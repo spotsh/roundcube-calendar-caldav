@@ -1,0 +1,23 @@
+
+Type-aware folder management/listing for Kolab
+
+Author: Aleksander Machniak <machniak@kolabsys.com>
+
+1. About.
+---------
+
+The plugin extends folders handling with features of the Kolab Suite.
+With this plugin enabled it is possible to:
+ - set/get/change folder's type
+ - filter folders list by folder type.
+
+http://www.kolab.org/doc/kolabformat-2.0-html
+
+2. Examples.
+------------
+
+To get list of all folders of type 'events' use code:
+
+$RCMAIL->imap->list_mailboxes('', '*', 'events');
+
+Plugin provides also set_folder_type/get_folder_type methods.
