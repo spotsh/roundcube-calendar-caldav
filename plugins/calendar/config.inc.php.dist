@@ -1,0 +1,54 @@
+<?php
+/*
+ +-------------------------------------------------------------------------+
+ | Configuration for the Calendar plugin                                   |
+ | Version 0.3 alpha                                                       |
+ |                                                                         |
+ | This program is free software; you can redistribute it and/or modify    |
+ | it under the terms of the GNU General Public License version 2          |
+ | as published by the Free Software Foundation.                           |
+ |                                                                         |
+ | This program is distributed in the hope that it will be useful,         |
+ | but WITHOUT ANY WARRANTY; without even the implied warranty of          |
+ | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           |
+ | GNU General Public License for more details.                            |
+ |                                                                         |
+ | You should have received a copy of the GNU General Public License along |
+ | with this program; if not, write to the Free Software Foundation, Inc., |
+ | 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.             |
+ |                                                                         |
+ +-------------------------------------------------------------------------+
+ | Author: Lazlo Westerhof <hello@lazlo.me>                                |
+ +-------------------------------------------------------------------------+
+*/
+
+// backend type (database, google, kolab)
+$rcmail_config['calendar_driver'] = "database";
+
+// default calendar view (agendaDay, agendaWeek, month)
+$rcmail_config['calendar_default_view'] = "agendaWeek";
+
+// general date format
+$rcmail_config['calendar_date_format'] = "yyyy-MM-dd";
+
+// time format (HH:mm, H:mm, h:mmt)
+$rcmail_config['calendar_time_format'] = "HH:mm";
+
+// short date format (used for column titles)
+$rcmail_config['calendar_date_short'] = 'M-d';
+
+// timeslots per hour (1, 2, 3, 4, 6)
+$rcmail_config['calendar_timeslots'] = 2;
+
+// first day of the week (0-6)
+$rcmail_config['calendar_first_day'] = 1;
+
+// first hour of the calendar (0-23)
+$rcmail_config['calendar_first_hour'] = 6;
+
+// event categories
+$rcmail_config['calendar_categories'] = array('Personal' => 'c0c0c0', 
+                                                  'Work' => 'ff0000',
+                                                'Family' => '00ff00',
+                                               'Holiday' => 'ff6600');
+?>

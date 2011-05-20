@@ -1,0 +1,37 @@
++ Edit: 3.12: Subject
++ Edit: 3.13: Location
++ Edit: 3.14: Start / End / All Day
++ Edit: 3.15: Show time as: Busy, Free, Out of office
+- Edit: 3.16: Reminder set
++ Edit: 3.17: Priority: High/Low
+- Edit: 3.19: Attachment Upload
+- Edit: 3.20: Print
+- Recurring events
+- Add/Manage Attendees
+  - Edit: 3.21: Required / Optional / Resource specification
+  - Edit: 3.22: Conflict Handling (Free/Busy Check for attendees)
+- Edit: 3.23: Specify folder for new event (prefs)
+- View: 3.1: Folder list
+- View: 3.3: Display modes (agenda / day / week / month)
+  + Day / Week / Month
+  - List (Agenda) view
+  - Individual days selection
+- View: 3.4: Fish-Eye View For Busy Days
+- View: 3.5: Search
++ Show list of calendars in a (hideable) drawer
+  + View: 3.6: Combined calendar view (Turn calendars on/off)
+  + View: 3.7: Small month overview calendar
+- View: 3.8: Color according to calendar and category (similar to Kontact)
++ View: 3.9: Alter event with drag/drop
+- Option: 4.12: Set default reminder time
++ Support for multiple calendars (replace categories)
+- Remember last visited view
+- Allow user to create/edit/delete calendars
+- Colors for calendars should be user-configurable
+- ICS parser/generator ((http://code.google.com/p/qcal/)
+- Importing ICS files
+- Create/manage invdividual views
+
+- Support for tasks/todos with task list view (ordered by date/time)
+? Show and edit two different views
+? Use ICS format for storage in DB

@@ -1,0 +1,392 @@
+/*** Style for Calendar plugin ***/
+
+body.calendarmain {
+	overflow: hidden;
+}
+
+#taskbar a.button-calendar {
+	background: url('images/calendar.png') 0px 1px no-repeat;
+}
+
+#main {
+	position: absolute;
+	clear: both;
+	top: 85px;
+	left: 0;
+	right: 0;
+	bottom: 10px;
+}
+
+#sidebar {
+	position: absolute;
+	top: 37px;
+	left: 10px;
+	bottom: 0;
+	width: 230px;
+}
+
+#datepicker {
+	width: 100%;
+}
+
+#datepicker .ui-datepicker {
+	width: 97% !important;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+}
+
+#datepicker .ui-priority-secondary {
+	opacity: 0.4;
+}
+
+#sidebartoggle {
+	position: absolute;
+	left: 246px;
+	width: 8px;
+	top: 37px;
+	bottom: 0;
+	background: url('images/toggle.gif') 0 48% no-repeat transparent;
+	cursor: pointer;
+}
+
+div.sidebarclosed {
+	background-position: -8px 48% !important;
+}
+
+#sidebartoggle:hover {
+	background-color: #ddd;
+}
+
+#calendar {
+	position: absolute;
+	top: 0;
+	left: 260px;
+	right: 10px;
+	bottom: 0;
+}
+
+#print {
+	width: 680px;
+}
+
+pre {
+ font-family: "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+}
+
+#calendars {
+	position: absolute;
+	top: 230px;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background-color: #F9F9F9;
+	border: 1px solid #999999;
+	overflow: hidden;
+}
+
+#calendarslist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+#calendarslist li {
+	margin: 0;
+	padding: 2px;
+	display: block;
+	background: #fff;
+	border-bottom: 1px solid #EBEBEB;
+}
+
+#calendarslist li label {
+	display: block;
+}
+
+#calendarslist li span {
+	cursor: default;
+}
+
+#calendarslist li input {
+	margin-right: 5px;
+}
+
+#calendarslist li.selected {
+	background-color: #ccc;
+	border-bottom: 1px solid #999;
+}
+
+#calendarslist li.selected span {
+	font-weight: bold;
+}
+
+#agendalist {
+	width: 100%;
+	margin: 0 auto;
+	margin-top: 60px;
+	border: 1px solid #C1DAD7;
+	display: none;
+}
+
+#agendalist table {
+	width: 100%;
+}
+
+#agendalist td, th {
+	border-right: 1px solid #C1DAD7;
+	border-bottom: 1px solid #C1DAD7;
+	background: #fff;
+	padding: 6px 6px 6px 12px;
+}
+
+#agendalist tr {
+	vertical-align: top;
+}
+
+#agendalist th {
+	font-weight: bold;
+}
+
+#calendartoolbar {
+	position: absolute;
+	top: 45px;
+	left: 260px;
+	height: 35px;
+}
+
+#calendartoolbar a {
+	padding-right: 10px;
+}
+
+#calendartoolbar a.button,
+#calendartoolbar a.buttonPas {
+	display: block;
+	float: left;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	margin-right: 10px;
+	overflow: hidden;
+	background: url('images/toolbar.png') 0 0 no-repeat transparent;
+	opacity: 0.99; /* this is needed to make buttons appear correctly in Chrome */
+}
+
+#calendartoolbar a.buttonPas {
+	opacity: 0.35;
+}
+
+#calendartoolbar a.addeventSel {
+	background-position: 0 -32px;
+}
+
+#calendartoolbar a.delete {
+  background-position: -32px 0;
+}
+
+#calendartoolbar a.deleteSel {
+  background-position: -32px -32px;
+}
+
+#calendartoolbar a.print {
+  background-position: -64px 0;
+}
+
+#calendartoolbar a.printSel {
+  background-position: -64px -32px;
+}
+
+#calendartoolbar a.export {
+	background-position: -128px 0;
+}
+
+#calendartoolbar a.exportSel {
+	background-position: -128px -32px;
+}
+
+#quicksearchbar {
+	right: 10px;
+}
+
+#eventshow,
+#eventedit {
+	display: none;
+}
+
+#user {
+	position: absolute;
+	top: 10px;
+	right: 100px;
+	left: 100px;
+	text-align: center;
+}
+
+/* jQuery UI overrides */
+
+#eventshow h1 {
+	font-size: 20px;
+	margin: 0.1em 0 0.4em 0;
+}
+
+#eventshow label,
+#eventshow h5.label {
+	font-weight: normal;
+	font-size: 0.9em;
+	color: #999;
+	margin: 0 0 0.2em 0;
+}
+
+#eventshow div.event-line {
+	margin-top: 0.1em;
+	margin-bottom: 0.3em;
+}
+
+#eventedit {
+	padding: 0.5em 0.1em;
+}
+
+#eventedit input.text,
+#eventedit textarea {
+	width: 97%;
+}
+
+#eventtabs {
+	position: relative;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+}
+
+#eventshow div.event-section,
+#eventtabs div.event-section {
+	margin-top: 0.2em;
+	margin-bottom: 0.8em;
+}
+
+#eventtabs .tabsbar {
+	position: absolute;
+	top: 0;
+}
+
+#eventtabs .ui-tabs-panel {
+	padding: 1em 0.8em;
+	border: 1px solid #aaa;
+	border-width: 0 1px 1px 1px;
+}
+
+#eventtabs .ui-tabs-nav {
+	background: none;
+	padding: 0;
+	border-width: 0 0 1px 0;
+	border-radius: 0;
+}
+
+#eventtabs .border-after {
+	padding-bottom: 0.6em;
+	margin-bottom: 0.6em;
+	border-bottom: 1px solid #999;
+}
+
+#eventshow label,
+#eventedit label {
+	display: inline-block;
+	min-width: 7em;
+	padding-right: 0.5em;
+}
+
+#eventedit .formtable td.label {
+	min-width: 6em;
+}
+
+td.topalign {
+	vertical-align: top;
+}
+
+#eventedit label.weekday,
+#eventedit label.monthday {
+	min-width: 3em;
+}
+
+#eventedit label.month {
+	min-width: 5em;
+}
+
+#edit-recurrence-yearly-bymonthblock {
+	margin-left: 7.5em;
+}
+
+#eventedit .recurrence-form {
+	display: none;
+}
+
+#eventedit .formtable td {
+	padding: 0.2em 0;
+}
+
+a.dropdown-link {
+	color: #CC0000;
+	font-size: 12px;
+	text-decoration: none;
+}
+
+a.dropdown-link:after {
+	content: ' ▼';
+	font-size: 11px;
+	color: #666;
+}
+
+#eventedit .ui-tabs-panel {
+	min-height: 20em;
+}
+
+.ui-dialog-buttonset a.dropdown-link {
+	margin-right: 1em;
+}
+
+.ui-datepicker-calendar .ui-datepicker-today .ui-state-default {
+	border-color: #cccccc;
+	background: #ffffcc;
+	color: #000;
+}
+
+.ui-datepicker-calendar .ui-datepicker-week-col {
+	text-align: right;
+	padding-right: 0.6em;
+}
+
+.ui-autocomplete {
+	max-height: 160px;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+* html .ui-autocomplete {
+	height: 160px;
+}
+
+/* fullcalendar style overrides */
+
+.fc-event-title {
+	font-weight: bold;
+}
+
+.fc-event-cateories {
+	font-style:italic; 
+}
+
+.fc-agenda-slots td div {
+	height: 22px;
+}
+
+.fc-mon, .fc-tue, .fc-wed, .fc-thu, .fc-fri {
+	background-color: #fdfdfd;
+}
+
+.fc-widget-header {
+	background-color: #fff;
+}
+
+/* Settings section */
+
+fieldset #calendarcategories div {
+	margin-bottom: 0.3em;
+}
+
