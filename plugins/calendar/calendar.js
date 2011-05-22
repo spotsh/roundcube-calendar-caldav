@@ -199,13 +199,12 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
             $('select.edit-alarm-offset').val(''+RegExp.$1+RegExp.$3);
           }
         }
-        // set correct visibility by triggering onchange handlers
-        $('select.edit-alarm-type, select.edit-alarm-offset').change();
       }
+      // set correct visibility by triggering onchange handlers
+      $('select.edit-alarm-type, select.edit-alarm-offset').change();
       
       // enable/disable alarm property according to backend support
       $('#edit-alarms')[(calendar.alarms ? 'show' : 'hide')]();
-      
       
       // set recurrence form
       var recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();

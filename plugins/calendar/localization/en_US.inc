@@ -49,8 +49,12 @@ $labels['next_year'] = 'Next year';
 $labels['next_month'] = 'Next month';
 $labels['choose_date'] = 'Choose date';
 
-$labels['showmessage'] = 'Message';
-$labels['byemail'] = 'E-mail';
+// alarm/reminder settings
+$labels['alarmemail'] = 'Send E-mail';
+$labels['alarmdisplay'] = 'Show message';
+$labels['alarmdisplayoption'] = 'Message';
+$labels['alarmemailoption'] = 'E-mail';
+$labels['alarmat'] = 'at $datetime';
 $labels['trigger@'] = 'on date';
 $labels['trigger-M'] = 'minutes before';
 $labels['trigger-H'] = 'hours before';
@@ -59,11 +63,10 @@ $labels['trigger+M'] = 'minutes after';
 $labels['trigger+H'] = 'hours after';
 $labels['trigger+D'] = 'days after';
 $labels['addalarm'] = 'add alarm';
+$labels['defaultalarmtype'] = 'Default reminder setting';
+$labels['defaultalarmoffset'] = 'Default reminder time';
 
-$labels['alarmemail'] = 'Send E-mail';
-$labels['alarmdisplay'] = 'Show message';
-$labels['alarmat'] = 'at $datetime';
-
+// event dialog tabs
 $labels['tabsummary'] = 'Summary';
 $labels['tabrecurrence'] = 'Recurrence';
 $labels['tabattendees'] = 'Participants';

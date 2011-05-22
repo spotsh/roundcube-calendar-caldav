@@ -210,7 +210,7 @@ class calendar_ui
     unset($attrib['name']);
     $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
     $select_type->add(
-      array($this->calendar->gettext('none'), $this->calendar->gettext('showmessage'), $this->calendar->gettext('byemail')),
+      array($this->calendar->gettext('none'), $this->calendar->gettext('alarmdisplayoption'), $this->calendar->gettext('alarmemailoption')),
       array('','DISPLAY','EMAIL'));
      
     $input_value = new html_inputfield(array('name' => 'alarmvalue[]', 'class' => 'edit-alarm-value', 'size' => 3));
@@ -221,13 +221,14 @@ class calendar_ui
     foreach (array('-M','-H','-D','+M','+H','+D','@') as $trigger)
       $select_offset->add($this->calendar->gettext('trigger' . $trigger), $trigger);
      
-    // TODO: pre-set with default values from user settings
+    // pre-set with default values from user settings
+    $preset = calendar::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
     $hidden = array('style' => 'display:none');
     $html = html::span('edit-alarm-set',
-      $select_type->show('') . ' ' .
+      $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')) . ' ' .
       html::span(array('class' => 'edit-alarm-values', 'style' => 'display:none'),
-        $input_value->show(15) . ' ' .
-        $select_offset->show('-M') . ' ' .
+        $input_value->show($preset[0]) . ' ' .
+        $select_offset->show($preset[1]) . ' ' .
         $input_date->show('', $hidden) . ' ' .
         $input_time->show('', $hidden)
       )

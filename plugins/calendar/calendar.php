@@ -174,9 +174,9 @@ class calendar extends rcube_plugin
       );
       
       $field_id = 'rcmfd_time_format';
-      $choices = array('HH:mm', 'H:mm', 'h:mmt');    
+      $choices = array('HH:mm', 'H:mm', 'h:mmt');
       $select = new html_select(array('name' => '_time_format', 'id' => $field_id));
-      $select->add($choices);      
+      $select->add($choices);
       $p['blocks']['view']['options']['time_format'] = array(
         'title' => html::label($field_id, Q($this->gettext('time_format'))),
         'content' => $select->show($this->rc->config->get('calendar_time_format', "HH:mm")),
@@ -185,13 +185,13 @@ class calendar extends rcube_plugin
       $field_id = 'rcmfd_timeslot';
       $choices = array('1', '2', '3', '4', '6');
       $select = new html_select(array('name' => '_timeslots', 'id' => $field_id));
-      $select->add($choices);      
+      $select->add($choices);
       $p['blocks']['view']['options']['timeslots'] = array(
         'title' => html::label($field_id, Q($this->gettext('timeslots'))),
         'content' => $select->show($this->rc->config->get('calendar_timeslots', 2)),
       );
       
-      $field_id = 'rcmfd_timeslot';
+      $field_id = 'rcmfd_firstday';
       $select = new html_select(array('name' => '_first_day', 'id' => $field_id));
       $select->add(rcube_label('sunday'), '0');
       $select->add(rcube_label('monday'), '1');
@@ -203,6 +203,27 @@ class calendar extends rcube_plugin
       $p['blocks']['view']['options']['first_day'] = array(
         'title' => html::label($field_id, Q($this->gettext('first_day'))),
         'content' => $select->show($this->rc->config->get('calendar_first_day', 1)),
+      );
+      
+      $field_id = 'rcmfd_alarm';
+      $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
+      $select_type->add($this->gettext('none'), '');
+      $select_type->add($this->gettext('alarmdisplayoption'), 'DISPLAY');
+      $select_type->add($this->gettext('alarmemailoption'), 'EMAIL');
+      
+      $input_value = new html_inputfield(array('name' => '_alarm_value', 'id' => $field_id . 'value', 'size' => 3));
+      $select_offset = new html_select(array('name' => '_alarm_offset', 'id' => $field_id . 'offset'));
+      foreach (array('-M','-H','-D','+M','+H','+D') as $trigger)
+        $select_offset->add($this->gettext('trigger' . $trigger), $trigger);
+      
+      $p['blocks']['view']['options']['alarmtype'] = array(
+        'title' => html::label($field_id, Q($this->gettext('defaultalarmtype'))),
+        'content' => $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')),
+      );
+      $preset = self::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
+      $p['blocks']['view']['options']['alarmoffset'] = array(
+        'title' => html::label($field_id . 'value', Q($this->gettext('defaultalarmoffset'))),
+        'content' => $input_value->show($preset[0]) . ' ' . $select_offset->show($preset[1]),
       );
       
       
@@ -280,13 +301,19 @@ class calendar extends rcube_plugin
       foreach ((array)$old_categories[$key] as $key => $name) {
         $this->driver->remove_category($name);
       }
+      
+      // compose default alarm preset value
+      $alarm_offset = get_input_value('_alarm_offset', RCUBE_INPUT_POST);
+      $default_alam = $alarm_offset[0] . intval(get_input_value('_alarm_value', RCUBE_INPUT_POST)) . $alarm_offset[1];
 
       $p['prefs'] = array(
+        'calendar_categories'   => $new_categories,
         'calendar_default_view' => get_input_value('_default_view', RCUBE_INPUT_POST),
         'calendar_time_format'  => get_input_value('_time_format', RCUBE_INPUT_POST),
         'calendar_timeslots'    => get_input_value('_timeslots', RCUBE_INPUT_POST),
         'calendar_first_day'    => get_input_value('_first_day', RCUBE_INPUT_POST),
-        'calendar_categories'   => $new_categories,
+        'calendar_default_alarm_type'   => get_input_value('_alarm_type', RCUBE_INPUT_POST),
+        'calendar_default_alarm_offset' => $default_alam,
       );
     }
 
@@ -471,8 +498,8 @@ class calendar extends rcube_plugin
     if (preg_match('/@(\d+)/', $trigger, $m)) {
       $text .= ' ' . $this->gettext(array('name' => 'alarmat', 'vars' => array('datetime' => format_date($m[1]))));
     }
-    else if (preg_match('/([+-])(\d+)([HMD])/', $trigger, $m)) {
-      $text .= ' ' . intval($m[2]) . ' ' . $this->gettext('trigger' . $m[1] . $m[3]);
+    else if ($val = self::parse_alaram_value($trigger)) {
+      $text .= ' ' . intval($val[0]) . ' ' . $this->gettext('trigger' . $val[1]);
     }
     else
       return false;
@@ -486,6 +513,14 @@ class calendar extends rcube_plugin
   private function _recurrence_text($rrule)
   {
     
+  }
+
+  public static function parse_alaram_value($val)
+  {
+    if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
+      return array($m[2], $m[1].$m[3]);
+    
+    return false;
   }
 
 }
