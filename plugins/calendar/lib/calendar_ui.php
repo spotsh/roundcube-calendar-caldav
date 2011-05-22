@@ -130,6 +130,7 @@ class calendar_ui
     $li = '';
     foreach ((array)$calendars as $id => $prop) {
       unset($prop['user_id']);
+      $prop['alarms'] = $this->calendar->driver->alarms;
       $prop['attendees'] = $this->calendar->driver->attendees;
       $prop['attachments'] = $this->calendar->driver->attachments;
       $jsenv[$id] = $prop;

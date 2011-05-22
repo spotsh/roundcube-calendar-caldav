@@ -26,6 +26,7 @@
 class database_driver extends calendar_driver
 {
   // features this backend supports
+  public $alarms = true;
   public $attendees = true;
   public $attachments = true;
 
@@ -306,10 +307,10 @@ class database_driver extends calendar_driver
       $result = $this->rc->db->query(sprintf(
         "SELECT * FROM events 
          WHERE calendar_id IN (%s)
-         AND start >= %s AND end <= %s",
+         AND start <= %s AND end >= %s",
          $this->calendar_ids,
-         $this->rc->db->fromunixtime($start),
-         $this->rc->db->fromunixtime($end)
+         $this->rc->db->fromunixtime($end),
+         $this->rc->db->fromunixtime($start)
        ));
 
       while ($result && ($event = $this->rc->db->fetch_assoc($result))) {

@@ -25,6 +25,7 @@
 abstract class calendar_driver
 {
   // backend features
+  public $alarms = false;
   public $attendees = false;
   public $attachments = false;
 

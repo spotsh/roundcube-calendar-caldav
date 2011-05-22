@@ -88,7 +88,7 @@ class Kolab_calendar
     $events = array();
     foreach ($this->events as $id => $event) {
       // TODO: also list recurring events
-      if ($event['start'] >= $start && $event['end'] <= $end) {
+      if ($event['start'] <= $end && $event['end'] >= $start) {
         $events[] = $event;
       }
     }
@@ -144,6 +144,8 @@ class Kolab_calendar
   {
     $start_time = date('H:i:s', $rec['start-date']);
     $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
+    if ($allday)  // in Roundcube all-day events only go until 23:59:59 of the last day
+      $rec['end-date']--;
     
     return array(
       'id' => $rec['uid'],
@@ -168,6 +170,10 @@ class Kolab_calendar
   private function _from_rcube_eventt($event)
   {
     $object = array();
+    
+    // set end-date to 00:00:00 of the following day
+    if ($event['all_day'])
+      $event['end']++;
     
     
     return $object;

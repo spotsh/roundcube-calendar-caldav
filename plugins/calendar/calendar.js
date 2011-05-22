@@ -189,10 +189,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           $('select.edit-alarm-type').val(alarm[0]);
           
           if (alarm[1].match(/@(\d+)/)) {
-            var ondate = new Date(parseInt(RegExp.$1));
+            var ondate = new Date(parseInt(RegExp.$1) * 1000);
             $('select.edit-alarm-offset').val('@');
             $('input.edit-alarm-date').val($.fullCalendar.formatDate(ondate, settings['date_format']));
-            $('input.edit-alarmtime').val($.fullCalendar.formatDate(ondate, settings['time_format']));
+            $('input.edit-alarm-time').val($.fullCalendar.formatDate(ondate, settings['time_format']));
           }
           else if (alarm[1].match(/([-+])(\d+)([mhd])/)) {
             $('input.edit-alarm-value').val(RegExp.$2);
@@ -202,6 +202,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         // set correct visibility by triggering onchange handlers
         $('select.edit-alarm-type, select.edit-alarm-offset').change();
       }
+      
+      // enable/disable alarm property according to backend support
+      $('#edit-alarms')[(calendar.alarms ? 'show' : 'hide')]();
+      
       
       // set recurrence form
       var recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();

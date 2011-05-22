@@ -21,6 +21,7 @@ require_once(dirname(__FILE__) . '/kolab_calendar.php');
 class kolab_driver extends calendar_driver
 {
   // features this backend supports
+  public $alarms = true;
   public $attendees = false;
   public $attachments = false;
 

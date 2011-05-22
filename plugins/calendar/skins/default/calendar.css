@@ -321,6 +321,10 @@ td.topalign {
 	padding: 0.2em 0;
 }
 
+span.edit-alarm-set {
+	white-space: nowrap;
+}
+
 a.dropdown-link {
 	color: #CC0000;
 	font-size: 12px;
