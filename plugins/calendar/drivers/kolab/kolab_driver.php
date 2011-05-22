@@ -223,6 +223,17 @@ class kolab_driver extends calendar_driver
   }
 
   /**
+   * Get a list of pending alarms to be displayed to the user
+   *
+   * @see Driver:pending_alarms()
+   */
+  public function pending_alarms($time, $calendars = null)
+  {
+    // TBD.
+    return array();
+  }
+
+  /**
    * Save an attachment related to the given event
    */
   public function add_attachment($attachment, $event_id)

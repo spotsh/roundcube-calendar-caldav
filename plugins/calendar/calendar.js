@@ -88,8 +88,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       if (event.recurrence && event.recurrence_text)
         $('#event-repeat').show().children('.event-text').html(Q(event.recurrence_text));
       
-      if (event.reminders && event.reminders_text)
-        $('#event-alarm').show().children('.event-text').html(Q(event.reminders_text));
+      if (event.alarms && event.alarms_text)
+        $('#event-alarm').show().children('.event-text').html(Q(event.alarms_text));
       
       if (calendar.name)
         $('#event-calendar').show().children('.event-text').html(Q(calendar.name)).removeClass().addClass('event-text').addClass('cal-'+calendar.id);
@@ -194,7 +194,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
             $('input.edit-alarm-date').val($.fullCalendar.formatDate(ondate, settings['date_format']));
             $('input.edit-alarm-time').val($.fullCalendar.formatDate(ondate, settings['time_format']));
           }
-          else if (alarm[1].match(/([-+])(\d+)([mhd])/)) {
+          else if (alarm[1].match(/([-+])(\d+)([MHD])/)) {
             $('input.edit-alarm-value').val(RegExp.$2);
             $('select.edit-alarm-offset').val(''+RegExp.$1+RegExp.$3);
           }

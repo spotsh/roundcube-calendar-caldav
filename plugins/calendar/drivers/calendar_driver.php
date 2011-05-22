@@ -127,6 +127,16 @@ abstract class calendar_driver
   abstract function search_events($start, $end, $query, $calendars = null);
 
   /**
+   * Get a list of pending alarms to be displayed to the user
+   *
+   * @param  integer Current time (unix timestamp)
+   * @param  mixed   List of calendar IDs to show alarms for (either as array or comma-separated string)
+   * @return array A list of alarms
+   */
+  abstract function pending_alarms($time, $calendars = null);
+
+
+  /**
    * Save an attachment related to the given event
    */
   public function add_attachment($attachment, $event_id) { }

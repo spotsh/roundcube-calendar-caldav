@@ -51,14 +51,18 @@ $labels['choose_date'] = 'Choose date';
 
 $labels['showmessage'] = 'Message';
 $labels['byemail'] = 'E-mail';
-$labels['ondate'] = 'on date';
-$labels['minutesbefore'] = 'minutes before';
-$labels['hoursbefore'] = 'hours before';
-$labels['daysbefore'] = 'days before';
-$labels['minutesafter'] = 'minutes after';
-$labels['hoursafter'] = 'hours after';
-$labels['daysafter'] = 'days after';
+$labels['trigger@'] = 'on date';
+$labels['trigger-M'] = 'minutes before';
+$labels['trigger-H'] = 'hours before';
+$labels['trigger-D'] = 'days before';
+$labels['trigger+M'] = 'minutes after';
+$labels['trigger+H'] = 'hours after';
+$labels['trigger+D'] = 'days after';
 $labels['addalarm'] = 'add alarm';
+
+$labels['alarmemail'] = 'Send E-mail';
+$labels['alarmdisplay'] = 'Show message';
+$labels['alarmat'] = 'at $datetime';
 
 $labels['tabsummary'] = 'Summary';
 $labels['tabrecurrence'] = 'Recurrence';

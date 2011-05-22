@@ -433,7 +433,12 @@ class calendar extends rcube_plugin
   {
     $json = array();
     foreach ($events as $event) {
-      // TODO: compose a human readable string for recurrence_text
+      // TODO: compose a human readable string for alarms_text and recurrence_text
+      if ($event['alarms'])
+        $event['alarms_text'] = $this->_alarms_text($event['alarms']);
+      if ($event['recurrence'])
+        $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
+      
       $json[] = array(
         'start' => date('c', $event['start']), // ISO 8601 date (added in PHP 5)
         'end'   => date('c', $event['end']), // ISO 8601 date (added in PHP 5)
@@ -446,5 +451,41 @@ class calendar extends rcube_plugin
     return json_encode($json);
   }
 
+  /**
+   * Render localized text for alarm settings
+   */
+  private function _alarms_text($alarm)
+  {
+    list($action, $trigger) = explode(':', $alarm);
+    
+    $text = '';
+    switch ($action) {
+      case 'EMAIL':
+        $text = $this->gettext('alarmemail');
+        break;
+      case 'DISPLAY':
+        $text = $this->gettext('alarmdisplay');
+        break;
+    }
+    
+    if (preg_match('/@(\d+)/', $trigger, $m)) {
+      $text .= ' ' . $this->gettext(array('name' => 'alarmat', 'vars' => array('datetime' => format_date($m[1]))));
+    }
+    else if (preg_match('/([+-])(\d+)([HMD])/', $trigger, $m)) {
+      $text .= ' ' . intval($m[2]) . ' ' . $this->gettext('trigger' . $m[1] . $m[3]);
+    }
+    else
+      return false;
+    
+    return $text;
+  }
+
+  /**
+   * Render localized text for recurrence settings
+   */
+  private function _recurrence_text($rrule)
+  {
+    
+  }
 
 }
