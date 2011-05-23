@@ -41,6 +41,7 @@ CREATE TABLE `events` (
   `priority` tinyint(1) NOT NULL DEFAULT '1',
   `alarms` varchar(255) DEFAULT NULL,
   `attendees` text DEFAULT NULL,
+  `notifyat` datetime NOT NULL DEFAULT '1000-01-01 00:00:00',
   PRIMARY KEY(`event_id`),
   CONSTRAINT `fk_events_calendar_id` FOREIGN KEY (`calendar_id`)
     REFERENCES `calendars`(`calendar_id`) ON DELETE CASCADE ON UPDATE CASCADE

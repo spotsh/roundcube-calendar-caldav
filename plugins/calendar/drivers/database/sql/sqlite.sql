@@ -41,6 +41,7 @@ CREATE TABLE events (
   priority tinyint(1) NOT NULL default '1',
   alarms varchar(255) default NULL,
   attendees text default NULL,
+  notifyat datetime NOT NULL default '1000-01-01 00:00:00',
   CONSTRAINT fk_events_calendar_id FOREIGN KEY (calendar_id)
     REFERENCES calendars(calendar_id)
 );

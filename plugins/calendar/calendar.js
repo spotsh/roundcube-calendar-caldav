@@ -45,20 +45,6 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     // private vars
     var day_clicked = 0;
     var ignore_click = false;
-    
-    // data loader
-    var load_events = function(calendar, start, end, callback) {
-      $.ajax({
-        url: "./?_task=calendar&_action=plugin.load_events",
-        dataType: 'json',
-        data: {
-          source: calendar,
-          start: Math.round(start.getTime() / 1000),
-          end: Math.round(end.getTime() / 1000)
-        },
-        success: callback
-      });
-    };
 
     // event details dialog (show only)
     var event_show_dialog = function(event) {
@@ -438,7 +424,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     for (var id in rcmail.env.calendars) {
       cal = rcmail.env.calendars[id];
       this.calendars[id] = $.extend({
-        events: function(start, end, callback) { load_events(id, start, end, callback); },
+        url: "./?_task=calendar&_action=plugin.load_events&source="+escape(id),
         editable: !cal.readonly,
         className: 'fc-event-cal-'+id,
         id: id
@@ -455,8 +441,9 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           }
         }).data('id', id);
         $(li).click(function(e){
+          var id = $(this).data('id');
           rcmail.select_folder(id, me.selected_calendar, 'rcmlical');
-          me.selected_calendar = $(this).data('id');
+          me.selected_calendar = id;
         }).data('id', id);
       }
       

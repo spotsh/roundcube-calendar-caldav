@@ -521,7 +521,9 @@ class calendar extends rcube_plugin
    */
   public static function parse_alaram_value($val)
   {
-    if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
+    if ($val[0] == '@')
+      return array(substr($val, 1));
+    else if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
       return array($m[2], $m[1].$m[3]);
     
     return false;

@@ -131,10 +131,26 @@ abstract class calendar_driver
    *
    * @param  integer Current time (unix timestamp)
    * @param  mixed   List of calendar IDs to show alarms for (either as array or comma-separated string)
-   * @return array A list of alarms
+   * @return array A list of alarms, each encoded as hash array:
+   *         id: Event identifier
+   *        uid: Unique identifier of this event
+   *   calendar: Calendar identifier to add event to (optional)
+   *      start: Event start date/time as unix timestamp
+   *        end: Event end date/time as unix timestamp
+   *     allday: Boolean flag if this is an all-day event
+   *      title: Event title/summary
+   *   location: Location string
    */
   abstract function pending_alarms($time, $calendars = null);
 
+  /**
+   * (User) feedback after showing an alarm notification
+   * This should mark the alarm as 'shown' or snooze it for the given amount of time
+   *
+   * @param  string  Event identifier
+   * @param  integer Suspend the alarm for this number of seconds
+   */
+  abstract function confirm_alarm($event_id, $snooze = 0);
 
   /**
    * Save an attachment related to the given event

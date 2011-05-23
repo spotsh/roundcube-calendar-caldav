@@ -139,8 +139,8 @@ class database_driver extends calendar_driver
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
-         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, alarms)
-         VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, alarms, notifyat)
+         VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           $this->rc->db->now(),
           $this->rc->db->now(),
           $this->rc->db->fromunixtime($event['start']),
@@ -156,7 +156,8 @@ class database_driver extends calendar_driver
         strval($event['categories']),
         intval($event['free_busy']),
         intval($event['priority']),
-        $event['alarms']
+        $event['alarms'],
+        $event['notifyat']
       );
       return $this->rc->db->insert_id($this->sequence_events);
     }
@@ -176,7 +177,7 @@ class database_driver extends calendar_driver
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
         "UPDATE " . $this->db_events . "
-         SET   changed=%s, start=%s, end=%s, all_day=?, recurrence=?, title=?, description=?, location=?, categories=?, free_busy=?, priority=?, alarms=?
+         SET   changed=%s, start=%s, end=%s, all_day=?, recurrence=?, title=?, description=?, location=?, categories=?, free_busy=?, priority=?, alarms=?, notifyat=?
          WHERE event_id=?
          AND   calendar_id IN (" . $this->calendar_ids . ")",
           $this->rc->db->now(),
@@ -192,6 +193,7 @@ class database_driver extends calendar_driver
         intval($event['free_busy']),
         intval($event['priority']),
         $event['alarms'],
+        $event['notifyat'],
         $event['id']
       );
       return $this->rc->db->affected_rows($query);
@@ -220,10 +222,37 @@ class database_driver extends calendar_driver
     }
     else if (is_string($event['recurrence']))
       $rrule = $event['recurrence'];
-      
+    
     $event['recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     $event['allday'] = $event['allday'] ? 1 : 0;
+    
+    // compute absolute time to notify the user
+    if ($event['alarms']) {
+      list($action, $trigger) = explode(':', $event['alarms']);
+      $notify = calendar::parse_alaram_value($trigger);
+      if (!empty($notify[1])){  // offset
+        $mult = 1;
+        switch ($notify[1]) {
+          case '-M': $mult =    -60; break;
+          case '+M': $mult =     60; break;
+          case '-H': $mult =  -3600; break;
+          case '+H': $mult =   3600; break;
+          case '-D': $mult = -86400; break;
+          case '+D': $mult =  86400; break;
+        }
+        $offset = $notify[0] * $mult;
+        $refdate = $mult > 0 ? $event['end'] : $event['start'];
+        $notify_at = $refdate + $offset;
+      }
+      else {  // absolute timestamp
+        $notify_at = $notify[0];
+      }
+      
+      $event['notifyat'] = date('Y-m-d H:i:s', $notify_at);
+    }
+    else
+      $event['notifyat'] = null;
     
     return $event;
   }
@@ -237,9 +266,10 @@ class database_driver extends calendar_driver
   public function move_event($event)
   {
     if (!empty($this->calendars)) {
+      $event = $this->_save_preprocess($event + (array)$this->get_event($event['id']));
       $query = $this->rc->db->query(sprintf(
         "UPDATE " . $this->db_events . "
-         SET   changed=%s, start=%s, end=%s, all_day=?
+         SET   changed=%s, start=%s, end=%s, all_day=?, notifyat=?
          WHERE event_id=?
          AND calendar_id IN (" . $this->calendar_ids . ")",
           $this->rc->db->now(),
@@ -247,6 +277,7 @@ class database_driver extends calendar_driver
           $this->rc->db->fromunixtime($event['end'])
         ),
         $event['allday'] ? 1 : 0,
+        $event['notifyat'],
         $event['id']
       );
       return $this->rc->db->affected_rows($query);
@@ -264,15 +295,17 @@ class database_driver extends calendar_driver
   public function resize_event($event)
   {
     if (!empty($this->calendars)) {
+      $event = $this->_save_preprocess($event + (array)$this->get_event($event['id']));
       $query = $this->rc->db->query(sprintf(
         "UPDATE " . $this->db_events . "
-         SET   changed=%s, start=%s, end=%s
+         SET   changed=%s, start=%s, end=%s, notifyat=?
          WHERE event_id=?
          AND calendar_id IN (" . $this->calendar_ids . ")",
           $this->rc->db->now(),
           $this->rc->db->fromunixtime($event['start']),
           $this->rc->db->fromunixtime($event['end'])
         ),
+        $event['notifyat'],
         $event['id']
       );
       return $this->rc->db->affected_rows($query);
@@ -303,6 +336,27 @@ class database_driver extends calendar_driver
   }
 
   /**
+   * Return data of a specific event
+   * @param string Event ID
+   * @return array Hash array with event properties
+   */
+  public function get_event($id)
+  {
+    $result = $this->rc->db->query(sprintf(
+      "SELECT * FROM " . $this->db_events . "
+       WHERE calendar_id IN (%s)
+       AND event_id=?",
+       $this->calendar_ids
+      ),
+      $id);
+
+    if ($result && ($event = $this->rc->db->fetch_assoc($result)))
+      return $this->_read_postprocess($event);
+
+    return false;
+  }
+
+  /**
    * Get event data
    *
    * @see Driver:load_events()
@@ -315,46 +369,55 @@ class database_driver extends calendar_driver
       $calendars = explode(',', $calendars);
     
     // only allow to select from calendars of this use
-    $calendars = array_intersect($calendars, array_keys($this->calendars));
+    $calendar_ids = array_intersect($calendars, array_keys($this->calendars));
+    array_walk($calendar_ids, array($this->rc->db, 'quote'));
     
     $events = array();
-    $free_busy_map = array_flip($this->free_busy_map);
-    
-    if (!empty($calendars)) {
+    if (!empty($calendar_ids)) {
       $result = $this->rc->db->query(sprintf(
         "SELECT * FROM " . $this->db_events . "
          WHERE calendar_id IN (%s)
          AND start <= %s AND end >= %s",
-         $this->calendar_ids,
+         join(',', $calendar_ids),
          $this->rc->db->fromunixtime($end),
          $this->rc->db->fromunixtime($start)
        ));
 
       while ($result && ($event = $this->rc->db->fetch_assoc($result))) {
-        $event['id'] = $event['event_id'];
-        $event['start'] = strtotime($event['start']);
-        $event['end'] = strtotime($event['end']);
-        $event['free_busy'] = $free_busy_map[$event['free_busy']];
-        $event['calendar'] = $event['calendar_id'];
-        
-        // parse recurrence rule
-        if ($event['recurrence'] && preg_match_all('/([A-Z]+)=([^;]+);?/', $event['recurrence'], $m, PREG_SET_ORDER)) {
-          $event['recurrence'] = array();
-          foreach ($m as $rr) {
-            if (is_numeric($rr[2]))
-              $rr[2] = intval($rr[2]);
-            else if ($rr[1] == 'UNTIL')
-              $rr[2] = strtotime($rr[2]);
-            $event['recurrence'][$rr[1]] = $rr[2];
-          }
-        }
-        
-        unset($event['event_id'], $event['calendar_id']);
-        $events[] = $event;
+        $events[] = $this->_read_postprocess($event);
       }
     }
     
     return $events;
+  }
+
+  /**
+   * Convert sql record into a rcube style event object
+   */
+  private function _read_postprocess($event)
+  {
+    $free_busy_map = array_flip($this->free_busy_map);
+    
+    $event['id'] = $event['event_id'];
+    $event['start'] = strtotime($event['start']);
+    $event['end'] = strtotime($event['end']);
+    $event['free_busy'] = $free_busy_map[$event['free_busy']];
+    $event['calendar'] = $event['calendar_id'];
+    
+    // parse recurrence rule
+    if ($event['recurrence'] && preg_match_all('/([A-Z]+)=([^;]+);?/', $event['recurrence'], $m, PREG_SET_ORDER)) {
+      $event['recurrence'] = array();
+      foreach ($m as $rr) {
+        if (is_numeric($rr[2]))
+          $rr[2] = intval($rr[2]);
+        else if ($rr[1] == 'UNTIL')
+          $rr[2] = strtotime($rr[2]);
+        $event['recurrence'][$rr[1]] = $rr[2];
+      }
+    }
+    
+    unset($event['event_id'], $event['calendar_id']);
+    return $event;
   }
 
   /**
@@ -374,14 +437,63 @@ class database_driver extends calendar_driver
    */
   public function pending_alarms($time, $calendars = null)
   {
-    // TBD.
-    return array();
+    if (empty($calendars))
+      $calendars = array_keys($this->calendars);
+    else if (is_string($calendars))
+      $calendars = explode(',', $calendars);
+    
+    // only allow to select from calendars of this use
+    $calendar_ids = array_intersect($calendars, array_keys($this->calendars));
+    array_walk($calendar_ids, array($this->rc->db, 'quote'));
+    
+    $alarms = array();
+    if (!empty($calendar_ids)) {
+      $result = $this->rc->db->query(sprintf(
+        "SELECT * FROM " . $this->db_events . "
+         WHERE calendar_id IN (%s)
+         AND notifyat <= %s",
+         join(',', $calendar_ids),
+         $this->rc->db->fromunixtime($time)
+       ));
+
+      while ($result && ($event = $this->rc->db->fetch_assoc($result)))
+        $alarms[] = $this->_read_postprocess($event);
+    }
+
+    return $alarms;
+  }
+
+  /**
+   * Feedback after showing/sending an alarm notification
+   *
+   * @see Driver:confirm_alarm()
+   */
+  public function confirm_alarm($event_id, $snooze = 0)
+  {
+    // set new notifyat time
+    if ($snooze > 0) {
+      $event = $this->get_event($event_id);
+      $notify_at = date('Y-m-d H:i:s', strtotime($event['notifyat']) + $snooze);
+    }
+    else  // unset notifyat value
+      $notify_at = null;
+    
+    $query = $this->rc->db->query(sprintf(
+      "UPDATE " . $this->db_events . "
+       SET   changed=%s, notifyat=?
+       WHERE event_id=?
+       AND calendar_id IN (" . $this->calendar_ids . ")",
+        $this->rc->db->now()),
+      $notify_at,
+      $event_id
+    );
+    return $this->rc->db->affected_rows($query);
   }
 
   /**
    * Save an attachment related to the given event
    */
-  function add_attachment($attachment, $event_id)
+  public function add_attachment($attachment, $event_id)
   {
     // TBD.
     return false;
@@ -390,7 +502,7 @@ class database_driver extends calendar_driver
   /**
    * Remove a specific attachment from the given event
    */
-  function remove_attachment($attachment, $event_id)
+  public function remove_attachment($attachment, $event_id)
   {
     // TBD.
     return false;
