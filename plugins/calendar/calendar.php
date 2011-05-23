@@ -98,8 +98,8 @@ class calendar extends rcube_plugin
     $driver_name = $this->rc->config->get('calendar_driver', 'database');
     $driver_class = $driver_name . '_driver';
 
-    require_once('drivers/calendar_driver.php');
-    require_once('drivers/' . $driver_name . '/' . $driver_class . '.php');
+    require_once($this->home . '/drivers/calendar_driver.php');
+    require_once($this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php');
 
     switch ($driver_name) {
       case "kolab":
