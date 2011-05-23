@@ -35,6 +35,14 @@ class database_driver extends calendar_driver
   private $calendars = array();
   private $calendar_ids = '';
   private $free_busy_map = array('free' => 0, 'busy' => 1, 'out-of-office' => 2, 'outofoffice' => 2);
+  
+  private $db_events = 'events';
+  private $db_calendars = 'calendars';
+  private $db_attachments = 'attachments';
+  private $sequence_events = 'event_ids';
+  private $sequence_calendars = 'calendar_ids';
+  private $sequence_attachments = 'attachment_ids';
+
 
   /**
    * Default constructor
@@ -43,6 +51,15 @@ class database_driver extends calendar_driver
   {
     $this->cal = $cal;
     $this->rc = $cal->rc;
+    
+    // read database config
+    $this->db_events = $this->rc->config->get('db_table_events', $this->db_events);
+    $this->db_calendars = $this->rc->config->get('db_table_calendars', $this->db_calendars);
+    $this->db_attachments = $this->rc->config->get('db_table_attachments', $this->db_attachments);
+    $this->sequence_events = $this->rc->config->get('db_sequence_events', $this->sequence_events);
+    $this->sequence_calendars = $this->rc->config->get('db_sequence_calendars', $this->sequence_calendars);
+    $this->sequence_attachments = $this->rc->config->get('db_sequence_attachments', $this->sequence_attachments);
+    
     $this->_read_calendars();
   }
 
@@ -54,7 +71,7 @@ class database_driver extends calendar_driver
     if (!empty($this->rc->user->ID)) {
       $calendar_ids = array();
       $result = $this->rc->db->query(
-        "SELECT * FROM calendars 
+        "SELECT * FROM " . $this->db_calendars . "
          WHERE user_id=?",
          $this->rc->user->ID
       );
@@ -91,7 +108,7 @@ class database_driver extends calendar_driver
   public function create_calendar($prop)
   {
     $result = $this->rc->db->query(
-      "INSERT INTO calendars 
+      "INSERT INTO " . $this->db_calendars . "
        (user_id, name, color)
        VALUES (?, ?, ?)",
        $this->rc->user->ID,
@@ -100,7 +117,7 @@ class database_driver extends calendar_driver
     );
     
     if ($result)
-      return $this->rc->db->insert_id('calendars');
+      return $this->rc->db->insert_id($this->$sequence_calendars);
     
     return false;
   }
@@ -121,7 +138,7 @@ class database_driver extends calendar_driver
       
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
-        "INSERT INTO events
+        "INSERT INTO " . $this->db_events . "
          (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, alarms)
          VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           $this->rc->db->now(),
@@ -141,7 +158,7 @@ class database_driver extends calendar_driver
         intval($event['priority']),
         $event['alarms']
       );
-      return $this->rc->db->insert_id('events');
+      return $this->rc->db->insert_id($this->sequence_events);
     }
     
     return false;
@@ -158,7 +175,7 @@ class database_driver extends calendar_driver
     if (!empty($this->calendars)) {
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
-        "UPDATE events
+        "UPDATE " . $this->db_events . "
          SET   changed=%s, start=%s, end=%s, all_day=?, recurrence=?, title=?, description=?, location=?, categories=?, free_busy=?, priority=?, alarms=?
          WHERE event_id=?
          AND   calendar_id IN (" . $this->calendar_ids . ")",
@@ -221,7 +238,7 @@ class database_driver extends calendar_driver
   {
     if (!empty($this->calendars)) {
       $query = $this->rc->db->query(sprintf(
-        "UPDATE events 
+        "UPDATE " . $this->db_events . "
          SET   changed=%s, start=%s, end=%s, all_day=?
          WHERE event_id=?
          AND calendar_id IN (" . $this->calendar_ids . ")",
@@ -248,7 +265,7 @@ class database_driver extends calendar_driver
   {
     if (!empty($this->calendars)) {
       $query = $this->rc->db->query(sprintf(
-        "UPDATE events 
+        "UPDATE " . $this->db_events . "
          SET   changed=%s, start=%s, end=%s
          WHERE event_id=?
          AND calendar_id IN (" . $this->calendar_ids . ")",
@@ -274,7 +291,7 @@ class database_driver extends calendar_driver
   {
     if (!empty($this->calendars)) {
       $query = $this->rc->db->query(
-        "DELETE FROM events
+        "DELETE FROM " . $this->db_events . "
          WHERE event_id=?
          AND calendar_id IN (" . $this->calendar_ids . ")",
          $event['id']
@@ -305,7 +322,7 @@ class database_driver extends calendar_driver
     
     if (!empty($calendars)) {
       $result = $this->rc->db->query(sprintf(
-        "SELECT * FROM events 
+        "SELECT * FROM " . $this->db_events . "
          WHERE calendar_id IN (%s)
          AND start <= %s AND end >= %s",
          $this->calendar_ids,
