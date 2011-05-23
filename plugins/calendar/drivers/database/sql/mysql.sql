@@ -19,10 +19,7 @@ CREATE TABLE `calendars` (
   `color` varchar(8) NOT NULL,
   PRIMARY KEY(`calendar_id`),
   CONSTRAINT `fk_calendars_user_id` FOREIGN KEY (`user_id`)
-    REFERENCES `users`(`user_id`)
-    /*!40008
-      ON DELETE CASCADE
-      ON UPDATE CASCADE */
+    REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
 CREATE TABLE `events` (
@@ -46,10 +43,7 @@ CREATE TABLE `events` (
   `attendees` text DEFAULT NULL,
   PRIMARY KEY(`event_id`),
   CONSTRAINT `fk_events_calendar_id` FOREIGN KEY (`calendar_id`)
-    REFERENCES `calendars`(`calendar_id`)
-    /*!40008
-      ON DELETE CASCADE
-      ON UPDATE CASCADE */
+    REFERENCES `calendars`(`calendar_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
 CREATE TABLE `attachments` (
@@ -61,10 +55,5 @@ CREATE TABLE `attachments` (
   `data` longtext NOT NULL DEFAULT '',
   PRIMARY KEY(`attachment_id`),
   CONSTRAINT `fk_attachments_event_id` FOREIGN KEY (`event_id`)
-    REFERENCES `events`(`event_id`)
-    /*!40008
-      ON DELETE CASCADE
-      ON UPDATE CASCADE */
+    REFERENCES `events`(`event_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
-
-
