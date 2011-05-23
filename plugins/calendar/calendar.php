@@ -460,7 +460,7 @@ class calendar extends rcube_plugin
   {
     $json = array();
     foreach ($events as $event) {
-      // TODO: compose a human readable string for alarms_text and recurrence_text
+      // compose a human readable strings for alarms_text and recurrence_text
       if ($event['alarms'])
         $event['alarms_text'] = $this->_alarms_text($event['alarms']);
       if ($event['recurrence'])
@@ -508,13 +508,17 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Render localized text for recurrence settings
+   * Render localized text describing the recurrence rule of an event
    */
   private function _recurrence_text($rrule)
   {
-    
+    // TODO: implement this
   }
 
+  /**
+   * Helper function to convert alarm trigger strings
+   * into two-field values (e.g. "-45M" => 45, "-M")
+   */
   public static function parse_alaram_value($val)
   {
     if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
