@@ -15,7 +15,7 @@
  +-------------------------------------------------------------------------+
 */
 
-class Kolab_calendar
+class kolab_calendar
 {
   public $id;
   public $ready = false;
