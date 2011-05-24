@@ -54,7 +54,7 @@ class calendar extends rcube_plugin
     // load Calendar user interface which includes jquery-ui
     $this->require_plugin('jqueryui');
     
-    require('lib/calendar_ui.php');
+    require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
     $this->ui->init();
 
@@ -65,7 +65,7 @@ class calendar extends rcube_plugin
       $this->load_driver();
 
       // load iCalendar functions
-      require('lib/calendar_ical.php');
+      require($this->home . '/lib/calendar_ical.php');
       $this->ical = new calendar_ical($this->rc, $this->driver);
 
       // register calendar actions
