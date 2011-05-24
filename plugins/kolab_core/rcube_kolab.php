@@ -1,5 +1,7 @@
 <?php
 
+ini_set('error_reporting', E_ALL&~(E_DEPRECATED | E_NOTICE));
+
 require_once 'Horde/Kolab/Storage/List.php';
 require_once 'Horde/Kolab/Format.php';
 require_once 'Horde/Auth.php';

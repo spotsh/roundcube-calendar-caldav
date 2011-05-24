@@ -24,6 +24,8 @@ pear install horde/Log
 pear install horde/Kolab_Format
 pear install horde/Kolab_Storage
 
+WARNING: This procedure installs Horde4 sources that doesn't work with this plugin!
+
 
 Configuration
 -------------
