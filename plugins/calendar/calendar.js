@@ -46,6 +46,21 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
 
+    // create a nice human-readable string for the date/time range
+    var event_date_text = function(event) {
+      var fromto, duration = event.end.getTime() / 1000 - event.start.getTime() / 1000;
+      if (event.allDay)
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + (duration > 86400 ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
+      else if (duration < 86400 && event.start.getDay() == event.end.getDay())
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
+          + $.fullCalendar.formatDate(event.end, settings['time_format']);
+      else
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
+          + $.fullCalendar.formatDate(event.end, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.end, settings['time_format']);
+
+      return fromto;
+    };
+
     // event details dialog (show only)
     var event_show_dialog = function(event) {
       var $dialog = $("#eventshow");
@@ -59,17 +74,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       if (event.description)
         $('#event-description').show().children('.event-text').html(nl2br(Q(event.description))); // TODO: format HTML with clickable links and stuff
       
-      // TODO: create a nice human-readable string for the date/time range
-      var fromto, duration = event.end.getTime() / 1000 - event.start.getTime() / 1000;
-      if (event.allDay)
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']);
-      else if (duration < 86400 && event.start.getDay() == event.end.getDay())
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
-          + $.fullCalendar.formatDate(event.end, settings['time_format']);
-      else
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
-          + $.fullCalendar.formatDate(event.end, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.end, settings['time_format']);
-      $('#event-date').html(Q(fromto)).show();
+      // render from-to in a nice human-readable way
+      $('#event-date').html(Q(event_date_text(event))).show();
       
       if (event.recurrence && event.recurrence_text)
         $('#event-repeat').show().children('.event-text').html(Q(event.recurrence_text));
@@ -416,6 +422,47 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
       return false;
     };
+    
+    // display a notification for the given pending alarms
+    this.display_alarms = function(alarms) {
+      // clear old alert first
+      $('#alarm-display').dialog('destroy');
+      
+      var event_ids = [];
+      var display = $('<div>').attr('id', 'alarm-display');
+      for (var html, alarm, i=0; i < alarms.length; i++) {
+        alarm = alarms[i];
+        alarm.start = new Date(alarm.start);
+        alarm.end = new Date(alarm.end);
+        event_ids.push(alarm.id);
+        
+        html = '<h3 class="event-title">' + Q(alarm.title) + '</h3>';
+        html += '<div class="event-section">' + Q(alarm.location) + '</div>';
+        html += '<div class="event-section">' + Q(event_date_text(alarm)) + '</div>';
+        $('<div>').addClass('alarm-item').html(html).appendTo(display);
+      }
+      
+      display.appendTo(document.body).dialog({
+        modal: true,
+        resizable: true,
+        closeOnEscape: false,
+        dialogClass: 'alert',
+        title: rcmail.gettext('alarmtitle', 'calendar'),
+        buttons: {
+          "Snooze": function() {
+            $(this).dialog('close');
+          },
+          "Dismiss": function() {
+            $(this).dialog('close');
+          }
+        },
+        close: function() {
+          $(this).dialog('destroy');
+          // TODO: submit dismissed event_ids to server
+          $(this).remove();
+        }
+      }).data('event_ids', event_ids.join(','));
+    };
 
 
     // create list of event sources AKA calendars
@@ -618,19 +665,19 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   } // end rcube_calendar class
 
-  
+
   // configure toobar buttons
   rcmail.register_command('plugin.addevent', function(){ cal.add_event(); }, true);
 
   // export events
   rcmail.register_command('plugin.export', function(){ rcmail.goto_url('plugin.export_events', { source:cal.selected_calendar }); }, true);
   rcmail.enable_command('plugin.export', true);
+  
+  // register callback commands
+  rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
 
   // reload calendar
-  rcmail.addEventListener('plugin.reload_calendar', reload_calendar);
-  function reload_calendar() {
-    $('#calendar').fullCalendar('refetchEvents');
-  }
+  rcmail.addEventListener('plugin.reload_calendar', function() { $('#calendar').fullCalendar('refetchEvents'); });
 
 
   var formattime = function(hour, minutes) {

@@ -74,6 +74,7 @@ class calendar extends rcube_plugin
       $this->register_action('plugin.load_events', array($this, 'load_events'));
       $this->register_action('plugin.event', array($this, 'event'));
       $this->register_action('plugin.export_events', array($this, 'export_events'));
+      $this->add_hook('keep_alive', array($this, 'keep_alive'));
       
       // set user's timezone
       if ($this->rc->config->get('timezone') === 'auto')
@@ -360,6 +361,20 @@ class calendar extends rcube_plugin
     exit;
   }
   
+  /**
+   * Handler for keep-alive requests
+   * This will check for pending notifications and pass them to the client
+   */
+  function keep_alive($attr)
+  {
+    $alarms = $this->driver->pending_alarms(time());
+    #if ($alarms)
+    #  $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($alarms));
+  }
+  
+  /**
+   *
+   */
   function export_events()
   {
     $start = get_input_value('start', RCUBE_INPUT_GET);
@@ -375,6 +390,9 @@ class calendar extends rcube_plugin
     exit;
   }
 
+  /**
+   *
+   */
   function load_settings()
   {
     $settings = array();
@@ -476,6 +494,28 @@ class calendar extends rcube_plugin
       ) + $event;
     }
     return json_encode($json);
+  }
+
+
+  /**
+   * Generate reduced and streamlined output for pending alarms
+   */
+  private function _alarms_output($alarms)
+  {
+    $out = array();
+    foreach ($alarms as $alarm) {
+      $out[] = array(
+        'id'       => $alarm['id'],
+        'start'    => $alarm['start'],
+        'end'      => $alarm['end'],
+        'allDay'   => ($event['all_day'] == 1)?true:false,
+        'title'    => $alarm['title'],
+        'location' => $alarm['location'],
+        'calendar' => $alarm['calendar'],
+      );
+    }
+    
+    return $out;
   }
 
   /**

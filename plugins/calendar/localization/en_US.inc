@@ -65,6 +65,7 @@ $labels['trigger+D'] = 'days after';
 $labels['addalarm'] = 'add alarm';
 $labels['defaultalarmtype'] = 'Default reminder setting';
 $labels['defaultalarmoffset'] = 'Default reminder time';
+$labels['alarmtitle'] = 'Upcoming events';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';

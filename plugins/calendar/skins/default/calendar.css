@@ -341,6 +341,20 @@ a.dropdown-link:after {
 	min-height: 20em;
 }
 
+.alarm-item {
+	margin: 0.4em 0 1em 0;
+}
+
+.alarm-item .event-title {
+	font-size: 14px;
+	margin: 0.1em 0 0.3em 0;
+}
+
+.alarm-item div.event-section {
+	margin-top: 0.1em;
+	margin-bottom: 0.3em;
+}
+
 .ui-dialog-buttonset a.dropdown-link {
 	margin-right: 1em;
 }
