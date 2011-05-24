@@ -56,7 +56,7 @@ CREATE TABLE events (
     priority smallint NOT NULL DEFAULT 1,
     alarms varchar(255) DEFAULT NULL,
     attendees text DEFAULT NULL,
-    notifyat timestamp without time zone DEFAULT now() NOT NULL
+    notifyat timestamp without time zone DEFAULT NULL
     PRIMARY KEY (event_id)
 );
 

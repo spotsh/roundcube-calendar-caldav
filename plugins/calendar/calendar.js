@@ -43,7 +43,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     var me = this;
     
     // private vars
-    var day_clicked = 0;
+    var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
 
     // event details dialog (show only)
@@ -518,13 +518,17 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       // callback for clicks in all-day box
       dayClick: function(date, allDay, e, view) {
         var now = new Date().getTime();
-        if (now - day_clicked < 400)  // emulate double-click on day
-          event_edit_dialog('new', { start:date, end:date, allDay:allDay, calendar:me.selected_calendar });
-        day_clicked = now;
+        if (now - day_clicked_ts < 400 && day_clicked == date.getTime())  // emulate double-click on day
+          return event_edit_dialog('new', { start:date, end:date, allDay:allDay, calendar:me.selected_calendar });
+        
         if (!ignore_click) {
           view.calendar.gotoDate(date);
           fullcalendar_update();
+          if (day_clicked && new Date(day_clicked).getMonth() != date.getMonth())
+            view.calendar.select(date, date, allDay);
         }
+        day_clicked = date.getTime();
+        day_clicked_ts = now;
       },
       // callback when a specific event is clicked
       eventClick : function(event) {
