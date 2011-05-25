@@ -111,6 +111,9 @@ class calendar extends rcube_plugin
       }
   }
 
+  /**
+   * Render the main calendar view from skin template
+   */
   function calendar_view()
   {
     $this->rc->output->set_pagetitle($this->gettext('calendar'));
@@ -128,6 +131,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.freebusy_select', array($this->ui, 'freebusy_select'));
     $this->register_handler('plugin.priority_select', array($this->ui, 'priority_select'));
     $this->register_handler('plugin.alarm_select', array($this->ui, 'alarm_select'));
+    $this->register_handler('plugin.snooze_select', array($this->ui, 'snooze_select'));
     $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));
     
     $this->rc->output->set_env('calendar_settings', $this->load_settings());
@@ -321,39 +325,56 @@ class calendar extends rcube_plugin
     return $p;
   }
 
+  /**
+   * Dispatcher for event actions initiated by the client
+   */
   function event()
   {
+    $action = get_input_value('action', RCUBE_INPUT_POST);
     $event = get_input_value('e', RCUBE_INPUT_POST);
-    $success = false;
+    $success = $reload = false;
     
-    switch ($event['action']) {
+    switch ($action) {
       case "new":
-          // create UID for new event
-          $events['uid'] = strtoupper(md5(time() . uniqid(rand())) . '-' . substr(md5($this->rc->user->get_username()), 0, 16));
-          $success = $this->driver->new_event($event);
-          break;
+        // create UID for new event
+        $events['uid'] = strtoupper(md5(time() . uniqid(rand())) . '-' . substr(md5($this->rc->user->get_username()), 0, 16));
+        $success = $this->driver->new_event($event);
+        $reload = true;
+        break;
       case "edit":
-          $success = $this->driver->edit_event($event);
-          break;
+        $success = $this->driver->edit_event($event);
+        $reload = true;
+        break;
       case "resize":
-          $success = $this->driver->resize_event($event);
-          break;
+        $success = $this->driver->resize_event($event);
+        $reload = true;
+        break;
       case "move":
-          $success = $this->driver->move_event($event);
-          break;
+        $success = $this->driver->move_event($event);
+        $reload = true;
+        break;
       case "remove":
-          $success = $this->driver->remove_event($event);
-          break;
+        $success = $this->driver->remove_event($event);
+        $reload = true;
+        break;
+      case "dismiss":
+        foreach (explode(',', $event['id']) as $id)
+          $success |= $this->driver->dismiss_alarm($id, $event['snooze']);
+        break;
     }
     
-    if ($success) {
-      $this->rc->output->command('plugin.reload_calendar', array());
-    }
-    else {
+    if (!$success) {
       $this->rc->output->show_message('calendar.errorsaving', 'error');
+    }
+    else if ($reload) {
+      $this->rc->output->command('plugin.reload_calendar', array());
     }
   }
   
+  /**
+   * Handler for load-requests from fullcalendar
+   * This will return pure JSON formatted output
+   */
   function load_events()
   {
     $events = $this->driver->load_events(get_input_value('start', RCUBE_INPUT_GET), get_input_value('end', RCUBE_INPUT_GET), get_input_value('source', RCUBE_INPUT_GET));
@@ -368,8 +389,8 @@ class calendar extends rcube_plugin
   function keep_alive($attr)
   {
     $alarms = $this->driver->pending_alarms(time());
-    #if ($alarms)
-    #  $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($alarms));
+    if ($alarms)
+      $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($alarms));
   }
   
   /**
@@ -523,7 +544,7 @@ class calendar extends rcube_plugin
    */
   private function _alarms_text($alarm)
   {
-    list($action, $trigger) = explode(':', $alarm);
+    list($trigger, $action) = explode(':', $alarm);
     
     $text = '';
     switch ($action) {

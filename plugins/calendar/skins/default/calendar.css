@@ -355,6 +355,26 @@ a.dropdown-link:after {
 	margin-bottom: 0.3em;
 }
 
+.alarm-item .alarm-actions {
+	margin-top: 0.4em;
+}
+
+.alarm-item div.alarm-actions a {
+	color: #CC0000;
+	margin-right: 0.8em;
+	text-decoration: none;
+}
+
+a.alarm-action-snooze:after {
+	content: ' ▼';
+	font-size: 10px;
+	color: #666;
+}
+
+#alarm-snooze-dropdown {
+	z-index: 5000;
+}
+
 .ui-dialog-buttonset a.dropdown-link {
 	margin-right: 1em;
 }

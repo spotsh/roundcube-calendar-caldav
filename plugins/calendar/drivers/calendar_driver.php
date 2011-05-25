@@ -28,6 +28,7 @@ abstract class calendar_driver
   public $alarms = false;
   public $attendees = false;
   public $attachments = false;
+  public $alarm_types = array('DISPLAY');
 
   /**
    * Get a list of available calendars from this source
@@ -150,7 +151,7 @@ abstract class calendar_driver
    * @param  string  Event identifier
    * @param  integer Suspend the alarm for this number of seconds
    */
-  abstract function confirm_alarm($event_id, $snooze = 0);
+  abstract function dismiss_alarm($event_id, $snooze = 0);
 
   /**
    * Save an attachment related to the given event

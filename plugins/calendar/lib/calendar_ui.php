@@ -209,9 +209,9 @@ class calendar_ui
   {
     unset($attrib['name']);
     $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
-    $select_type->add(
-      array($this->calendar->gettext('none'), $this->calendar->gettext('alarmdisplayoption'), $this->calendar->gettext('alarmemailoption')),
-      array('','DISPLAY','EMAIL'));
+    $select_type->add($this->calendar->gettext('none'), '');
+    foreach ($this->calendar->driver->alarm_types as $type)
+      $select_type->add($this->calendar->gettext(strtolower("alarm{$type}option")), $type);
      
     $input_value = new html_inputfield(array('name' => 'alarmvalue[]', 'class' => 'edit-alarm-value', 'size' => 3));
     $input_date = new html_inputfield(array('name' => 'alarmdate[]', 'class' => 'edit-alarm-date', 'size' => 10));
@@ -239,6 +239,29 @@ class calendar_ui
     #  $attrib['addicon'] ? html::img(array('src' => $attrib['addicon'], 'alt' => 'add')) : '(+)');
      
     return $html;
+  }
+
+  function snooze_select($attrib = array())
+  {
+    $steps = array(
+       5 => 'repeatinmin',
+      10 => 'repeatinmin',
+      15 => 'repeatinmin',
+      20 => 'repeatinmin',
+      30 => 'repeatinmin',
+      60 => 'repeatinhr',
+      120 => 'repeatinhrs',
+      1440 => 'repeattomorrow',
+      10080 => 'repeatinweek',
+    );
+    
+    $items = array();
+    foreach ($steps as $n => $label) {
+      $items[] = html::tag('li', null, html::a(array('href' => "#" . ($n * 60), 'class' => 'active'),
+        $this->calendar->gettext(array('name' => $label, 'vars' => array('min' => $n % 60, 'hrs' => intval($n / 60))))));
+    }
+    
+    return html::tag('ul', $attrib, join("\n", $items));
   }
 
   /**

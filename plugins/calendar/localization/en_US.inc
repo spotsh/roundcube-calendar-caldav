@@ -65,6 +65,14 @@ $labels['trigger+D'] = 'days after';
 $labels['addalarm'] = 'add alarm';
 $labels['defaultalarmtype'] = 'Default reminder setting';
 $labels['defaultalarmoffset'] = 'Default reminder time';
+$labels['dismissall'] = 'Dismiss all';
+$labels['dismiss'] = 'Dismiss';
+$labels['snooze'] = 'Snooze';
+$labels['repeatinmin'] = 'Repeat in $min minutes';
+$labels['repeatinhr'] = 'Repeat in 1 hour';
+$labels['repeatinhrs'] = 'Repeat in $hrs hours';
+$labels['repeattomorrow'] = 'Repeat tomorrow';
+$labels['repeatinweek'] = 'Repeat in a week';
 $labels['alarmtitle'] = 'Upcoming events';
 
 // event dialog tabs

@@ -236,9 +236,9 @@ class kolab_driver extends calendar_driver
   /**
    * Feedback after showing/sending an alarm notification
    *
-   * @see Driver:confirm_alarm()
+   * @see Driver:dismiss_alarm()
    */
-  public function confirm_alarm($event_id, $snooze = 0)
+  public function dismiss_alarm($event_id, $snooze = 0)
   {
     // TBD.
     return false;

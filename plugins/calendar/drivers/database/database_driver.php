@@ -29,6 +29,7 @@ class database_driver extends calendar_driver
   public $alarms = true;
   public $attendees = true;
   public $attachments = true;
+  public $alarm_types = array('DISPLAY','EMAIL');
 
   private $rc;
   private $cal;
@@ -229,7 +230,7 @@ class database_driver extends calendar_driver
     
     // compute absolute time to notify the user
     if ($event['alarms']) {
-      list($action, $trigger) = explode(':', $event['alarms']);
+      list($trigger, $action) = explode(':', $event['alarms']);
       $notify = calendar::parse_alaram_value($trigger);
       if (!empty($notify[1])){  // offset
         $mult = 1;
@@ -249,7 +250,8 @@ class database_driver extends calendar_driver
         $notify_at = $notify[0];
       }
       
-      $event['notifyat'] = date('Y-m-d H:i:s', $notify_at);
+      if ($notify_at > time())
+        $event['notifyat'] = date('Y-m-d H:i:s', $notify_at);
     }
     else
       $event['notifyat'] = null;
@@ -466,17 +468,12 @@ class database_driver extends calendar_driver
   /**
    * Feedback after showing/sending an alarm notification
    *
-   * @see Driver:confirm_alarm()
+   * @see Driver:dismiss_alarm()
    */
-  public function confirm_alarm($event_id, $snooze = 0)
+  public function dismiss_alarm($event_id, $snooze = 0)
   {
-    // set new notifyat time
-    if ($snooze > 0) {
-      $event = $this->get_event($event_id);
-      $notify_at = date('Y-m-d H:i:s', strtotime($event['notifyat']) + $snooze);
-    }
-    else  // unset notifyat value
-      $notify_at = null;
+    // set new notifyat time or unset if not snoozed
+    $notify_at = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
     
     $query = $this->rc->db->query(sprintf(
       "UPDATE " . $this->db_events . "
@@ -487,6 +484,7 @@ class database_driver extends calendar_driver
       $notify_at,
       $event_id
     );
+    
     return $this->rc->db->affected_rows($query);
   }
 
