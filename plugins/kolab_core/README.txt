@@ -24,7 +24,18 @@ pear install horde/Log
 pear install horde/Kolab_Format
 pear install horde/Kolab_Storage
 
-WARNING: This procedure installs Horde4 sources that doesn't work with this plugin!
+WARNING: Above procedure installs Horde4 sources that doesn't work
+with this plugin! Here's mine:
+
+Get Horde3 framework from http://www.horde.org/download/horde and put Horde directory
+somewhere in include path. Install PEAR packages:
+pear install Net/Socket
+pear install Net/LDAP2
+pear install Net/IMAP
+pear install Net/DNS2
+pear install Net/SMTP
+pear install Mail/MimeDecode
+pear install Auth/SASL
 
 
 Configuration
