@@ -32,16 +32,19 @@ class rcube_kolab
             return;
         
         $rcmail = rcmail::get_instance();
-        
+
+        // get password of logged user
+        $pwd = $rcmail->decrypt($_SESSION['password']);
+
         // load ldap credentials from local config
         $conf['kolab'] = $rcmail->config->get('kolab');
         
         $conf['kolab']['ldap'] += array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
-        $conf['kolab']['imap'] = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
-        
+        $conf['kolab']['imap'] += array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
-        if (self::$horde_auth->authenticate($_SESSION['username'], array('password' => ($pwd = $rcmail->decrypt($_SESSION['password']))), false)) {
+        if (self::$horde_auth->authenticate($_SESSION['username'], array('password' => $pwd), false)) {
             $_SESSION['__auth'] = array(
                 'authenticated' => true,
                 'userId' => $_SESSION['username'],
