@@ -24,6 +24,7 @@ class kolab_driver extends calendar_driver
   public $alarms = true;
   public $attendees = false;
   public $attachments = false;
+  public $categoriesimmutable = true;
 
   private $rc;
   private $cal;
@@ -260,28 +261,26 @@ class kolab_driver extends calendar_driver
     
   }
 
-  /**
-   * Create a new category
-   */
-  public function add_category($name, $color)
-  {
-    
-  }
 
   /**
-   * Remove the given category
+   * List availabale categories
+   * The default implementation reads them from config/user prefs
    */
-  public function remove_category($name)
+  public function list_categories()
   {
-    
-  }
-
-  /**
-   * Update/replace a category
-   */
-  public function replace_category($oldname, $name, $color)
-  {
-    
+    # fixed list according to http://www.kolab.org/doc/kolabformat-2.0rc7-html/c300.html
+    return array(
+      'important' => 'cc0000',
+      'business' => '333333',
+      'personal' => '333333',
+      'vacation' => '333333',
+      'must-attend' => '333333',
+      'travel-required' => '333333',
+      'needs-preparation' => '333333',
+      'birthday' => '333333',
+      'anniversary' => '333333',
+      'phone-call' => '333333',
+    );
   }
 
   /**

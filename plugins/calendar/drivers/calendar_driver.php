@@ -28,6 +28,7 @@ abstract class calendar_driver
   public $alarms = false;
   public $attendees = false;
   public $attachments = false;
+  public $categoriesimmutable = false;
   public $alarm_types = array('DISPLAY');
 
   /**
@@ -135,7 +136,6 @@ abstract class calendar_driver
    * @return array A list of alarms, each encoded as hash array:
    *         id: Event identifier
    *        uid: Unique identifier of this event
-   *   calendar: Calendar identifier to add event to (optional)
    *      start: Event start date/time as unix timestamp
    *        end: Event end date/time as unix timestamp
    *     allday: Boolean flag if this is an all-day event
