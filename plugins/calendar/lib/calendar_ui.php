@@ -203,6 +203,19 @@ class calendar_ui
   }
   
   /**
+   * Render HTML input for sensitivity selection
+   */
+  function sensitivity_select($attrib = array())
+  {
+    $attrib['name'] = 'sensitivity';
+    $select = new html_select($attrib);
+    $select->add($this->calendar->gettext('public'), '0');
+    $select->add($this->calendar->gettext('private'), '1');
+    $select->add($this->calendar->gettext('confidential'), '2');
+    return $select->show(null);
+  }
+  
+  /**
    * Render HTML form for alarm configuration
    */
   function alarm_select($attrib = array())

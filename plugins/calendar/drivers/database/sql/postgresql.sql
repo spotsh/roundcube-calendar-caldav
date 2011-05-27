@@ -54,6 +54,7 @@ CREATE TABLE events (
     all_day smallint NOT NULL DEFAULT 0,
     free_busy smallint NOT NULL DEFAULT 0,
     priority smallint NOT NULL DEFAULT 1,
+    sensitivity smallint NOT NULL DEFAULT 0,
     alarms varchar(255) DEFAULT NULL,
     attendees text DEFAULT NULL,
     notifyat timestamp without time zone DEFAULT NULL

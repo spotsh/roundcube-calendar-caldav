@@ -25,6 +25,7 @@ class kolab_calendar
   private $events;
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
+  private $sensitivity_map = array('public', 'private', 'confidential');
   
   /**
    * Default constructor
@@ -147,6 +148,8 @@ class kolab_calendar
     if ($allday)  // in Roundcube all-day events only go until 23:59:59 of the last day
       $rec['end-date']--;
     
+    $sensitivity_map = array_flip($this->sensitivity_map);
+    
     return array(
       'id' => $rec['uid'],
       'uid' => $rec['uid'],
@@ -159,6 +162,7 @@ class kolab_calendar
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],
       'priority' => 1, // normal
+      'sensitivity' => $sensitivity_map[$rec['sensitivity']],
       'calendar' => $this->id,
     );
   }

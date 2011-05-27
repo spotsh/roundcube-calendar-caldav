@@ -63,6 +63,10 @@
     <label><roundcube:label name="calendar.priority" /></label>
     <span class="event-text"></span>
   </div>
+  <div class="event-line" id="event-sensitivity">
+    <label><roundcube:label name="calendar.sensitivity" /></label>
+    <span class="event-text"></span>
+  </div>
 </div>
 
 <div id="eventedit">
@@ -120,6 +124,10 @@
       <div class="event-section">
         <label for="edit-priority"><roundcube:label name="calendar.priority" /></label>
         <roundcube:object name="plugin.priority_select" id="edit-priority" />
+      </div>
+      <div class="event-section">
+        <label for="edit-sensitivity"><roundcube:label name="calendar.sensitivity" /></label>
+        <roundcube:object name="plugin.sensitivity_select" id="edit-sensitivity" />
       </div>
     </div>
     <!-- recurrence settings -->

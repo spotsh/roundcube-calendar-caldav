@@ -130,6 +130,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.category_select', array($this->ui, 'category_select'));
     $this->register_handler('plugin.freebusy_select', array($this->ui, 'freebusy_select'));
     $this->register_handler('plugin.priority_select', array($this->ui, 'priority_select'));
+    $this->register_handler('plugin.sensitivity_select', array($this->ui, 'sensitivity_select'));
     $this->register_handler('plugin.alarm_select', array($this->ui, 'alarm_select'));
     $this->register_handler('plugin.snooze_select', array($this->ui, 'snooze_select'));
     $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));

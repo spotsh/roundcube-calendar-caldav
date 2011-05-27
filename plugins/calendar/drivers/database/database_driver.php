@@ -140,8 +140,8 @@ class database_driver extends calendar_driver
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
-         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, alarms, notifyat)
-         VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, notifyat)
+         VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           $this->rc->db->now(),
           $this->rc->db->now(),
           $this->rc->db->fromunixtime($event['start']),
@@ -157,6 +157,7 @@ class database_driver extends calendar_driver
         strval($event['categories']),
         intval($event['free_busy']),
         intval($event['priority']),
+        intval($event['sensitivity']),
         $event['alarms'],
         $event['notifyat']
       );
@@ -178,7 +179,7 @@ class database_driver extends calendar_driver
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
         "UPDATE " . $this->db_events . "
-         SET   changed=%s, start=%s, end=%s, all_day=?, recurrence=?, title=?, description=?, location=?, categories=?, free_busy=?, priority=?, alarms=?, notifyat=?
+         SET   changed=%s, start=%s, end=%s, all_day=?, recurrence=?, title=?, description=?, location=?, categories=?, free_busy=?, priority=?, sensitivity=?, alarms=?, notifyat=?
          WHERE event_id=?
          AND   calendar_id IN (" . $this->calendar_ids . ")",
           $this->rc->db->now(),
@@ -192,6 +193,7 @@ class database_driver extends calendar_driver
         strval($event['location']),
         strval($event['categories']),
         intval($event['free_busy']),
+        intval($event['sensitivity']),
         intval($event['priority']),
         $event['alarms'],
         $event['notifyat'],

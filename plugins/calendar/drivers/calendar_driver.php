@@ -62,6 +62,7 @@ abstract class calendar_driver
    *   categories: Event categories (comma-separated list)
    *    free_busy: Show time as free/busy/outofoffice
    *     priority: Event priority
+   *  sensitivity: Event sensitivity (0=public, 1=private, 2=confidential)
    *       alarms: Reminder settings (TBD.)
    * @return mixed New event ID on success, False on error
    */

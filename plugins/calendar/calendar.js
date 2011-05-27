@@ -98,6 +98,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         var priolabels = { 0:rcmail.gettext('low'), 1:rcmail.gettext('normal'), 2:rcmail.gettext('high') };
         $('#event-priority').show().children('.event-text').html(Q(priolabels[event.priority]));
       }
+      if (event.sensitivity != 0) {
+        var sensitivitylabels = { 0:rcmail.gettext('public'), 1:rcmail.gettext('private'), 2:rcmail.gettext('confidential') };
+        $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
+      }
       
       var buttons = {};
       if (calendar.editable) {
@@ -157,6 +161,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       var calendars = $('#edit-calendar').val(event.calendar);
       var freebusy = $('#edit-free-busy').val(event.free_busy);
       var priority = $('#edit-priority').val(event.priority);
+      var sensitivity = $('#edit-sensitivity').val(event.sensitivity);
       
       var duration = Math.round((event.end.getTime() - event.start.getTime()) / 1000);
       var startdate = $('#edit-startdate').val($.fullCalendar.formatDate(event.start, settings['date_format'])).data('duration', duration);
@@ -266,6 +271,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           categories: categories.val(),
           free_busy: freebusy.val(),
           priority: priority.val(),
+          sensitivity: sensitivity.val(),
           recurrence: '',
           alarms:'',
         };

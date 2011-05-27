@@ -39,6 +39,7 @@ CREATE TABLE `events` (
   `all_day` tinyint(1) NOT NULL DEFAULT '0',
   `free_busy` tinyint(1) NOT NULL DEFAULT '0',
   `priority` tinyint(1) NOT NULL DEFAULT '1',
+  `sensitivity` tinyint(1) NOT NULL DEFAULT '0',
   `alarms` varchar(255) DEFAULT NULL,
   `attendees` text DEFAULT NULL,
   `notifyat` datetime DEFAULT NULL,
