@@ -522,8 +522,9 @@ class database_driver extends calendar_driver
       $result = $this->rc->db->query(sprintf(
         "SELECT * FROM " . $this->db_events . "
          WHERE calendar_id IN (%s)
-         AND notifyat <= %s",
+         AND notifyat <= %s AND end <= %s",
          join(',', $calendar_ids),
+         $this->rc->db->fromunixtime($time),
          $this->rc->db->fromunixtime($time)
        ));
 
