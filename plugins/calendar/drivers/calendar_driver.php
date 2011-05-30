@@ -22,6 +22,39 @@
  |         Thomas Bruederli <roundcube@gmail.com>                          |
  +-------------------------------------------------------------------------+
 */
+
+/**
+ * Struct of an internal event object how it passed from/to the driver classes:
+ *
+ *  $event = array(
+ *            'id' => 'Event ID used for editing',
+ *           'uid' => 'Unique identifier of this event',
+ *      'calendar' => 'Calendar identifier to add event to or where the event is stored',
+ *         'start' => <unixtime>,  // Event start date/time as unix timestamp
+ *           'end' => <unixtime>,  // Event end date/time as unix timestamp
+ *        'allday' => true|false,  // Boolean flag if this is an all-day event
+ *         'title' => 'Event title/summary',
+ *      'location' => 'Location string',
+ *   'description' => 'Event description',
+ *    'recurrence' => array(   // Recurrence definition according to iCalendar (RFC 2445) specification as list of key-value pairs
+ *            'FREQ' => 'DAILY|WEEKLY|MONTHLY|YEARLY',
+ *        'INTERVAL' => 1...n,
+ *           'UNTIL' => <unixtime>,
+ *           'COUNT' => 1..n,   // number of times
+ *                      // + more properties (see http://www.kanzaki.com/docs/ical/recur.html)
+ *    ),
+ * 'recurrence_id' => 'ID of the recurrence group',   // usually the ID of the starting event
+ *    'categories' => 'Event category',
+ *     'free_busy' => 'free|busy|outofoffice',  // Show time as
+ *      'priority' => 1|0|2,   // Event priority (0=low, 1=normal, 2=high)
+ *   'sensitivity' => 0|1|2,   // Event sensitivity (0=public, 1=private, 2=confidential)
+ *        'alarms' => '-15M:DISPLAY',  // Reminder settings inspired by valarm definition (e.g. display alert 15 minutes before event)
+ *  );
+ */
+
+/**
+ * Interface definition for calendar driver classes
+ */
 abstract class calendar_driver
 {
   // backend features
@@ -49,21 +82,7 @@ abstract class calendar_driver
   /**
    * Add a single event to the database
    *
-   * @param array Hash array with vent properties:
-   *     calendar: Calendar identifier to add event to (optional)
-   *          uid: Unique identifier of this event
-   *        start: Event start date/time as unix timestamp
-   *          end: Event end date/time as unix timestamp
-   *       allday: Boolean flag if this is an all-day event
-   *        title: Event title/summary
-   *     location: Location string
-   *  description: Event description
-   *   recurrence: Recurrence definition according to iCalendar specification
-   *   categories: Event categories (comma-separated list)
-   *    free_busy: Show time as free/busy/outofoffice
-   *     priority: Event priority
-   *  sensitivity: Event sensitivity (0=public, 1=private, 2=confidential)
-   *       alarms: Reminder settings (TBD.)
+   * @param array Hash array with event properties (see header of this file)
    * @return mixed New event ID on success, False on error
    */
   abstract function new_event($event);
@@ -71,7 +90,7 @@ abstract class calendar_driver
   /**
    * Update an event entry with the given data
    *
-   * @see Driver:new_event()
+   * @param array Hash array with event properties (see header of this file)
    * @return boolean True on success, False on error
    */
   abstract function edit_event($event);
@@ -114,7 +133,7 @@ abstract class calendar_driver
    * @param  integer Event's new start (unix timestamp)
    * @param  integer Event's new end (unix timestamp)
    * @param  mixed   List of calendar IDs to load events from (either as array or comma-separated string)
-   * @return array A list of event records
+   * @return array A list of event objects (see header of this file for struct of an event)
    */
   abstract function load_events($start, $end, $calendars = null);
 
@@ -125,7 +144,7 @@ abstract class calendar_driver
    * @param  integer Event's new end (unix timestamp)
    * @param  string  Search query
    * @param  mixed   List of calendar IDs to load events from (either as array or comma-separated string)
-   * @return array A list of event records
+   * @return array A list of event objects (see header of this file for struct of an event)
    */
   abstract function search_events($start, $end, $query, $calendars = null);
 
