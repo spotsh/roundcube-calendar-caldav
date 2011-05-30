@@ -28,6 +28,7 @@ class calendar extends rcube_plugin
   public $task = '?(?!login|logout).*';
   public $rc;
   public $driver;
+  public $home;  // declare public to be used in other classes
 
   public $ical;
   public $ui;
@@ -383,7 +384,11 @@ class calendar extends rcube_plugin
    */
   function load_events()
   {
-    $events = $this->driver->load_events(get_input_value('start', RCUBE_INPUT_GET), get_input_value('end', RCUBE_INPUT_GET), get_input_value('source', RCUBE_INPUT_GET));
+    $events = $this->driver->load_events(
+      get_input_value('start', RCUBE_INPUT_GET),
+      get_input_value('end', RCUBE_INPUT_GET),
+      get_input_value('source', RCUBE_INPUT_GET)
+    );
     echo $this->encode($events);
     exit;
   }
@@ -511,6 +516,10 @@ class calendar extends rcube_plugin
       if ($event['recurrence'])
         $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
       
+      // TEMPORARY: recurring instances are immutable
+      if ($event['recurrence_id'])
+        $event['editable'] = false;
+      
       $json[] = array(
         'start' => date('c', $event['start']), // ISO 8601 date (added in PHP 5)
         'end'   => date('c', $event['end']), // ISO 8601 date (added in PHP 5)
@@ -579,7 +588,24 @@ class calendar extends rcube_plugin
    */
   private function _recurrence_text($rrule)
   {
-    // TODO: implement this
+    // TODO: finish this
+    $text = sprintf('%s %d ', $this->gettext('every'), $rrule['INTERVAL']);
+    switch ($rrule['FREQ']) {
+      case 'DAILY':
+        $text .= $this->gettext('days');
+        break;
+      case 'WEEKLY':
+        $text .= $this->gettext('weeks');
+        break;
+      case 'MONTHLY':
+        $text .= $this->gettext('months');
+        break;
+      case 'YEARY':
+        $text .= $this->gettext('years');
+        break;
+    }
+    
+    return $text;
   }
 
   /**
@@ -594,6 +620,28 @@ class calendar extends rcube_plugin
       return array($m[2], $m[1].$m[3]);
     
     return false;
+  }
+  
+  /**
+   * Convert the internal structured data into a vcalendar rrule 2.0 string
+   */
+  public static function to_rrule($recurrence)
+  {
+    if (is_string($recurrence))
+      return $recurrence;
+    
+    $rrule = '';
+    foreach ((array)$recurrence as $k => $val) {
+      $k = strtoupper($k);
+      switch ($k) {
+        case 'UNTIL':
+          $val = gmdate('Ymd\THis', $val);
+          break;
+      }
+      $rrule .= $k . '=' . $val . ';';
+    }
+    
+    return $rrule;
   }
 
 }

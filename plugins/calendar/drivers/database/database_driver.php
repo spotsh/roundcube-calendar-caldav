@@ -53,6 +53,9 @@ class database_driver extends calendar_driver
     $this->cal = $cal;
     $this->rc = $cal->rc;
     
+    // load library classes
+    require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
+    
     // read database config
     $this->db_events = $this->rc->config->get('db_table_events', $this->db_events);
     $this->db_calendars = $this->rc->config->get('db_table_calendars', $this->db_calendars);
@@ -161,7 +164,11 @@ class database_driver extends calendar_driver
         $event['alarms'],
         $event['notifyat']
       );
-      return $this->rc->db->insert_id($this->sequence_events);
+      
+      if ($success = $this->rc->db->insert_id($this->sequence_events))
+        $this->_update_recurring($event);
+      
+      return $success;
     }
     
     return false;
@@ -199,7 +206,11 @@ class database_driver extends calendar_driver
         $event['notifyat'],
         $event['id']
       );
-      return $this->rc->db->affected_rows($query);
+      
+      if ($success = $this->rc->db->affected_rows($query))
+        $this->_update_recurring($event);
+      
+      return $success;
     }
     
     return false;
@@ -211,26 +222,22 @@ class database_driver extends calendar_driver
   private function _save_preprocess($event)
   {
     // compose vcalendar-style recurrencue rule from structured data
-    $rrule = '';
-    if (is_array($event['recurrence'])) {
-      foreach ($event['recurrence'] as $k => $val) {
-        $k = strtoupper($k);
-        switch ($k) {
-          case 'UNTIL':
-            $val = gmdate('Ymd\THis', $val);
-            break;
-        }
-        $rrule .= $k . '=' . $val . ';';
-      }
-    }
-    else if (is_string($event['recurrence']))
-      $rrule = $event['recurrence'];
-    
+    $rrule = $event['recurrence'] ? calendar::to_rrule($event['recurrence']) : '';
     $event['recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     $event['allday'] = $event['allday'] ? 1 : 0;
     
     // compute absolute time to notify the user
+    $event['notifyat'] = $this->_get_notification($event);
+    
+    return $event;
+  }
+
+  /**
+   * Compute absolute time to notify the user
+   */
+  private function _get_notification($event)
+  {
     if ($event['alarms']) {
       list($trigger, $action) = explode(':', $event['alarms']);
       $notify = calendar::parse_alaram_value($trigger);
@@ -253,12 +260,63 @@ class database_driver extends calendar_driver
       }
       
       if ($notify_at > time())
-        $event['notifyat'] = date('Y-m-d H:i:s', $notify_at);
+        return date('Y-m-d H:i:s', $notify_at);
     }
-    else
-      $event['notifyat'] = null;
     
-    return $event;
+    return null;
+  }
+
+  /**
+   * Insert "fake" entries for recurring occurences of this event
+   */
+  private function _update_recurring($event)
+  {
+    if (empty($this->calendars))
+      return;
+    
+    // clear existing recurrence copies
+    $this->rc->db->query(
+      "DELETE FROM " . $this->db_events . "
+       WHERE recurrence_id=?
+       AND calendar_id IN (" . $this->calendar_ids . ")",
+       $event['id']
+    );
+    
+    // create new fake entries
+    if ($event['recurrence']) {
+      // TODO: replace Horde classes with something that has less than 6'000 lines of code
+      $recurrence = new Horde_Date_Recurrence($event['start']);
+      $recurrence->fromRRule20($event['recurrence']);
+      
+      $duration = $event['end'] - $event['start'];
+      $next = new Horde_Date($event['start']);
+      while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
+        $next_ts = $next->timestamp();
+        $notify_at = $this->_get_notification(array('alarms' => $event['alarms'], 'start' => $next_ts, 'end' => $next_ts + $duration));
+        $query = $this->rc->db->query(sprintf(
+          "INSERT INTO " . $this->db_events . "
+           (calendar_id, recurrence_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, notifyat)
+            SELECT calendar_id, ?, %s, %s, uid, %s, %s, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, ?
+            FROM  " . $this->db_events . " WHERE event_id=? AND calendar_id IN (" . $this->calendar_ids . ")",
+            $this->rc->db->now(),
+            $this->rc->db->now(),
+            $this->rc->db->fromunixtime($next_ts),
+            $this->rc->db->fromunixtime($next_ts + $duration)
+          ),
+          $event['id'],
+          $notify_at,
+          $event['id']
+        );
+        
+        if (!$this->rc->db->affected_rows($query))
+          break;
+        
+        // stop adding events for inifinite recurrence after 20 years
+        if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next->year > date('Y') + 20))
+          break;
+      }
+    }
+    
   }
 
   /**
@@ -284,7 +342,11 @@ class database_driver extends calendar_driver
         $event['notifyat'],
         $event['id']
       );
-      return $this->rc->db->affected_rows($query);
+      
+      if ($success = $this->rc->db->affected_rows($query))
+        $this->_update_recurring($event);
+      
+      return $success;
     }
     
     return false;
@@ -312,7 +374,11 @@ class database_driver extends calendar_driver
         $event['notifyat'],
         $event['id']
       );
-      return $this->rc->db->affected_rows($query);
+      
+      if ($success = $this->rc->db->affected_rows($query))
+        $this->_update_recurring($event);
+      
+      return $success;
     }
     
     return false;
@@ -329,8 +395,9 @@ class database_driver extends calendar_driver
     if (!empty($this->calendars)) {
       $query = $this->rc->db->query(
         "DELETE FROM " . $this->db_events . "
-         WHERE event_id=?
+         WHERE (event_id=? OR recurrence_id=?)
          AND calendar_id IN (" . $this->calendar_ids . ")",
+         $event['id'],
          $event['id']
       );
       return $this->rc->db->affected_rows($query);

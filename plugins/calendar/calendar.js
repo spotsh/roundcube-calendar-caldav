@@ -104,7 +104,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       }
       
       var buttons = {};
-      if (calendar.editable) {
+      if (calendar.editable && event.editable !== false) {
         buttons[rcmail.gettext('edit', 'calendar')] = function() {
           event_edit_dialog('edit', event);
         };

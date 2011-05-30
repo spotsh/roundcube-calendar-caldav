@@ -91,6 +91,7 @@ $labels['errorsaving'] = "Failed to save changes";
 $labels['operationfailed'] = "The requested operation failed";
 
 // recurrence form
+$labels['repeat'] = 'Repeat';
 $labels['frequency'] = 'Repeat';
 $labels['never'] = 'never';
 $labels['daily'] = 'daily';

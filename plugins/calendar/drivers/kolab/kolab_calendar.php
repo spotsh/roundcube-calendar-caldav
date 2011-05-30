@@ -84,13 +84,40 @@ class kolab_calendar
    */
   public function list_events($start, $end)
   {
+    // use Horde classes to compute recurring instances
+    require_once 'Horde/Date/Recurrence.php';
+    
     $this->_fetch_events();
     
     $events = array();
     foreach ($this->events as $id => $event) {
-      // TODO: also list recurring events
+      // list events in requested time window
       if ($event['start'] <= $end && $event['end'] >= $start) {
         $events[] = $event;
+      }
+      
+      // resolve recurring events (maybe move to _fetch_events() for general use?)
+      if ($event['recurrence']) {
+        $recurrence = new Horde_Date_Recurrence($event['start']);
+        $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
+        
+        $duration = $event['end'] - $event['start'];
+        $next = new Horde_Date($event['start']);
+        while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
+          $rec_start = $next->timestamp();
+          $rec_end = $rec_start + $duration;
+          
+          // add to output if in range
+          if ($rec_start <= $end && $rec_end >= $start) {
+            $rec_event = $event;
+            $rec_event['recurrence_id'] = $event['id'];
+            $rec_event['start'] = $rec_start;
+            $rec_event['end'] = $rec_end;
+            $events[] = $rec_event;
+          }
+          else if ($start_ts > $end)  // stop loop if out of range
+            break;
+        }
       }
     }
     
@@ -147,6 +174,54 @@ class kolab_calendar
     $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
     if ($allday)  // in Roundcube all-day events only go until 23:59:59 of the last day
       $rec['end-date']--;
+      
+    // convert alarm time into internal format
+    if ($rec['alarm']) {
+      $alarm_value = $rec['alarm'];
+      $alarm_unit = 'M';
+      if ($rec['alarm'] % 1440 == 0) {
+        $alarm_value /= 1440;
+        $alarm_unit = 'D';
+      }
+      else if ($rec['alarm'] % 60 == 0) {
+        $alarm_value /= 60;
+        $alarm_unit = 'H';
+      }
+      $alarm_value *= -1;
+    }
+    
+    // convert recurrence rules into internal pseudo-vcalendar format
+    if ($recurrence = $rec['recurrence']) {
+      $rrule = array(
+        'FREQ' => strtoupper($recurrence['cycle']),
+        'INTERVAL' => intval($recurrence['interval']),
+      );
+      
+      if ($recurrence['range-type'] == 'number')
+        $rrule['COUNT'] = intval($recurrence['range']);
+      else if ($recurrence['range-type'] == 'date')
+        $rrule['UNTIL'] = strtotime($recurrence['range']);
+      
+      if ($recurrence['day']) {
+        $byday = array();
+        $prefix = ($rrule['FREQ'] == 'MONTHLY' || $rrule['FREQ'] == 'YEARLY') ? intval($recurrence['daynumber'] ? $recurrence['daynumber'] : 1) : '';
+        foreach ($recurrence['day'] as $day)
+          $byday[] = $prefix . substr(strtoupper($day), 0, 2);
+        $rrule['BYDAY'] = join(',', $byday);
+      }
+      if ($recurrence['daynumber']) {
+        if ($recurrence['type'] == 'monthday')
+          $rrule['BYMONTHDAY'] = $recurrence['daynumber'];
+        else if ($recurrence['type'] == 'yearday')
+          $rrule['BYYEARDAY'] = $recurrence['daynumber'];
+      }
+      if ($rec['month']) {
+        $monthmap = array('january' => 1, 'february' => 2, 'march' => 3, 'april' => 4, 'may' => 5, 'june' => 6, 'july' => 7, 'august' => 8, 'september' => 9, 'october' => 10, 'november' => 11, 'december' => 12);
+        $rrule['BYMONTH'] = strtolower($monthmap[$recurrence['month']]);
+      }
+      
+      // TODO: handle exclusions (not yet supported by the internal format)
+    }
     
     $sensitivity_map = array_flip($this->sensitivity_map);
     
@@ -159,6 +234,8 @@ class kolab_calendar
       'start' => $rec['start-date'],
       'end' => $rec['end-date'],
       'all_day' => $allday,
+      'recurrence' => $rrule,
+      'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],
       'priority' => 1, // normal
