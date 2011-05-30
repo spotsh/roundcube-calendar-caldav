@@ -1,6 +1,7 @@
 <?php
 
 // Sample configuration for Kolab LDAP binding used by Kolab_Storage
+$rcmail_config['kolab'] = array('imap' => array());
 
 //$rcmail_config['kolab']['ldap']['server'] = '<defaults to imap_host>';
 $rcmail_config['kolab']['ldap']['basedn'] = 'dc=kolabserver,dc=local';
