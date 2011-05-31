@@ -610,18 +610,13 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       // event rendering
       eventRender: function(event, element, view) {
         if(view.name != "month") {
-          if (event.categories) {
-            if(!event.allDay)
-              element.find('span.fc-event-title').after('<span class="fc-event-categories">' + event.categories + '</span>');
-          }
           if (event.location) {
-            element.find('span.fc-event-title').after('<span class="fc-event-location">@' + event.location + '</span>');
+            element.find('div.fc-event-title').after('<div class="fc-event-location">@&nbsp;' + Q(event.location) + '</div>');
           }
-          if (event.description) {
-            if (!event.allDay){
-              element.find('span.fc-event-title').after('<span class="fc-event-description">' + event.description + '</span>');
-            }
-          }
+          if (event.recurrence_id)
+            element.find('div.fc-event-time').append('<i class="fc-icon-recurring"></i>');
+          if (event.alarms)
+            element.find('div.fc-event-time').append('<i class="fc-icon-alarms"></i>');
         }
       },
       // callback for date range selection

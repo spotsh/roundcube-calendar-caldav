@@ -410,6 +410,10 @@ a.alarm-action-snooze:after {
 	font-style:italic; 
 }
 
+.fc-event-location {
+	font-size: 90%;
+}
+
 .fc-agenda-slots td div {
 	height: 22px;
 }
@@ -420,6 +424,20 @@ a.alarm-action-snooze:after {
 
 .fc-widget-header {
 	background-color: #fff;
+}
+
+.fc-icon-alarms,
+.fc-icon-recurring {
+	display: inline-block;
+	width: 11px;
+	height: 11px;
+	background: url('images/eventicons.gif') 0 0 no-repeat;
+	margin-left: 3px;
+	line-height: 10px;
+}
+
+.fc-icon-alarms {
+	background-position: 0 -13px;
 }
 
 /* Settings section */
