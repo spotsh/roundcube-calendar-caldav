@@ -101,6 +101,9 @@ class kolab_calendar
         $recurrence = new Horde_Date_Recurrence($event['start']);
         $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
         
+        foreach ((array)$event['recurrence']['EXDATE'] as $exdate)
+          $recurrence->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+        
         $duration = $event['end'] - $event['start'];
         $next = new Horde_Date($event['start']);
         while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
