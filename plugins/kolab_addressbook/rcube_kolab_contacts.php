@@ -244,7 +244,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         if ($fields == $this->primary_key) {
             return $this->get_record($value);
         }
-
+        else if ($fields == '*') {
+          $fields = array_keys($this->coltypes);
+        }
+        
         $value = strtolower($value);
         if (!is_array($fields))
             $fields = array($fields);
