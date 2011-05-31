@@ -849,24 +849,4 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         this.checked = true;
     });
 
-    // initialize sidebar toggle
-    $('#sidebartoggle').click(function() {
-      var width = $(this).data('sidebarwidth');
-      var offset = $(this).data('offset');
-      var $sidebar = $('#sidebar'), time = 250;
-      
-      if ($sidebar.is(':visible')) {
-        $sidebar.animate({ left:'-'+(width+10)+'px' }, time, function(){ $('#sidebar').hide(); });
-        $(this).animate({ left:'6px'}, time, function(){ $('#sidebartoggle').addClass('sidebarclosed') });
-        $('#calendar').animate({ left:'20px'}, time, function(){ $(this).fullCalendar('render'); });
-      }
-      else {
-        $sidebar.show().animate({ left:'10px' }, time);
-        $(this).animate({ left:offset+'px'}, time, function(){ $('#sidebartoggle').removeClass('sidebarclosed'); });
-        $('#calendar').animate({ left:(width+20)+'px'}, time, function(){ $(this).fullCalendar('render'); });
-      }
-    })
-    .data('offset', $('#sidebartoggle').position().left)
-    .data('sidebarwidth', $('#sidebar').width() + $('#sidebar').position().left);
-
 });
