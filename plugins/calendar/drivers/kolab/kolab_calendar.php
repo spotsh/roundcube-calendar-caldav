@@ -200,7 +200,7 @@ class kolab_calendar
       if ($recurrence['range-type'] == 'number')
         $rrule['COUNT'] = intval($recurrence['range']);
       else if ($recurrence['range-type'] == 'date')
-        $rrule['UNTIL'] = strtotime($recurrence['range']);
+        $rrule['UNTIL'] = $recurrence['range'];
       
       if ($recurrence['day']) {
         $byday = array();
@@ -220,7 +220,10 @@ class kolab_calendar
         $rrule['BYMONTH'] = strtolower($monthmap[$recurrence['month']]);
       }
       
-      // TODO: handle exclusions (not yet supported by the internal format)
+      if ($recurrence['exclusion']) {
+        foreach ((array)$recurrence['exclusion'] as $excl)
+          $rrule['EXDATE'][] = strtotime($excl);
+      }
     }
     
     $sensitivity_map = array_flip($this->sensitivity_map);
