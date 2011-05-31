@@ -362,7 +362,7 @@ class calendar_ui
 
         $table = new html_table(array('cols' => 2, 'border' => 0, 'cellpadding' => 0, 'class' => 'formtable'));
 
-        $table->add('label', $this->calendar->gettext('recurrencend'));
+        $table->add('label', ucfirst($this->calendar->gettext('recurrencend')));
         $table->add(null, html::label(null, $radio->show('', array('value' => '', 'id' => 'edit-recurrence-repeat-forever')) . ' ' .
           $this->calendar->gettext('forever')));
 

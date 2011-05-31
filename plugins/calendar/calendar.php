@@ -589,23 +589,34 @@ class calendar extends rcube_plugin
   private function _recurrence_text($rrule)
   {
     // TODO: finish this
-    $text = sprintf('%s %d ', $this->gettext('every'), $rrule['INTERVAL']);
+    $freq = sprintf('%s %d ', $this->gettext('every'), $rrule['INTERVAL']);
+    $details = '';
     switch ($rrule['FREQ']) {
       case 'DAILY':
-        $text .= $this->gettext('days');
+        $freq .= $this->gettext('days');
         break;
       case 'WEEKLY':
-        $text .= $this->gettext('weeks');
+        $freq .= $this->gettext('weeks');
         break;
       case 'MONTHLY':
-        $text .= $this->gettext('months');
+        $freq .= $this->gettext('months');
         break;
       case 'YEARY':
-        $text .= $this->gettext('years');
+        $freq .= $this->gettext('years');
         break;
     }
     
-    return $text;
+    if ($rrule['INTERVAL'] == 1)
+      $freq = $this->gettext(strtolower($rrule['FREQ']));
+      
+    if ($rrule['COUNT'])
+      $until =  $this->gettext(array('name' => 'forntimes', 'vars' => array('nr' => $rrule['COUNT'])));
+    else if ($rrule['UNTIL'])
+      $until = $this->gettext('recurrencend') . ' ' . format_date($rrule['UNTIL'], self::to_php_date_format($this->rc->config->get('calendar_date_format')));
+    else
+      $until = $this->gettext('forever');
+    
+    return rtrim($freq . $details . ', ' . $until);
   }
 
   /**
@@ -637,11 +648,44 @@ class calendar extends rcube_plugin
         case 'UNTIL':
           $val = gmdate('Ymd\THis', $val);
           break;
+        case 'EXDATE':
+          foreach ((array)$val as $i => $ex)
+            $val[$i] = gmdate('Ymd\THis', $ex);
+          $val = join(',', $val);
+          break;
       }
       $rrule .= $k . '=' . $val . ';';
     }
     
     return $rrule;
+  }
+  
+  /**
+   * Convert from fullcalendar date format to PHP date() format string
+   */
+  private static function to_php_date_format($from)
+  {
+    // "dd.MM.yyyy HH:mm:ss" => "d.m.Y H:i:s"
+    return strtr($from, array(
+      'yyyy' => 'Y',
+      'yy'   => 'y',
+      'MMMM' => 'F',
+      'MMM'  => 'M',
+      'MM'   => 'm',
+      'M'    => 'n',
+      'dddd' => 'l',
+      'ddd'  => 'D',
+      'dd'   => 'd',
+      'HH'   => 'H',
+      'hh'   => 'h',
+      'mm'   => 'i',
+      'ss'   => 's',
+      'TT'   => 'A',
+      'tt'   => 'a',
+      'T'    => 'A',
+      't'    => 'a',
+      'u'    => 'c',
+    ));
   }
 
 }

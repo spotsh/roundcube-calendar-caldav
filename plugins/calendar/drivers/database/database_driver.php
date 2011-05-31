@@ -223,6 +223,7 @@ class database_driver extends calendar_driver
   {
     // compose vcalendar-style recurrencue rule from structured data
     $rrule = $event['recurrence'] ? calendar::to_rrule($event['recurrence']) : '';
+    $event['_exdates'] = (array)$event['recurrence']['EXDATE'];
     $event['recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     $event['allday'] = $event['allday'] ? 1 : 0;
@@ -287,6 +288,9 @@ class database_driver extends calendar_driver
       // TODO: replace Horde classes with something that has less than 6'000 lines of code
       $recurrence = new Horde_Date_Recurrence($event['start']);
       $recurrence->fromRRule20($event['recurrence']);
+      
+      foreach ((array)$event['_exdates'] as $exdate)
+        $recurrence->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
       
       $duration = $event['end'] - $event['start'];
       $next = new Horde_Date($event['start']);
@@ -483,6 +487,8 @@ class database_driver extends calendar_driver
           $rr[2] = intval($rr[2]);
         else if ($rr[1] == 'UNTIL')
           $rr[2] = strtotime($rr[2]);
+        else if ($rr[1] == 'EXDATE')
+          $rr[2] = array_map('strtotime', explode(',', $rr[2]));
         $event['recurrence'][$rr[1]] = $rr[2];
       }
     }
