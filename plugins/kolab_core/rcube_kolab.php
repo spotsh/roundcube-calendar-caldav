@@ -18,19 +18,19 @@ class rcube_kolab
 {
     private static $horde_auth;
     private static $ready = false;
-    
-    
+
+
     /**
      * Setup the environment needed by the Kolab_* classes to access Kolab data
      */
     public static function setup()
     {
         global $conf;
-        
+
         // setup already done
         if (self::$horde_auth)
             return;
-        
+
         $rcmail = rcmail::get_instance();
 
         // get password of logged user
@@ -38,7 +38,14 @@ class rcube_kolab
 
         // load ldap credentials from local config
         $conf['kolab'] = $rcmail->config->get('kolab');
-        
+
+        // Set global Horde config (e.g. Cache settings)
+        if (!empty($conf['kolab']['global'])) {
+            $conf = array_merge($conf, $conf['kolab']['global']);
+            unset($conf['kolab']['global']);
+        }
+
+        // Re-set LDAP/IMAP host config
         $conf['kolab']['ldap'] += array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
         $conf['kolab']['imap'] += array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
 
@@ -54,12 +61,11 @@ class rcube_kolab
             Auth::setCredential('password', $pwd);
             self::$ready = true;
         }
-        
+
         NLS::setCharset('UTF-8');
         String::setDefaultCharset('UTF-8');
     }
-    
-    
+
     /**
      * Get instance of a Kolab (XML) format object
      *
