@@ -681,7 +681,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           if (event.location) {
             element.find('div.fc-event-title').after('<div class="fc-event-location">@&nbsp;' + Q(event.location) + '</div>');
           }
-          if (event.recurrence_id)
+          if (event.recurrence)
             element.find('div.fc-event-time').append('<i class="fc-icon-recurring"></i>');
           if (event.alarms)
             element.find('div.fc-event-time').append('<i class="fc-icon-alarms"></i>');

@@ -191,6 +191,10 @@ class database_driver extends calendar_driver
       if ($old['recurrence'] || $old['recurrence_id']) {
         $master = $old['recurrence_id'] ? $this->get_event($old['recurrence_id']) : $old;
         
+        // keep saved exceptions (not submitted by the client)
+        if ($old['recurrence']['EXDATE'])
+          $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
+        
         switch ($event['savemode']) {
           case 'new':
             $event['uid'] = $this->cal->generate_uid();
