@@ -50,6 +50,7 @@
  *      'priority' => 1|0|2,   // Event priority (0=low, 1=normal, 2=high)
  *   'sensitivity' => 0|1|2,   // Event sensitivity (0=public, 1=private, 2=confidential)
  *        'alarms' => '-15M:DISPLAY',  // Reminder settings inspired by valarm definition (e.g. display alert 15 minutes before event)
+ *      'savemode' => 'all|future|current|new',   // How changes on recurring event should be handled
  *  );
  */
 

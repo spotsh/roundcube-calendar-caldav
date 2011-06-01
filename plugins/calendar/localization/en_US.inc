@@ -89,6 +89,7 @@ $labels['tabattachments'] = 'Attachments';
 $labels['deleteventconfirm'] = "Do you really want to delete this event?";
 $labels['errorsaving'] = "Failed to save changes";
 $labels['operationfailed'] = "The requested operation failed";
+$labels['invalideventdates'] = "Invalid dates entered! Please check your input.";
 
 // recurrence form
 $labels['repeat'] = 'Repeat';
@@ -116,5 +117,14 @@ $labels['third'] = 'third';
 $labels['fourth'] = 'fourth';
 $labels['last'] = 'last';
 $labels['dayofmonth'] = 'Day of month';
+
+$labels['changerecurringevent'] = 'Change recurring event';
+$labels['removerecurringevent'] = 'Remove recurring event';
+$labels['changerecurringeventwarning'] = 'This is a recurring event. Would you like to edit the current event only, this and all future occurences, all occurences or save it as a new event?';
+$labels['removerecurringeventwarning'] = 'This is a recurring event. Would you like to remove the current event only, this and all future occurences or all occurences of this event?';
+$labels['currentevent'] = 'Current';
+$labels['futurevents'] = 'Future';
+$labels['allevents'] = 'All';
+$labels['saveasnew'] = 'Save as new';
 
 ?>

@@ -52,7 +52,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     var ignore_click = false;
 
     // create a nice human-readable string for the date/time range
-    var event_date_text = function(event) {
+    var event_date_text = function(event)
+    {
       var fromto, duration = event.end.getTime() / 1000 - event.start.getTime() / 1000;
       if (event.allDay)
         fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + (duration > 86400 ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
@@ -67,7 +68,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     };
 
     // event details dialog (show only)
-    var event_show_dialog = function(event) {
+    var event_show_dialog = function(event)
+    {
       var $dialog = $("#eventshow");
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       
@@ -142,7 +144,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     };
 
     // bring up the event dialog (jquery-ui popup)
-    var event_edit_dialog = function(action, event) {
+    var event_edit_dialog = function(action, event)
+    {
       // close show dialog first
       $("#eventshow").dialog('close');
       
@@ -225,15 +228,9 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         var wdays = event.recurrence.BYDAY.split(',');
         $('input.edit-recurrence-weekly-byday').val(wdays);
       }
-      else if (event.start) {
-        $('input.edit-recurrence-weekly-byday').val([weekdays[event.start.getDay()]]);
-      }
       if (event.recurrence && event.recurrence.BYMONTHDAY) {
         $('input.edit-recurrence-monthly-bymonthday').val(String(event.recurrence.BYMONTHDAY).split(','));
         $('input.edit-recurrence-monthly-mode').val(['BYMONTHDAY']);
-      }
-      else if (event.start) {
-        $('input.edit-recurrence-monthly-bymonthday').val([event.start.getDate()]);
       }
       if (event.recurrence && event.recurrence.BYDAY && (event.recurrence.FREQ == 'MONTHLY' || event.recurrence.FREQ == 'YEARLY')) {
         var byday, section = event.recurrence.FREQ.toLowerCase();
@@ -253,12 +250,26 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         $('input.edit-recurrence-yearly-bymonth').val([String(event.start.getMonth()+1)]);
       }
       
+      // show warning if editing a recurring event
+      if (event.id && event.recurrence) {
+        $('#edit-recurring-warning').show();
+        $('input.edit-recurring-savemode[value="all"]').prop('checked', true);
+      }
+      else
+        $('#edit-recurring-warning').hide();
+      
       // buttons
       var buttons = {};
       
       buttons[rcmail.gettext('save', 'calendar')] = function() {
         var start = me.parse_datetime(starttime.val(), startdate.val());
         var end = me.parse_datetime(endtime.val(), enddate.val());
+        
+        // basic input validatetion
+        if (start.getTime() > end.getTime()) {
+          alert(rcmail.gettext('invalideventdates', 'calendar'));
+          return false;
+        }
         
         // post data to server
         var data = {
@@ -304,13 +315,15 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           if (freq == 'WEEKLY') {
             var byday = [];
             $('input.edit-recurrence-weekly-byday:checked').each(function(){ byday.push(this.value); });
-            data.recurrence.BYDAY = byday.join(',');
+            if (byday.length)
+              data.recurrence.BYDAY = byday.join(',');
           }
           else if (freq == 'MONTHLY') {
             var mode = $('input.edit-recurrence-monthly-mode:checked').val(), bymonday = [];
             if (mode == 'BYMONTHDAY') {
-               $('input.edit-recurrence-monthly-bymonthday:checked').each(function(){ bymonday.push(this.value); });
-              data.recurrence.BYMONTHDAY = bymonday.join(',');
+              $('input.edit-recurrence-monthly-bymonthday:checked').each(function(){ bymonday.push(this.value); });
+              if (bymonday.length)
+                data.recurrence.BYMONTHDAY = bymonday.join(',');
             }
             else
               data.recurrence.BYDAY = $('#edit-recurrence-monthly-prefix').val() + $('#edit-recurrence-monthly-byday').val();
@@ -318,14 +331,18 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           else if (freq == 'YEARLY') {
             var byday, bymonth = [];
             $('input.edit-recurrence-yearly-bymonth:checked').each(function(){ bymonth.push(this.value); });
-            data.recurrence.BYMONTH = bymonth.join(',');
+            if (bymonth.length)
+              data.recurrence.BYMONTH = bymonth.join(',');
             if ((byday = $('#edit-recurrence-yearly-byday').val()))
               data.recurrence.BYDAY = $('#edit-recurrence-yearly-prefix').val() + byday;
           }
         }
         
-        if (event.id)
+        if (event.id) {
           data.id = event.id;
+          if (event.recurrence)
+            data.savemode = $('input.edit-recurring-savemode:checked').val();
+        }
         else
           data.calendar = calendars.val();
 
@@ -368,7 +385,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     };
     
     // mouse-click handler to check if the show dialog is still open and prevent default action
-    var dialog_check = function(e) {
+    var dialog_check = function(e)
+    {
       var showd = $("#eventshow");
       if (showd.is(':visible') && !$(e.target).closest('.ui-dialog').length) {
         showd.dialog('close');
@@ -380,6 +398,47 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         window.setTimeout(function(){ ignore_click = false; }, 20);
         return false;
       }
+      return true;
+    };
+    
+    // display confirm dialog when modifying/deleting a recurring event where the user needs to select the savemode
+    var recurring_edit_confirm = function(event, action) {
+      var $dialog = $('<div>').addClass('edit-recurring-warning');
+      $dialog.html('<div class="message"><span class="ui-icon ui-icon-alert"></span>' +
+        rcmail.gettext((action == 'remove' ? 'removerecurringeventwarning' : 'changerecurringeventwarning'), 'calendar') + '</div>' +
+        '<div class="savemode">' +
+          '<a href="#current" class="button">' + rcmail.gettext('currentevent', 'calendar') + '</a>' +
+          '<a href="#future" class="button">' + rcmail.gettext('futurevents', 'calendar') + '</a>' +
+          '<a href="#all" class="button">' + rcmail.gettext('allevents', 'calendar') + '</a>' +
+          (action != 'remove' ? '<a href="#new" class="button">' + rcmail.gettext('saveasnew', 'calendar') + '</a>' : '') +
+        '</div>');
+      
+      $dialog.find('a.button').button().click(function(e){
+        event.savemode = String(this.href).replace(/.+#/, '');
+        rcmail.http_post('plugin.event', { action:action, e:event });
+        $dialog.dialog("destroy").hide();
+        return false;
+      });
+      
+      $dialog.dialog({
+        modal: true,
+        width: 420,
+        dialogClass: 'warning',
+        title: rcmail.gettext((action == 'remove' ? 'removerecurringevent' : 'changerecurringevent'), 'calendar'),
+        buttons: [
+          {
+            text: rcmail.gettext('cancel', 'calendar'),
+            click: function() {
+              $(this).dialog("close");
+            }
+          }
+        ],
+        close: function(){
+          $dialog.dialog("destroy").hide();
+          $('#calendar').fullCalendar('refetchEvents');
+        }
+      }).show();
+      
       return true;
     };
 
@@ -423,6 +482,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
     // delete the given event after showing a confirmation dialog
     this.delete_event = function(event) {
+      // show extended confirm dialog for recurring events, use jquery UI dialog
+      if (event.recurrence)
+        return recurring_edit_confirm({ id:event.id }, 'remove');
+      
       // send remove request to plugin
       if (confirm(rcmail.gettext('deleteventconfirm', 'calendar'))) {
         rcmail.http_post('plugin.event', { action:'remove', e:{ id:event.id } });
@@ -475,7 +538,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         resizable: true,
         closeOnEscape: false,
         dialogClass: 'alarm',
-        title: rcmail.gettext('alarmtitle', 'calendar'),
+        title: '<span class="ui-icon ui-icon-alert" style="float:left; margin:0 4px 0 0"></span>' + rcmail.gettext('alarmtitle', 'calendar'),
         buttons: buttons,
         close: function() {
           $('#alarm-snooze-dropdown').hide();
@@ -564,7 +627,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         }).data('id', id);
       }
       
-      if (!cal.readonly) {
+      if (!cal.readonly && !this.selected_calendar) {
         this.selected_calendar = id;
         rcmail.enable_command('plugin.addevent', true);
       }
@@ -593,6 +656,11 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         month: 'ddd', // Mon
         week: 'ddd ' + settings['date_short'], // Mon 9/7
         day: 'dddd ' + settings['date_short']  // Monday 9/7
+      },
+      titleFormat: {
+        month: 'MMMM yyyy',
+        week: settings['date_long'].replace(/ yyyy/, '[ yyyy]') + "{ '&mdash;' " + settings['date_long'] + "}",
+        day: 'dddd ' + settings['date_long']
       },
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
@@ -658,17 +726,23 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           end: event.end.getTime()/1000,
           allday: allDay?1:0
         };
-        rcmail.http_post('plugin.event', { action:'move', e:data });
+        if (event.recurrence)
+          recurring_edit_confirm(data, 'move');
+        else
+          rcmail.http_post('plugin.event', { action:'move', e:data });
       },
       // callback for event resizing
       eventResize : function(event, delta) {
         // send resize request to server
         var data = {
-          id: event.id, 
+          id: event.id,
           start: event.start.getTime()/1000,
-          end: event.end.getTime()/1000, 
+          end: event.end.getTime()/1000,
         };
-        rcmail.http_post('plugin.event', { action:'resize', e:data });
+        if (event.recurrence)
+          recurring_edit_confirm(data, 'resize');
+        else
+          rcmail.http_post('plugin.event', { action:'resize', e:data });
       }
     });
 
@@ -843,10 +917,4 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     });
     $('#edit-recurrence-enddate').datepicker(cal.datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
     
-    // avoid unselecting all weekdays, monthdays and months
-    $('input.edit-recurrence-weekly-byday, input.edit-recurrence-monthly-bymonthday, input.edit-recurrence-yearly-bymonth').click(function(){
-      if (!$('input.'+this.className+':checked').length)
-        this.checked = true;
-    });
-
 });

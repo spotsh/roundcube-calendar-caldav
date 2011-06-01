@@ -135,6 +135,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.alarm_select', array($this->ui, 'alarm_select'));
     $this->register_handler('plugin.snooze_select', array($this->ui, 'snooze_select'));
     $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));
+    $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     
     $this->rc->output->set_env('calendar_settings', $this->load_settings());
     $this->rc->output->add_label('low','normal','high');
@@ -344,7 +345,7 @@ class calendar extends rcube_plugin
     switch ($action) {
       case "new":
         // create UID for new event
-        $events['uid'] = strtoupper(md5(time() . uniqid(rand())) . '-' . substr(md5($this->rc->user->get_username()), 0, 16));
+        $event['uid'] = $this->generate_uid();
         $success = $this->driver->new_event($event);
         $reload = true;
         break;
@@ -370,12 +371,13 @@ class calendar extends rcube_plugin
         break;
     }
     
-    if (!$success) {
+    if ($success)
+      $this->rc->output->show_message('successfullysaved', 'confirmation');
+    else
       $this->rc->output->show_message('calendar.errorsaving', 'error');
-    }
-    else if ($reload) {
+
+    if ($success && $reload)
       $this->rc->output->command('plugin.reload_calendar', array());
-    }
   }
   
   /**
@@ -433,6 +435,7 @@ class calendar extends rcube_plugin
     $settings['default_view'] = (string)$this->rc->config->get('calendar_default_view', "agendaWeek");
     $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', "yyyy/MM/dd");
     $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', "M/d");
+    $settings['date_long'] = (string)$this->rc->config->get('calendar_date_long', "M d yyyy");
     $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', "HH:mm");
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', 2);
     $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', 1);
@@ -515,10 +518,6 @@ class calendar extends rcube_plugin
         $event['alarms_text'] = $this->_alarms_text($event['alarms']);
       if ($event['recurrence'])
         $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
-      
-      // TEMPORARY: recurring instances are immutable
-      if ($event['recurrence_id'])
-        $event['editable'] = false;
       
       $json[] = array(
         'start' => date('c', $event['start']), // ISO 8601 date (added in PHP 5)
@@ -617,6 +616,14 @@ class calendar extends rcube_plugin
       $until = $this->gettext('forever');
     
     return rtrim($freq . $details . ', ' . $until);
+  }
+
+  /**
+   * Generate a unique identifier for an event
+   */
+  public function generate_uid()
+  {
+    return strtoupper(md5(time() . uniqid(rand())) . '-' . substr(md5($this->rc->user->get_username()), 0, 16));
   }
 
   /**

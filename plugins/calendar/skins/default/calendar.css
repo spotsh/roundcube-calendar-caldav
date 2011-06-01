@@ -240,6 +240,7 @@ pre {
 }
 
 #eventedit {
+	position: relative;
 	padding: 0.5em 0.1em;
 }
 
@@ -321,6 +322,36 @@ td.topalign {
 	padding: 0.2em 0;
 }
 
+.edit-recurring-warning {
+	margin-top: 0.5em;
+	padding: 0.8em;
+	background-color: #F7FDCB;
+	border: 1px solid #C2D071;
+}
+
+.edit-recurring-warning .message {
+	margin-bottom: 0.5em;
+}
+
+.edit-recurring-warning .savemode {
+	padding-left: 20px;
+}
+
+.edit-recurring-warning span.ui-icon {
+	float: left;
+	margin: 0 7px 20px 0;
+}
+
+.edit-recurring-warning label {
+	min-width: 3em;
+	padding-right: 1em;
+}
+
+.edit-recurring-warning a.button {
+	margin: 0 0.5em 0 0.2em;
+	min-width: 5em;
+}
+
 span.edit-alarm-set {
 	white-space: nowrap;
 }
@@ -399,6 +430,7 @@ a.alarm-action-snooze:after {
 * html .ui-autocomplete {
 	height: 160px;
 }
+
 
 /* fullcalendar style overrides */
 

@@ -280,6 +280,22 @@ class calendar_ui
   /**
    * Generate the form for recurrence settings
    */
+  function recurring_event_warning($attrib = array())
+  {
+    $attrib['id'] = 'edit-recurring-warning';
+    
+    $radio = new html_radiobutton(array('name' => 'savemode', 'class' => 'edit-recurring-savemode'));
+    $form = html::label(null, $radio->show('', array('value' => 'current')) . $this->calendar->gettext('currentevent')) . ' ' .
+       html::label(null, $radio->show('', array('value' => 'future')) . $this->calendar->gettext('futurevents')) . ' ' .
+       html::label(null, $radio->show('all', array('value' => 'all')) . $this->calendar->gettext('allevents')) . ' ' .
+       html::label(null, $radio->show('', array('value' => 'new')) . $this->calendar->gettext('saveasnew'));
+       
+    return html::div($attrib, html::div('message', html::span('ui-icon ui-icon-alert', '') . $this->calendar->gettext('changerecurringeventwarning')) . html::div('savemode', $form));
+  }
+  
+  /**
+   * Generate the form for recurrence settings
+   */
   function recurrence_form($attrib = array())
   {
     switch ($attrib['part']) {
