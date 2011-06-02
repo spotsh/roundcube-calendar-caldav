@@ -20,11 +20,10 @@ class kolab_core extends rcube_plugin
     {
         // load local config
         $this->load_config();
-        
+
         // extend include path to load bundled Horde classes
         $include_path = $this->home . PATH_SEPARATOR . ini_get('include_path');
         set_include_path($include_path);
     }
-    
 }
 
