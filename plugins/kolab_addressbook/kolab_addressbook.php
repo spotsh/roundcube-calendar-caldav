@@ -29,8 +29,13 @@ class kolab_addressbook extends rcube_plugin
         $this->add_hook('addressbook_get', array($this, 'get_address_book'));
         $this->add_hook('contact_form', array($this, 'contact_form'));
 
-        // extend list of address sources to be used for autocompletion
         $rcmail = rcmail::get_instance();
+
+        if ($rcmail->task == 'addressbook') {
+            $this->add_texts('localization');
+        }
+
+        // extend list of address sources to be used for autocompletion
         if ($rcmail->action == 'autocomplete' || $rcmail->action == 'group-expand') {
             $sources = (array) $rcmail->config->get('autocomplete_addressbooks', array());
             foreach ($this->_list_sources() as $abook_id => $abook) {
@@ -118,25 +123,22 @@ class kolab_addressbook extends rcube_plugin
         if (!is_a($GLOBALS['CONTACTS'], 'rcube_kolab_contacts'))
             return $p;
 
-        $this->add_texts('localization');
-
         // extend the list of contact fields to be displayed in the 'personal' section
         if (is_array($p['form']['personal'])) {
             $p['form']['contact']['content']['officelocation'] = array('size' => 40);
-
-            $p['form']['personal']['content']['initials']     = array('size' => 6);
-            $p['form']['personal']['content']['profession']   = array('size' => 40);
-            $p['form']['personal']['content']['children']     = array('size' => 40);
-            $p['form']['personal']['content']['pgppublickey'] = array('size' => 40);
-            $p['form']['personal']['content']['freebusyurl']  = array('size' => 40);
+            $p['form']['personal']['content']['initials']      = array('size' => 6);
+            $p['form']['personal']['content']['profession']    = array('size' => 40);
+            $p['form']['personal']['content']['children']      = array('size' => 40);
+            $p['form']['personal']['content']['pgppublickey']  = array('size' => 40);
+            $p['form']['personal']['content']['freebusyurl']   = array('size' => 40);
 
             // re-order fields according to the coltypes list
-            $p['form']['contact']['content'] = $this->_sort_form_fields($p['form']['contact']['content']);
+            $p['form']['contact']['content']  = $this->_sort_form_fields($p['form']['contact']['content']);
             $p['form']['personal']['content'] = $this->_sort_form_fields($p['form']['personal']['content']);
 
             /* define a separate section 'settings'
             $p['form']['settings'] = array(
-                'name'    => rcube_label('kolab_addressbook.settings'),
+                'name'    => $this->gettext('settings'),
                 'content' => array(
                     'pgppublickey' => array('size' => 40, 'visible' => true),
                     'freebusyurl'  => array('size' => 40, 'visible' => true),
