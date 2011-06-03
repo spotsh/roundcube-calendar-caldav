@@ -75,6 +75,7 @@ class calendar extends rcube_plugin
       $this->register_action('plugin.load_events', array($this, 'load_events'));
       $this->register_action('plugin.event', array($this, 'event'));
       $this->register_action('plugin.export_events', array($this, 'export_events'));
+      $this->register_action('plugin.randomdata', array($this, 'generate_randomdata'));
       $this->add_hook('keep_alive', array($this, 'keep_alive'));
       
       // set user's timezone
@@ -472,6 +473,9 @@ class calendar extends rcube_plugin
       $this->rc->gettext('nov'), $this->rc->gettext('dec')
     );
     $settings['today'] = rcube_label('today');
+    
+    // user prefs
+    $settings['hidden_calendars'] = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
 
     return $settings;
   }
@@ -693,6 +697,54 @@ class calendar extends rcube_plugin
       't'    => 'a',
       'u'    => 'c',
     ));
+  }
+  
+  /**
+   * TEMPORARY: generate random event data for testing
+   * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=plugin.randomdata&_num=500
+   */
+  public function generate_randomdata()
+  {
+    $cats = array_keys($this->driver->list_categories());
+    $cals = $this->driver->list_calendars();
+    $num = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
+    
+    while ($count++ < $num) {
+      $start = round((time() + rand(-2600, 2600) * 1000) / 300) * 300;
+      $duration = round(rand(30, 360) / 30) * 30 * 60;
+      $allday = rand(0,20) > 18;
+      $alarm = rand(-30,12) * 5;
+      $fb = rand(0,2);
+      
+      if (date('G', $start) > 23)
+        $start -= 3600;
+      
+      if ($allday) {
+        $start = strtotime(date('Y-m-d 00:00:00', $start));
+        $duration = 86399;
+      }
+      
+      $title = '';
+      $len = rand(4, 40);
+      $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
+      for ($i = 0; $i < $len; $i++)
+        $title .= $chars[rand(0,strlen($chars)-1)];
+      
+      $this->driver->new_event(array(
+        'uid' => $this->generate_uid(),
+        'start' => $start,
+        'end' => $start + $duration,
+        'allday' => $allday,
+        'title' => $title,
+        'free_busy' => $fb == 2 ? 'outofoffice' : ($fb ? 'busy' : 'free'),
+        'categories' => $cats[array_rand($cats)],
+        'calendar' => array_rand($cals),
+        'alarms' => $alarm > 0 ? "-{$alarm}M:DISPLAY" : '',
+        'priority' => 1,
+      ));
+    }
+    
+    $this->rc->output->redirect('');
   }
 
 }

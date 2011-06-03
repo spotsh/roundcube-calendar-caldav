@@ -434,8 +434,29 @@ a.alarm-action-snooze:after {
 
 /* fullcalendar style overrides */
 
+.fc-content {
+	position: absolute !important;
+	top: 37px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+}
+
 .fc-event-title {
 	font-weight: bold;
+}
+
+.fc-event-hori .fc-event-title {
+	font-weight: normal;
+	white-space: nowrap;
+}
+
+.fc-event-hori .fc-event-time {
+	white-space: nowrap;
+	font-weight: normal;
+	font-size: 10px;
+	padding-right: 0.6em;
 }
 
 .fc-event-cateories {

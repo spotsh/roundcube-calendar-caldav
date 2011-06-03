@@ -126,6 +126,7 @@ class calendar_ui
   function calendar_list($attrib = array())
   {
     $calendars = $this->calendar->driver->list_calendars();
+    $hidden = explode(',', $this->rc->config->get('hidden_calendars', ''));
 
     $li = '';
     foreach ((array)$calendars as $id => $prop) {
@@ -137,7 +138,7 @@ class calendar_ui
       
       $html_id = html_identifier($id);
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' =>'cal-'  . asciiwords($id, true)),
-        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => true), '') . html::span(null, Q($prop['name'])));
+        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => !in_array($id, $hidden)), '') . html::span(null, Q($prop['name'])));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);
