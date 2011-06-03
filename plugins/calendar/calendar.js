@@ -22,34 +22,58 @@
  +-------------------------------------------------------------------------+
 */
 
-/* calendar initialization */
-window.rcmail && rcmail.addEventListener('init', function(evt) {
-  
-  // quote html entities
-  function Q(str)
-  {
-    return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-  // php equivalent
-  function nl2br(str)
-  {
-    return String(str).replace(/\n/g, "<br/>");
-  }
-
-  // Roundcube calendar client class
-  function rcube_calendar(settings)
-  {
-    // member vars
+// Roundcube calendar client class
+function rcube_calendar(settings)
+{
+    /***  member vars  ***/
     this.settings = settings;
     this.alarm_ids = [];
     this.alarm_dialog = null;
     this.snooze_popup = null;
     this.dismiss_link = null
-    
-    // private vars
+
+
+    /***  private vars  ***/
     var me = this;
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
+
+    // general datepicker settings
+    var datepicker_settings = {
+      // translate from fullcalendar format to datepicker format
+      dateFormat: settings['date_format'].replace(/M/g, 'm').replace(/mmmmm/, 'MM').replace(/mmm/, 'M').replace(/dddd/, 'DD').replace(/ddd/, 'D').replace(/yy/g, 'y'),
+      firstDay : settings['first_day'],
+      dayNamesMin: settings['days_short'],
+      monthNames: settings['months'],
+      monthNamesShort: settings['months'],
+      changeMonth: false,
+      showOtherMonths: true,
+      selectOtherMonths: true,
+    };
+
+
+    /***  private methods  ***/
+
+    // quote html entities
+    var Q = function(str)
+    {
+      return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    };
+    // php equivalent
+    var nl2br = function(str)
+    {
+      return String(str).replace(/\n/g, "<br/>");
+    };
+
+    // from time and date strings to a real date object
+    var parse_datetime = function(time, date) {
+      // we use the utility function from datepicker to parse dates
+      var date = $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings);
+      var time_arr = time.split(/[:.]/);
+      if (!isNaN(time_arr[0])) date.setHours(time_arr[0]);
+      if (!isNaN(time_arr[1])) date.setMinutes(time_arr[1]);
+      return date;
+    };
 
     // create a nice human-readable string for the date/time range
     var event_date_text = function(event)
@@ -262,8 +286,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       var buttons = {};
       
       buttons[rcmail.gettext('save', 'calendar')] = function() {
-        var start = me.parse_datetime(starttime.val(), startdate.val());
-        var end = me.parse_datetime(endtime.val(), enddate.val());
+        var start = parse_datetime(starttime.val(), startdate.val());
+        var end = parse_datetime(endtime.val(), enddate.val());
         
         // basic input validatetion
         if (start.getTime() > end.getTime()) {
@@ -293,7 +317,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         if (alarm) {
           var val, offset = $('select.edit-alarm-offset').val();
           if (offset == '@')
-            data.alarms = '@' + (me.parse_datetime($('input.edit-alarm-time').val(), $('input.edit-alarm-date').val()).getTime()/1000) + ':' + alarm;
+            data.alarms = '@' + (parse_datetime($('input.edit-alarm-time').val(), $('input.edit-alarm-date').val()).getTime()/1000) + ':' + alarm;
           else if ((val = parseInt($('input.edit-alarm-value').val())) && !isNaN(val) && val >= 0)
             data.alarms = offset[0] + val + offset[1] + ':' + alarm;
         }
@@ -310,7 +334,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
           if (until == 'count')
             data.recurrence.COUNT = rrtimes.val();
           else if (until == 'until')
-            data.recurrence.UNTIL = me.parse_datetime(endtime.val(), rrenddate.val()).getTime()/1000;
+            data.recurrence.UNTIL = parse_datetime(endtime.val(), rrenddate.val()).getTime()/1000;
           
           if (freq == 'WEEKLY') {
             var byday = [];
@@ -383,7 +407,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
       title.select();
     };
-    
+
     // mouse-click handler to check if the show dialog is still open and prevent default action
     var dialog_check = function(e)
     {
@@ -400,7 +424,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       }
       return true;
     };
-    
+
     // display confirm dialog when modifying/deleting a recurring event where the user needs to select the savemode
     var recurring_edit_confirm = function(event, action) {
       var $dialog = $('<div>').addClass('edit-recurring-warning');
@@ -442,30 +466,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       return true;
     };
 
-    // general datepicker settings
-    this.datepicker_settings = {
-      // translate from fullcalendar format to datepicker format
-      dateFormat: settings['date_format'].replace(/M/g, 'm').replace(/mmmmm/, 'MM').replace(/mmm/, 'M').replace(/dddd/, 'DD').replace(/ddd/, 'D').replace(/yy/g, 'y'),
-      firstDay : settings['first_day'],
-      dayNamesMin: settings['days_short'],
-      monthNames: settings['months'],
-      monthNamesShort: settings['months'],
-      changeMonth: false,
-      showOtherMonths: true,
-      selectOtherMonths: true,
-    };
 
-
-    // from time and date strings to a real date object
-    this.parse_datetime = function(time, date) {
-      // we use the utility function from datepicker to parse dates
-      var date = $.datepicker.parseDate(me.datepicker_settings.dateFormat, date, me.datepicker_settings);
-      var time_arr = time.split(/[:.]/);
-      if (!isNaN(time_arr[0])) date.setHours(time_arr[0]);
-      if (!isNaN(time_arr[1])) date.setMinutes(time_arr[1]);
-      return date;
-    };
-
+    /*** public methods ***/
 
     // public method to bring up the new event dialog
     this.add_event = function() {
@@ -494,7 +496,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
       return false;
     };
-    
+
     // display a notification for the given pending alarms
     this.display_alarms = function(alarms) {
       // clear old alert first
@@ -552,7 +554,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       });
       this.alarm_ids = event_ids;
     };
-    
+
     // show a drop-down menu with a selection of snooze times
     this.snooze_dropdown = function(link)
     {
@@ -577,7 +579,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         this.dismiss_link = link;
       }
     };
-    
+
     // dismiss or snooze alarms for the given event
     this.dismiss_alarm = function(id, snooze)
     {
@@ -765,7 +767,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     };
 
     // initialize small calendar widget using jQuery UI datepicker
-    $('#datepicker').datepicker($.extend(this.datepicker_settings, {
+    $('#datepicker').datepicker($.extend(datepicker_settings, {
       inline: true,
       showWeek: true,
       changeMonth: false, // maybe enable?
@@ -796,108 +798,78 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     $("#calendar .fc-button-prev").click(fullcalendar_update);
     $("#calendar .fc-button-next").click(fullcalendar_update);
     $("#calendar .fc-button-today").click(fullcalendar_update);
-    
-    // hide event dialog when clicking somewhere into document
-    $(document).bind('mousedown', dialog_check);
 
-  } // end rcube_calendar class
+    // format time string
+    var formattime = function(hour, minutes) {
+        return ((hour < 10) ? "0" : "") + hour + ((minutes < 10) ? ":0" : ":") + minutes;
+    };
 
+    // if start date is changed, shift end date according to initial duration
+    var shift_enddate = function(dateText) {
+      var newstart = parse_datetime('0', dateText);
+      var newend = new Date(newstart.getTime() + $('#edit-startdate').data('duration') * 1000);
+      $('#edit-enddate').val($.fullCalendar.formatDate(newend, cal.settings['date_format']));
+    };
 
-  // configure toobar buttons
-  rcmail.register_command('plugin.addevent', function(){ cal.add_event(); }, true);
+    // init event dialog
+    $('#eventtabs').tabs();
+    $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
+    $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
+    $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); });
 
-  // export events
-  rcmail.register_command('plugin.export', function(){ rcmail.goto_url('plugin.export_events', { source:cal.selected_calendar }); }, true);
-  rcmail.enable_command('plugin.export', true);
-  
-  // register callback commands
-  rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
-
-  // reload calendar
-  rcmail.addEventListener('plugin.reload_calendar', function() { $('#calendar').fullCalendar('refetchEvents'); });
-
-
-  var formattime = function(hour, minutes) {
-      return ((hour < 10) ? "0" : "") + hour + ((minutes < 10) ? ":0" : ":") + minutes;
-  };
-
-  // if start date is changed, shift end date according to initial duration
-  var shift_enddate = function(dateText) {
-    var newstart = cal.parse_datetime('0', dateText);
-    var newend = new Date(newstart.getTime() + $('#edit-startdate').data('duration') * 1000);
-    $('#edit-enddate').val($.fullCalendar.formatDate(newend, cal.settings['date_format']));
-  };
-
-
-  // let's go
-  var cal = new rcube_calendar(rcmail.env.calendar_settings);
-
-  $(window).resize(function() {
-    $('#calendar').fullCalendar('option', 'height', $(window).height() - 95);
-  }).resize();
-
-  // show toolbar
-  $('#toolbar').show();
-
-  // init event dialog
-  $('#eventtabs').tabs();
-  $('#edit-enddate, input.edit-alarm-date').datepicker(cal.datepicker_settings);
-  $('#edit-startdate').datepicker(cal.datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
-  $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); });
-
-  // configure drop-down menu on time input fields based on jquery UI autocomplete
-  $('#edit-starttime, #edit-endtime, input.edit-alarm-time')
-    .attr('autocomplete', "off")
-    .autocomplete({
-      delay: 100,
-      minLength: 1,
-      source: function(p, callback) {
-        /* Time completions */
-        var result = [];
-        var now = new Date();
-        var full = p.term - 1 > 0 || p.term.length > 1;
-        var hours = full? p.term - 0 : now.getHours();
-        var step = 15;
-        var minutes = hours * 60 + (full ? 0 : now.getMinutes());
-        var min = Math.ceil(minutes / step) * step % 60;
-        var hour = Math.floor(Math.ceil(minutes / step) * step / 60);
-        // list hours from 0:00 till now
-        for (var h = 0; h < hours; h++)
-          result.push(formattime(h, 0));
-          // list 15min steps for the next two hours
-        for (; h < hour + 2; h++) {
-          while (min < 60) {
-            result.push(formattime(h, min));
-            min += step;
+    // configure drop-down menu on time input fields based on jquery UI autocomplete
+    $('#edit-starttime, #edit-endtime, input.edit-alarm-time')
+      .attr('autocomplete', "off")
+      .autocomplete({
+        delay: 100,
+        minLength: 1,
+        source: function(p, callback) {
+          /* Time completions */
+          var result = [];
+          var now = new Date();
+          var full = p.term - 1 > 0 || p.term.length > 1;
+          var hours = full? p.term - 0 : now.getHours();
+          var step = 15;
+          var minutes = hours * 60 + (full ? 0 : now.getMinutes());
+          var min = Math.ceil(minutes / step) * step % 60;
+          var hour = Math.floor(Math.ceil(minutes / step) * step / 60);
+          // list hours from 0:00 till now
+          for (var h = 0; h < hours; h++)
+            result.push(formattime(h, 0));
+            // list 15min steps for the next two hours
+          for (; h < hour + 2; h++) {
+            while (min < 60) {
+              result.push(formattime(h, min));
+              min += step;
+            }
+            min = 0;
           }
-          min = 0;
+          // list the remaining hours till 23:00
+          while (h < 24)
+            result.push(formattime((h++), 0));
+          return callback(result);
+        },
+        open: function(event, ui) {
+          // scroll to current time
+          var widget = $(this).autocomplete('widget');
+          var menu = $(this).data('autocomplete').menu;
+          var val = $(this).val();
+          var li, html, offset = 0;
+          widget.children().each(function(){
+            li = $(this);
+            html = li.children().first().html();
+            if (html < val)
+              offset += li.height();
+            if (html == val)
+              menu.activate($.Event({ type: 'mouseenter' }), li);
+          });
+          widget.scrollTop(offset - 1);
         }
-        // list the remaining hours till 23:00
-        while (h < 24)
-          result.push(formattime((h++), 0));
-        return callback(result);
-      },
-      open: function(event, ui) {
-        // scroll to current time
-        var widget = $(this).autocomplete('widget');
-        var menu = $(this).data('autocomplete').menu;
-        var val = $(this).val();
-        var li, html, offset = 0;
-        widget.children().each(function(){
-          li = $(this);
-          html = li.children().first().html();
-          if (html < val)
-            offset += li.height();
-          if (html == val)
-            menu.activate($.Event({ type: 'mouseenter' }), li);
-        });
-        widget.scrollTop(offset - 1);
-      }
-    })
-    .click(function() {  // show drop-down upon clicks
-      $(this).autocomplete('search', $(this).val() ? $(this).val().replace(/\D.*/, "") : " ");
-    });
-    
+      })
+      .click(function() {  // show drop-down upon clicks
+        $(this).autocomplete('search', $(this).val() ? $(this).val().replace(/\D.*/, "") : " ");
+      });
+
     // register events on alarm fields
     $('select.edit-alarm-type').change(function(){
       $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
@@ -907,7 +879,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
       $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
     });
-    
+
     // toggle recurrence frequency forms
     $('#edit-recurrence-frequency').change(function(e){
       var freq = $(this).val().toLowerCase();
@@ -915,6 +887,38 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       if (freq)
         $('#recurrence-form-'+freq+', #recurrence-form-until').show();
     });
-    $('#edit-recurrence-enddate').datepicker(cal.datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
-    
+    $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
+
+    // hide event dialog when clicking somewhere into document
+    $(document).bind('mousedown', dialog_check);
+
+} // end rcube_calendar class
+
+
+/* calendar plugin initialization */
+window.rcmail && rcmail.addEventListener('init', function(evt) {
+
+  // configure toobar buttons
+  rcmail.register_command('plugin.addevent', function(){ cal.add_event(); }, true);
+
+  // export events
+  rcmail.register_command('plugin.export', function(){ rcmail.goto_url('plugin.export_events', { source:cal.selected_calendar }); }, true);
+  rcmail.enable_command('plugin.export', true);
+
+  // register callback commands
+  rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
+  rcmail.addEventListener('plugin.reload_calendar', function(){ $('#calendar').fullCalendar('refetchEvents'); });
+
+
+  // let's go
+  var cal = new rcube_calendar(rcmail.env.calendar_settings);
+  cal.init_ui();
+
+  $(window).resize(function() {
+    $('#calendar').fullCalendar('option', 'height', $(window).height() - 95);
+  }).resize();
+
+  // show toolbar
+  $('#toolbar').show();
+
 });
