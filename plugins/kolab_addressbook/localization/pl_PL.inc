@@ -3,9 +3,9 @@
 $labels = array();
 $labels['initials'] = 'Inicjały';
 $labels['profession'] = 'Zawód';
-$labels['officelocation'] = 'Lokalizacja biura';
+$labels['officelocation'] = 'Adres biura';
 $labels['children'] = 'Dzieci';
-$labels['pgppublickey'] = 'Klucz publiczny PGP';
+$labels['pgppublickey'] = 'Klucz publ. PGP';
 $labels['freebusyurl'] = 'URL Free-busy';
 $labels['settings'] = 'Ustawienia';
 
