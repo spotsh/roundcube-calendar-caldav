@@ -29,20 +29,26 @@ class rcube_kolab_contacts extends rcube_addressbook
       'email'        => array('subtypes' => null),
       'phone'        => array(),
       'address'      => array('limit' => 2, 'subtypes' => array('home','business')),
-      'officelocation' => array('type' => 'text', 'size' => 40, 'limit' => 1, 'label' => 'kolab_addressbook.officelocation'),
+      'officelocation' => array('type' => 'text', 'size' => 40, 'limit' => 1,
+                                'label' => 'kolab_addressbook.officelocation', 'category' => 'main'),
       'website'      => array('limit' => 1, 'subtypes' => null),
       'im'           => array('limit' => 1, 'subtypes' => null),
       'gender'       => array('limit' => 1),
-      'initials'     => array('type' => 'text', 'size' => 6, 'limit' => 1, 'label' => 'kolab_addressbook.initials'),
+      'initials'     => array('type' => 'text', 'size' => 6, 'limit' => 1,
+                                'label' => 'kolab_addressbook.initials', 'category' => 'personal'),
       'birthday'     => array('limit' => 1),
       'anniversary'  => array('limit' => 1),
-      'profession'   => array('type' => 'text', 'size' => 40, 'limit' => 1, 'label' => 'kolab_addressbook.profession'),
+      'profession'   => array('type' => 'text', 'size' => 40, 'limit' => 1,
+                                'label' => 'kolab_addressbook.profession', 'category' => 'personal'),
       'manager'      => array('limit' => 1),
       'assistant'    => array('limit' => 1),
       'spouse'       => array('limit' => 1),
-      'children'     => array('type' => 'text', 'size' => 40, 'limit' => 1, 'label' => 'kolab_addressbook.children'),
-      'pgppublickey' => array('type' => 'text', 'size' => 40, 'limit' => 1, 'label' => 'kolab_addressbook.pgppublickey'),
-      'freebusyurl'  => array('type' => 'text', 'size' => 40, 'limit' => 1, 'label' => 'kolab_addressbook.freebusyurl'),
+      'children'     => array('type' => 'text', 'size' => 40, 'limit' => 1,
+                                'label' => 'kolab_addressbook.children', 'category' => 'personal'),
+      'pgppublickey' => array('type' => 'text', 'size' => 40, 'limit' => 1,
+                                'label' => 'kolab_addressbook.pgppublickey'),
+      'freebusyurl'  => array('type' => 'text', 'size' => 40, 'limit' => 1,
+                                'label' => 'kolab_addressbook.freebusyurl'),
       'notes'        => array(),
       'photo'        => array(),
       // TODO: define more Kolab-specific fields such as: language, latitude, longitude
@@ -230,11 +236,13 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * Search records
      *
-     * @param array   List of fields to search in
-     * @param string  Search value
-     * @param boolean True if results are requested, False if count only
-     * @param boolean True to skip the count query (select only)
-     * @param array   List of fields that cannot be empty
+     * @param mixed   $fields   The field name of array of field names to search in
+     * @param mixed   $value    Search value (or array of values when $fields is array)
+     * @param boolean $strict   True for strict (=), False for partial (LIKE) matching
+     * @param boolean $select   True if results are requested, False if count only
+     * @param boolean $nocount  True to skip the count query (select only)
+     * @param array   $required List of fields that cannot be empty
+     *
      * @return object rcube_result_set List of contact records and 'count' value
      */
     public function search($fields, $value, $strict=false, $select=true, $nocount=false, $required=array())
@@ -249,12 +257,24 @@ class rcube_kolab_contacts extends rcube_addressbook
           $fields = array_keys($this->coltypes);
         }
 
-        $value = strtolower($value);
         if (!is_array($fields))
             $fields = array($fields);
         if (!is_array($required) && !empty($required))
             $required = array($required);
 
+        // advanced search
+        if (is_array($value)) {
+            $advanced = true;
+            $value = array_map('mb_strtolower', $value);
+        }
+        else
+            $value = mb_strtolower($value);
+
+        $scount = count($fields);
+        // build key name regexp
+        $regexp = '/^(' . implode($fields, '|') . ')(?:.*)$/';
+
+        // save searching conditions
         $this->filter = array('fields' => $fields, 'value' => $value, 'strict' => $strict, 'ids' => array());
 
         // search be iterating over all records in memory
@@ -266,15 +286,38 @@ class rcube_kolab_contacts extends rcube_addressbook
                         continue 2;
             }
 
-            foreach ($fields as $f) {
-                foreach ((array)$contact[$f] as $val) {
-                    $val = strtolower($val);
-                    if (($strict && $val == $value) || (!$strict && strstr($val, $value))) {
-                        $this->filter['ids'][] = $id;
-                        break 2;
+            $found = array();
+            foreach (preg_grep($regexp, array_keys($contact)) as $col) {
+                if ($advanced) {
+                    $pos     = strpos($col, ':');
+                    $colname = $pos ? substr($col, 0, $pos) : $col;
+                    $search  = $value[array_search($colname, $fields)];
+                }
+                else {
+                    $search = $value;
+                }
+
+                foreach ((array)$contact[$col] as $val) {
+                    // composite field, e.g. address
+                    if (is_array($val)) {
+                        $val = implode($val);
+                    }
+                    $val = mb_strtolower($val);
+
+                    if (($strict && $val == $search) || (!$strict && strpos($val, $search) !== false)) {
+                        if (!$advanced) {
+                            $this->filter['ids'][] = $id;
+                            break 2;
+                        }
+                        else {
+                            $found[$colname] = true;
+                        }
                     }
                 }
             }
+
+            if (count($found) >= $scount) // && $advanced
+                $this->filter['ids'][] = $id;
         }
 
         // list records (now limited by $this->filter)

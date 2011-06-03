@@ -76,6 +76,8 @@ class kolab_addressbook extends rcube_plugin
      */
     public function get_address_book($p)
     {
+        $this->_list_sources();
+
         if ($this->sources[$p['id']]) {
             $p['instance'] = $this->sources[$p['id']];
         }
