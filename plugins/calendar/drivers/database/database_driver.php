@@ -508,7 +508,7 @@ class database_driver extends calendar_driver
       $success = $this->rc->db->affected_rows($query);
       if ($success && $update_master)
         $this->_update_event($master, true);
-console($savemode, $master['id'], $success);
+
       return $success;
     }
     

@@ -50,7 +50,7 @@ class calendar extends rcube_plugin
     }
     
     // load localizations
-    $this->add_texts('localization/', true);
+    $this->add_texts('localization/', $this->rc->action != 'plugin.event');
 
     // load Calendar user interface which includes jquery-ui
     $this->require_plugin('jqueryui');
@@ -181,7 +181,7 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
         'content' => $select->show($this->rc->config->get('calendar_default_view', "agendaWeek")),
       );
-      
+/*
       $field_id = 'rcmfd_time_format';
       $choices = array('HH:mm', 'H:mm', 'h:mmt');
       $select = new html_select(array('name' => '_time_format', 'id' => $field_id));
@@ -190,7 +190,7 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('time_format'))),
         'content' => $select->show($this->rc->config->get('calendar_time_format', "HH:mm")),
       );
-      
+*/
       $field_id = 'rcmfd_timeslot';
       $choices = array('1', '2', '3', '4', '6');
       $select = new html_select(array('name' => '_timeslots', 'id' => $field_id));
@@ -217,8 +217,8 @@ class calendar extends rcube_plugin
       $field_id = 'rcmfd_alarm';
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
-      $select_type->add($this->gettext('alarmdisplayoption'), 'DISPLAY');
-      $select_type->add($this->gettext('alarmemailoption'), 'EMAIL');
+      foreach ($this->driver->alarm_types as $type)
+        $select_type->add($this->gettext(strtolower("alarm{$type}option")), $type);
       
       $input_value = new html_inputfield(array('name' => '_alarm_value', 'id' => $field_id . 'value', 'size' => 3));
       $select_offset = new html_select(array('name' => '_alarm_offset', 'id' => $field_id . 'offset'));
@@ -378,7 +378,7 @@ class calendar extends rcube_plugin
       $this->rc->output->show_message('calendar.errorsaving', 'error');
 
     if ($success && $reload)
-      $this->rc->output->command('plugin.reload_calendar', array());
+      $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
   }
   
   /**
@@ -504,7 +504,8 @@ class calendar extends rcube_plugin
   function fromGMT($datetime, $user_tz = true)
   {
     $tz = $user_tz ? $this->gmt_offset : date('Z');
-    return strtotime($datetime) + $tz;
+    $ts = is_numeric($datetime) ? $datetime : strtotime($datetime);
+    return $ts + $tz;
   }
 
   /**
@@ -725,17 +726,18 @@ class calendar extends rcube_plugin
       }
       
       $title = '';
-      $len = rand(4, 40);
+      $len = rand(2, 12);
+      $words = explode(" ", "The Hough transform is named after Paul Hough who patented the method in 1962. It is a technique which can be used to isolate features of a particular shape within an image. Because it requires that the desired features be specified in some parametric form, the classical Hough transform is most commonly used for the de- tection of regular curves such as lines, circles, ellipses, etc. A generalized Hough transform can be employed in applications where a simple analytic description of a feature(s) is not possible. Due to the computational complexity of the generalized Hough algorithm, we restrict the main focus of this discussion to the classical Hough transform. Despite its domain restrictions, the classical Hough transform (hereafter referred to without the classical prefix ) retains many applications, as most manufac- tured parts (and many anatomical parts investigated in medical imagery) contain feature boundaries which can be described by regular curves. The main advantage of the Hough transform technique is that it is tolerant of gaps in feature boundary descriptions and is relatively unaffected by image noise.");
       $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
       for ($i = 0; $i < $len; $i++)
-        $title .= $chars[rand(0,strlen($chars)-1)];
+        $title .= $words[rand(0,count($words)-1)] . " ";
       
       $this->driver->new_event(array(
         'uid' => $this->generate_uid(),
         'start' => $start,
         'end' => $start + $duration,
         'allday' => $allday,
-        'title' => $title,
+        'title' => rtrim($title),
         'free_busy' => $fb == 2 ? 'outofoffice' : ($fb ? 'busy' : 'free'),
         'categories' => $cats[array_rand($cats)],
         'calendar' => array_rand($cals),

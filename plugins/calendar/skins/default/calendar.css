@@ -112,7 +112,7 @@ pre {
 
 #calendarslist li.selected {
 	background-color: #ccc;
-	border-bottom: 1px solid #999;
+	border-bottom: 1px solid #bbb;
 }
 
 #calendarslist li.selected span {

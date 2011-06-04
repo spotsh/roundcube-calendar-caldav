@@ -298,6 +298,7 @@ function rcube_calendar(settings)
         
         // post data to server
         var data = {
+          calendar: event.calendar,
           start: start.getTime()/1000,
           end: end.getTime()/1000,
           allday: allday.checked?1:0,
@@ -309,7 +310,7 @@ function rcube_calendar(settings)
           priority: priority.val(),
           sensitivity: sensitivity.val(),
           recurrence: '',
-          alarms:'',
+          alarms: ''
         };
         
         // serialize alarm settings
@@ -658,6 +659,7 @@ function rcube_calendar(settings)
         right: 'agendaDay,agendaWeek,month'
       },
       aspectRatio: 1,
+      ignoreTimezone: false,  // will translate event dates to the client's timezone
       height: $(window).height() - 96,
       eventSources: event_sources,
       monthNames : settings['months'],
@@ -755,6 +757,7 @@ function rcube_calendar(settings)
         // send move request to server
         var data = {
           id: event.id,
+          calendar: event.calendar,
           start: event.start.getTime()/1000,
           end: event.end.getTime()/1000,
           allday: allDay?1:0
@@ -769,8 +772,9 @@ function rcube_calendar(settings)
         // send resize request to server
         var data = {
           id: event.id,
+          calendar: event.calendar,
           start: event.start.getTime()/1000,
-          end: event.end.getTime()/1000,
+          end: event.end.getTime()/1000
         };
         if (event.recurrence)
           recurring_edit_confirm(data, 'resize');
@@ -945,7 +949,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   // register callback commands
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
-  rcmail.addEventListener('plugin.reload_calendar', function(){ $('#calendar').fullCalendar('refetchEvents'); });
+  rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
 
 
   // let's go
