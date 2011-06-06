@@ -30,8 +30,8 @@
 
 + Support for multiple calendars (replace categories)
 - Remember last visited view
-- Allow user to create/edit/delete calendars
-- Colors for calendars should be user-configurable
++ Allow user to create/edit/delete calendars
++ Colors for calendars should be user-configurable
 - ICS parser/generator ((http://code.google.com/p/qcal/)
 - Importing ICS files
 - Create/manage invdividual views

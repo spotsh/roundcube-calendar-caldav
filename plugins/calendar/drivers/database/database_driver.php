@@ -365,8 +365,8 @@ class database_driver extends calendar_driver
       else {  // absolute timestamp
         $notify_at = $notify[0];
       }
-      
-      if ($notify_at > time())
+
+      if ($event['start'] > time())
         return date('Y-m-d H:i:s', $notify_at);
     }
     
