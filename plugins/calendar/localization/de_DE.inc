@@ -17,7 +17,7 @@ $labels = array();
 // config
 $labels['default_view'] = 'Ansicht';
 $labels['time_format'] = 'Zeitformatierung';
-$labels['timeslots'] = 'Zeitfenster pro Stunde';
+$labels['timeslots'] = 'Zeitraster pro Stunde';
 $labels['first_day'] = 'Erster Wochentag';
 
 // calendar

@@ -54,6 +54,7 @@ class calendar_ui
   {
     $skin = $this->rc->config->get('skin');
     $this->calendar->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
+    $this->calendar->include_stylesheet('skins/' . $skin . '/jquery.miniColors.css');
   }
 
   /**
@@ -62,6 +63,7 @@ class calendar_ui
   public function addJS()
   {
       $this->calendar->include_script('lib/js/fullcalendar.js');
+      $this->calendar->include_script('lib/js/jquery.miniColors.min.js');
       $this->calendar->include_script('calendar.js');
   }
   

@@ -82,6 +82,24 @@ abstract class calendar_driver
   abstract function create_calendar($prop);
 
   /**
+   * Update properties of an existing calendar
+   *
+   * @param array Hash array with calendar properties
+   *      id: Calendar Identifier
+   *    name: Calendar name
+   *   color: The color of the calendar
+   * @return boolean True on success, Fales on failure
+   */
+  abstract function edit_calendar($prop);
+
+  /**
+   * Delete the given calendar with all its contents
+   *
+   * @return boolean True on success, Fales on failure
+   */
+  abstract function remove_calendar($prop);
+
+  /**
    * Add a single event to the database
    *
    * @param array Hash array with event properties (see header of this file)

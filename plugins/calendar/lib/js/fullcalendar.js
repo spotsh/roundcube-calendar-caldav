@@ -903,7 +903,7 @@ function EventManager(options, _sources) {
 		cache = [];
 		var fetchID = ++currentFetchID;
 		var len = sources.length;
-		pendingSourceCnt = len;
+		pendingSourceCnt = typeof src == 'undefined' ? len : 1;
 		for (var i=0; i<len; i++) {
 			if (typeof src == 'undefined' || src == sources[i])
 				fetchEventSource(sources[i], fetchID);

@@ -50,7 +50,7 @@ class calendar extends rcube_plugin
     }
     
     // load localizations
-    $this->add_texts('localization/', $this->rc->action != 'plugin.event');
+    $this->add_texts('localization/', !$this->rc->action || $this->rc->task != 'calendar');
 
     // load Calendar user interface which includes jquery-ui
     $this->require_plugin('jqueryui');
@@ -71,9 +71,9 @@ class calendar extends rcube_plugin
 
       // register calendar actions
       $this->register_action('index', array($this, 'calendar_view'));
-      $this->register_action('plugin.calendar', array($this, 'calendar_view'));
+      $this->register_action('plugin.event', array($this, 'event_action'));
+      $this->register_action('plugin.calendar', array($this, 'calendar_action'));
       $this->register_action('plugin.load_events', array($this, 'load_events'));
-      $this->register_action('plugin.event', array($this, 'event'));
       $this->register_action('plugin.export_events', array($this, 'export_events'));
       $this->register_action('plugin.randomdata', array($this, 'generate_randomdata'));
       $this->add_hook('keep_alive', array($this, 'keep_alive'));
@@ -247,7 +247,7 @@ class calendar extends rcube_plugin
           $field_class = 'rcmfd_category_' . str_replace(' ', '_', $name);
           $category_remove = new html_inputfield(array('type' => 'button', 'value' => 'X', 'class' => 'button', 'onclick' => '$(this).parent().remove()', 'title' => $this->gettext('remove_category')));
           $category_name  = new html_inputfield(array('name' => "_categories[$key]", 'class' => $field_class, 'size' => 30));
-          $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => $field_class, 'size' => 6));
+          $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => "$field_class colors", 'size' => 6));
           $categories_list .= html::div(null, $category_name->show($name) . '&nbsp;' . $category_color->show($color) . '&nbsp;' . $category_remove->show());
         }
 
@@ -261,16 +261,22 @@ class calendar extends rcube_plugin
         $p['blocks']['categories']['options']['categories'] = array(
           'content' => $new_category->show('') . '&nbsp;' . $add_category->show(),
         );
-      
+        
         $this->rc->output->add_script('function rcube_calendar_add_category(){
           var name = $("#rcmfd_new_category").val();
           if (name.length) {
             var input = $("<input>").attr("type", "text").attr("name", "_categories[]").attr("size", 30).val(name);
-            var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).val("000000");
+            var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).addClass("colors").val("000000");
             var button = $("<input>").attr("type", "button").attr("value", "X").addClass("button").click(function(){ $(this).parent().remove() });
             $("<div>").append(input).append("&nbsp;").append(color).append("&nbsp;").append(button).appendTo("#calendarcategories");
+            color.miniColors();
           }
         }');
+
+        // include color picker
+        $this->include_script('lib/js/jquery.miniColors.min.js');
+        $this->include_stylesheet('skins/' .$this->rc->config->get('skin') . '/jquery.miniColors.css');
+        $this->rc->output->add_script('$("input.colors").miniColors()', 'docready');
       }
     }
 
@@ -335,9 +341,42 @@ class calendar extends rcube_plugin
   }
 
   /**
+   * Dispatcher for calendar actions initiated by the client
+   */
+  function calendar_action()
+  {
+    $action = get_input_value('action', RCUBE_INPUT_POST);
+    $cal = get_input_value('c', RCUBE_INPUT_POST);
+    $success = $reload = false;
+    
+    switch ($action) {
+      case "new":
+        $success = $this->driver->create_calendar($cal);
+        $reload = true;
+        break;
+      case "edit":
+        $success = $this->driver->edit_calendar($cal);
+        $reload = true;
+        break;
+      case "remove":
+        if ($success = $this->driver->remove_calendar($cal))
+          $this->rc->output->command('plugin.calendar_destroy_source', array('id' => $cal['id']));
+        break;
+    }
+    
+    if ($success)
+      $this->rc->output->show_message('successfullysaved', 'confirmation');
+    else
+      $this->rc->output->show_message('calendar.errorsaving', 'error');
+
+    if ($success && $reload)
+      $this->rc->output->redirect('');
+  }
+  
+  /**
    * Dispatcher for event actions initiated by the client
    */
-  function event()
+  function event_action()
   {
     $action = get_input_value('action', RCUBE_INPUT_POST);
     $event = get_input_value('e', RCUBE_INPUT_POST);
