@@ -31,6 +31,8 @@ function rcube_calendar(settings)
     this.alarm_dialog = null;
     this.snooze_popup = null;
     this.dismiss_link = null;
+    this.selected_event = null;
+    this.selected_calendar = null;
     this.eventcount = [];
 
 
@@ -82,7 +84,7 @@ function rcube_calendar(settings)
     {
       var fromto, duration = event.end.getTime() / 1000 - event.start.getTime() / 1000;
       if (event.allDay)
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + (duration > 86400 ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + (duration > 86400 || event.start.getDay() != event.end.getDay() ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
       else if (duration < 86400 && event.start.getDay() == event.end.getDay())
         fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
           + $.fullCalendar.formatDate(event.end, settings['time_format']);
@@ -178,6 +180,7 @@ function rcube_calendar(settings)
       
       var $dialog = $("#eventedit");
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
+      me.selected_event = event;
 
       // reset dialog first, enable/disable fields according to editable state
       $('#eventtabs').get(0).reset();
@@ -613,9 +616,10 @@ function rcube_calendar(settings)
         calendar = { name:'', color:'cc0000' };
 
       // reset form first
-      $('#calendarform > form').get(0).reset();
+      var form = $('#calendarform > form');
+      form.get(0).reset();
       
-      var name = $('#calendar-name').val(calendar.name);
+      var name = $('#calendar-name').val(calendar.editname || calendar.name);
       var color = $('#calendar-color').val(calendar.color).miniColors('value', calendar.color);
       
       // dialog buttons
@@ -735,7 +739,7 @@ function rcube_calendar(settings)
       header: {
         left: 'prev,next today',
         center: 'title',
-        right: 'agendaDay,agendaWeek,month'
+        right: 'agendaDay,agendaWeek,month,list'
       },
       aspectRatio: 1,
       ignoreTimezone: false,  // will translate event dates to the client's timezone
@@ -748,7 +752,10 @@ function rcube_calendar(settings)
       firstDay : settings['first_day'],
       firstHour : settings['first_hour'],
       slotMinutes : 60/settings['timeslots'],
-      timeFormat: settings['time_format'],
+      timeFormat: {
+        '': settings['time_format'],
+        list: settings['time_format'] + '{ - ' + settings['time_format'] + '}'
+      },
       axisFormat : settings['time_format'],
       columnFormat: {
         month: 'ddd', // Mon
@@ -758,7 +765,8 @@ function rcube_calendar(settings)
       titleFormat: {
         month: 'MMMM yyyy',
         week: settings['date_long'].replace(/ yyyy/, '[ yyyy]') + "{ '&mdash;' " + settings['date_long'] + "}",
-        day: 'dddd ' + settings['date_long']
+        day: 'dddd ' + settings['date_long'],
+        list: settings['date_long']
       },
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
@@ -766,7 +774,9 @@ function rcube_calendar(settings)
         today: settings['today'],
         day: rcmail.gettext('day', 'calendar'),
         week: rcmail.gettext('week', 'calendar'),
-        month: rcmail.gettext('month', 'calendar')
+        month: rcmail.gettext('month', 'calendar'),
+        list: rcmail.gettext('agenda', 'calendar'),
+        basicDay: 'basic'
       },
       selectable: true,
       selectHelper: true,
@@ -775,7 +785,8 @@ function rcube_calendar(settings)
       },
       // event rendering
       eventRender: function(event, element, view) {
-        element.attr('title', event.title);
+        if (view.name != 'list')
+          element.attr('title', event.title);
         if (view.name == 'month') {
 /* attempt to limit the number of events displayed
    (could also be used to init fish-eye-view)

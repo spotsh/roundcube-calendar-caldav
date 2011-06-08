@@ -23,6 +23,7 @@ $labels['color'] = 'Color';
 $labels['day'] = 'Day';
 $labels['week'] = 'Week';
 $labels['month'] = 'Month';
+$labels['agenda'] = 'Agenda';
 $labels['new_event'] = 'New event';
 $labels['edit_event'] = 'Edit event';
 $labels['edit'] = 'Edit';

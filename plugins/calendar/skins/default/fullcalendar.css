@@ -614,5 +614,27 @@ table.fc-border-separate {
 .fc-agenda .ui-resizable-resizing { /* TODO: better selector */
 	_overflow: hidden;
 	}
-	
-	
+
+
+/* List view  (by bruederli@kolabsys.com)
+------------------------------------------------------------------------*/
+
+.fc-view-list {
+	border-top: 1px solid #ccc;
+}
+
+.fc-view-list .fc-list-header {
+	border-top-width: 0;
+	border-bottom-width: 0;
+	padding: 2px;
+	text-align: center;
+}
+
+.fc-list-section {
+	padding: 4px 2px;
+}
+
+.fc-list-section .fc-event {
+	position: relative;
+	margin: 1px 2px 3px 2px;
+}

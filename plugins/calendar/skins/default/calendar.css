@@ -500,6 +500,10 @@ a.alarm-action-snooze:after {
 	background-position: 0 -13px;
 }
 
+.fc-list-section .fc-event {
+	cursor: pointer;
+}
+
 /* Settings section */
 
 fieldset #calendarcategories div {
