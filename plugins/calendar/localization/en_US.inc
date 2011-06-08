@@ -17,6 +17,9 @@ $labels['calendars'] = 'Calendars';
 $labels['category'] = 'Category';
 $labels['categories'] = 'Categories';
 $labels['createcalendar'] = 'Create new calendar';
+$labels['editcalendar'] = 'Edit calendar properties';
+$labels['name'] = 'Name';
+$labels['color'] = 'Color';
 $labels['day'] = 'Day';
 $labels['week'] = 'Week';
 $labels['month'] = 'Month';
@@ -87,9 +90,11 @@ $labels['tabattachments'] = 'Attachments';
 
 // messages
 $labels['deleteventconfirm'] = "Do you really want to delete this event?";
+$labels['deletecalendarconfirm'] = "Do you really want to delete this calendar with all its events?";
 $labels['errorsaving'] = "Failed to save changes";
 $labels['operationfailed'] = "The requested operation failed";
 $labels['invalideventdates'] = "Invalid dates entered! Please check your input.";
+$labels['invalidcalendarproperties'] = "Invalid calendar properties! Please set a valid name.";
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

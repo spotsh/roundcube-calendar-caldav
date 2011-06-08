@@ -112,7 +112,7 @@ pre {
 
 #calendarslist li.selected {
 	background-color: #ccc;
-	border-bottom: 1px solid #999;
+	border-bottom: 1px solid #bbb;
 }
 
 #calendarslist li.selected span {
@@ -207,7 +207,8 @@ pre {
 }
 
 #eventshow,
-#eventedit {
+#eventedit,
+#calendarform {
 	display: none;
 }
 
@@ -217,6 +218,10 @@ pre {
 	right: 100px;
 	left: 100px;
 	text-align: center;
+}
+
+a.miniColors-trigger {
+	margin-top: -3px;
 }
 
 /* jQuery UI overrides */
@@ -256,6 +261,7 @@ pre {
 	border-radius: 0;
 }
 
+div.form-section,
 #eventshow div.event-section,
 #eventtabs div.event-section {
 	margin-top: 0.2em;
@@ -287,7 +293,8 @@ pre {
 }
 
 #eventshow label,
-#eventedit label {
+#eventedit label,
+.form-section label {
 	display: inline-block;
 	min-width: 7em;
 	padding-right: 0.5em;
@@ -434,8 +441,29 @@ a.alarm-action-snooze:after {
 
 /* fullcalendar style overrides */
 
+.fc-content {
+	position: absolute !important;
+	top: 37px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+}
+
 .fc-event-title {
 	font-weight: bold;
+}
+
+.fc-event-hori .fc-event-title {
+	font-weight: normal;
+	white-space: nowrap;
+}
+
+.fc-event-hori .fc-event-time {
+	white-space: nowrap;
+	font-weight: normal;
+	font-size: 10px;
+	padding-right: 0.6em;
 }
 
 .fc-event-cateories {

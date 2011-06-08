@@ -75,7 +75,7 @@ class database_driver extends calendar_driver
     if (!empty($this->rc->user->ID)) {
       $calendar_ids = array();
       $result = $this->rc->db->query(
-        "SELECT * FROM " . $this->db_calendars . "
+        "SELECT *, calendar_id AS id FROM " . $this->db_calendars . "
          WHERE user_id=?",
          $this->rc->user->ID
       );
@@ -121,9 +121,58 @@ class database_driver extends calendar_driver
     );
     
     if ($result)
-      return $this->rc->db->insert_id($this->$sequence_calendars);
+      return $this->rc->db->insert_id($this->sequence_calendars);
     
     return false;
+  }
+  
+  /**
+   * Update properties of an existing calendar
+   *
+   * @see calendar_driver::edit_calendar()
+   */
+  public function edit_calendar($prop)
+  {
+    $query = $this->rc->db->query(
+      "UPDATE " . $this->db_calendars . "
+       SET   name=?, color=?
+       WHERE calendar_id=?
+       AND   user_id=?",
+      $prop['name'],
+      $prop['color'],
+      $prop['id'],
+      $this->rc->user->ID
+    );
+    
+    return $this->rc->db->affected_rows($query);
+  }
+
+  /**
+   * Delete the given calendar with all its contents
+   *
+   * @see calendar_driver::remove_calendar()
+   */
+  public function remove_calendar($prop)
+  {
+    if (!$this->calendars[$prop['id']])
+      return false;
+    
+    // delete all events of this calendar
+    $query = $this->rc->db->query(
+      "DELETE FROM " . $this->db_events . "
+       WHERE calendar_id=?",
+       $prop['id']
+    );
+    
+    // TODO: also delete linked attachments
+    
+    $query = $this->rc->db->query(
+      "DELETE FROM " . $this->db_calendars . "
+       WHERE calendar_id=?",
+       $prop['id']
+    );
+    
+    return $this->rc->db->affected_rows($query);
   }
 
   /**
@@ -316,8 +365,8 @@ class database_driver extends calendar_driver
       else {  // absolute timestamp
         $notify_at = $notify[0];
       }
-      
-      if ($notify_at > time())
+
+      if ($event['start'] > time())
         return date('Y-m-d H:i:s', $notify_at);
     }
     
@@ -508,7 +557,7 @@ class database_driver extends calendar_driver
       $success = $this->rc->db->affected_rows($query);
       if ($success && $update_master)
         $this->_update_event($master, true);
-console($savemode, $master['id'], $success);
+
       return $success;
     }
     
@@ -699,8 +748,15 @@ console($savemode, $master['id'], $success);
    */
   public function remove_category($name)
   {
-    // TBD. alter events accordingly
-    return false;
+    $query = $this->rc->db->query(
+      "UPDATE " . $this->db_events . "
+       SET   categories=''
+       WHERE categories=?
+       AND   calendar_id IN (" . $this->calendar_ids . ")",
+      $name
+    );
+    
+    return $this->rc->db->affected_rows($query);
   }
 
   /**
@@ -708,8 +764,16 @@ console($savemode, $master['id'], $success);
    */
   public function replace_category($oldname, $name, $color)
   {
-    // TBD. alter events accordingly
-    return false;
+    $query = $this->rc->db->query(
+      "UPDATE " . $this->db_events . "
+       SET   categories=?
+       WHERE categories=?
+       AND   calendar_id IN (" . $this->calendar_ids . ")",
+      $name,
+      $oldname
+    );
+    
+    return $this->rc->db->affected_rows($query);
   }
 
 }

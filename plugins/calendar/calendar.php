@@ -50,7 +50,7 @@ class calendar extends rcube_plugin
     }
     
     // load localizations
-    $this->add_texts('localization/', true);
+    $this->add_texts('localization/', !$this->rc->action || $this->rc->task != 'calendar');
 
     // load Calendar user interface which includes jquery-ui
     $this->require_plugin('jqueryui');
@@ -71,10 +71,11 @@ class calendar extends rcube_plugin
 
       // register calendar actions
       $this->register_action('index', array($this, 'calendar_view'));
-      $this->register_action('plugin.calendar', array($this, 'calendar_view'));
+      $this->register_action('plugin.event', array($this, 'event_action'));
+      $this->register_action('plugin.calendar', array($this, 'calendar_action'));
       $this->register_action('plugin.load_events', array($this, 'load_events'));
-      $this->register_action('plugin.event', array($this, 'event'));
       $this->register_action('plugin.export_events', array($this, 'export_events'));
+      $this->register_action('plugin.randomdata', array($this, 'generate_randomdata'));
       $this->add_hook('keep_alive', array($this, 'keep_alive'));
       
       // set user's timezone
@@ -180,7 +181,7 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
         'content' => $select->show($this->rc->config->get('calendar_default_view', "agendaWeek")),
       );
-      
+/*
       $field_id = 'rcmfd_time_format';
       $choices = array('HH:mm', 'H:mm', 'h:mmt');
       $select = new html_select(array('name' => '_time_format', 'id' => $field_id));
@@ -189,7 +190,7 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('time_format'))),
         'content' => $select->show($this->rc->config->get('calendar_time_format', "HH:mm")),
       );
-      
+*/
       $field_id = 'rcmfd_timeslot';
       $choices = array('1', '2', '3', '4', '6');
       $select = new html_select(array('name' => '_timeslots', 'id' => $field_id));
@@ -216,8 +217,8 @@ class calendar extends rcube_plugin
       $field_id = 'rcmfd_alarm';
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
-      $select_type->add($this->gettext('alarmdisplayoption'), 'DISPLAY');
-      $select_type->add($this->gettext('alarmemailoption'), 'EMAIL');
+      foreach ($this->driver->alarm_types as $type)
+        $select_type->add($this->gettext(strtolower("alarm{$type}option")), $type);
       
       $input_value = new html_inputfield(array('name' => '_alarm_value', 'id' => $field_id . 'value', 'size' => 3));
       $select_offset = new html_select(array('name' => '_alarm_offset', 'id' => $field_id . 'offset'));
@@ -246,7 +247,7 @@ class calendar extends rcube_plugin
           $field_class = 'rcmfd_category_' . str_replace(' ', '_', $name);
           $category_remove = new html_inputfield(array('type' => 'button', 'value' => 'X', 'class' => 'button', 'onclick' => '$(this).parent().remove()', 'title' => $this->gettext('remove_category')));
           $category_name  = new html_inputfield(array('name' => "_categories[$key]", 'class' => $field_class, 'size' => 30));
-          $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => $field_class, 'size' => 6));
+          $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => "$field_class colors", 'size' => 6));
           $categories_list .= html::div(null, $category_name->show($name) . '&nbsp;' . $category_color->show($color) . '&nbsp;' . $category_remove->show());
         }
 
@@ -260,16 +261,22 @@ class calendar extends rcube_plugin
         $p['blocks']['categories']['options']['categories'] = array(
           'content' => $new_category->show('') . '&nbsp;' . $add_category->show(),
         );
-      
+        
         $this->rc->output->add_script('function rcube_calendar_add_category(){
           var name = $("#rcmfd_new_category").val();
           if (name.length) {
             var input = $("<input>").attr("type", "text").attr("name", "_categories[]").attr("size", 30).val(name);
-            var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).val("000000");
+            var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).addClass("colors").val("000000");
             var button = $("<input>").attr("type", "button").attr("value", "X").addClass("button").click(function(){ $(this).parent().remove() });
             $("<div>").append(input).append("&nbsp;").append(color).append("&nbsp;").append(button).appendTo("#calendarcategories");
+            color.miniColors();
           }
         }');
+
+        // include color picker
+        $this->include_script('lib/js/jquery.miniColors.min.js');
+        $this->include_stylesheet('skins/' .$this->rc->config->get('skin') . '/jquery.miniColors.css');
+        $this->rc->output->add_script('$("input.colors").miniColors()', 'docready');
       }
     }
 
@@ -334,9 +341,42 @@ class calendar extends rcube_plugin
   }
 
   /**
+   * Dispatcher for calendar actions initiated by the client
+   */
+  function calendar_action()
+  {
+    $action = get_input_value('action', RCUBE_INPUT_POST);
+    $cal = get_input_value('c', RCUBE_INPUT_POST);
+    $success = $reload = false;
+    
+    switch ($action) {
+      case "new":
+        $success = $this->driver->create_calendar($cal);
+        $reload = true;
+        break;
+      case "edit":
+        $success = $this->driver->edit_calendar($cal);
+        $reload = true;
+        break;
+      case "remove":
+        if ($success = $this->driver->remove_calendar($cal))
+          $this->rc->output->command('plugin.calendar_destroy_source', array('id' => $cal['id']));
+        break;
+    }
+    
+    if ($success)
+      $this->rc->output->show_message('successfullysaved', 'confirmation');
+    else
+      $this->rc->output->show_message('calendar.errorsaving', 'error');
+
+    if ($success && $reload)
+      $this->rc->output->redirect('');
+  }
+  
+  /**
    * Dispatcher for event actions initiated by the client
    */
-  function event()
+  function event_action()
   {
     $action = get_input_value('action', RCUBE_INPUT_POST);
     $event = get_input_value('e', RCUBE_INPUT_POST);
@@ -377,7 +417,7 @@ class calendar extends rcube_plugin
       $this->rc->output->show_message('calendar.errorsaving', 'error');
 
     if ($success && $reload)
-      $this->rc->output->command('plugin.reload_calendar', array());
+      $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
   }
   
   /**
@@ -472,6 +512,9 @@ class calendar extends rcube_plugin
       $this->rc->gettext('nov'), $this->rc->gettext('dec')
     );
     $settings['today'] = rcube_label('today');
+    
+    // user prefs
+    $settings['hidden_calendars'] = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
 
     return $settings;
   }
@@ -500,7 +543,8 @@ class calendar extends rcube_plugin
   function fromGMT($datetime, $user_tz = true)
   {
     $tz = $user_tz ? $this->gmt_offset : date('Z');
-    return strtotime($datetime) + $tz;
+    $ts = is_numeric($datetime) ? $datetime : strtotime($datetime);
+    return $ts + $tz;
   }
 
   /**
@@ -693,6 +737,55 @@ class calendar extends rcube_plugin
       't'    => 'a',
       'u'    => 'c',
     ));
+  }
+  
+  /**
+   * TEMPORARY: generate random event data for testing
+   * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=plugin.randomdata&_num=500
+   */
+  public function generate_randomdata()
+  {
+    $cats = array_keys($this->driver->list_categories());
+    $cals = $this->driver->list_calendars();
+    $num = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
+    
+    while ($count++ < $num) {
+      $start = round((time() + rand(-2600, 2600) * 1000) / 300) * 300;
+      $duration = round(rand(30, 360) / 30) * 30 * 60;
+      $allday = rand(0,20) > 18;
+      $alarm = rand(-30,12) * 5;
+      $fb = rand(0,2);
+      
+      if (date('G', $start) > 23)
+        $start -= 3600;
+      
+      if ($allday) {
+        $start = strtotime(date('Y-m-d 00:00:00', $start));
+        $duration = 86399;
+      }
+      
+      $title = '';
+      $len = rand(2, 12);
+      $words = explode(" ", "The Hough transform is named after Paul Hough who patented the method in 1962. It is a technique which can be used to isolate features of a particular shape within an image. Because it requires that the desired features be specified in some parametric form, the classical Hough transform is most commonly used for the de- tection of regular curves such as lines, circles, ellipses, etc. A generalized Hough transform can be employed in applications where a simple analytic description of a feature(s) is not possible. Due to the computational complexity of the generalized Hough algorithm, we restrict the main focus of this discussion to the classical Hough transform. Despite its domain restrictions, the classical Hough transform (hereafter referred to without the classical prefix ) retains many applications, as most manufac- tured parts (and many anatomical parts investigated in medical imagery) contain feature boundaries which can be described by regular curves. The main advantage of the Hough transform technique is that it is tolerant of gaps in feature boundary descriptions and is relatively unaffected by image noise.");
+      $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
+      for ($i = 0; $i < $len; $i++)
+        $title .= $words[rand(0,count($words)-1)] . " ";
+      
+      $this->driver->new_event(array(
+        'uid' => $this->generate_uid(),
+        'start' => $start,
+        'end' => $start + $duration,
+        'allday' => $allday,
+        'title' => rtrim($title),
+        'free_busy' => $fb == 2 ? 'outofoffice' : ($fb ? 'busy' : 'free'),
+        'categories' => $cats[array_rand($cats)],
+        'calendar' => array_rand($cals),
+        'alarms' => $alarm > 0 ? "-{$alarm}M:DISPLAY" : '',
+        'priority' => 1,
+      ));
+    }
+    
+    $this->rc->output->redirect('');
   }
 
 }

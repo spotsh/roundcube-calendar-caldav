@@ -18,13 +18,20 @@
       <roundcube:object name="plugin.calendar_list" id="calendarslist" />
       </div>
       <div class="boxfooter">
-        <roundcube:button command="plugin.createcalendar" type="link" title="calendar.createcalendar" class="buttonPas addgroup" classAct="button addgroup" content=" " />
-        <roundcube:button name="calendarmenulink" id="calendarmenulink" type="link" title="calendaractions" class="button groupactions" onclick="return false" content=" " />
+        <roundcube:button command="plugin.calendar-create" type="link" title="calendar.createcalendar" class="buttonPas addgroup" classAct="button addgroup" content=" " />
+        <roundcube:button name="calendaroptionslink" id="calendaroptionslink" type="link" title="calendaractions" class="button groupactions" onclick="rcmail_ui.show_popup('calendaroptions');return false" content=" " />
       </div>
     </div>
   </div>
   <div id="sidebartoggle"></div>
   <div id="calendar"></div>
+</div>
+
+<div id="calendaroptionsmenu" class="popupmenu">
+  <ul>
+    <li><roundcube:button command="plugin.calendar-edit" label="calendar.edit" classAct="active" /></li>
+    <li><roundcube:button command="plugin.calendar-remove" label="calendar.remove" classAct="active" /></li>
+  </ul>
 </div>
 
 <div id="eventshow">
@@ -163,9 +170,24 @@
   
   <roundcube:object name="plugin.edit_recurring_warning" class="edit-recurring-warning" style="display:none" />
 </div>
+
+<div id="calendarform">
+  <form action="#">
+    <div class="form-section">
+      <label for="calendar-name"><roundcube:label name="calendar.name" /></label>
+      <input type="text" name="name" size="20" id="calendar-name" />
+    </div>
+    <div class="form-section">
+      <label for="calendar-color"><roundcube:label name="calendar.color" /></label>
+      <input type="text" name="color" size="6"  id="calendar-color" />
+    </div>
+  </form>
+</div>
+
 <div id="alarm-snooze-dropdown" class="popupmenu">
   <roundcube:object name="plugin.snooze_select" type="ul" />
 </div>
+
 <div id="calendartoolbar">
   <roundcube:button command="plugin.addevent" type="link" class="buttonPas addevent" classAct="button addevent" classSel="button addeventSel" title="calendar.new_event" content=" " />
   <roundcube:button command="plugin.print" type="link" class="buttonPas print" classAct="button print" classSel="button printSel" title="calendar.print" content=" " />
@@ -182,6 +204,10 @@
 <roundcube:object name="plugin.calendar_css" />
 
 <script type="text/javascript">
+
+// use skin functions to handle popup-menus
+rcube_init_mail_ui();
+rcmail_ui.popups.calendaroptions = { id:'calendaroptionsmenu', above:1, obj:$('#calendaroptionsmenu') };
 
 $(document).ready(function(e){
   // initialize sidebar toggle
