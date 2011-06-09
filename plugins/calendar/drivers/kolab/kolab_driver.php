@@ -121,6 +121,27 @@ class kolab_driver extends calendar_driver
   }
 
   /**
+   * Update properties of an existing calendar
+   *
+   * @see calendar_driver::edit_calendar()
+   */
+  public function edit_calendar($prop)
+  {
+    return false;
+  }
+
+  /**
+   * Delete the given calendar with all its contents
+   *
+   * @see calendar_driver::remove_calendar()
+   */
+  public function remove_calendar($prop)
+  {
+    return false;
+  }
+
+
+  /**
    * Add a single event to the database
    *
    * @see Driver:new_event()
