@@ -620,18 +620,25 @@ table.fc-border-separate {
 ------------------------------------------------------------------------*/
 
 .fc-view-list {
-	border-top: 1px solid #ccc;
+	border: 1px solid #ccc;
+	width: 99%;
 }
 
 .fc-view-list .fc-list-header {
-	border-top-width: 0;
-	border-bottom-width: 0;
+	border-width: 0;
+	border-bottom-width: 1px;
 	padding: 2px;
 	text-align: center;
 }
 
 .fc-list-section {
 	padding: 4px 2px;
+	border-width: 0;
+	border-bottom-width: 1px;
+}
+
+.fc-view-list .fc-last {
+	border-bottom-width: 0;
 }
 
 .fc-list-section .fc-event {

@@ -177,6 +177,7 @@ class calendar extends rcube_plugin
       $select->add($this->gettext('day'), "agendaDay");
       $select->add($this->gettext('week'), "agendaWeek");
       $select->add($this->gettext('month'), "month");
+      $select->add($this->gettext('agenda'), "list");
       $p['blocks']['view']['options']['default_view'] = array(
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
         'content' => $select->show($this->rc->config->get('calendar_default_view', "agendaWeek")),

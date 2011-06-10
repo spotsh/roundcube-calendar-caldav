@@ -87,7 +87,7 @@ var defaults = {
 		thisWeek: 'This week',
 		nextWeek: 'Next week',
 		thisMonth: 'This month',
-		nextMonth: 'Next Month',
+		nextMonth: 'Next month',
 		future: 'Future events'
 	},
 	
@@ -915,12 +915,12 @@ function EventManager(options, _sources) {
 	function fetchEvents(start, end, src) {
 		rangeStart = start;
 		rangeEnd = end;
-		cache = typeof src != 'undefined' ? $.grep(cache, function(e) { return !isSourcesEqual(e.source, source); }) : [];
+		cache = typeof src != 'undefined' ? $.grep(cache, function(e) { return !isSourcesEqual(e.source, src); }) : [];
 		var fetchID = ++currentFetchID;
 		var len = sources.length;
 		pendingSourceCnt = typeof src == 'undefined' ? len : 1;
 		for (var i=0; i<len; i++) {
-			if (typeof src == 'undefined' || src == sources[i])
+			if (typeof src == 'undefined' || isSourcesEqual(sources[i], src))
 				fetchEventSource(sources[i], fetchID);
 		}
 	}
@@ -5415,6 +5415,8 @@ function ListEventRenderer() {
 		
 			lazySegBind(segContainer, seg, bindSeg);
 		}
+		
+		markFirstLast(getListContainer());
 	}
 	
 	function bindSeg(event, eventElement, seg) {
@@ -5510,7 +5512,7 @@ function ListView(element, calendar) {
 	}
 	
 	function setHeight(height, dateChanged) {
-		body.css('height', height+'px').css('overflow', 'auto');
+		body.css('height', (height-1)+'px').css('overflow', 'auto');
 	}
 
 	function setWidth(width) {
