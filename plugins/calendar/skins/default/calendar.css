@@ -461,16 +461,21 @@ a.alarm-action-snooze:after {
 
 .fc-event-hori .fc-event-time {
 	white-space: nowrap;
-	font-weight: normal;
+	font-weight: normal !important;
 	font-size: 10px;
 	padding-right: 0.6em;
+}
+
+.fc-grid .fc-event-time {
+	font-weight: normal !important;
+	padding-right: 0.3em;
 }
 
 .fc-event-cateories {
 	font-style:italic; 
 }
 
-.fc-event-location {
+div.fc-event-location {
 	font-size: 90%;
 }
 
@@ -502,6 +507,27 @@ a.alarm-action-snooze:after {
 
 .fc-list-section .fc-event {
 	cursor: pointer;
+}
+
+.fc-view-list div.fc-list-header,
+.fc-view-table td.fc-list-header {
+	padding: 3px;
+	background: #dddddd;
+	background-image: -moz-linear-gradient(center top, #f4f4f4, #d2d2d2);
+	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #f4f4f4), color-stop(1.00, #d2d2d2));
+	filter: progid:DXImageTransform.Microsoft.gradient(enabled='true', startColorstr=#f4f4f4, endColorstr=#d2d2d2, GradientType=1);
+	font-weight: bold;
+	color: #333;
+}
+
+.fc-view-list .fc-event-skin .fc-event-content {
+	background: #F6F6F6;
+	padding: 2px;
+}
+
+.fc-view-list .fc-event-skin .fc-event-title,
+.fc-view-list .fc-event-skin .fc-event-location {
+	color: #333;
 }
 
 /* Settings section */

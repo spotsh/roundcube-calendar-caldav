@@ -739,7 +739,7 @@ function rcube_calendar(settings)
       header: {
         left: 'prev,next today',
         center: 'title',
-        right: 'agendaDay,agendaWeek,month,list'
+        right: 'agendaDay,agendaWeek,month,list,table'
       },
       aspectRatio: 1,
       ignoreTimezone: false,  // will translate event dates to the client's timezone
@@ -754,20 +754,25 @@ function rcube_calendar(settings)
       slotMinutes : 60/settings['timeslots'],
       timeFormat: {
         '': settings['time_format'],
-        list: settings['time_format'] + '{ - ' + settings['time_format'] + '}'
+        list: settings['time_format'] + '{ - ' + settings['time_format'] + '}',
+        table: settings['time_format'] + '{ - ' + settings['time_format'] + '}'
       },
       axisFormat : settings['time_format'],
       columnFormat: {
         month: 'ddd', // Mon
         week: 'ddd ' + settings['date_short'], // Mon 9/7
-        day: 'dddd ' + settings['date_short']  // Monday 9/7
+        day: 'dddd ' + settings['date_short'],  // Monday 9/7
+        list: settings['date_agena'],
+        table: settings['date_agena']
       },
       titleFormat: {
         month: 'MMMM yyyy',
         week: settings['date_long'].replace(/ yyyy/, '[ yyyy]') + "{ '&mdash;' " + settings['date_long'] + "}",
         day: 'dddd ' + settings['date_long'],
-        list: settings['date_long']
+        list: settings['date_long'],
+        table: settings['date_long']
       },
+      smartSections: true,
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
       buttonText: {
@@ -776,7 +781,7 @@ function rcube_calendar(settings)
         week: rcmail.gettext('week', 'calendar'),
         month: rcmail.gettext('month', 'calendar'),
         list: rcmail.gettext('agenda', 'calendar'),
-        basicDay: 'basic'
+        table: rcmail.gettext('table', 'calendar')
       },
       selectable: true,
       selectHelper: true,
@@ -785,7 +790,7 @@ function rcube_calendar(settings)
       },
       // event rendering
       eventRender: function(event, element, view) {
-        if (view.name != 'list')
+        if (view.name != 'list' && view.name != 'table')
           element.attr('title', event.title);
         if (view.name == 'month') {
 /* attempt to limit the number of events displayed
@@ -940,7 +945,7 @@ function rcube_calendar(settings)
     var shift_enddate = function(dateText) {
       var newstart = parse_datetime('0', dateText);
       var newend = new Date(newstart.getTime() + $('#edit-startdate').data('duration') * 1000);
-      $('#edit-enddate').val($.fullCalendar.formatDate(newend, cal.settings['date_format']));
+      $('#edit-enddate').val($.fullCalendar.formatDate(newend, me.settings['date_format']));
     };
 
     // init event dialog
