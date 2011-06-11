@@ -236,6 +236,17 @@ class calendar extends rcube_plugin
         'content' => $input_value->show($preset[0]) . ' ' . $select_offset->show($preset[1]),
       );
       
+      // default calendar selection
+      $field_id = 'rcmfd_default_calendar';
+      $select_cal = new html_select(array('name' => '_default_calendar', 'id' => $field_id));
+      foreach ((array)$this->driver->list_calendars() as $id => $prop) {
+        if (!$prop['readononly'])
+          $select_cal->add($prop['name'], strval($id));
+      }
+      $p['blocks']['view']['options']['defaultcalendar'] = array(
+        'title' => html::label($field_id . 'value', Q($this->gettext('defaultcalendar'))),
+        'content' => $select_cal->show($this->rc->config->get('calendar_default_calendar', '')),
+      );
       
       // category definitions
       if (!$this->driver->categoriesimmutable) {
@@ -305,6 +316,7 @@ class calendar extends rcube_plugin
         'calendar_first_day'    => get_input_value('_first_day', RCUBE_INPUT_POST),
         'calendar_default_alarm_type'   => get_input_value('_alarm_type', RCUBE_INPUT_POST),
         'calendar_default_alarm_offset' => $default_alam,
+        'calendar_default_calendar'     => get_input_value('_default_calendar', RCUBE_INPUT_POST),
       );
       
       // categories
@@ -475,6 +487,7 @@ class calendar extends rcube_plugin
     $settings = array();
     
     // configuration
+    $settings['default_calendar'] = $this->rc->config->get('calendar_default_calendar');
     $settings['default_view'] = (string)$this->rc->config->get('calendar_default_view', "agendaWeek");
     $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', "yyyy/MM/dd");
     $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', "M/d");

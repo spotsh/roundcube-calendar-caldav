@@ -22,7 +22,7 @@
 - View: 3.5: Search
 + View: 3.9: Alter event with drag/drop
 + Option: 4.12: Set default reminder time
-- Edit: 3.23: Specify folder for new event (prefs)
++ Option: 3.23: Specify folder for new event (prefs)
 - Receive: 1.20: Invitation handling
 
 - View: 3.4: Fish-Eye View For Busy Days

@@ -728,7 +728,7 @@ function rcube_calendar(settings)
         }).data('id', id);
       }
       
-      if (!cal.readonly && !this.selected_calendar) {
+      if (!cal.readonly && !this.selected_calendar && (!settings.default_calendar || settings.default_calendar == id)) {
         this.selected_calendar = id;
         rcmail.enable_command('plugin.addevent', true);
       }
@@ -754,6 +754,7 @@ function rcube_calendar(settings)
       slotMinutes : 60/settings['timeslots'],
       timeFormat: {
         '': settings['time_format'],
+        agenda: settings['time_format'] + '{ - ' + settings['time_format'] + '}',
         list: settings['time_format'] + '{ - ' + settings['time_format'] + '}',
         table: settings['time_format'] + '{ - ' + settings['time_format'] + '}'
       },

@@ -158,7 +158,8 @@ class calendar_ui
     $attrib['name'] = 'calendar';
     $select = new html_select($attrib);
     foreach ((array)$this->calendar->driver->list_calendars() as $id => $prop) {
-      $select->add($prop['name'], $id);
+      if (!$prop['readonly'])
+        $select->add($prop['name'], $id);
     }
 
     return $select->show(null);

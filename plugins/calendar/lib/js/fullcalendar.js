@@ -5350,7 +5350,7 @@ function ListEventRenderer() {
 				times = renderEventTime(event, seg);
 				skinCss = getSkinCss(event, opt);
 				skinCssAttr = (skinCss ? " style='" + skinCss + "'" : '');
-				classes = ['fc-event', 'fc-event-skin', 'fc-event-vert', 'fc-corner-left', 'fc-corner-right', 'fc-corner-top', 'fc-corner-bottom'];
+				classes = ['fc-event', 'fc-event-skin', 'fc-event-vert', 'fc-corner-top', 'fc-corner-bottom'];
 				if (event.source && event.source.className) {
 					classes = classes.concat(event.source.className);
 				}

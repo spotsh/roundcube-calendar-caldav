@@ -10,6 +10,7 @@ $labels['add_category'] = 'Add category';
 $labels['remove_category'] = 'Remove category';
 $labels['add_calendar'] = 'Add calendar';
 $labels['remove_calendar'] = 'Remove calendar';
+$labels['defaultcalendar'] = 'Create new events in';
 
 // calendar
 $labels['calendar'] = 'Calendar';
