@@ -118,7 +118,7 @@ class kolab_calendar
             $rec_event['end'] = $rec_end;
             $events[] = $rec_event;
           }
-          else if ($start_ts > $end)  // stop loop if out of range
+          else if ($rec_start > $end)  // stop loop if out of range
             break;
         }
       }
