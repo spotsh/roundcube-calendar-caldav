@@ -155,7 +155,7 @@ class kolab_calendar
   	if (!is_array($event))
             return false;
 			
-	write_log("err_log",$event);	
+		
 		
 	//generate new event from RC input
 	$object = $this->_from_rcube_event($event);
@@ -163,9 +163,9 @@ class kolab_calendar
 	//generate new UID
 	$object['uid'] = $this->storage->generateUID();
 		
-	write_log("err_log",$object);
+	
 	$saved = $this->storage->save($object);
-			write_log("err_log",$saved);
+			
     return $saved;
   }
 
