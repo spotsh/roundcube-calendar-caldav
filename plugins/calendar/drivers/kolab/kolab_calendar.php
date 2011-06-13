@@ -308,7 +308,7 @@ class kolab_calendar
      	$alarmbase = explode(":",$event['alarms']);
 		
 		//get number only
-		$avalue = preg_replace('/[^0-9]/', '', $alarmbase[0]); write_log('err_log',$avalue);
+		$avalue = preg_replace('/[^0-9]/', '', $alarmbase[0]); 
 	
 		  if(preg_match("/H/",$alarmbase[0]))
 		  {
