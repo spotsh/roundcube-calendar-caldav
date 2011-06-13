@@ -26,6 +26,21 @@ class kolab_calendar
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
   private $sensitivity_map = array('public', 'private', 'confidential');
+
+  
+  private $fieldmap = array(
+  // kolab       => roundcube
+  	'summary' => 'title',
+  	'location'=>'location',
+  	'body'=>'description',
+  	'categories'=>'categories',
+  	'start-date'=>'start',
+  	'end-date'=>'end',
+  	'sensitivity'=>'sensitivity',
+  	'show-time-as' => 'free_busy',
+  	'alarm','alarms'
+  	      
+    );
   
   /**
    * Default constructor
@@ -63,7 +78,7 @@ class kolab_calendar
   public function get_color()
   {
     // TODO: read color from backend (not yet supported)
-    return '0000cc';
+    return '0000dd';
   }
   
   
@@ -88,7 +103,8 @@ class kolab_calendar
     require_once 'Horde/Date/Recurrence.php';
     
     $this->_fetch_events();
-    
+	
+	    
     $events = array();
     foreach ($this->events as $id => $event) {
       // list events in requested time window
@@ -136,7 +152,21 @@ class kolab_calendar
    */
   public function insert_event($event)
   {
-    return false;
+  	if (!is_array($event))
+            return false;
+			
+	write_log("err_log",$event);	
+		
+	//generate new event from RC input
+	$object = $this->_from_rcube_event($event);
+	
+	//generate new UID
+	$object['uid'] = $this->storage->generateUID();
+		
+	write_log("err_log",$object);
+	$saved = $this->storage->save($object);
+			write_log("err_log",$saved);
+    return $saved;
   }
 
   /**
@@ -254,16 +284,50 @@ class kolab_calendar
    * Convert the given event record into a data structure that can be passed to Kolab_Storage backend for saving
    * (opposite of self::_to_rcube_event())
    */
-  private function _from_rcube_eventt($event)
+  private function _from_rcube_event($event)
   {
-    $object = array();
     
-    // set end-date to 00:00:00 of the following day
-    if ($event['all_day'])
-      $event['end']++;
+	$object = array
+	(
+		// kolab       => roundcube
+	  	'summary' => $event['title'],
+	  	'location'=> $event['location'],
+	  	'body'=> $event['description'],
+	  	'categories'=> $event['categories'],
+	  	'start-date'=>$event['start'],
+	  	'end-date'=>$event['end'],
+	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
+	  	'show-time-as' => $event['free_busy'],
+  	  	 
+	);
+	
+	//handle alarms
+	if ($event['alarms']) 
+	{
+		//get the value
+     	$alarmbase = explode(":",$event['alarms']);
+		
+		//get number only
+		$avalue = preg_replace('/[^0-9]/', '', $alarmbase[0]); write_log('err_log',$avalue);
+	
+		  if(preg_match("/H/",$alarmbase[0]))
+		  {
+		  	$object['alarm'] = $avalue*60;
+			
+		  }else if (preg_match("/D/",$alarmbase[0]))
+		  	{
+		  		$object['alarm'] = $avalue*24*60;
+				
+		  	}else
+				{
+					//minutes
+					$object['alarm'] = $avalue;
+				}
+	    }
+		
+	
     
-    
-    return $object;
+	return $object;
   }
 
 }
