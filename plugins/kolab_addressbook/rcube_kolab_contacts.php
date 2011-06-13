@@ -251,7 +251,16 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // search by ID
         if ($fields == $this->primary_key) {
-            return $this->get_record($value);
+            $ids    = !is_array($value) ? explode(',', $value) : $value;
+            $result = new rcube_result_set();
+
+            foreach ($ids as $id) {
+                if ($rec = $this->get_record($id, true)) {
+                    $result->add($rec);
+                    $result->count++;
+                }
+            }
+            return $result;
         }
         else if ($fields == '*') {
           $fields = array_keys($this->coltypes);
