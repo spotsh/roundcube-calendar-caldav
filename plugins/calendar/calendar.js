@@ -493,11 +493,11 @@ function rcube_calendar(settings)
     this.delete_event = function(event) {
       // show extended confirm dialog for recurring events, use jquery UI dialog
       if (event.recurrence)
-        return recurring_edit_confirm({ id:event.id }, 'remove');
+        return recurring_edit_confirm({ id:event.id, calendar:event.calendar }, 'remove');
       
       // send remove request to plugin
       if (confirm(rcmail.gettext('deleteventconfirm', 'calendar'))) {
-        rcmail.http_post('plugin.event', { action:'remove', e:{ id:event.id } });
+        rcmail.http_post('plugin.event', { action:'remove', e:{ id:event.id, calendar:event.calendar } });
         return true;
       }
 
