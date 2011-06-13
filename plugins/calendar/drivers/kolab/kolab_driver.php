@@ -70,6 +70,7 @@ class kolab_driver extends calendar_driver
               $this->calendars[$calendar->id] = array(
                 'id' => $calendar->id,
                 'name' => $calendar->get_name(),
+                'editname' => $calendar->get_foldername(),
                 'color' => $calendar->get_color(),
                 'readonly' => $c_folder->_owner != $_SESSION['username'],
               );

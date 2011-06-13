@@ -71,6 +71,17 @@ class kolab_calendar
     $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
     return strlen($dispname) ? $dispname : $this->imap_folder;
   }
+  
+  /**
+   * Getter for the top-end calendar folder name (not the entire path)
+   *
+   * @return string Name of this calendar
+   */
+  public function get_foldername()
+  {
+    $parts = explode('/', $this->imap_folder);
+    return end($parts);
+  }
 
   /**
    * Return color to display this calendar
