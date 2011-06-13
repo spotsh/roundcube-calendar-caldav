@@ -178,8 +178,29 @@ class kolab_calendar
 
   public function update_event($event)
   {
-    
-    return false;
+     $updated = false;
+	 $old = $this->storage->getObject($event['id']);
+	 $object = array_merge($old, $this->_from_rcube_event($event));
+	 $saved = $this->storage->save($object, $event['id']);
+            if (PEAR::isError($saved)) {
+                raise_error(array(
+                  'code' => 600, 'type' => 'php',
+                  'file' => __FILE__, 'line' => __LINE__,
+                  'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
+                true, false);
+            }
+            else {
+               $updated = true;
+            }
+	 
+    return $updated;
+  }
+
+
+  public function delete_event($event)
+  {
+			
+	 return true;
   }
 
 
