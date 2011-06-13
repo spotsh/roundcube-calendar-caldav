@@ -74,8 +74,8 @@ class calendar_ui
   {
     $skin = $this->rc->config->get('skin');
     $this->calendar->add_button(array(
-      'command' => 'plugin.export_events',
-      'href' => './?_task=calendar&amp;_action=plugin.export_events',
+      'command' => 'export_events',
+      'href' => './?_task=calendar&amp;_action=export_events',
       'title' => 'calendar.export',
       'imagepas' => 'skins/' . $skin . '/images/export.png',
       'imageact' => 'skins/' . $skin . '/images/export.png'),

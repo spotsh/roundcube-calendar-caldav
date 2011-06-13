@@ -71,11 +71,12 @@ class calendar extends rcube_plugin
 
       // register calendar actions
       $this->register_action('index', array($this, 'calendar_view'));
-      $this->register_action('plugin.event', array($this, 'event_action'));
-      $this->register_action('plugin.calendar', array($this, 'calendar_action'));
-      $this->register_action('plugin.load_events', array($this, 'load_events'));
-      $this->register_action('plugin.export_events', array($this, 'export_events'));
-      $this->register_action('plugin.randomdata', array($this, 'generate_randomdata'));
+      $this->register_action('event', array($this, 'event_action'));
+      $this->register_action('calendar', array($this, 'calendar_action'));
+      $this->register_action('load_events', array($this, 'load_events'));
+      $this->register_action('search_events', array($this, 'search_events'));
+      $this->register_action('export_events', array($this, 'export_events'));
+      $this->register_action('randomdata', array($this, 'generate_randomdata'));
       $this->add_hook('keep_alive', array($this, 'keep_alive'));
       
       // set user's timezone
@@ -373,7 +374,7 @@ class calendar extends rcube_plugin
         break;
       case "remove":
         if ($success = $this->driver->remove_calendar($cal))
-          $this->rc->output->command('plugin.calendar_destroy_source', array('id' => $cal['id']));
+          $this->rc->output->command('plugin.destroy_source', array('id' => $cal['id']));
         break;
     }
     
@@ -440,6 +441,21 @@ class calendar extends rcube_plugin
    * This will return pure JSON formatted output
    */
   function load_events()
+  {
+    $events = $this->driver->load_events(
+      get_input_value('start', RCUBE_INPUT_GET),
+      get_input_value('end', RCUBE_INPUT_GET),
+      get_input_value('source', RCUBE_INPUT_GET)
+    );
+    echo $this->encode($events);
+    exit;
+  }
+  
+  /**
+   * Handler for search-requests from client
+   * This will return pure JSON formatted output for fullcalendar
+   */
+  function search_events()
   {
     $events = $this->driver->load_events(
       get_input_value('start', RCUBE_INPUT_GET),
@@ -758,7 +774,7 @@ class calendar extends rcube_plugin
   
   /**
    * TEMPORARY: generate random event data for testing
-   * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=plugin.randomdata&_num=500
+   * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=randomdata&_num=500
    */
   public function generate_randomdata()
   {

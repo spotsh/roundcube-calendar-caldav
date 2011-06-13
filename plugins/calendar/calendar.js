@@ -377,7 +377,7 @@ function rcube_calendar(settings)
         else
           data.calendar = calendars.val();
 
-        rcmail.http_post('plugin.event', { action:action, e:data });
+        rcmail.http_post('event', { action:action, e:data });
         $dialog.dialog("close");
       };
 
@@ -446,7 +446,7 @@ function rcube_calendar(settings)
       
       $dialog.find('a.button').button().click(function(e){
         event.savemode = String(this.href).replace(/.+#/, '');
-        rcmail.http_post('plugin.event', { action:action, e:event });
+        rcmail.http_post('event', { action:action, e:event });
         $dialog.dialog("destroy").hide();
         return false;
       });
@@ -497,7 +497,7 @@ function rcube_calendar(settings)
       
       // send remove request to plugin
       if (confirm(rcmail.gettext('deleteventconfirm', 'calendar'))) {
-        rcmail.http_post('plugin.event', { action:'remove', e:{ id:event.id, calendar:event.calendar } });
+        rcmail.http_post('event', { action:'remove', e:{ id:event.id, calendar:event.calendar } });
         return true;
       }
 
@@ -591,7 +591,7 @@ function rcube_calendar(settings)
     this.dismiss_alarm = function(id, snooze)
     {
       $('#alarm-snooze-dropdown').hide();
-      rcmail.http_post('plugin.event', { action:'dismiss', e:{ id:id, snooze:snooze } });
+      rcmail.http_post('event', { action:'dismiss', e:{ id:id, snooze:snooze } });
       
       // remove dismissed alarm from list
       if (this.dismiss_link) {
@@ -641,7 +641,7 @@ function rcube_calendar(settings)
         if (calendar.id)
           data.id = calendar.id;
         
-        rcmail.http_post('plugin.calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });
+        rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });
         $dialog.dialog("close");
       };
 
@@ -668,7 +668,7 @@ function rcube_calendar(settings)
     this.calendar_remove = function(calendar)
     {
       if (confirm(rcmail.gettext('deletecalendarconfirm', 'calendar'))) {
-        rcmail.http_post('plugin.calendar', { action:'remove', c:{ id:calendar.id } });
+        rcmail.http_post('calendar', { action:'remove', c:{ id:calendar.id } });
         return true;
       }
       return false;
@@ -692,7 +692,7 @@ function rcube_calendar(settings)
     for (var id in rcmail.env.calendars) {
       cal = rcmail.env.calendars[id];
       this.calendars[id] = $.extend({
-        url: "./?_task=calendar&_action=plugin.load_events&source="+escape(id),
+        url: "./?_task=calendar&_action=load_events&source="+escape(id),
         editable: !cal.readonly,
         className: 'fc-event-cal-'+id,
         id: id
@@ -723,14 +723,14 @@ function rcube_calendar(settings)
         $(li).click(function(e){
           var id = $(this).data('id');
           rcmail.select_folder(id, me.selected_calendar, 'rcmlical');
-          rcmail.enable_command('plugin.calendar-edit','plugin.calendar-remove', true);
+          rcmail.enable_command('calendar-edit','calendar-remove', true);
           me.selected_calendar = id;
         }).data('id', id);
       }
       
       if (!cal.readonly && !this.selected_calendar && (!settings.default_calendar || settings.default_calendar == id)) {
         this.selected_calendar = id;
-        rcmail.enable_command('plugin.addevent', true);
+        rcmail.enable_command('addevent', true);
       }
     }
 
@@ -861,7 +861,7 @@ function rcube_calendar(settings)
         if (event.recurrence)
           recurring_edit_confirm(data, 'move');
         else
-          rcmail.http_post('plugin.event', { action:'move', e:data });
+          rcmail.http_post('event', { action:'move', e:data });
       },
       // callback for event resizing
       eventResize: function(event, delta) {
@@ -875,7 +875,7 @@ function rcube_calendar(settings)
         if (event.recurrence)
           recurring_edit_confirm(data, 'resize');
         else
-          rcmail.http_post('plugin.event', { action:'resize', e:data });
+          rcmail.http_post('event', { action:'resize', e:data });
       },
       viewDisplay: function(view) {
         me.eventcount = [];
@@ -1039,21 +1039,20 @@ function rcube_calendar(settings)
 window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   // configure toobar buttons
-  rcmail.register_command('plugin.addevent', function(){ cal.add_event(); }, true);
+  rcmail.register_command('addevent', function(){ cal.add_event(); }, true);
   
   // configure list operations
-  rcmail.register_command('plugin.calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
-  rcmail.register_command('plugin.calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
-  rcmail.register_command('plugin.calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
+  rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
+  rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
+  rcmail.register_command('calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
 
   // export events
-  rcmail.register_command('plugin.export', function(){ rcmail.goto_url('plugin.export_events', { source:cal.selected_calendar }); }, true);
-  rcmail.enable_command('plugin.export', true);
+  rcmail.register_command('export', function(){ rcmail.goto_url('export_events', { source:cal.selected_calendar }); }, true);
 
   // register callback commands
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
   rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
-  rcmail.addEventListener('plugin.calendar_destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
+  rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
 
 
   // let's go
