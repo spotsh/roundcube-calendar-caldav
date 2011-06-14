@@ -40,12 +40,13 @@ $labels['date'] = 'Date';
 $labels['start'] = 'Start';
 $labels['end'] = 'End';
 $labels['choose_date'] = 'Choose date';
-$labels['freebusy'] = 'Show as';
+$labels['freebusy'] = 'Show me as';
 $labels['free'] = 'Free';
 $labels['busy'] = 'Busy';
 $labels['outofoffice'] = 'Out of Office';
+$labels['tentative'] = 'Tentative';
 $labels['priority'] = 'Priority';
-$labels['sensitivity'] = 'Sensitivity';
+$labels['sensitivity'] = 'Privacy';
 $labels['public'] = 'public';
 $labels['private'] = 'private';
 $labels['confidential'] = 'confidential';
@@ -98,6 +99,7 @@ $labels['operationfailed'] = "The requested operation failed";
 $labels['invalideventdates'] = "Invalid dates entered! Please check your input.";
 $labels['invalidcalendarproperties'] = "Invalid calendar properties! Please set a valid name.";
 $labels['searchnoresults'] = 'No events found in the selected calendars';
+$labels['successremoval'] = "The event was deleted successfully";
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

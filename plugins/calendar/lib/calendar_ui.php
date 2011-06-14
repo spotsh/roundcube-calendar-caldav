@@ -190,6 +190,7 @@ class calendar_ui
     $select->add($this->calendar->gettext('free'), 'free');
     $select->add($this->calendar->gettext('busy'), 'busy');
     $select->add($this->calendar->gettext('outofoffice'), 'outofoffice');
+    $select->add($this->calendar->gettext('tentative'), 'tentative');
     return $select->show(null);
   }
 

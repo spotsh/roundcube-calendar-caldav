@@ -49,7 +49,7 @@ class kolab_calendar
   {
     if ($imap_folder)
       $this->imap_folder = $imap_folder;
-
+	write_log('err_log',$imap_folder);
     // ID is derrived from folder name
     $this->id = strtolower(asciiwords(strtr($this->imap_folder, '/.', '--')));
 
@@ -212,11 +212,30 @@ class kolab_calendar
     return $updated;
   }
 
+	/**
+	   * Delete an event record
+	   *
+	   * @see Driver:remove_event()
+	   * @return boolean True on success, False on error
+	   */
 
   public function delete_event($event)
   {
 			
-	 return true;
+	 $deleted = false;
+	 $deleteme = $this->storage->delete($event['id']);
+            if (PEAR::isError($deleteme)) {
+                raise_error(array(
+                  'code' => 600, 'type' => 'php',
+                  'file' => __FILE__, 'line' => __LINE__,
+                  'message' => "Error saving contact object to Kolab server:" . $deleteme->getMessage()),
+                true, false);
+            }
+            else {
+               $deleted = true;
+            }
+	 
+    return $deleted;
   }
 
 
@@ -311,7 +330,7 @@ class kolab_calendar
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],
-      'priority' => 1, // normal
+      'priority' => $rec['priority'], // normal
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
       'calendar' => $this->id,
     );
@@ -335,12 +354,13 @@ class kolab_calendar
 	  	'end-date'=>$event['end'],
 	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
 	  	'show-time-as' => $event['free_busy'],
+	  	'priority' => $event['priority']
   	  	 
 	);
 	
 	//handle alarms
-	if ($event['alarms']) 
-	{
+	if ($event['alarms']) 	{
+
 		//get the value
      	$alarmbase = explode(":",$event['alarms']);
 		
@@ -366,5 +386,7 @@ class kolab_calendar
     
 	return $object;
   }
+
+ 
 
 }
