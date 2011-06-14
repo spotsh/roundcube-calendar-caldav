@@ -11,7 +11,7 @@ body.calendarmain {
 #main {
 	position: absolute;
 	clear: both;
-	top: 85px;
+	top: 90px;
 	left: 0;
 	right: 0;
 	bottom: 10px;
@@ -41,7 +41,7 @@ body.calendarmain {
 
 #sidebartoggle {
 	position: absolute;
-	left: 246px;
+	left: 244px;
 	width: 8px;
 	top: 37px;
 	bottom: 0;
@@ -60,7 +60,7 @@ div.sidebarclosed {
 #calendar {
 	position: absolute;
 	top: 0;
-	left: 260px;
+	left: 256px;
 	right: 10px;
 	bottom: 0;
 }
@@ -75,7 +75,7 @@ pre {
 
 #calendars {
 	position: absolute;
-	top: 230px;
+	top: 220px;
 	left: 0;
 	bottom: 0;
 	right: 0;
@@ -149,7 +149,7 @@ pre {
 #calendartoolbar {
 	position: absolute;
 	top: 45px;
-	left: 260px;
+	left: 256px;
 	height: 35px;
 }
 

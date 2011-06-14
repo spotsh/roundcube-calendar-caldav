@@ -97,6 +97,7 @@ $labels['errorsaving'] = "Failed to save changes";
 $labels['operationfailed'] = "The requested operation failed";
 $labels['invalideventdates'] = "Invalid dates entered! Please check your input.";
 $labels['invalidcalendarproperties'] = "Invalid calendar properties! Please set a valid name.";
+$labels['searchnoresults'] = 'No events found in the selected calendars';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

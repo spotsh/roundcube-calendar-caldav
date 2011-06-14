@@ -630,11 +630,10 @@ table.fc-border-separate {
 	border-width: 0;
 	border-bottom-width: 1px;
 	padding: 3px;
-	text-align: center;
 }
 
-.fc-view-table td.fc-list-header {
-	_border-top-width: 1px;
+.fc-view-table .fc-list-smart td.fc-list-header {
+	text-align: center;
 }
 
 .fc-view-table .fc-first td.fc-list-header {

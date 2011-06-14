@@ -699,6 +699,9 @@ function rcube_calendar(settings)
           var fc = $(fcselector);
           var sources = [];
           
+          if (this._search_message)
+            rcmail.hide_message(this._search_message);
+          
           for (var sid in this.calendars) {
             if (this.calendars[sid] && this.calendars[sid].active) {
               fc.fullCalendar('removeEventSource', this.calendars[sid]);
@@ -740,6 +743,10 @@ function rcube_calendar(settings)
     this.reset_quicksearch = function()
     {
       $(rcmail.gui_objects.qsearchbox).val('');
+      
+      if (this._search_message)
+        rcmail.hide_message(this._search_message);
+      
       if (this.search_request) {
         // restore original event sources and view mode from fullcalendar
         var fc = $(fcselector);
@@ -755,6 +762,13 @@ function rcube_calendar(settings)
         this.search_request = this.search_source = null;
       }
     };
+    
+    // callback if all sources have been fetched from server
+    this.events_loaded = function(count)
+    {
+      if (this.search_request && !count)
+        this._search_message = rcmail.display_message(rcmail.gettext('searchnoresults', 'calendar'), 'notice');
+    }
 
 
     /***  startup code  ***/
@@ -826,7 +840,7 @@ function rcube_calendar(settings)
       },
       aspectRatio: 1,
       ignoreTimezone: false,  // will translate event dates to the client's timezone
-      height: $(window).height() - 96,
+      height: $('#main').height(),
       eventSources: event_sources,
       monthNames : settings['months'],
       monthNamesShort : settings['months_short'],
@@ -868,8 +882,11 @@ function rcube_calendar(settings)
       },
       selectable: true,
       selectHelper: true,
-      loading : function(isLoading) {
+      loading: function(isLoading) {
         this._rc_loading = rcmail.set_busy(isLoading, 'loading', this._rc_loading);
+        // trigger callback
+        if (!isLoading && me.search_request)
+          me.events_loaded($(this).fullCalendar('clientEvents').length);
       },
       // event rendering
       eventRender: function(event, element, view) {
@@ -1143,7 +1160,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   var cal = new rcube_calendar(rcmail.env.calendar_settings);
 
   $(window).resize(function() {
-    $('#calendar').fullCalendar('option', 'height', $(window).height() - 96);
+    $('#calendar').fullCalendar('option', 'height', $('#main').height());
   }).resize();
 
   // show toolbar
