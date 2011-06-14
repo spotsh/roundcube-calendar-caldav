@@ -35,7 +35,7 @@ class database_driver extends calendar_driver
   private $cal;
   private $calendars = array();
   private $calendar_ids = '';
-  private $free_busy_map = array('free' => 0, 'busy' => 1, 'out-of-office' => 2, 'outofoffice' => 2);
+  private $free_busy_map = array('free' => 0, 'busy' => 1, 'out-of-office' => 2, 'outofoffice' => 2, 'tentative' => 3);
   
   private $db_events = 'events';
   private $db_calendars = 'calendars';

@@ -46,7 +46,7 @@
  *    ),
  * 'recurrence_id' => 'ID of the recurrence group',   // usually the ID of the starting event
  *    'categories' => 'Event category',
- *     'free_busy' => 'free|busy|outofoffice',  // Show time as
+ *     'free_busy' => 'free|busy|outofoffice|tentative',  // Show time as
  *      'priority' => 1|0|2,   // Event priority (0=low, 1=normal, 2=high)
  *   'sensitivity' => 0|1|2,   // Event sensitivity (0=public, 1=private, 2=confidential)
  *        'alarms' => '-15M:DISPLAY',  // Reminder settings inspired by valarm definition (e.g. display alert 15 minutes before event)
