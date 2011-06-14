@@ -435,7 +435,7 @@ class calendar extends rcube_plugin
       $this->rc->output->show_message('calendar.errorsaving', 'error');
 
     // FIXME: update a single event object on the client instead of reloading the entire source
-    if ($success && $reload or ($removed && $reload))
+    if ($success && $reload || ($removed && $reload))
       $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
   }
   

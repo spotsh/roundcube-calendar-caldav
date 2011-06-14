@@ -69,7 +69,8 @@ class kolab_calendar
   public function get_name()
   {
     $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
-    return strlen($dispname) ? $dispname : $this->imap_folder;
+    $toret = strlen($dispname) ? $dispname : $this->imap_folder;
+	return mb_convert_encoding($toret,"UTF8", "UTF7-IMAP");
   }
   
   /**
