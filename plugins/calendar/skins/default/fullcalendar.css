@@ -691,6 +691,11 @@ table.fc-border-separate {
 	width: 7em;
 }
 
+.fc-view-table .fc-list-normal col.fc-event-date {
+	width: 1px;
+}
+
+
 .fc-view-table col.fc-event-time {
 	width: 8em;
 }

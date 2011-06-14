@@ -5581,6 +5581,7 @@ function TableEventRenderer() {
 		events.sort(sortCmp);
 		reportEvents(events);
 		renderSegs(compileSegs(events), modifiedEventId);
+		getListContainer().removeClass('fc-list-smart fc-list-normal').addClass(opt('smartSections') ? 'fc-list-smart' : 'fc-list-normal');
 	}
 
 	function renderSegs(segs, modifiedEventId) {
