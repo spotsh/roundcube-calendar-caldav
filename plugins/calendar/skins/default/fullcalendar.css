@@ -622,7 +622,7 @@ table.fc-border-separate {
 .fc-view-list,
 .fc-view-table {
 	border: 1px solid #ccc;
-	width: 99%;
+	width: auto;
 }
 
 .fc-view-list .fc-list-header,

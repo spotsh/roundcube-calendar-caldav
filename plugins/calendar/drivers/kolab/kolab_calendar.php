@@ -106,18 +106,23 @@ class kolab_calendar
   /**
    * @param  integer Event's new start (unix timestamp)
    * @param  integer Event's new end (unix timestamp)
+   * @param  string  Search query (optional)
    * @return array A list of event records
    */
-  public function list_events($start, $end)
+  public function list_events($start, $end, $search = null)
   {
     // use Horde classes to compute recurring instances
     require_once 'Horde/Date/Recurrence.php';
     
     $this->_fetch_events();
-	
-	    
+    
     $events = array();
     foreach ($this->events as $id => $event) {
+      // TODO: filter events by search query
+      if (!empty($search)) {
+        
+      }
+      
       // list events in requested time window
       if ($event['start'] <= $end && $event['end'] >= $start) {
         $events[] = $event;

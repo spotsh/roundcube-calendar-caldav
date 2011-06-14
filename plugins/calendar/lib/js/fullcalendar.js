@@ -650,8 +650,8 @@ function Calendar(element, options, eventSources) {
 		if (value === undefined) {
 			return options[name];
 		}
+		options[name] = value;
 		if (name == 'height' || name == 'contentHeight' || name == 'aspectRatio') {
-			options[name] = value;
 			updateSize();
 		}
 	}

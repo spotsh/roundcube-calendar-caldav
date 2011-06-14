@@ -597,7 +597,7 @@ class database_driver extends calendar_driver
    *
    * @see Driver:load_events()
    */
-  public function load_events($start, $end, $calendars = null)
+  public function load_events($start, $end, $calendars = null, $sql_add = '')
   {
     if (empty($calendars))
       $calendars = array_keys($this->calendars);
@@ -613,10 +613,12 @@ class database_driver extends calendar_driver
       $result = $this->rc->db->query(sprintf(
         "SELECT * FROM " . $this->db_events . "
          WHERE calendar_id IN (%s)
-         AND start <= %s AND end >= %s",
+         AND start <= %s AND end >= %s
+         %s",
          join(',', $calendar_ids),
          $this->rc->db->fromunixtime($end),
-         $this->rc->db->fromunixtime($start)
+         $this->rc->db->fromunixtime($start),
+         $sql_add
        ));
 
       while ($result && ($event = $this->rc->db->fetch_assoc($result))) {
@@ -665,7 +667,13 @@ class database_driver extends calendar_driver
    */
   public function search_events($start, $end, $query, $calendars = null)
   {
+    // compose (slow) SQL query for searching
+    // FIXME: improve searching using a dedicated col and normalized values
+    foreach (array('title','location','description','categories','attendees') as $col) {
+      $sql_query[] = $this->rc->db->ilike($col, '%'.$query.'%');
+    }
     
+    return $this->load_events($start, $end, $calendars, 'AND (' . join(' OR ', $sql_query) . ')');
   }
 
   /**

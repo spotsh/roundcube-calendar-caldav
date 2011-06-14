@@ -33,6 +33,8 @@ function rcube_calendar(settings)
     this.dismiss_link = null;
     this.selected_event = null;
     this.selected_calendar = null;
+    this.search_request = null;
+    this.search_source = null;
     this.eventcount = [];
 
 
@@ -684,6 +686,76 @@ function rcube_calendar(settings)
       }
     };
 
+
+    /***  event searching  ***/
+
+    // execute search
+    this.quicksearch = function()
+    {
+      if (rcmail.gui_objects.qsearchbox) {
+        var q = rcmail.gui_objects.qsearchbox.value;
+        if (q != '') {
+          var id = 'search-'+q;
+          var fc = $(fcselector);
+          var sources = [];
+          
+          for (var sid in this.calendars) {
+            if (this.calendars[sid] && this.calendars[sid].active) {
+              fc.fullCalendar('removeEventSource', this.calendars[sid]);
+              sources.push(sid);
+            }
+          }
+          id += '@'+sources.join(',');
+          
+          // just refetch events if query didn't change
+          if (this.search_request == id) {
+            fc.fullCalendar('refetchEvents');
+            return;
+          }
+          // remove old search results
+          else if (this.search_source) {
+            fc.fullCalendar('removeEventSource', this.search_source);
+          }
+          else {
+            this.default_view = fc.fullCalendar('getView').name;
+          }
+          
+          // replace event source from fullcalendar
+          this.search_request = id;
+          this.search_source = {
+            url: "./?_task=calendar&_action=search_events&q="+escape(q)+'&source='+escape(sources.join(',')),
+            editable: false
+          };
+          
+          fc.fullCalendar('option', 'smartSections', false);
+          fc.fullCalendar('addEventSource', this.search_source);
+          fc.fullCalendar('changeView', 'list');
+        }
+      }
+    };
+    
+    // reset search and get back to normal event listing
+    this.reset_quicksearch = function()
+    {
+      $(rcmail.gui_objects.qsearchbox).val('');
+      if (this.search_request) {
+        // restore original event sources and view mode from fullcalendar
+        var fc = $(fcselector);
+        fc.fullCalendar('option', 'smartSections', true);
+        fc.fullCalendar('removeEventSource', this.search_source);
+        for (var sid in this.calendars) {
+          if (this.calendars[sid] && this.calendars[sid].active)
+            fc.fullCalendar('addEventSource', this.calendars[sid]);
+        }
+        console.log(this.default_view);
+        if (this.default_view)
+          fc.fullCalendar('changeView', this.default_view);
+        
+        this.search_request = this.search_source = null;
+      }
+    };
+
+
     /***  startup code  ***/
 
     // create list of event sources AKA calendars
@@ -698,8 +770,10 @@ function rcube_calendar(settings)
         id: id
       }, cal);
       
-      if ((active = ($.inArray(String(id), settings.hidden_calendars) < 0)))
+      if ((active = ($.inArray(String(id), settings.hidden_calendars) < 0))) {
+        this.calendars[id].active = true;
         event_sources.push(this.calendars[id]);
+      }
       
       // init event handler on calendar list checkbox
       if ((li = rcmail.get_folder_li(id, 'rcmlical'))) {
@@ -709,21 +783,29 @@ function rcube_calendar(settings)
             var action;
             if (this.checked) {
               action = 'addEventSource';
+              me.calendars[id].active = true;
               settings.hidden_calendars = $.map(settings.hidden_calendars, function(v){ return v == id ? null : v; });
             }
             else {
               action = 'removeEventSource';
+              me.calendars[id].active = false;
               settings.hidden_calendars.push(id);
             }
-            $(fcselector).fullCalendar(action, me.calendars[id]);
-            rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
+            // just trigger search again (don't save prefs?)
+            if (me.search_request) {
+              me.quicksearch();
+            }
+            else {  // add/remove event source
+              $(fcselector).fullCalendar(action, me.calendars[id]);
+              rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
+            }
           }
         }).data('id', id).get(0).checked = active;
         
         $(li).click(function(e){
           var id = $(this).data('id');
           rcmail.select_folder(id, me.selected_calendar, 'rcmlical');
-          rcmail.enable_command('calendar-edit','calendar-remove', true);
+          rcmail.enable_command('calendar-edit','calendar-remove', !me.calendars[id].readonly);
           me.selected_calendar = id;
         }).data('id', id);
       }
@@ -1046,8 +1128,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
 
-  // export events
+  // search and export events
   rcmail.register_command('export', function(){ rcmail.goto_url('export_events', { source:cal.selected_calendar }); }, true);
+  rcmail.register_command('search', function(){ cal.quicksearch(); }, true);
+  rcmail.register_command('reset-search', function(){ cal.reset_quicksearch(); }, true);
 
   // register callback commands
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });

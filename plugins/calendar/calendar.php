@@ -138,6 +138,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.snooze_select', array($this->ui, 'snooze_select'));
     $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
+    $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
     
     $this->rc->output->set_env('calendar_settings', $this->load_settings());
     $this->rc->output->add_label('low','normal','high');
@@ -457,12 +458,13 @@ class calendar extends rcube_plugin
    */
   function search_events()
   {
-    $events = $this->driver->load_events(
+    $events = $this->driver->search_events(
       get_input_value('start', RCUBE_INPUT_GET),
       get_input_value('end', RCUBE_INPUT_GET),
+      get_input_value('q', RCUBE_INPUT_GET),
       get_input_value('source', RCUBE_INPUT_GET)
     );
-    echo $this->encode($events);
+    echo $this->encode($events, true);
     exit;
   }
   
@@ -586,7 +588,7 @@ class calendar extends rcube_plugin
    * @param  array  Events as array
    * @return string JSON encoded events
    */
-  function encode($events)
+  function encode($events, $addcss = false)
   {
     $json = array();
     foreach ($events as $event) {
@@ -601,7 +603,7 @@ class calendar extends rcube_plugin
         'end'   => date('c', $event['end']), // ISO 8601 date (added in PHP 5)
         'description' => $event['description'],
         'location'    => $event['location'],
-        'className'   => 'cat-' . asciiwords($event['categories'], true),
+        'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
         'allDay'      => ($event['all_day'] == 1)?true:false,
       ) + $event;
     }
