@@ -418,7 +418,7 @@ class calendar extends rcube_plugin
         $reload = true;
         break;
       case "remove":
-        $success = $this->driver->remove_event($event);
+        $removed = $this->driver->remove_event($event);
         $reload = true;
         break;
       case "dismiss":
@@ -429,11 +429,13 @@ class calendar extends rcube_plugin
     
     if ($success)
       $this->rc->output->show_message('successfullysaved', 'confirmation');
+	else if ($removed)
+	  $this->rc->output->show_message('calendar.successremoval', 'confirmation');
     else
       $this->rc->output->show_message('calendar.errorsaving', 'error');
 
     // FIXME: update a single event object on the client instead of reloading the entire source
-    if ($success && $reload)
+    if ($success && $reload or ($removed && $reload))
       $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
   }
   
