@@ -603,8 +603,8 @@ class calendar extends rcube_plugin
       $json[] = array(
         'start' => date('c', $event['start']), // ISO 8601 date (added in PHP 5)
         'end'   => date('c', $event['end']), // ISO 8601 date (added in PHP 5)
-        'description' => $event['description'],
-        'location'    => $event['location'],
+        'description' => strval($event['description']),
+        'location'    => strval($event['location']),
         'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
         'allDay'      => ($event['all_day'] == 1)?true:false,
       ) + $event;

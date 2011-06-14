@@ -322,8 +322,8 @@ class kolab_calendar
     return array(
       'id' => $rec['uid'],
       'uid' => $rec['uid'],
-      'title' => strval($rec['summary']),
-      'location' => strval($rec['location']),
+      'title' => $rec['summary'],
+      'location' => $rec['location'],
       'description' => $rec['body'],
       'start' => $rec['start-date'],
       'end' => $rec['end-date'],
