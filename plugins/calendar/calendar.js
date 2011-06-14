@@ -729,8 +729,10 @@ function rcube_calendar(settings)
           
           fc.fullCalendar('option', 'smartSections', false);
           fc.fullCalendar('addEventSource', this.search_source);
-          fc.fullCalendar('changeView', 'list');
+          fc.fullCalendar('changeView', 'table');
         }
+        else  // empty search input equals reset
+          this.reset_quicksearch();
       }
     };
     
@@ -747,7 +749,6 @@ function rcube_calendar(settings)
           if (this.calendars[sid] && this.calendars[sid].active)
             fc.fullCalendar('addEventSource', this.calendars[sid]);
         }
-        console.log(this.default_view);
         if (this.default_view)
           fc.fullCalendar('changeView', this.default_view);
         
@@ -821,7 +822,7 @@ function rcube_calendar(settings)
       header: {
         left: 'prev,next today',
         center: 'title',
-        right: 'agendaDay,agendaWeek,month,list,table'
+        right: 'agendaDay,agendaWeek,month,table'
       },
       aspectRatio: 1,
       ignoreTimezone: false,  // will translate event dates to the client's timezone
@@ -845,8 +846,8 @@ function rcube_calendar(settings)
         month: 'ddd', // Mon
         week: 'ddd ' + settings['date_short'], // Mon 9/7
         day: 'dddd ' + settings['date_short'],  // Monday 9/7
-        list: settings['date_agena'],
-        table: settings['date_agena']
+        list: settings['date_agenda'],
+        table: settings['date_agenda']
       },
       titleFormat: {
         month: 'MMMM yyyy',
@@ -863,8 +864,7 @@ function rcube_calendar(settings)
         day: rcmail.gettext('day', 'calendar'),
         week: rcmail.gettext('week', 'calendar'),
         month: rcmail.gettext('month', 'calendar'),
-        list: rcmail.gettext('agenda', 'calendar'),
-        table: rcmail.gettext('table', 'calendar')
+        table: rcmail.gettext('agenda', 'calendar')
       },
       selectable: true,
       selectHelper: true,

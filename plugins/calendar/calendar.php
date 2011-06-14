@@ -179,7 +179,7 @@ class calendar extends rcube_plugin
       $select->add($this->gettext('day'), "agendaDay");
       $select->add($this->gettext('week'), "agendaWeek");
       $select->add($this->gettext('month'), "month");
-      $select->add($this->gettext('agenda'), "list");
+      $select->add($this->gettext('agenda'), "table");
       $p['blocks']['view']['options']['default_view'] = array(
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
         'content' => $select->show($this->rc->config->get('calendar_default_view', "agendaWeek")),
@@ -510,7 +510,7 @@ class calendar extends rcube_plugin
     $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', "yyyy/MM/dd");
     $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', "M/d");
     $settings['date_long'] = (string)$this->rc->config->get('calendar_date_long', "M d yyyy");
-    $settings['date_agena'] = (string)$this->rc->config->get('calendar_date_agenda', "ddd M d");
+    $settings['date_agenda'] = (string)$this->rc->config->get('calendar_date_agenda', "ddd M d");
     $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', "HH:mm");
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', 2);
     $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', 1);
