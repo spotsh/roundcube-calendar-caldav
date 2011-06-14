@@ -26,6 +26,7 @@ class kolab_calendar
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
   private $sensitivity_map = array('public', 'private', 'confidential');
+  private $priority_map = array('low', 'normal', 'high');
 
   
   private $fieldmap = array(
@@ -49,7 +50,7 @@ class kolab_calendar
   {
     if ($imap_folder)
       $this->imap_folder = $imap_folder;
-	write_log('err_log',$imap_folder);
+
     // ID is derrived from folder name
     $this->id = strtolower(asciiwords(strtr($this->imap_folder, '/.', '--')));
 
@@ -69,8 +70,7 @@ class kolab_calendar
   public function get_name()
   {
     $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
-    $toret = strlen($dispname) ? $dispname : $this->imap_folder;
-	return mb_convert_encoding($toret,"UTF8", "UTF7-IMAP");
+    return rcube_charset_convert(strlen($dispname) ? $dispname : $this->imap_folder, "UTF7-IMAP");
   }
   
   /**
@@ -317,12 +317,13 @@ class kolab_calendar
     }
     
     $sensitivity_map = array_flip($this->sensitivity_map);
+    $priority_map = array_flip($this->priority_map);
     
     return array(
       'id' => $rec['uid'],
       'uid' => $rec['uid'],
-      'title' => $rec['summary'],
-      'location' => $rec['location'],
+      'title' => strval($rec['summary']),
+      'location' => strval($rec['location']),
       'description' => $rec['body'],
       'start' => $rec['start-date'],
       'end' => $rec['end-date'],
@@ -331,7 +332,7 @@ class kolab_calendar
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],
-      'priority' => $rec['priority'], // normal
+      'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
       'calendar' => $this->id,
     );
@@ -355,7 +356,7 @@ class kolab_calendar
 	  	'end-date'=>$event['end'],
 	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
 	  	'show-time-as' => $event['free_busy'],
-	  	'priority' => $event['priority']
+	  	'priority' => $this->priority_map[$event['priority']]
   	  	 
 	);
 	
