@@ -142,13 +142,16 @@ class kolab_folders extends rcube_plugin
             $folder = $attrib['foldername']; // UTF7-IMAP
             $data   = $folderdata[$folder];
 
-            if (!empty($data)
-                && ($type = $data[kolab_folders::CTYPE_KEY])
-                && ($class_name = self::folder_class_name($type))
-            ) {
-                $attrib['class'] = trim($attrib['class'] . ' ' . $class_name);
-                $table->set_row_attribs($attrib, $i);
-            }
+            if (!empty($data))
+                $type = $data[kolab_folders::CTYPE_KEY];
+
+            if (!$type)
+                $type = 'mail';
+
+            $class_name = self::folder_class_name($type);
+
+            $attrib['class'] = trim($attrib['class'] . ' ' . $class_name);
+            $table->set_row_attribs($attrib, $i);
         }
 
         return $args;
@@ -239,7 +242,7 @@ class kolab_folders extends rcube_plugin
         if (!strlen($old_mbox)) {
             // By default don't subscribe to non-mail folders
             if ($subscribe)
-                $subscribe = preg_match('/^mail/', $ctype);
+                $subscribe = (bool) preg_match('/^mail/', $ctype);
 
             $result = $this->rc->imap->create_mailbox($mbox, $subscribe);
             // Set folder type
