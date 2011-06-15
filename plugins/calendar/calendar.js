@@ -730,7 +730,7 @@ function rcube_calendar(settings)
             editable: false
           };
           
-          fc.fullCalendar('option', 'smartSections', false);
+          fc.fullCalendar('option', 'listSections', 'day');
           fc.fullCalendar('addEventSource', this.search_source);
           fc.fullCalendar('changeView', 'table');
         }
@@ -750,7 +750,7 @@ function rcube_calendar(settings)
       if (this.search_request) {
         // restore original event sources and view mode from fullcalendar
         var fc = $(fcselector);
-        fc.fullCalendar('option', 'smartSections', true);
+        fc.fullCalendar('option', 'listSections', 'smart');
         fc.fullCalendar('removeEventSource', this.search_source);
         for (var sid in this.calendars) {
           if (this.calendars[sid] && this.calendars[sid].active)
@@ -870,7 +870,7 @@ function rcube_calendar(settings)
         list: settings['date_long'],
         table: settings['date_long']
       },
-      smartSections: true,
+      listSections: 'smart',
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
       buttonText: {

@@ -418,7 +418,7 @@ class calendar extends rcube_plugin
         $reload = true;
         break;
       case "remove":
-        $success = $this->driver->remove_event($event);
+        $removed = $this->driver->remove_event($event);
         $reload = true;
         break;
       case "dismiss":
@@ -429,11 +429,13 @@ class calendar extends rcube_plugin
     
     if ($success)
       $this->rc->output->show_message('successfullysaved', 'confirmation');
+	else if ($removed)
+	  $this->rc->output->show_message('calendar.successremoval', 'confirmation');
     else
       $this->rc->output->show_message('calendar.errorsaving', 'error');
 
     // FIXME: update a single event object on the client instead of reloading the entire source
-    if ($success && $reload)
+    if ($success && $reload || ($removed && $reload))
       $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
   }
   
@@ -601,8 +603,8 @@ class calendar extends rcube_plugin
       $json[] = array(
         'start' => date('c', $event['start']), // ISO 8601 date (added in PHP 5)
         'end'   => date('c', $event['end']), // ISO 8601 date (added in PHP 5)
-        'description' => $event['description'],
-        'location'    => $event['location'],
+        'description' => strval($event['description']),
+        'location'    => strval($event['location']),
         'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
         'allDay'      => ($event['all_day'] == 1)?true:false,
       ) + $event;

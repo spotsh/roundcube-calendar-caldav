@@ -26,6 +26,7 @@ class kolab_calendar
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
   private $sensitivity_map = array('public', 'private', 'confidential');
+  private $priority_map = array('low', 'normal', 'high');
 
   
   private $fieldmap = array(
@@ -69,7 +70,7 @@ class kolab_calendar
   {
     // @TODO: get namespace prefixes from IMAP
     $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
-    return strlen($dispname) ? $dispname : $this->imap_folder;
+    return rcube_charset_convert(strlen($dispname) ? $dispname : $this->imap_folder, "UTF7-IMAP");
   }
   
   /**
@@ -316,6 +317,7 @@ class kolab_calendar
     }
     
     $sensitivity_map = array_flip($this->sensitivity_map);
+    $priority_map = array_flip($this->priority_map);
     
     return array(
       'id' => $rec['uid'],
@@ -330,7 +332,7 @@ class kolab_calendar
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],
-      'priority' => $rec['priority'], // normal
+      'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
       'calendar' => $this->id,
     );
@@ -354,7 +356,7 @@ class kolab_calendar
 	  	'end-date'=>$event['end'],
 	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
 	  	'show-time-as' => $event['free_busy'],
-	  	'priority' => $event['priority']
+	  	'priority' => $this->priority_map[$event['priority']]
   	  	 
 	);
 	

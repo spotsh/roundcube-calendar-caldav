@@ -64,7 +64,7 @@ class kolab_driver extends calendar_driver
     }
     else {
         foreach ($folders as $c_folder) {
-        	 $calendar = new kolab_calendar($c_folder->name);
+            $calendar = new kolab_calendar($c_folder->name);
             $this->folders[$calendar->id] = $calendar;
             if ($calendar->ready) {
               $this->calendars[$calendar->id] = array(
@@ -209,9 +209,8 @@ class kolab_driver extends calendar_driver
   public function remove_event($event)
   {
   	if (($storage = $this->_get_storage($event['calendar'])) && ($ev = $storage->get_event($event['id'])))
-      $rt = $storage->delete_event($event + $ev);
-	     if($rt==true)
-	        $this->rc->output->show_message('calendar.successremoval', 'success'); return $rt;
+      return $storage->delete_event($event);
+	     
     return false;
   }
 

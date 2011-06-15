@@ -91,11 +91,12 @@ var defaults = {
 		nextWeek: 'Next week',
 		thisMonth: 'This month',
 		nextMonth: 'Next month',
-		future: 'Future events'
+		future: 'Future events',
+		week: 'W'
 	},
 	
 	// list options
-	smartSections: false,
+	listSections: 'month',  // false|'day'|'week'|'month'|'smart'
 	
 	// jquery-ui theming
 	theme: false,
@@ -1533,8 +1534,8 @@ function formatDates(date1, date2, format, options) {
 			for (i2=i+1; i2<len; i2++) {
 				if (format.charAt(i2) == ']') {
 					var subformat = format.substring(i+1, i2);
-					var subres = formatDate(date, subformat, options);
-					if (subres != formatDate(otherDate, subformat, options)) {
+					var subres = formatDate(otherDate, subformat, options);
+					if (subres != formatDate(date, subformat, options)) {
 						res += subres;
 					}
 					i = i2;
@@ -1604,6 +1605,18 @@ var dateFormatters = {
 	}
 };
 
+
+// Determine the week of the year based on the ISO 8601 definition.
+// copied from jquery UI Datepicker
+var iso8601Week = function(date) {
+	var checkDate = cloneDate(date);
+	// Find Thursday of this week starting on Monday
+	checkDate.setDate(checkDate.getDate() + 4 - (checkDate.getDay() || 7));
+	var time = checkDate.getTime();
+	checkDate.setMonth(0); // Compare with Jan 1
+	checkDate.setDate(1);
+	return Math.floor(Math.round((time - checkDate) / 86400000) / 7) + 1;
+};
 
 
 fc.applyAll = applyAll;
@@ -5276,7 +5289,7 @@ function ListEventRenderer() {
 		var segs = [];
 		var colFormat = opt('titleFormat', 'day');
 		var firstDay = opt('firstDay');
-		var smartSegs = opt('smartSections');
+		var segmode = opt('listSections');
 		var event, i, dd, wd, md, seg, segHash, curSegHash, segDate, curSeg = -1;
 		var today = clearTime(new Date());
 		var weekstart = addDays(cloneDate(today), -((today.getDay() - firstDay + 7) % 7));
@@ -5296,24 +5309,30 @@ function ListEventRenderer() {
 			md = segDate.getMonth() + ((segDate.getYear() - today.getYear()) * 12) - today.getMonth();
 			
 			// build section title
-			if (!smartSegs) {
+			if (segmode == 'smart') {
+				if (dd < 0) {
+					segHash = opt('listTexts', 'past');
+				} else if (dd == 0) {
+					segHash = opt('listTexts', 'today');
+				} else if (dd == 1) {
+					segHash = opt('listTexts', 'tomorrow');
+				} else if (wd == 0) {
+					segHash = opt('listTexts', 'thisWeek');
+				} else if (wd == 1) {
+					segHash = opt('listTexts', 'nextWeek');
+				} else if (md == 0) {
+					segHash = opt('listTexts', 'thisMonth');
+				} else if (md == 1) {
+					segHash = opt('listTexts', 'nextMonth');
+				}
+			} else if (segmode == 'month') {
+				segHash = formatDate(segDate, 'MMMM yyyy');
+			} else if (segmode == 'week') {
+				segHash = opt('listTexts', 'week') + ' ' + iso8601Week(segDate);
+			} else if (segmode == 'day') {
 				segHash = formatDate(segDate, colFormat);
-			} else if (dd < 0) {
-				segHash = opt('listTexts', 'past');
-			} else if (dd == 0) {
-				segHash = opt('listTexts', 'today');
-			} else if (dd == 1) {
-				segHash = opt('listTexts', 'tomorrow');
-			} else if (wd == 0) {
-				segHash = opt('listTexts', 'thisWeek');
-			} else if (wd == 1) {
-				segHash = opt('listTexts', 'nextWeek');
-			} else if (md == 0) {
-				segHash = opt('listTexts', 'thisMonth');
-			} else if (md == 1) {
-				segHash = opt('listTexts', 'nextMonth');
 			} else {
-				segHash = formatDate(segDate, colFormat);
+				segHash = '';
 			}
 			
 			// start new segment
@@ -5341,7 +5360,8 @@ function ListEventRenderer() {
 		for (j=0; j < segs.length; j++) {
 			seg = segs[j];
 			
-			segHeader = $('<div class="fc-list-header ' + headerClass + '">' + htmlEscape(seg.title) + '</div>').appendTo(getListContainer());
+			if (seg.title)
+				segHeader = $('<div class="fc-list-header ' + headerClass + '">' + htmlEscape(seg.title) + '</div>').appendTo(getListContainer());
 			segContainer = $('<div>').addClass('fc-list-section ' + contentClass).appendTo(getListContainer());
 			s = '';
 			
@@ -5408,28 +5428,31 @@ function ListEventRenderer() {
 	function renderEventTime(event, seg) {
 		var timeFormat = opt('timeFormat');
 		var dateFormat = opt('columnFormat');
+		var segmode = opt('listSections');
 		var duration = event.end.getTime() - event.start.getTime();
 		var datestr = '', timestr = '';
 		
-		if (!opt('smartSections')) {
-			// no date display if grouped by day
-		} else if (event.start < seg.start) {
-			datestr = opt('listTexts', 'until') + ' ' + formatDate(event.end, (event.allDay || event.end.getDate() != seg.start.getDate()) ? dateFormat : timeFormat);
-		} else if (duration > DAY_MS) {
-			datestr = formatDates(event.start, event.end, dateFormat + '[ - ' + dateFormat + ']');
-		} else if (seg.daydiff == 0) {
-			datestr = opt('listTexts', 'today');
-		}	else if (seg.daydiff == 1) {
-			datestr = opt('listTexts', 'tomorrow');
-		} else if (seg.weekdiff == 0 || seg.weekdiff == 1) {
-			datestr = formatDate(event.start, 'dddd');
-		} else if (seg.daydiff > 1 || seg.daydiff < 0) {
-			datestr = formatDate(event.start, dateFormat);
+		if (segmode == 'smart') {
+			if (event.start < seg.start) {
+				datestr = opt('listTexts', 'until') + ' ' + formatDate(event.end, (event.allDay || event.end.getDate() != seg.start.getDate()) ? dateFormat : timeFormat);
+			} else if (duration > DAY_MS) {
+				datestr = formatDates(event.start, event.end, dateFormat + '[ - ' + dateFormat + ']');
+			} else if (seg.daydiff == 0) {
+				datestr = opt('listTexts', 'today');
+			}	else if (seg.daydiff == 1) {
+				datestr = opt('listTexts', 'tomorrow');
+			} else if (seg.weekdiff == 0 || seg.weekdiff == 1) {
+				datestr = formatDate(event.start, 'dddd');
+			} else if (seg.daydiff > 1 || seg.daydiff < 0) {
+				datestr = formatDate(event.start, dateFormat);
+			}
+		} else if (segmode != 'day') {
+			datestr = formatDates(event.start, event.end, dateFormat + (duration > DAY_MS ? '[ - ' + dateFormat + ']' : ''));
 		}
 		
 		if (!datestr && event.allDay) {
 			timestr = opt('allDayText');
-		} else if (duration < DAY_MS && !event.allDay) {
+		} else if ((duration < DAY_MS || !datestr) && !event.allDay) {
 			timestr = formatDates(event.start, event.end, timeFormat);
 		}
 		
@@ -5581,7 +5604,7 @@ function TableEventRenderer() {
 		events.sort(sortCmp);
 		reportEvents(events);
 		renderSegs(compileSegs(events), modifiedEventId);
-		getListContainer().removeClass('fc-list-smart fc-list-normal').addClass(opt('smartSections') ? 'fc-list-smart' : 'fc-list-normal');
+		getListContainer().removeClass('fc-list-smart fc-list-day fc-list-month fc-list-week').addClass('fc-list-' + opt('listSections'));
 	}
 
 	function renderSegs(segs, modifiedEventId) {
@@ -5594,7 +5617,8 @@ function TableEventRenderer() {
 		for (j=0; j < segs.length; j++) {
 			seg = segs[j];
 			
-			segHeader = $('<tbody class="fc-list-header"><tr><td class="fc-list-header ' + headerClass + '" colspan="5">' + htmlEscape(seg.title) + '</td></tr></tbody>').appendTo(table);
+			if (seg.title)
+				segHeader = $('<tbody class="fc-list-header"><tr><td class="fc-list-header ' + headerClass + '" colspan="5">' + htmlEscape(seg.title) + '</td></tr></tbody>').appendTo(table);
 			segContainer = $('<tbody>').addClass('fc-list-section ' + contentClass).appendTo(table);
 			s = '';
 			
@@ -5618,12 +5642,14 @@ function TableEventRenderer() {
 					"<div class='" + skinClasses.join(' ') + "'" + skinCssAttr + ">" +
 					"<span class='fc-event-inner'></span>" +
 					"</div></td>" +
-					"<td class='fc-event-date'>" +
+					"<td class='fc-event-date' colspan='" + (times[1] ? 1 : 2) + "'>" +
 					htmlEscape(times[0]) +
 					"</td>" +
-					"<td class='fc-event-time'>" +
-					htmlEscape(times[1]) +
-					"</td>" +
+					(times[1] ?
+						"<td class='fc-event-time'>" +
+						htmlEscape(times[1]) +
+						"</td>"
+						: "") +
 					"<td class='fc-event-title'>" +
 					htmlEscape(event.title) +
 					"</td>" +
