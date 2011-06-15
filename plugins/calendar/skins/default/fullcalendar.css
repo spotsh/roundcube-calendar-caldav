@@ -629,11 +629,7 @@ table.fc-border-separate {
 .fc-view-table td.fc-list-header {
 	border-width: 0;
 	border-bottom-width: 1px;
-	padding: 3px;
-}
-
-.fc-view-table .fc-list-smart td.fc-list-header {
-	text-align: center;
+	padding: 3px 5px;
 }
 
 .fc-view-table .fc-first td.fc-list-header {
@@ -690,7 +686,7 @@ table.fc-border-separate {
 	width: 7em;
 }
 
-.fc-view-table .fc-list-normal col.fc-event-date {
+.fc-view-table .fc-list-day col.fc-event-date {
 	width: 1px;
 }
 
