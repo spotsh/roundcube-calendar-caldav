@@ -119,4 +119,14 @@ class rcube_kolab
         if (isset($_SESSION['__auth']))
             unset($_SESSION['__auth']);
     }
+
+    /**
+     * Creates folder ID from folder name
+     */
+    public static function folder_id($folder)
+    {
+        $folder = rcube_charset_convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
+        return asciiwords(strtr($folder, '/.', '--'));
+    }
+
 }
