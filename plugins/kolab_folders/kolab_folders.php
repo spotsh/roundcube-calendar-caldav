@@ -400,8 +400,8 @@ class kolab_folders extends rcube_plugin
 
         $class[] = 'type-' . ($ctype ? $ctype : 'mail');
 
-        if ($subtype == 'default')
-            $class[] = 'type-default';
+        if ($subtype)
+            $class[] = 'subtype-' . $subtype;
 
         return implode(' ', $class);
     }
