@@ -87,7 +87,7 @@ class rcube_kolab
      * Get a list of storage folders for the given data type
      *
      * @param string Data type to list folders for (contact,event,task,note)
-     * @return array List of Kolab_Folder objects
+     * @return array List of Kolab_Folder objects (folder names in UTF7-IMAP)
      */
     public static function get_folders($type)
     {
@@ -99,7 +99,7 @@ class rcube_kolab
     /**
      * Get storage object for read/write access to the Kolab backend
      *
-     * @param string IMAP folder to access
+     * @param string IMAP folder to access (UTF7-IMAP)
      * @param string Object type to deal with (leave empty for auto-detection using annotations)
      * @return object Kolab_Data The data storage object
      */
@@ -122,10 +122,13 @@ class rcube_kolab
 
     /**
      * Creates folder ID from folder name
+     *
+     * @param string $folder Folder name (UTF7-IMAP)
+     *
+     * @return string Folder ID string
      */
     public static function folder_id($folder)
     {
-        $folder = rcube_charset_convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
         return asciiwords(strtr($folder, '/.', '--'));
     }
 

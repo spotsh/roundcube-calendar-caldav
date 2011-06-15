@@ -130,7 +130,9 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function get_name()
     {
-        return strtr(preg_replace('!^(INBOX|user)/!i', '', $this->imap_folder), '/', ':');
+        $folder = rcube_charset_convert($this->imap_folder, 'UTF7-IMAP');
+        // @TODO: use namespace prefixes
+        return strtr(preg_replace('!^(INBOX|user)/!i', '', $folder), '/', ':');
     }
 
 
