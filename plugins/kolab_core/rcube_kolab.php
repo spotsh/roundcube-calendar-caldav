@@ -33,10 +33,18 @@ class rcube_kolab
 
         $rcmail = rcmail::get_instance();
 
-        // Set Horde configuration
-        $conf['sql'] = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
+        // Set Horde configuration (for cache db)
+        $dsnw = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
+        $dsnr = MDB2::parseDSN($rcmail->config->get('db_dsnr'));
+
+        $conf['sql'] = MDB2::parseDSN($dsnw);
         $conf['sql']['charset'] = 'utf-8';
-        $conf['sql']['phptype'] = 'mysql';
+
+        if (!empty($dsnr) && $dsnr != $dsnw) {
+            $conf['sql']['read'] = MDB2::parseDSN($dsnr);
+            $conf['sql']['read']['charset'] = 'utf-8';
+            $conf['sql']['splitread'] = true;
+        }
 
         // get password of logged user
         $pwd = $rcmail->decrypt($_SESSION['password']);
