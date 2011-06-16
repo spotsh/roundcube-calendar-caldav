@@ -690,13 +690,8 @@ table.fc-border-separate {
 	width: 1px;
 }
 
-
 .fc-view-table col.fc-event-time {
 	width: 8em;
-}
-
-.fc-view-table col.fc-event-location {
-	width: 20%;
 }
 
 .fc-view-table td.fc-event-date,

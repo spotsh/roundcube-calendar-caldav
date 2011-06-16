@@ -530,6 +530,10 @@ div.fc-event-location {
 	color: #333;
 }
 
+.fc-view-table col.fc-event-location {
+	width: 20%;
+}
+
 /* Settings section */
 
 fieldset #calendarcategories div {

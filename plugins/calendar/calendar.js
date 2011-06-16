@@ -40,7 +40,6 @@ function rcube_calendar(settings)
 
     /***  private vars  ***/
     var me = this;
-    var fcselector = '#calendar';
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
 
@@ -468,7 +467,7 @@ function rcube_calendar(settings)
         ],
         close: function(){
           $dialog.dialog("destroy").hide();
-          $(fcselector).fullCalendar('refetchEvents');
+          fc.fullCalendar('refetchEvents');
         }
       }).show();
       
@@ -482,7 +481,7 @@ function rcube_calendar(settings)
     this.add_event = function() {
       if (this.selected_calendar) {
         var now = new Date();
-        var date = $(fcselector).fullCalendar('getDate') || now;
+        var date = fc.fullCalendar('getDate') || now;
         date.setHours(now.getHours()+1);
         date.setMinutes(0);
         var end = new Date(date.getTime());
@@ -679,7 +678,7 @@ function rcube_calendar(settings)
     this.calendar_destroy_source = function(id)
     {
       if (this.calendars[id]) {
-        $(fcselector).fullCalendar('removeEventSource', this.calendars[id]);
+        fc.fullCalendar('removeEventSource', this.calendars[id]);
         $(rcmail.get_folder_li(id, 'rcmlical')).remove();
         $('#edit-calendar option[value="'+id+'"]').remove();
         delete this.calendars[id];
@@ -696,7 +695,6 @@ function rcube_calendar(settings)
         var q = rcmail.gui_objects.qsearchbox.value;
         if (q != '') {
           var id = 'search-'+q;
-          var fc = $(fcselector);
           var sources = [];
           
           if (this._search_message)
@@ -730,7 +728,7 @@ function rcube_calendar(settings)
             editable: false
           };
           
-          fc.fullCalendar('option', 'listSections', 'day');
+          fc.fullCalendar('option', 'listSections', 'month');
           fc.fullCalendar('addEventSource', this.search_source);
           fc.fullCalendar('changeView', 'table');
         }
@@ -749,7 +747,6 @@ function rcube_calendar(settings)
       
       if (this.search_request) {
         // restore original event sources and view mode from fullcalendar
-        var fc = $(fcselector);
         fc.fullCalendar('option', 'listSections', 'smart');
         fc.fullCalendar('removeEventSource', this.search_source);
         for (var sid in this.calendars) {
@@ -811,7 +808,7 @@ function rcube_calendar(settings)
               me.quicksearch();
             }
             else {  // add/remove event source
-              $(fcselector).fullCalendar(action, me.calendars[id]);
+              fc.fullCalendar(action, me.calendars[id]);
               rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
             }
           }
@@ -832,7 +829,7 @@ function rcube_calendar(settings)
     }
 
     // initalize the fullCalendar plugin
-    $(fcselector).fullCalendar({
+    var fc = $('#calendar').fullCalendar({
       header: {
         left: 'prev,next today',
         center: 'title',
@@ -871,6 +868,8 @@ function rcube_calendar(settings)
         table: settings['date_long']
       },
       listSections: 'smart',
+      listRange: 60,  // show 60 days in list view
+      tableCols: ['handle', 'date', 'time', 'title', 'location'],
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
       buttonText: {
@@ -989,7 +988,7 @@ function rcube_calendar(settings)
     // event handler for clicks on calendar week cell of the datepicker widget
     var init_week_events = function(){
       $('#datepicker table.ui-datepicker-calendar td.ui-datepicker-week-col').click(function(e){
-        var base_date = $("#datepicker").datepicker('getDate');
+        var base_date = minical.datepicker('getDate');
         var day_off = base_date.getDay() - 1;
         if (day_off < 0) day_off = 6;
         var base_kw = $.datepicker.iso8601Week(base_date);
@@ -997,39 +996,39 @@ function rcube_calendar(settings)
         var diff = (kw - base_kw) * 7 * 86400000;
         // select monday of the chosen calendar week
         var date = new Date(base_date.getTime() - day_off * 86400000 + diff);
-        $(fcselector).fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
-        $("#datepicker").datepicker('setDate', date);
+        fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
+        minical.datepicker('setDate', date);
         window.setTimeout(init_week_events, 10);
       }).css('cursor', 'pointer');
     };
 
     // initialize small calendar widget using jQuery UI datepicker
-    $('#datepicker').datepicker($.extend(datepicker_settings, {
+    var minical = $('#datepicker').datepicker($.extend(datepicker_settings, {
       inline: true,
       showWeek: true,
       changeMonth: false, // maybe enable?
       changeYear: false,  // maybe enable?
       onSelect: function(dateText, inst) {
         ignore_click = true;
-        var d = $("#datepicker").datepicker('getDate'); //parse_datetime('0:0', dateText);
-        $(fcselector).fullCalendar('gotoDate', d).fullCalendar('select', d, d, true);
+        var d = minical.datepicker('getDate'); //parse_datetime('0:0', dateText);
+        fc.fullCalendar('gotoDate', d).fullCalendar('select', d, d, true);
         window.setTimeout(init_week_events, 10);
       },
       onChangeMonthYear: function(year, month, inst) {
         window.setTimeout(init_week_events, 10);
-        var d = $("#datepicker").datepicker('getDate');
+        var d = minical.datepicker('getDate');
         d.setYear(year);
         d.setMonth(month - 1);
-        $("#datepicker").data('year', year).data('month', month);
-        //$(fcselector).fullCalendar('gotoDate', d).fullCalendar('setDate', d);
+        minical.data('year', year).data('month', month);
+        //fc.fullCalendar('gotoDate', d).fullCalendar('setDate', d);
       },
     }));
     window.setTimeout(init_week_events, 10);
 
     // react on fullcalendar buttons
     var fullcalendar_update = function() {
-      var d = $(fcselector).fullCalendar('getDate');
-      $("#datepicker").datepicker('setDate', d);
+      var d = fc.fullCalendar('getDate');
+      minical.datepicker('setDate', d);
       window.setTimeout(init_week_events, 10);
     };
     $("#calendar .fc-button-prev").click(fullcalendar_update);

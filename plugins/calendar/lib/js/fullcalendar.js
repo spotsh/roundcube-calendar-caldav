@@ -95,8 +95,11 @@ var defaults = {
 		week: 'W'
 	},
 	
-	// list options
+	// list/table options
 	listSections: 'month',  // false|'day'|'week'|'month'|'smart'
+	listRange: 30,  // number of days to be displayed
+	listPage: 7,  // number of days to jump when paging
+	tableCols: ['handle', 'date', 'time', 'title'],
 	
 	// jquery-ui theming
 	theme: false,
@@ -651,9 +654,11 @@ function Calendar(element, options, eventSources) {
 		if (value === undefined) {
 			return options[name];
 		}
-		options[name] = value;
 		if (name == 'height' || name == 'contentHeight' || name == 'aspectRatio') {
+			options[name] = value;
 			updateSize();
+		} else if (name.indexOf('list') == 0 || name == 'tableCols') {
+			options[name] = value;
 		}
 	}
 	
@@ -4296,7 +4301,7 @@ function View(element, calendar, viewName) {
 	
 	function opt(name, viewNameOverride) {
 		var v = options[name];
-		if (typeof v == 'object') {
+		if (typeof v == 'object' && !v.length) {
 			return smartProperty(v, viewNameOverride || viewName);
 		}
 		return v;
@@ -5356,13 +5361,14 @@ function ListEventRenderer() {
 		var tm = opt('theme') ? 'ui' : 'fc';
 		var headerClass = tm + "-widget-header";
 		var contentClass = tm + "-widget-content";
-		var i, j, seg, event, times, s, skinCss, skinCssAttr, classes, segHeader, segContainer, eventElements;
+		var i, j, seg, event, times, s, skinCss, skinCssAttr, classes, segContainer, eventElements;
 
 		for (j=0; j < segs.length; j++) {
 			seg = segs[j];
 			
-			if (seg.title)
-				segHeader = $('<div class="fc-list-header ' + headerClass + '">' + htmlEscape(seg.title) + '</div>').appendTo(getListContainer());
+			if (seg.title) {
+				$('<div class="fc-list-header ' + headerClass + '">' + htmlEscape(seg.title) + '</div>').appendTo(getListContainer());
+			}
 			segContainer = $('<div>').addClass('fc-list-section ' + contentClass).appendTo(getListContainer());
 			s = '';
 			
@@ -5516,15 +5522,12 @@ function ListView(element, calendar) {
 	
 	function render(date, delta) {
 		if (delta) {
-			addDays(date, delta);
-			if (!opt('weekends')) {
-				skipWeekend(date, delta < 0 ? -1 : 1);
-			}
+			addDays(date, opt('listPage') * delta);
 		}
 		t.title = opt('listTexts', 'from') + ' ' + formatDate(date, opt('titleFormat'));
 		t.start = t.visStart = cloneDate(date, true);
-		t.end = addDays(cloneDate(t.start), 1);
-		t.visEnd = addMonths(cloneDate(t.start), 1);  // show events one month ahead. Enough?
+		t.end = addDays(cloneDate(t.start), opt('listPage'));
+		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
 		
 		updateOptions();
 
@@ -5613,13 +5616,16 @@ function TableEventRenderer() {
 		var table = getListContainer();
 		var headerClass = tm + "-widget-header";
 		var contentClass = tm + "-widget-content";
-		var i, j, seg, event, times, s, skinCss, skinCssAttr, skinClasses, rowClasses, segHeader, segContainer, eventElements;
+		var tableCols = opt('tableCols');
+		var timecol = $.inArray('time', tableCols) >= 0;
+		var i, j, seg, event, times, s, skinCss, skinCssAttr, skinClasses, rowClasses, segContainer, eventElements;
 
 		for (j=0; j < segs.length; j++) {
 			seg = segs[j];
 			
-			if (seg.title)
-				segHeader = $('<tbody class="fc-list-header"><tr><td class="fc-list-header ' + headerClass + '" colspan="5">' + htmlEscape(seg.title) + '</td></tr></tbody>').appendTo(table);
+			if (seg.title) {
+				$('<tbody class="fc-list-header"><tr><td class="fc-list-header ' + headerClass + '" colspan="' + tableCols.length + '">' + htmlEscape(seg.title) + '</td></tr></tbody>').appendTo(table);
+			}
 			segContainer = $('<tbody>').addClass('fc-list-section ' + contentClass).appendTo(table);
 			s = '';
 			
@@ -5637,27 +5643,25 @@ function TableEventRenderer() {
 					rowClasses.push('fc-today');
 				}
 				
-				s += 
-					"<tr class='" + rowClasses.join(' ') + "'>" +
-					"<td class='fc-event-handle'>" +
-					"<div class='" + skinClasses.join(' ') + "'" + skinCssAttr + ">" +
-					"<span class='fc-event-inner'></span>" +
-					"</div></td>" +
-					"<td class='fc-event-date' colspan='" + (times[1] ? 1 : 2) + "'>" +
-					htmlEscape(times[0]) +
-					"</td>" +
-					(times[1] ?
-						"<td class='fc-event-time'>" +
-						htmlEscape(times[1]) +
-						"</td>"
-						: "") +
-					"<td class='fc-event-title'>" +
-					htmlEscape(event.title) +
-					"</td>" +
-					"<td class='fc-event-location'>" +
-					htmlEscape(event.location) +
-					"</td>" +
-					"</tr>";
+				s +=  "<tr class='" + rowClasses.join(' ') + "'>";
+				for (var col, c=0; c < tableCols.length; c++) {
+					col = tableCols[c];
+					if (col == 'handle') {
+						s += "<td class='fc-event-handle'>" +
+							"<div class='" + skinClasses.join(' ') + "'" + skinCssAttr + ">" +
+							"<span class='fc-event-inner'></span>" +
+							"</div></td>";
+					} else if (col == 'date') {
+						s += "<td class='fc-event-date' colspan='" + (times[1] || !timecol ? 1 : 2) + "'>" + htmlEscape(times[0]) + "</td>";
+					} else if (col == 'time') {
+						if (times[1]) {
+							s += "<td class='fc-event-time'>" + htmlEscape(times[1]) + "</td>";
+						}
+					} else {
+						s += "<td class='fc-event-" + col + "'>" + htmlEscape(event[col] || '') + "</td>";
+					}
+				}
+				s += "</tr>";
 			}
 			
 			segContainer[0].innerHTML = s;
@@ -5731,15 +5735,12 @@ function TableView(element, calendar) {
 	
 	function render(date, delta) {
 		if (delta) {
-			addDays(date, delta);
-			if (!opt('weekends')) {
-				skipWeekend(date, delta < 0 ? -1 : 1);
-			}
+			addDays(date, opt('listPage') * delta);
 		}
 		t.title = opt('listTexts', 'from') + ' ' + formatDate(date, opt('titleFormat'));
 		t.start = t.visStart = cloneDate(date, true);
-		t.end = addDays(cloneDate(t.start), 1);
-		t.visEnd = addMonths(cloneDate(t.start), 1);  // show events one month ahead. Enough?
+		t.end = addDays(cloneDate(t.start), opt('listPage'));
+		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
 		
 		updateOptions();
 
@@ -5760,15 +5761,14 @@ function TableView(element, calendar) {
 	
 	
 	function buildSkeleton() {
+		var tableCols = opt('tableCols');
 		var s =
 			"<table class='fc-border-separate' style='width:100%' cellspacing='0'>" +
-			"<colgroup>" +
-			"<col class='fc-event-handle' />" +
-			"<col class='fc-event-date' />" +
-			"<col class='fc-event-time' />" +
-			"<col class='fc-event-title' />" +
-			"<col class='fc-event-location' />" +
-			"</colgroup>" +
+			"<colgroup>";
+		for (var c=0; c < tableCols.length; c++) {
+			s += "<col class='fc-event-" + tableCols[c] + "' />";
+		}
+		s += "</colgroup>" +
 			"</table>";
 		div = $('<div>').addClass('fc-list-content').appendTo(element);
 		table = $(s).appendTo(div);
