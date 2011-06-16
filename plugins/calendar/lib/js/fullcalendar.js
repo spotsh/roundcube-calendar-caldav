@@ -1602,7 +1602,8 @@ var dateFormatters = {
 			return 'th';
 		}
 		return ['st', 'nd', 'rd'][date%10-1] || 'th';
-	}
+	},
+	W	: function(d)	{ return iso8601Week(d); }
 };
 
 
@@ -5328,7 +5329,7 @@ function ListEventRenderer() {
 			} else if (segmode == 'month') {
 				segHash = formatDate(segDate, 'MMMM yyyy');
 			} else if (segmode == 'week') {
-				segHash = opt('listTexts', 'week') + ' ' + iso8601Week(segDate);
+				segHash = opt('listTexts', 'week') + formatDate(segDate, ' W');
 			} else if (segmode == 'day') {
 				segHash = formatDate(segDate, colFormat);
 			} else {
