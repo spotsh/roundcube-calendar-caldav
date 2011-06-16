@@ -3,7 +3,7 @@
 /**
  * Type-aware folder management/listing for Kolab
  *
- * @version 0.2
+ * @version 0.3
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  *
@@ -46,6 +46,7 @@ class kolab_folders extends rcube_plugin
         $this->add_hook('folder_form', array($this, 'folder_form'));
         $this->add_hook('folder_update', array($this, 'folder_save'));
         $this->add_hook('folder_create', array($this, 'folder_save'));
+        $this->add_hook('folders_list', array($this, 'folders_list'));
     }
 
     /**
@@ -117,6 +118,46 @@ class kolab_folders extends rcube_plugin
     }
 
     /**
+     * Handler for folders_list hook. Add css classes to folder rows.
+     */
+    function folders_list($args)
+    {
+        if (!$this->metadata_support()) {
+            return $args;
+        }
+
+        $table = $args['table'];
+
+        // get folders types
+        $folderdata = $this->get_folder_type_list('*');
+
+        if (!is_array($folderdata)) {
+            return $args;
+        }
+
+        // Add type-based style for table rows
+        // See kolab_folders::folder_class_name()
+        for ($i=0, $cnt=$table->size(); $i<$cnt; $i++) {
+            $attrib = $table->get_row_attribs($i);
+            $folder = $attrib['foldername']; // UTF7-IMAP
+            $data   = $folderdata[$folder];
+
+            if (!empty($data))
+                $type = $data[kolab_folders::CTYPE_KEY];
+
+            if (!$type)
+                $type = 'mail';
+
+            $class_name = self::folder_class_name($type);
+
+            $attrib['class'] = trim($attrib['class'] . ' ' . $class_name);
+            $table->set_row_attribs($attrib, $i);
+        }
+
+        return $args;
+    }
+
+    /**
      * Handler for folder info/edit form (folder_form hook).
      * Adds folder type selector.
      */
@@ -177,10 +218,11 @@ class kolab_folders extends rcube_plugin
      */
     function folder_save($args)
     {
-        $ctype    = trim(get_input_value('_ctype', RCUBE_INPUT_POST)); 
-        $subtype  = trim(get_input_value('_subtype', RCUBE_INPUT_POST)); 
-        $mbox     = $args['record']['name'];
-        $old_mbox = $args['record']['oldname'];
+        $ctype     = trim(get_input_value('_ctype', RCUBE_INPUT_POST)); 
+        $subtype   = trim(get_input_value('_subtype', RCUBE_INPUT_POST)); 
+        $mbox      = $args['record']['name'];
+        $old_mbox  = $args['record']['oldname'];
+        $subscribe = $args['record']['subscribe'];
 
         if (empty($ctype)) {
             return $args;
@@ -190,7 +232,7 @@ class kolab_folders extends rcube_plugin
         if ($subtype == 'default') {
         }
         // Subtype sanity-checks
-        else if ($subtype && $ctype != 'mail' || !in_array($subtype, $this->mail_types)) {
+        else if ($subtype && ($ctype != 'mail' || !in_array($subtype, $this->mail_types))) {
             $subtype = '';
         }
 
@@ -198,7 +240,11 @@ class kolab_folders extends rcube_plugin
 
         // Create folder
         if (!strlen($old_mbox)) {
-            $result = $this->rc->imap->create_mailbox($mbox, true);
+            // By default don't subscribe to non-mail folders
+            if ($subscribe)
+                $subscribe = (bool) preg_match('/^mail/', $ctype);
+
+            $result = $this->rc->imap->create_mailbox($mbox, $subscribe);
             // Set folder type
             if ($result) {
                 $this->set_folder_type($mbox, $ctype);
@@ -222,6 +268,9 @@ class kolab_folders extends rcube_plugin
                 }
             }
         }
+
+        $args['record']['class'] = self::folder_class_name($ctype);
+        $args['record']['subscribe'] = $subscribe;
 
         // Skip folder creation/rename in core
         // @TODO: Maybe we should provide folder_create_after and folder_update_after hooks?
@@ -340,5 +389,23 @@ class kolab_folders extends rcube_plugin
 
         return $metadata;
     }
-}
 
+    /**
+     * Returns CSS class name for specified folder type
+     *
+     * @param string $type Folder type
+     *
+     * @return string Class name
+     */
+    static function folder_class_name($type)
+    {
+        list($ctype, $subtype) = explode('.', $type);
+
+        $class[] = 'type-' . ($ctype ? $ctype : 'mail');
+
+        if ($subtype)
+            $class[] = 'subtype-' . $subtype;
+
+        return implode(' ', $class);
+    }
+}

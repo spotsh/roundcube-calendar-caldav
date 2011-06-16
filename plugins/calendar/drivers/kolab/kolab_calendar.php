@@ -40,7 +40,6 @@ class kolab_calendar
   	'sensitivity'=>'sensitivity',
   	'show-time-as' => 'free_busy',
   	'alarm','alarms'
-  	      
     );
   
   /**
@@ -48,11 +47,11 @@ class kolab_calendar
    */
   public function __construct($imap_folder = null)
   {
-    if ($imap_folder)
+    if (strlen($imap_folder))
       $this->imap_folder = $imap_folder;
 
     // ID is derrived from folder name
-    $this->id = strtolower(asciiwords(strtr($this->imap_folder, '/.', '--')));
+    $this->id = rcube_kolab::folder_id($this->imap_folder);
 
     // fetch objects from the given IMAP folder
     $this->storage = rcube_kolab::get_storage($this->imap_folder);
@@ -69,6 +68,7 @@ class kolab_calendar
    */
   public function get_name()
   {
+    // @TODO: get namespace prefixes from IMAP
     $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
     return rcube_charset_convert(strlen($dispname) ? $dispname : $this->imap_folder, "UTF7-IMAP");
   }

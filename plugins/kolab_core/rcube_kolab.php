@@ -33,16 +33,24 @@ class rcube_kolab
 
         $rcmail = rcmail::get_instance();
 
-        // Set Horde configuration
-        $GLOBALS['conf']['sql'] = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
-        $GLOBALS['conf']['sql']['charset'] = 'utf-8';
-        $GLOBALS['conf']['sql']['phptype'] = 'mysql';
+        // Set Horde configuration (for cache db)
+        $dsnw = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
+        $dsnr = MDB2::parseDSN($rcmail->config->get('db_dsnr'));
+
+        $conf['sql'] = MDB2::parseDSN($dsnw);
+        $conf['sql']['charset'] = 'utf-8';
+
+        if (!empty($dsnr) && $dsnr != $dsnw) {
+            $conf['sql']['read'] = MDB2::parseDSN($dsnr);
+            $conf['sql']['read']['charset'] = 'utf-8';
+            $conf['sql']['splitread'] = true;
+        }
 
         // get password of logged user
         $pwd = $rcmail->decrypt($_SESSION['password']);
 
         // load ldap credentials from local config
-        $conf['kolab'] = $rcmail->config->get('kolab');
+        $conf['kolab'] = (array) $rcmail->config->get('kolab');
 
         // Set global Horde config (e.g. Cache settings)
         if (!empty($conf['kolab']['global'])) {
@@ -51,8 +59,11 @@ class rcube_kolab
         }
 
         // Re-set LDAP/IMAP host config
-        $conf['kolab']['ldap'] += array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
-        $conf['kolab']['imap'] += array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+        $ldap = array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
+        $imap = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+
+        $conf['kolab']['ldap'] = array_merge($ldap, (array)$conf['kolab']['ldap']);
+        $conf['kolab']['imap'] = array_merge($imap, (array)$conf['kolab']['imap']);
 
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
@@ -87,7 +98,7 @@ class rcube_kolab
      * Get a list of storage folders for the given data type
      *
      * @param string Data type to list folders for (contact,event,task,note)
-     * @return array List of Kolab_Folder objects
+     * @return array List of Kolab_Folder objects (folder names in UTF7-IMAP)
      */
     public static function get_folders($type)
     {
@@ -99,7 +110,7 @@ class rcube_kolab
     /**
      * Get storage object for read/write access to the Kolab backend
      *
-     * @param string IMAP folder to access
+     * @param string IMAP folder to access (UTF7-IMAP)
      * @param string Object type to deal with (leave empty for auto-detection using annotations)
      * @return object Kolab_Data The data storage object
      */
@@ -119,4 +130,17 @@ class rcube_kolab
         if (isset($_SESSION['__auth']))
             unset($_SESSION['__auth']);
     }
+
+    /**
+     * Creates folder ID from folder name
+     *
+     * @param string $folder Folder name (UTF7-IMAP)
+     *
+     * @return string Folder ID string
+     */
+    public static function folder_id($folder)
+    {
+        return asciiwords(strtr($folder, '/.', '--'));
+    }
+
 }

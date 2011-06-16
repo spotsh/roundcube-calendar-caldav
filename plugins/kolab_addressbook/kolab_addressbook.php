@@ -202,7 +202,7 @@ class kolab_addressbook extends rcube_plugin
         else {
             foreach ($this->folders as $c_folder) {
                 // create instance of rcube_contacts
-                $abook_id = strtolower(asciiwords(strtr($c_folder->name, '/.', '--')));
+                $abook_id = rcube_kolab::folder_id($c_folder->name);
                 $abook = new rcube_kolab_contacts($c_folder->name);
                 $this->sources[$abook_id] = $abook;
             }

@@ -33,28 +33,31 @@ class calendar extends rcube_plugin
   public $ical;
   public $ui;
 
+  private $default_categories = array(
+    'Personal' => 'c0c0c0',
+    'Work'     => 'ff0000',
+    'Family'   => '00ff00',
+    'Holiday'  => 'ff6600',
+  );
+
   /**
    * Plugin initialization.
    */
   function init()
   {
     $this->rc = rcmail::get_instance();
-    
+
     $this->register_task('calendar', 'calendar');
-    
+
     // load calendar configuration
-    if(file_exists($this->home . "/config.inc.php")) {
-      $this->load_config('config.inc.php');
-    } else {
-      $this->load_config('config.inc.php.dist');
-    }
-    
+    $this->load_config();
+
     // load localizations
     $this->add_texts('localization/', !$this->rc->action || $this->rc->task != 'calendar');
 
     // load Calendar user interface which includes jquery-ui
     $this->require_plugin('jqueryui');
-    
+
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
     $this->ui->init();
@@ -254,9 +257,9 @@ class calendar extends rcube_plugin
       if (!$this->driver->categoriesimmutable) {
         $p['blocks']['categories']['name'] = $this->gettext('categories');
 
-        $categories = $this->rc->config->get('calendar_categories', array());
+        $categories = (array) $this->rc->config->get('calendar_categories', $this->default_categories);
         $categories_list = '';
-        foreach ($categories as $name => $color){
+        foreach ($categories as $name => $color) {
           $key = md5($name);
           $field_class = 'rcmfd_category_' . str_replace(' ', '_', $name);
           $category_remove = new html_inputfield(array('type' => 'button', 'value' => 'X', 'class' => 'button', 'onclick' => '$(this).parent().remove()', 'title' => $this->gettext('remove_category')));
@@ -549,7 +552,7 @@ class calendar extends rcube_plugin
       $this->rc->gettext('nov'), $this->rc->gettext('dec')
     );
     $settings['today'] = rcube_label('today');
-    
+
     // user prefs
     $settings['hidden_calendars'] = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
 
