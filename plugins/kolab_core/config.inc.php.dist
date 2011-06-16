@@ -1,14 +1,17 @@
 <?php
 
-// Sample configuration for Kolab LDAP binding used by Kolab_Storage
-$rcmail_config['kolab'] = array('imap' => array());
+// Horde/Kolab classes configuration
+$rcmail_config['kolab'] = array(
+    // IMAP configuration (e.g. connection info, namespaces)
+    'imap' => array(),
+    // Global Horde classes configuration (e.g. cache settings)
+    'global' => array(),
+);
 
+// Sample configuration for Kolab LDAP binding used by Kolab_Storage
 //$rcmail_config['kolab']['ldap']['server'] = '<defaults to imap_host>';
 $rcmail_config['kolab']['ldap']['basedn'] = 'dc=kolabserver,dc=local';
 $rcmail_config['kolab']['ldap']['phpdn'] = 'cn=nobody,cn=internal,dc=kolabserver,dc=local';
 $rcmail_config['kolab']['ldap']['phppw'] = '<ldap-pwd-goes-here>';
-
-// Global Horde classes configuration (e.g. Cache settings)
-$rcmail_config['kolab']['global'] = array();
 
 ?>

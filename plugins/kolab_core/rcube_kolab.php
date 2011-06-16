@@ -34,15 +34,15 @@ class rcube_kolab
         $rcmail = rcmail::get_instance();
 
         // Set Horde configuration
-        $GLOBALS['conf']['sql'] = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
-        $GLOBALS['conf']['sql']['charset'] = 'utf-8';
-        $GLOBALS['conf']['sql']['phptype'] = 'mysql';
+        $conf['sql'] = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
+        $conf['sql']['charset'] = 'utf-8';
+        $conf['sql']['phptype'] = 'mysql';
 
         // get password of logged user
         $pwd = $rcmail->decrypt($_SESSION['password']);
 
         // load ldap credentials from local config
-        $conf['kolab'] = $rcmail->config->get('kolab');
+        $conf['kolab'] = (array) $rcmail->config->get('kolab');
 
         // Set global Horde config (e.g. Cache settings)
         if (!empty($conf['kolab']['global'])) {
@@ -51,8 +51,11 @@ class rcube_kolab
         }
 
         // Re-set LDAP/IMAP host config
-        $conf['kolab']['ldap'] = array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
-        $conf['kolab']['imap'] = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+        $ldap = array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
+        $imap = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+
+        $conf['kolab']['ldap'] = array_merge($ldap, (array)$conf['kolab']['ldap']);
+        $conf['kolab']['imap'] = array_merge($imap, (array)$conf['kolab']['imap']);
 
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
