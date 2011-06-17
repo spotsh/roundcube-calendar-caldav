@@ -163,6 +163,10 @@ class kolab_folders extends rcube_plugin
      */
     function folder_form($args)
     {
+        if ($args['options']['is_root']) {
+            return $args;
+        }
+
         if (!$this->metadata_support()) {
             return $args;
         }
@@ -218,8 +222,8 @@ class kolab_folders extends rcube_plugin
      */
     function folder_save($args)
     {
-        $ctype     = trim(get_input_value('_ctype', RCUBE_INPUT_POST)); 
-        $subtype   = trim(get_input_value('_subtype', RCUBE_INPUT_POST)); 
+        $ctype     = trim(get_input_value('_ctype', RCUBE_INPUT_POST));
+        $subtype   = trim(get_input_value('_subtype', RCUBE_INPUT_POST));
         $mbox      = $args['record']['name'];
         $old_mbox  = $args['record']['oldname'];
         $subscribe = $args['record']['subscribe'];
