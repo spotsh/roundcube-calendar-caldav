@@ -120,6 +120,7 @@ class kolab_calendar
     $events = array();
     foreach ($this->events as $id => $event) {
       // TODO: filter events by search query
+     
       if (!empty($search)) {
         
       }
@@ -338,13 +339,16 @@ class kolab_calendar
     );
   }
 
-  /**
+   /**
    * Convert the given event record into a data structure that can be passed to Kolab_Storage backend for saving
    * (opposite of self::_to_rcube_event())
    */
   private function _from_rcube_event($event)
   {
-    
+    $priority_map = $this->priority_map;
+    $daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
+	
+		
 	$object = array
 	(
 		// kolab       => roundcube
@@ -356,7 +360,7 @@ class kolab_calendar
 	  	'end-date'=>$event['end'],
 	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
 	  	'show-time-as' => $event['free_busy'],
-	  	'priority' => $this->priority_map[$event['priority']]
+	  	'priority' => isset($priority_map[$event['priority']]) ? $priority_map[$event['priority']] : 1
   	  	 
 	);
 	
@@ -383,9 +387,71 @@ class kolab_calendar
 					$object['alarm'] = $avalue;
 				}
 	    }
+	
+	//recurr object/array
+	if (count($event['recurrence'])>1){
+		
+		$ra = $event['recurrence'];
+		
+		//Frequency abd interval
+		$object['recurrence']['cycle'] = strtolower($ra['FREQ']);
+		$object['recurrence']['interval'] = intval($ra['INTERVAL']);
+		
+		//Range Type
+		if($ra['UNTIL']){
+		  $object['recurrence']['range-type']='date';
+		  $object['recurrence']['range']=$ra['UNTIL'];
+		}
+		if($ra['COUNT']){
+		  $object['recurrence']['range-type']='number';
+		  $object['recurrence']['range']=$ra['COUNT'];
+		}
+		//weekly 
+		
+		if ($ra['FREQ']=='WEEKLY'){
+			
+			$weekdays = split(",",$ra['BYDAY']);
+			foreach ($weekdays as $days){
+			 $weekly[]=$daymap[$days]; 	
+			}
+			
+			$object['recurrence']['day']=$weekly;
+			}
+		
+		//monthly (temporary hack to follow current Horde logic)
+		if ($ra['FREQ']=='MONTHLY'){
+			
+			if($ra['BYDAY']=='NaN'){
+					      
+			   	  		   
+			   $object['recurrence']['daynumber']=1;
+			   $object['recurrence']['day']=array(date('L',$event['start']));
+			   $object['recurrence']['cycle']='monthly';
+			   $object['recurrence']['type']='weekday';
+			  
+			  
+		      }
+				else {
+					$object['recurrence']['daynumber']=date('j',$event['start']);
+					$object['recurrence']['cycle']='monthly';
+					$object['recurrence']['type']="daynumber";
+				}
+			
+		}
+	
+	//year
+	
 		
 	
-    
+	
+	  //exclusion
+	  $object['recurrence']['type']=array(split(',',$ra['UNTIL']));
+	    
+	 }	
+	//whole dday event
+	if($event['allday']==1)
+		$object['_is_all_day']=1;
+		
 	return $object;
   }
 
