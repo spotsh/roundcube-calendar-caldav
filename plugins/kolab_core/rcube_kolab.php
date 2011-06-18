@@ -46,8 +46,8 @@ class rcube_kolab
         }
 
         // Set Horde configuration (for cache db)
-        $dsnw = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
-        $dsnr = MDB2::parseDSN($rcmail->config->get('db_dsnr'));
+        $dsnw = $rcmail->config->get('db_dsnw');
+        $dsnr = $rcmail->config->get('db_dsnr');
 
         $conf['sql'] = MDB2::parseDSN($dsnw);
         $conf['sql']['charset'] = 'utf-8';
