@@ -40,6 +40,7 @@ function rcube_calendar(settings)
 
     /***  private vars  ***/
     var me = this;
+    var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
 
@@ -79,6 +80,16 @@ function rcube_calendar(settings)
       if (!isNaN(time_arr[1])) date.setMinutes(time_arr[1]);
       return date;
     };
+    
+    // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
+    var date2unixtime = function(date) {
+      return date.getTime()/1000 + gmt_offset;
+    };
+    
+    var fromunixtime = function(ts) {
+      ts -= gmt_offset;
+      return new Date(ts * 1000);
+    }
 
     // create a nice human-readable string for the date/time range
     var event_date_text = function(event)
@@ -225,7 +236,7 @@ function rcube_calendar(settings)
           $('select.edit-alarm-type').val(alarm[1]);
           
           if (alarm[0].match(/@(\d+)/)) {
-            var ondate = new Date(parseInt(RegExp.$1) * 1000);
+            var ondate = fromunixtime(parseInt(RegExp.$1));
             $('select.edit-alarm-offset').val('@');
             $('input.edit-alarm-date').val($.fullCalendar.formatDate(ondate, settings['date_format']));
             $('input.edit-alarm-time').val($.fullCalendar.formatDate(ondate, settings['time_format']));
@@ -305,8 +316,8 @@ function rcube_calendar(settings)
         // post data to server
         var data = {
           calendar: event.calendar,
-          start: start.getTime()/1000,
-          end: end.getTime()/1000,
+          start: date2unixtime(start),
+          end: date2unixtime(end),
           allday: allday.checked?1:0,
           title: title.val(),
           description: description.val(),
@@ -325,7 +336,7 @@ function rcube_calendar(settings)
         if (alarm) {
           var val, offset = $('select.edit-alarm-offset').val();
           if (offset == '@')
-            data.alarms = '@' + (parse_datetime($('input.edit-alarm-time').val(), $('input.edit-alarm-date').val()).getTime()/1000) + ':' + alarm;
+            data.alarms = '@' + date2unixtime(parse_datetime($('input.edit-alarm-time').val(), $('input.edit-alarm-date').val())) + ':' + alarm;
           else if ((val = parseInt($('input.edit-alarm-value').val())) && !isNaN(val) && val >= 0)
             data.alarms = offset[0] + val + offset[1] + ':' + alarm;
         }
@@ -342,7 +353,7 @@ function rcube_calendar(settings)
           if (until == 'count')
             data.recurrence.COUNT = rrtimes.val();
           else if (until == 'until')
-            data.recurrence.UNTIL = parse_datetime(endtime.val(), rrenddate.val()).getTime()/1000;
+            data.recurrence.UNTIL = date2unixtime(parse_datetime(endtime.val(), rrenddate.val()));
           
           if (freq == 'WEEKLY') {
             var byday = [];
@@ -516,8 +527,8 @@ function rcube_calendar(settings)
       var actions, adismiss, asnooze, alarm, html, event_ids = [];
       for (var actions, html, alarm, i=0; i < alarms.length; i++) {
         alarm = alarms[i];
-        alarm.start = new Date(alarm.start * 1000);
-        alarm.end = new Date(alarm.end * 1000);
+        alarm.start = $.fullCalendar.parseISO8601(alarm.start, true);
+        alarm.end = $.fullCalendar.parseISO8601(alarm.end, true);
         event_ids.push(alarm.id);
         
         html = '<h3 class="event-title">' + Q(alarm.title) + '</h3>';
@@ -836,7 +847,7 @@ function rcube_calendar(settings)
         right: 'agendaDay,agendaWeek,month,table'
       },
       aspectRatio: 1,
-      ignoreTimezone: false,  // will translate event dates to the client's timezone
+      ignoreTimezone: true,  // will treat the given date strings as in local (browser's) timezone
       height: $('#main').height(),
       eventSources: event_sources,
       monthNames : settings['months'],
@@ -952,8 +963,8 @@ function rcube_calendar(settings)
         var data = {
           id: event.id,
           calendar: event.calendar,
-          start: event.start.getTime()/1000,
-          end: event.end.getTime()/1000,
+          start: date2unixtime(event.start),
+          end: date2unixtime(event.end),
           allday: allDay?1:0
         };
         if (event.recurrence)
@@ -967,8 +978,8 @@ function rcube_calendar(settings)
         var data = {
           id: event.id,
           calendar: event.calendar,
-          start: event.start.getTime()/1000,
-          end: event.end.getTime()/1000
+          start: date2unixtime(event.start),
+          end: date2unixtime(event.end),
         };
         if (event.recurrence)
           recurring_edit_confirm(data, 'resize');

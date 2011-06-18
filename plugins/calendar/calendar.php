@@ -604,8 +604,8 @@ class calendar extends rcube_plugin
         $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
       
       $json[] = array(
-        'start' => date('c', $event['start']), // ISO 8601 date (added in PHP 5)
-        'end'   => date('c', $event['end']), // ISO 8601 date (added in PHP 5)
+        'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
+        'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
         'description' => strval($event['description']),
         'location'    => strval($event['location']),
         'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
@@ -625,8 +625,8 @@ class calendar extends rcube_plugin
     foreach ($alarms as $alarm) {
       $out[] = array(
         'id'       => $alarm['id'],
-        'start'    => $alarm['start'],
-        'end'      => $alarm['end'],
+        'start'    => gmdate('c', $this->fromGMT($alarm['start'])),
+        'end'      => gmdate('c', $this->fromGMT($alarm['end'])),
         'allDay'   => ($event['allday'] == 1)?true:false,
         'title'    => $alarm['title'],
         'location' => $alarm['location'],
