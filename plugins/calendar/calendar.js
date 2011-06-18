@@ -83,11 +83,11 @@ function rcube_calendar(settings)
     
     // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
     var date2unixtime = function(date) {
-      return date.getTime()/1000 + gmt_offset;
+      return date.getTime()/1000 + gmt_offset * 3600;
     };
     
     var fromunixtime = function(ts) {
-      ts -= gmt_offset;
+      ts -= gmt_offset * 3600;
       return new Date(ts * 1000);
     }
 
