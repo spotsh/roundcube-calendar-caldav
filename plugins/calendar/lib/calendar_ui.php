@@ -341,7 +341,23 @@ class calendar_ui
         $select = $this->interval_selector(array('name' => 'interval', 'class' => 'edit-recurrence-interval', 'id' => 'edit-recurrence-interval-monthly'));
         $html = html::div($attrib, html::label(null, $this->calendar->gettext('every')) . $select->show(1) . html::span('label-after', $this->calendar->gettext('months')));
         // day of month selection
-        $checkbox = new html_checkbox(array('name' => 'bymonthday', 'class' => 'edit-recurrence-monthly-bymonthday'));
+       
+        //hidden fields to emulate user selection:
+        $input_bymonthday  = new html_hiddenfield(array('name' => 'bymonthday',  'value' => 1));
+		$input_byday  = new html_hiddenfield(array('name' => 'byday',  'value' => 1)); 
+		$input_bydayp  = new html_hiddenfield(array('name' => 'bydayprefix',  'value' => 1)); 
+		
+	    $radio = new html_radiobutton(array('name' => 'repeatmode', 'class' => 'edit-recurrence-monthly-mode'));		
+		$table = new html_table(array('cols' => 2, 'border' => 0, 'cellpadding' => 0, 'class' => 'formtable'));
+        $table->add('label', html::label(null, $radio->show('', array('value' => 'BYDAY')) . ' ' . $this->calendar->gettext('on_the_same_weekday')));
+		$table->add('label', html::label(null, $radio->show('', array('value' => 'BYMONTHDAY')) . ' ' . $this->calendar->gettext('on_the_same_date')));
+		$html .= $input_byday->show();		
+		$html .= $input_bymonthday->show();
+		$html .= $input_bydayp->show();
+		$html .= html::div($attrib, $table->show());
+       
+       /*
+        $checkbox = new html_radiobutton(array('name' => 'bymonthday', 'class' => 'edit-recurrence-monthly-bymonthday'));
         for ($monthdays = '', $d = 1; $d <= 31; $d++) {
             $monthdays .= html::label(array('class' => 'monthday'), $checkbox->show('', array('value' => $d)) . $d);
             $monthdays .= $d % 7 ? ' ' : html::br();
@@ -356,6 +372,7 @@ class calendar_ui
         $table->add(null, $this->rrule_selectors($attrib['part']));
         
         $html .= html::div($attrib, $table->show());
+	    */
         break;
 
       // annually recurrence form

@@ -58,6 +58,9 @@ $labels['prev_month'] = 'Previous month';
 $labels['next_year'] = 'Next year';
 $labels['next_month'] = 'Next month';
 $labels['choose_date'] = 'Choose date';
+$labels['on_the_same_date'] = 'on the same date';
+$labels['on_the_same_weekday'] = 'on the same weekday';
+
 
 // alarm/reminder settings
 $labels['alarmemail'] = 'Send E-mail';

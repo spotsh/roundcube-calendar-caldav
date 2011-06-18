@@ -345,7 +345,8 @@ class kolab_calendar
   private function _from_rcube_event($event)
   {
     $priority_map = $this->priority_map;
-    
+    $daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
+	
 	$object = array
 	(
 		// kolab       => roundcube
@@ -404,7 +405,7 @@ class kolab_calendar
 	//weekly 
 	
 	if ($ra['FREQ']=='WEEKLY'){
-		$daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
+		
 		$weekdays = split(",",$ra['BYDAY']);
 		foreach ($weekdays as $days){
 		 $weekly[]=$daymap[$days]; 	
@@ -413,8 +414,37 @@ class kolab_calendar
 		$object['recurrence']['day']=$weekly;
 		}
 	
+	//monthly (temporary hack to follow current Horde logic)
+	if ($ra['FREQ']=='MONTHLY'){
+		
+		if($ra['BYDAY']=='NaN'){
+				      
+		   	  		   
+		   $object['recurrence']['daynumber']=1;
+		   $object['recurrence']['day']=array(date('L',$event['start']));
+		   $object['recurrence']['cycle']='monthly';
+		   $object['recurrence']['type']='weekday';
+		  
+		  
+	      }
+			else {
+				$object['recurrence']['daynumber']=date('j',$event['start']);
+				$object['recurrence']['cycle']='monthly';
+				$object['recurrence']['type']="daynumber";
+			}
+		
+		}
+	
+	//year
+	if ($ra['FREQ']=='YEARLY'){
+		
+		
+	}
+		
 	
 	
+	  //exclusion
+	  $object['recurrence']['type']=array(split(',',$ra['UNTIL']));
 	    
 	return $object;
   }
