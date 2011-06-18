@@ -609,7 +609,7 @@ class calendar extends rcube_plugin
         'description' => strval($event['description']),
         'location'    => strval($event['location']),
         'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
-        'allDay'      => ($event['all_day'] == 1)?true:false,
+        'allDay'      => ($event['allday'] == 1)?true:false,
       ) + $event;
     }
     return json_encode($json);
@@ -627,7 +627,7 @@ class calendar extends rcube_plugin
         'id'       => $alarm['id'],
         'start'    => $alarm['start'],
         'end'      => $alarm['end'],
-        'allDay'   => ($event['all_day'] == 1)?true:false,
+        'allDay'   => ($event['allday'] == 1)?true:false,
         'title'    => $alarm['title'],
         'location' => $alarm['location'],
         'calendar' => $alarm['calendar'],

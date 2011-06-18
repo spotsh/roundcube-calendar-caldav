@@ -265,7 +265,7 @@ class kolab_calendar
     $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
     if ($allday)  // in Roundcube all-day events only go until 23:59:59 of the last day
       $rec['end-date']--;
-      
+    
     // convert alarm time into internal format
     if ($rec['alarm']) {
       $alarm_value = $rec['alarm'];
@@ -301,7 +301,7 @@ class kolab_calendar
         $rrule['BYDAY'] = join(',', $byday);
       }
       if ($recurrence['daynumber']) {
-        if ($recurrence['type'] == 'monthday')
+        if ($recurrence['type'] == 'monthday' || $recurrence['type'] == 'daynumber')
           $rrule['BYMONTHDAY'] = $recurrence['daynumber'];
         else if ($recurrence['type'] == 'yearday')
           $rrule['BYYEARDAY'] = $recurrence['daynumber'];
@@ -328,7 +328,7 @@ class kolab_calendar
       'description' => $rec['body'],
       'start' => $rec['start-date'],
       'end' => $rec['end-date'],
-      'all_day' => $allday,
+      'allday' => $allday,
       'recurrence' => $rrule,
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
@@ -349,8 +349,7 @@ class kolab_calendar
     $daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
 	
 		
-	$object = array
-	(
+	$object = array(
 		// kolab       => roundcube
 	  	'summary' => $event['title'],
 	  	'location'=> $event['location'],
@@ -448,9 +447,13 @@ class kolab_calendar
 	  $object['recurrence']['type']=array(split(',',$ra['UNTIL']));
 	    
 	 }	
-	//whole dday event
-	if($event['allday']==1)
-		$object['_is_all_day']=1;
+
+	// whole day event
+	if ($event['allday']) {
+		$object['end-date']++;
+		$object['_is_all_day'] = 1;
+	}
+
 		
 	return $object;
   }
