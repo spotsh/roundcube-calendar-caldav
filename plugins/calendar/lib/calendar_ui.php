@@ -311,7 +311,7 @@ class calendar_ui
         $select->add($this->calendar->gettext('daily'), 'DAILY');
         $select->add($this->calendar->gettext('weekly'), 'WEEKLY');
         $select->add($this->calendar->gettext('monthly'), 'MONTHLY');
-        $select->add($this->calendar->gettext('yearly'), 'YEARLY');
+       // $select->add($this->calendar->gettext('yearly'), 'YEARLY');
         $html = html::label('edit-frequency', $this->calendar->gettext('frequency')) . $select->show('');
         break;
 
