@@ -33,6 +33,18 @@ class rcube_kolab
 
         $rcmail = rcmail::get_instance();
 
+        // get password of logged user
+        $pwd = $rcmail->decrypt($_SESSION['password']);
+
+        // load ldap credentials from local config
+        $conf['kolab'] = (array) $rcmail->config->get('kolab');
+
+        // Set global Horde config (e.g. Cache settings)
+        if (!empty($conf['kolab']['global'])) {
+            $conf = array_merge($conf, $conf['kolab']['global']);
+            unset($conf['kolab']['global']);
+        }
+
         // Set Horde configuration (for cache db)
         $dsnw = MDB2::parseDSN($rcmail->config->get('db_dsnw'));
         $dsnr = MDB2::parseDSN($rcmail->config->get('db_dsnr'));
@@ -44,18 +56,6 @@ class rcube_kolab
             $conf['sql']['read'] = MDB2::parseDSN($dsnr);
             $conf['sql']['read']['charset'] = 'utf-8';
             $conf['sql']['splitread'] = true;
-        }
-
-        // get password of logged user
-        $pwd = $rcmail->decrypt($_SESSION['password']);
-
-        // load ldap credentials from local config
-        $conf['kolab'] = (array) $rcmail->config->get('kolab');
-
-        // Set global Horde config (e.g. Cache settings)
-        if (!empty($conf['kolab']['global'])) {
-            $conf = array_merge($conf, $conf['kolab']['global']);
-            unset($conf['kolab']['global']);
         }
 
         // Re-set LDAP/IMAP host config
