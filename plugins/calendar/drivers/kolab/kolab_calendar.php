@@ -338,12 +338,13 @@ class kolab_calendar
     );
   }
 
-  /**
+   /**
    * Convert the given event record into a data structure that can be passed to Kolab_Storage backend for saving
    * (opposite of self::_to_rcube_event())
    */
   private function _from_rcube_event($event)
   {
+    $priority_map = $this->priority_map;
     
 	$object = array
 	(
@@ -356,7 +357,7 @@ class kolab_calendar
 	  	'end-date'=>$event['end'],
 	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
 	  	'show-time-as' => $event['free_busy'],
-	  	'priority' => $this->priority_map[$event['priority']]
+	  	'priority' => isset($priority_map[$event['priority']]) ? $priority_map[$event['priority']] : 1
   	  	 
 	);
 	
@@ -383,9 +384,38 @@ class kolab_calendar
 					$object['alarm'] = $avalue;
 				}
 	    }
-		
 	
-    
+	//recurr object/array
+	$ra = $event['recurrence'];
+	
+	//Frequency abd interval
+	$object['recurrence']['cycle'] = strtolower($ra['FREQ']);
+	$object['recurrence']['interval'] = intval($ra['INTERVAL']);
+	
+	//Range Type
+	if($ra['UNTIL']){
+	  $object['recurrence']['range-type']='date';
+	  $object['recurrence']['range']=$ra['UNTIL'];
+	}
+	if($ra['COUNT']){
+	  $object['recurrence']['range-type']='number';
+	  $object['recurrence']['range']=$ra['COUNT'];
+	}
+	//weekly 
+	
+	if ($ra['FREQ']=='WEEKLY'){
+		$daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
+		$weekdays = split(",",$ra['BYDAY']);
+		foreach ($weekdays as $days){
+		 $weekly[]=$daymap[$days]; 	
+		}
+		
+		$object['recurrence']['day']=$weekly;
+		}
+	
+	
+	
+	    
 	return $object;
   }
 
