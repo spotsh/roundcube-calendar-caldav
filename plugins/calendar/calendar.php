@@ -29,6 +29,7 @@ class calendar extends rcube_plugin
   public $rc;
   public $driver;
   public $home;  // declare public to be used in other classes
+  public $timezone;
 
   public $ical;
   public $ui;
@@ -560,31 +561,12 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Convert the given time stamp to a GMT date string
-   */
-  function toGMT($time, $user_tz = true)
-  {
-    $tz = $user_tz ? $this->gmt_offset : date('Z');
-    return date('Y-m-d H:i:s', $time - $tz);
-  }
-
-  /**
-   * Shift the given time stamo to a GMT time zone
-   */
-  function toGMTTS($time, $user_tz = true)
-  {
-    $tz = $user_tz ? $this->gmt_offset : date('Z');
-    return $time - $tz;
-  }
-
-  /**
    * Convert the given date string into a GMT-based time stamp
    */
-  function fromGMT($datetime, $user_tz = true)
+  function fromGMT($datetime)
   {
-    $tz = $user_tz ? $this->gmt_offset : date('Z');
     $ts = is_numeric($datetime) ? $datetime : strtotime($datetime);
-    return $ts + $tz;
+    return $ts + $this->gmt_offset;
   }
 
   /**
@@ -609,7 +591,7 @@ class calendar extends rcube_plugin
         'description' => strval($event['description']),
         'location'    => strval($event['location']),
         'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
-        'allDay'      => ($event['allday'] == 1)?true:false,
+        'allDay'      => ($event['allday'] == 1),
       ) + $event;
     }
     return json_encode($json);
