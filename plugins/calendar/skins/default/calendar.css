@@ -22,7 +22,7 @@ body.calendarmain {
 	top: 37px;
 	left: 10px;
 	bottom: 0;
-	width: 230px;
+	width: 265px;
 }
 
 #datepicker {
@@ -41,9 +41,9 @@ body.calendarmain {
 
 #sidebartoggle {
 	position: absolute;
-	left: 244px;
+	left: 276px;
 	width: 8px;
-	top: 37px;
+	top: 27px;
 	bottom: 0;
 	background: url('images/toggle.gif') 0 48% no-repeat transparent;
 	cursor: pointer;
@@ -60,7 +60,7 @@ div.sidebarclosed {
 #calendar {
 	position: absolute;
 	top: 0;
-	left: 256px;
+	left: 290px;
 	right: 10px;
 	bottom: 0;
 }
@@ -539,4 +539,3 @@ div.fc-event-location {
 fieldset #calendarcategories div {
 	margin-bottom: 0.3em;
 }
-
