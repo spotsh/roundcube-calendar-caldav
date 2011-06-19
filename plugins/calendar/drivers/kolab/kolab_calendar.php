@@ -90,10 +90,13 @@ class kolab_calendar
   /**
    * Return color to display this calendar
    */
-  public function get_color()
+  public function get_color($owner)
   {
     // TODO: read color from backend (not yet supported)
-    return '0000dd';
+    //temporary color deffirence between own calendars and the rest	
+    if ($owner == $_SESSION['username'])
+      return 'd63355';
+    return '1f9ebe';
   }
   
   
@@ -135,6 +138,7 @@ class kolab_calendar
       
       // resolve recurring events (maybe move to _fetch_events() for general use?)
       if ($event['recurrence']) {
+      	
         $recurrence = new Horde_Date_Recurrence($event['start']);
         $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
         
@@ -169,6 +173,7 @@ class kolab_calendar
    * Create a new event record
    *
    * @see Driver:new_event()
+   * 
    * @return mixed The created record ID on success, False on error
    */
   public function insert_event($event)
