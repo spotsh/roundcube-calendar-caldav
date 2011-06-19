@@ -21,6 +21,7 @@ class kolab_calendar
   public $ready = false;
   public $readonly = true;
   
+  private $cal;
   private $storage;
   private $events;
   private $id2uid;
@@ -45,8 +46,10 @@ class kolab_calendar
   /**
    * Default constructor
    */
-  public function __construct($imap_folder = null)
+  public function __construct($imap_folder, $calendar)
   {
+    $this->cal = $calendar;
+    
     if (strlen($imap_folder))
       $this->imap_folder = $imap_folder;
 
@@ -263,8 +266,11 @@ class kolab_calendar
   {
     $start_time = date('H:i:s', $rec['start-date']);
     $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
-    if ($allday)  // in Roundcube all-day events only go until 23:59:59 of the last day
+    if ($allday) {  // in Roundcube all-day events only go until 23:59:59 of the last day
       $rec['end-date']--;
+      $rec['end-date'] -= $this->cal->timezone * 3600 - date('Z');   // shift 00 times from server's timezone to user's timezone
+      $rec['start-date'] -= $this->cal->timezone * 3600 - date('Z');  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
+    }
     
     // convert alarm time into internal format
     if ($rec['alarm']) {
@@ -450,7 +456,9 @@ class kolab_calendar
 
 	// whole day event
 	if ($event['allday']) {
-		$object['end-date']++;
+		$object['end-date'] += 60;  // end is at 23:59 => jump to the next day
+		$object['end-date'] += $this->cal->timezone * 3600 - date('Z');   // shift 00 times from user's timezone to server's timezone 
+		$object['start-date'] += $this->cal->timezone * 3600 - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
 		$object['_is_all_day'] = 1;
 	}
 

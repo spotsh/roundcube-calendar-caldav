@@ -64,7 +64,7 @@ class kolab_driver extends calendar_driver
     }
     else {
         foreach ($folders as $c_folder) {
-            $calendar = new kolab_calendar($c_folder->name);
+            $calendar = new kolab_calendar($c_folder->name, $this->cal);
             $this->folders[$calendar->id] = $calendar;
             if ($calendar->ready) {
               $this->calendars[$calendar->id] = array(
