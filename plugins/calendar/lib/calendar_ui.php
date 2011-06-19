@@ -45,6 +45,10 @@ class calendar_ui
       'label' => 'calendar.calendar',
       'href' => './?_task=calendar',
       ), 'taskbar');
+    
+    // load basic client script (which - unfortunately - requires fullcalendar)
+    $this->calendar->include_script('lib/js/fullcalendar.js');
+    $this->calendar->include_script('calendar_base.js');
   }
   
   /**
@@ -62,9 +66,8 @@ class calendar_ui
    */
   public function addJS()
   {
-      $this->calendar->include_script('lib/js/fullcalendar.js');
-      $this->calendar->include_script('lib/js/jquery.miniColors.min.js');
-      $this->calendar->include_script('calendar.js');
+    $this->calendar->include_script('calendar_ui.js');
+    $this->calendar->include_script('lib/js/jquery.miniColors.min.js');
   }
   
   /**

@@ -331,8 +331,9 @@ class database_driver extends calendar_driver
     $event['recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     
-    if (isset($event['allday']))
+    if (isset($event['allday'])) {
       $event['all_day'] = $event['allday'] ? 1 : 0;
+    }
     
     // compute absolute time to notify the user
     $event['notifyat'] = $this->_get_notification($event);

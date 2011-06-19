@@ -22,15 +22,13 @@
  +-------------------------------------------------------------------------+
 */
 
-// Roundcube calendar client class
-function rcube_calendar(settings)
+// Roundcube calendar UI client class
+function rcube_calendar_ui(settings)
 {
+    // extend base class
+    rcube_calendar.call(this, settings);
+    
     /***  member vars  ***/
-    this.settings = settings;
-    this.alarm_ids = [];
-    this.alarm_dialog = null;
-    this.snooze_popup = null;
-    this.dismiss_link = null;
     this.selected_event = null;
     this.selected_calendar = null;
     this.search_request = null;
@@ -59,12 +57,9 @@ function rcube_calendar(settings)
 
 
     /***  private methods  ***/
-
-    // quote html entities
-    var Q = function(str)
-    {
-      return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    };
+    
+    var Q = this.quote_html;
+    
     // php equivalent
     var nl2br = function(str)
     {
@@ -72,7 +67,8 @@ function rcube_calendar(settings)
     };
 
     // from time and date strings to a real date object
-    var parse_datetime = function(time, date) {
+    var parse_datetime = function(time, date)
+    {
       // we use the utility function from datepicker to parse dates
       var date = $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings);
       var time_arr = time.split(/[:.]/);
@@ -82,11 +78,13 @@ function rcube_calendar(settings)
     };
     
     // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
-    var date2unixtime = function(date) {
+    var date2unixtime = function(date)
+    {
       return date.getTime()/1000 + gmt_offset * 3600;
     };
     
-    var fromunixtime = function(ts) {
+    var fromunixtime = function(ts)
+    {
       ts -= gmt_offset * 3600;
       return new Date(ts * 1000);
     }
@@ -122,7 +120,7 @@ function rcube_calendar(settings)
         $('#event-description').show().children('.event-text').html(nl2br(Q(event.description))); // TODO: format HTML with clickable links and stuff
       
       // render from-to in a nice human-readable way
-      $('#event-date').html(Q(event_date_text(event))).show();
+      $('#event-date').html(Q(me.event_date_text(event))).show();
       
       if (event.recurrence && event.recurrence_text)
         $('#event-repeat').show().children('.event-text').html(Q(event.recurrence_text));
@@ -514,108 +512,6 @@ function rcube_calendar(settings)
       }
 
       return false;
-    };
-
-    // display a notification for the given pending alarms
-    this.display_alarms = function(alarms) {
-      // clear old alert first
-      if (this.alarm_dialog)
-        this.alarm_dialog.dialog('destroy');
-      
-      this.alarm_dialog = $('<div>').attr('id', 'alarm-display');
-      
-      var actions, adismiss, asnooze, alarm, html, event_ids = [];
-      for (var actions, html, alarm, i=0; i < alarms.length; i++) {
-        alarm = alarms[i];
-        alarm.start = $.fullCalendar.parseISO8601(alarm.start, true);
-        alarm.end = $.fullCalendar.parseISO8601(alarm.end, true);
-        event_ids.push(alarm.id);
-        
-        html = '<h3 class="event-title">' + Q(alarm.title) + '</h3>';
-        html += '<div class="event-section">' + Q(alarm.location) + '</div>';
-        html += '<div class="event-section">' + Q(event_date_text(alarm)) + '</div>';
-        
-        adismiss = $('<a href="#" class="alarm-action-dismiss"></a>').html(rcmail.gettext('dismiss','calendar')).click(function(){
-          me.dismiss_link = $(this);
-          me.dismiss_alarm(me.dismiss_link.data('id'), 0);
-        });
-        asnooze = $('<a href="#" class="alarm-action-snooze"></a>').html(rcmail.gettext('snooze','calendar')).click(function(){
-          me.snooze_dropdown($(this));
-        });
-        actions = $('<div>').addClass('alarm-actions').append(adismiss.data('id', alarm.id)).append(asnooze.data('id', alarm.id));
-        
-        $('<div>').addClass('alarm-item').html(html).append(actions).appendTo(this.alarm_dialog);
-      }
-      
-      var buttons = {};
-      buttons[rcmail.gettext('dismissall','calendar')] = function() {
-        // submit dismissed event_ids to server
-        me.dismiss_alarm(me.alarm_ids.join(','), 0);
-        $(this).dialog('close');
-      };
-      
-      this.alarm_dialog.appendTo(document.body).dialog({
-        modal: false,
-        resizable: true,
-        closeOnEscape: false,
-        dialogClass: 'alarm',
-        title: '<span class="ui-icon ui-icon-alert" style="float:left; margin:0 4px 0 0"></span>' + rcmail.gettext('alarmtitle', 'calendar'),
-        buttons: buttons,
-        close: function() {
-          $('#alarm-snooze-dropdown').hide();
-          $(this).dialog('destroy').remove();
-          me.alarm_dialog = null;
-          me.alarm_ids = null;
-        },
-        drag: function(event, ui) {
-          $('#alarm-snooze-dropdown').hide();
-        }
-      });
-      this.alarm_ids = event_ids;
-    };
-
-    // show a drop-down menu with a selection of snooze times
-    this.snooze_dropdown = function(link)
-    {
-      if (!this.snooze_popup) {
-        this.snooze_popup = $('#alarm-snooze-dropdown');
-        $('#alarm-snooze-dropdown a').click(function(e){
-          var time = String(this.href).replace(/.+#/, '');
-          me.dismiss_alarm($('#alarm-snooze-dropdown').data('id'), time);
-          return false;
-        });
-      }
-      
-      // hide visible popup
-      if (this.snooze_popup.is(':visible') && this.snooze_popup.data('id') == link.data('id')) {
-        this.snooze_popup.hide();
-        this.dismiss_link = null;
-      }
-      else {  // open popup below the clicked link
-        var pos = link.offset();
-        pos.top += link.height() + 2;
-        this.snooze_popup.data('id', link.data('id')).css({ top:Math.floor(pos.top)+'px', left:Math.floor(pos.left)+'px' }).show();
-        this.dismiss_link = link;
-      }
-    };
-
-    // dismiss or snooze alarms for the given event
-    this.dismiss_alarm = function(id, snooze)
-    {
-      $('#alarm-snooze-dropdown').hide();
-      rcmail.http_post('event', { action:'dismiss', e:{ id:id, snooze:snooze } });
-      
-      // remove dismissed alarm from list
-      if (this.dismiss_link) {
-        this.dismiss_link.closest('div.alarm-item').hide();
-        var new_ids = jQuery.grep(this.alarm_ids, function(v){ return v != id; });
-        if (new_ids.length)
-          this.alarm_ids = new_ids;
-        else
-          this.alarm_dialog.dialog('close');
-      }
-      
-      this.dismiss_link = null;
     };
 
     // opens a jquery UI dialog with event properties (or empty for creating a new calendar)
@@ -1167,7 +1063,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
 
   // let's go
-  var cal = new rcube_calendar(rcmail.env.calendar_settings);
+  var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);
 
   $(window).resize(function() {
     $('#calendar').fullCalendar('option', 'height', $('#main').height());

@@ -54,17 +54,23 @@ class calendar extends rcube_plugin
     $this->load_config();
 
     // load localizations
-    $this->add_texts('localization/', !$this->rc->action || $this->rc->task != 'calendar');
-
-    // load Calendar user interface which includes jquery-ui
-    $this->require_plugin('jqueryui');
+    $this->add_texts('localization/', $this->rc->task == 'calendar' && !$this->rc->action);
 
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
-    $this->ui->init();
 
-    $skin = $this->rc->config->get('skin');
-    $this->include_stylesheet('skins/' . $skin . '/calendar.css');
+    // load Calendar user interface which includes jquery-ui
+    if (!$this->rc->output->ajax_call && !$this->rc->output->env['framed']) {
+      $this->require_plugin('jqueryui');
+
+      $this->ui->init();
+
+      // settings are required in every GUI step
+      $this->rc->output->set_env('calendar_settings', $this->load_settings());
+
+      $skin = $this->rc->config->get('skin');
+      $this->include_stylesheet('skins/' . $skin . '/calendar.css');
+    }
 
     if ($this->rc->task == 'calendar') {
       $this->load_driver();
@@ -81,15 +87,6 @@ class calendar extends rcube_plugin
       $this->register_action('search_events', array($this, 'search_events'));
       $this->register_action('export_events', array($this, 'export_events'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
-      $this->add_hook('keep_alive', array($this, 'keep_alive'));
-      
-      // set user's timezone
-      if ($this->rc->config->get('timezone') === 'auto')
-        $this->timezone = isset($_SESSION['timezone']) ? $_SESSION['timezone'] : date('Z');
-      else
-        $this->timezone = ($this->rc->config->get('timezone') + intval($this->rc->config->get('dst_active')));
-
-      $this->gmt_offset = $this->timezone * 3600;
     } 
     else if ($this->rc->task == 'settings') {
       $this->load_driver();
@@ -99,10 +96,27 @@ class calendar extends rcube_plugin
       $this->add_hook('preferences_list', array($this, 'preferences_list'));
       $this->add_hook('preferences_save', array($this, 'preferences_save')); 
     }
+    
+    // add hook to display alarms
+    $this->add_hook('keep_alive', array($this, 'keep_alive'));
+    
+    // set user's timezone
+    if ($this->rc->config->get('timezone') === 'auto')
+      $this->timezone = isset($_SESSION['timezone']) ? $_SESSION['timezone'] : date('Z');
+    else
+      $this->timezone = ($this->rc->config->get('timezone') + intval($this->rc->config->get('dst_active')));
+    
+    $this->gmt_offset = $this->timezone * 3600;
   }
 
+  /**
+   * Helper method to load the backend driver according to local config
+   */
   private function load_driver()
   {
+    if (is_object($this->driver))
+      return;
+    
     $driver_name = $this->rc->config->get('calendar_driver', 'database');
     $driver_class = $driver_name . '_driver';
 
@@ -480,9 +494,16 @@ class calendar extends rcube_plugin
    */
   function keep_alive($attr)
   {
+    $this->load_driver();
     $alarms = $this->driver->pending_alarms(time());
-    if ($alarms)
+    if ($alarms) {
+      // make sure texts and env vars are available on client
+      if ($this->rc->task != 'calendar') {
+        $this->add_texts('localization/', true);
+        $this->rc->output->set_env('snooze_select', $this->ui->snooze_select());
+      }
       $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($alarms));
+    }
   }
   
   /**
