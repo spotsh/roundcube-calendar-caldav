@@ -86,6 +86,7 @@ class rcube_kolab
      * Get instance of a Kolab (XML) format object
      *
      * @param string Data type (contact,event,task,note)
+     *
      * @return object Horde_Kolab_Format_XML The format object
      */
     public static function get_format($type)
@@ -98,6 +99,7 @@ class rcube_kolab
      * Get a list of storage folders for the given data type
      *
      * @param string Data type to list folders for (contact,event,task,note)
+     *
      * @return array List of Kolab_Folder objects (folder names in UTF7-IMAP)
      */
     public static function get_folders($type)
@@ -112,6 +114,7 @@ class rcube_kolab
      *
      * @param string IMAP folder to access (UTF7-IMAP)
      * @param string Object type to deal with (leave empty for auto-detection using annotations)
+     *
      * @return object Kolab_Data The data storage object
      */
     public static function get_storage($folder, $data_type = null)
@@ -141,6 +144,82 @@ class rcube_kolab
     public static function folder_id($folder)
     {
         return asciiwords(strtr($folder, '/.', '--'));
+    }
+
+    /**
+     * Deletes IMAP folder
+     *
+     * @param string $name Folder name (UTF7-IMAP)
+     *
+     * @return bool True on success, false on failure
+     */
+    public static function folder_delete($name)
+    {
+        self::setup();
+        $kolab  = Kolab_List::singleton();
+
+        $folder = $kolab->getFolder($name);
+        $result = $folder->delete();
+
+        if (is_a($result, 'PEAR_Error')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Creates IMAP folder
+     *
+     * @param string $name    Folder name (UTF7-IMAP)
+     * @param string $type    Folder type
+     * @param bool   $default True if older is default (for specified type)
+     *
+     * @return bool True on success, false on failure
+     */
+    public static function folder_create($name, $type=null, $default=false)
+    {
+        self::setup();
+        $kolab  = Kolab_List::singleton();
+
+        $folder = new Kolab_Folder();
+        $folder->setList($kolab);
+        $folder->setFolder($name);
+
+        $result = $folder->save(array(
+            'type' => $type,
+            'default' => $default,
+        ));
+
+        if (is_a($result, 'PEAR_Error')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Renames IMAP folder
+     *
+     * @param string $oldname Old folder name (UTF7-IMAP)
+     * @param string $newname New folder name (UTF7-IMAP)
+     *
+     * @return bool True on success, false on failure
+     */
+    public static function folder_rename($oldname, $newname)
+    {
+        self::setup();
+        $kolab  = Kolab_List::singleton();
+
+        $folder = $kolab->getFolder($oldname);
+        $folder->setFolder($newname);
+        $result = $kolab->rename($folder);
+
+        if (is_a($result, 'PEAR_Error')) {
+            return false;
+        }
+
+        return true;
     }
 
 }
