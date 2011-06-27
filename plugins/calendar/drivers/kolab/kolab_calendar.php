@@ -21,7 +21,6 @@ class kolab_calendar
   public $ready = false;
   public $readonly = true;
   
-  private $rc;
   private $cal;
   private $storage;
   private $events;
@@ -50,7 +49,6 @@ class kolab_calendar
   public function __construct($imap_folder, $calendar)
   {
     $this->cal = $calendar;
-    $this->rc = $calendar->rc;
     
     if (strlen($imap_folder))
       $this->imap_folder = $imap_folder;
