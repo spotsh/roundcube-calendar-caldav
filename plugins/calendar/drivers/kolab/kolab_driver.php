@@ -258,8 +258,46 @@ class kolab_driver extends calendar_driver
    */
   public function pending_alarms($time, $calendars = null)
   {
-    // TBD.
-    return array();
+    $events = array();
+    foreach ($this->load_events($time, $time + 86400 * 365) as $e) {
+      // add to list if alarm is set
+      if ($e['alarm'] && ($notifyat = $e['start'] - $e['alarm'] * 60) <= $time) {
+        $id = $e['id'];
+        $events[$id] = $e;
+        $events[$id]['notifyat'] = $notifyat;
+      }
+    }
+    
+    // get alarm information stored in local database
+    if (!empty($events)) {
+      $event_ids = array_keys($events);
+      array_walk($event_ids, array($this->rc->db, 'quote'));
+      $result = $this->rc->db->query(sprintf(
+        "SELECT * FROM kolab_alarms
+         WHERE event_id IN (%s)
+         AND notifyat <= %s",
+         join(',', $event_ids),
+         $this->rc->db->now()
+       ));
+
+      while ($result && ($e = $this->rc->db->fetch_assoc($result))) {
+        $dbdata[$e['event_id']] = $e;
+      }
+    }
+    
+    $alarms = array();
+    foreach ($events as $id => $e) {
+      // skip dismissed
+      if ($dbdata[$id]['dismissed'])
+        continue;
+      
+      // snooze function may have shifted alarm time
+      $notifyat = $dbdata['notifyat'] ? strtotime($notifyat) : $e['notifyat'];
+      if ($notifyat <= $time)
+        $alarms[] = $e;
+    }
+    
+    return $alarms;
   }
 
   /**
@@ -269,8 +307,19 @@ class kolab_driver extends calendar_driver
    */
   public function dismiss_alarm($event_id, $snooze = 0)
   {
-    // TBD.
-    return false;
+    // set new notifyat time or unset if not snoozed
+    $notifyat = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
+    
+    $query = $this->rc->db->query(
+      "UPDATE kolab_alarms
+       SET    dismissed=?, notifyat=?
+       WHERE  event_id=?",
+      $snooze > 0 ? 0 : 1, 
+      $notifyat,
+      $event_id
+    );
+    
+    return $this->rc->db->affected_rows($query);
   }
   
   /**
