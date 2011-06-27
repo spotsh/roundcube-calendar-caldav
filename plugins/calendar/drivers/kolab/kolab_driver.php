@@ -71,7 +71,7 @@ class kolab_driver extends calendar_driver
                 'id' => $calendar->id,
                 'name' => $calendar->get_name(),
                 'editname' => $calendar->get_foldername(),
-                'color' => $calendar->get_color($c_folder->_owner),
+                'color' => $calendar->get_color(),
                 'readonly' => $c_folder->_owner != $_SESSION['username'],
               );
             }
@@ -102,7 +102,7 @@ class kolab_driver extends calendar_driver
       if ($this->create_calendar(array('name' => 'Default', 'color' => 'cc0000')))
         $this->_read_calendars();
     }
-    
+
     return $this->calendars;
   }
 
@@ -117,9 +117,29 @@ class kolab_driver extends calendar_driver
    */
   public function create_calendar($prop)
   {
-    
+    $folder = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+
+    // add namespace prefix (when needed)
+    $this->rc->imap_init();
+    $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+
+    // create ID
+    $id = rcube_kolab::folder_id($folder);
+
+    // create IMAP folder
+    if (rcube_kolab::folder_create($folder, 'event')) {
+      // save color in user prefs (temp. solution)
+      $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
+      $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+
+      $this->rc->user->save_prefs($prefs);
+
+      return $id;
+    }
+
     return false;
   }
+
 
   /**
    * Update properties of an existing calendar
@@ -128,8 +148,35 @@ class kolab_driver extends calendar_driver
    */
   public function edit_calendar($prop)
   {
+    if ($prop['id'] && ($cal = $this->folders[$prop['id']])) {
+      $newfolder = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+      $oldfolder = $cal->get_realname();
+      // add namespace prefix (when needed)
+      $this->rc->imap_init();
+      $newfolder = $this->rc->imap->mod_mailbox($newfolder, 'in');
+
+      if ($newfolder != $oldfolder)
+        $result = rcube_kolab::folder_rename($oldfolder, $newfolder);
+      else
+        $result = true;
+
+      if ($result) {
+        // create ID
+        $id = rcube_kolab::folder_id($newfolder);
+        // save color in user prefs (temp. solution)
+        $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
+        $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+        unset($prefs['kolab_calendars'][$prop['id']]);
+
+        $this->rc->user->save_prefs($prefs);
+
+        return true;
+      }
+    }
+
   	 return false;
   }
+
 
   /**
    * Delete the given calendar with all its contents
@@ -138,7 +185,18 @@ class kolab_driver extends calendar_driver
    */
   public function remove_calendar($prop)
   {
-  	
+    if ($prop['id'] && ($cal = $this->folders[$prop['id']])) {
+      $folder = $cal->get_realname();
+  	  if (rcube_kolab::folder_delete($folder)) {
+        // remove color in user prefs (temp. solution)
+        $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
+        unset($prefs['kolab_calendars'][$prop['id']]);
+
+        $this->rc->user->save_prefs($prefs);
+        return true;
+  	  }
+    }
+
     return false;
   }
 
@@ -153,7 +211,7 @@ class kolab_driver extends calendar_driver
     $cid = $event['calendar'] ? $event['calendar'] : reset(array_keys($this->calendars));
     if ($storage = $this->_get_storage($cid))
       return $storage->insert_event($event);
-    
+
     return false;
   }
 
@@ -167,7 +225,7 @@ class kolab_driver extends calendar_driver
   {
     if ($storage = $this->_get_storage($event['calendar']))
       return $storage->update_event($event);
-    
+
     return false;
   }
 
@@ -181,7 +239,7 @@ class kolab_driver extends calendar_driver
   {
     if (($storage = $this->_get_storage($event['calendar'])) && ($ev = $storage->get_event($event['id'])))
       return $storage->update_event($event + $ev);
-    
+
     return false;
   }
 
