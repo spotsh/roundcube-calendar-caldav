@@ -95,6 +95,8 @@ abstract class calendar_driver
   /**
    * Delete the given calendar with all its contents
    *
+   * @param array Hash array with calendar properties
+   *      id: Calendar Identifier
    * @return boolean True on success, Fales on failure
    */
   abstract function remove_calendar($prop);

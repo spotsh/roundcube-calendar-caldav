@@ -137,7 +137,7 @@ class kolab_folders extends rcube_plugin
 
         // Add type-based style for table rows
         // See kolab_folders::folder_class_name()
-        for ($i=0, $cnt=$table->size(); $i<$cnt; $i++) {
+        for ($i=1, $cnt=$table->size(); $i<=$cnt; $i++) {
             $attrib = $table->get_row_attribs($i);
             $folder = $attrib['foldername']; // UTF7-IMAP
             $data   = $folderdata[$folder];

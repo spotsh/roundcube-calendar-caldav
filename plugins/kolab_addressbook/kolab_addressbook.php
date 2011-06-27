@@ -1,12 +1,11 @@
 <?php
 
-require_once(dirname(__FILE__) . '/rcube_kolab_contacts.php');
-
 /**
- * Kolab address book
+ * Kolab address book 0.5
  *
  * Sample plugin to add a new address book source with data from Kolab storage
- * This is work-in-progress for the Roundcube+Kolab integration.
+ * It provides also a possibilities to manage contact folders
+ * (create/rename/delete/acl) directly in Addressbook UI.
  *
  * @author Thomas Bruederli <roundcube@gmail.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
@@ -28,9 +27,12 @@ require_once(dirname(__FILE__) . '/rcube_kolab_contacts.php');
  */
 class kolab_addressbook extends rcube_plugin
 {
+    public $task = 'mail|settings|addressbook';
+
     private $folders;
     private $sources;
     private $rc;
+    private $ui;
 
     const GLOBAL_FIRST = 0;
     const PERSONAL_FIRST = 1;
@@ -42,6 +44,8 @@ class kolab_addressbook extends rcube_plugin
      */
     public function init()
     {
+        require_once(dirname(__FILE__) . '/lib/rcube_kolab_contacts.php');
+
         $this->rc = rcmail::get_instance();
 
         // load required plugin
@@ -54,6 +58,16 @@ class kolab_addressbook extends rcube_plugin
         if ($this->rc->task == 'addressbook') {
             $this->add_texts('localization');
             $this->add_hook('contact_form', array($this, 'contact_form'));
+
+            // Plugin actions
+            $this->register_action('plugin.book', array($this, 'book_actions'));
+            $this->register_action('plugin.book-save', array($this, 'book_save'));
+
+            // Load UI elements
+            if ($this->api->output->type == 'html') {
+                require_once($this->home . '/lib/kolab_addressbook_ui.php');
+                $this->ui = new kolab_addressbook_ui($this);
+            }
         }
         else if ($this->rc->task == 'settings') {
             $this->add_texts('localization');
@@ -92,13 +106,33 @@ class kolab_addressbook extends rcube_plugin
         }
 
         $sources = array();
+        $names   = array();
+
         foreach ($this->_list_sources() as $abook_id => $abook) {
+            $name = $origname = $abook->get_name();
+
+            // find folder prefix to truncate
+            for ($i = count($names)-1; $i >= 0; $i--) {
+                if (strpos($name, $names[$i].' &raquo; ') === 0) {
+                    $length = strlen($names[$i].' &raquo; ');
+                    $prefix = substr($name, 0, $length);
+                    $count  = count(explode(' &raquo; ', $prefix));
+                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                    break;
+                }
+            }
+            $names[] = $origname;
+
             // register this address source
             $sources[$abook_id] = array(
-                'id' => $abook_id,
-                'name' => $abook->get_name(),
+                'id'       => $abook_id,
+                'name'     => $name,
                 'readonly' => $abook->readonly,
-                'groups' => $abook->groups,
+                'editable' => $abook->editable,
+                'groups'   => $abook->groups,
+                'realname' => rcube_charset_convert($abook->get_realname(), 'UTF7-IMAP'), // IMAP folder name
+                'class_name' => $abook->get_namespace(),
+                'kolab'    => true,
             );
         }
 
@@ -200,10 +234,17 @@ class kolab_addressbook extends rcube_plugin
             true, false);
         }
         else {
-            foreach ($this->folders as $c_folder) {
+            // convert to UTF8 and sort
+            $names = array();
+            foreach ($this->folders as $c_folder)
+                $names[$c_folder->name] = rcube_charset_convert($c_folder->name, 'UTF7-IMAP');
+
+            asort($names, SORT_LOCALE_STRING);
+
+            foreach ($names as $utf7name => $name) {
                 // create instance of rcube_contacts
-                $abook_id = rcube_kolab::folder_id($c_folder->name);
-                $abook = new rcube_kolab_contacts($c_folder->name);
+                $abook_id = rcube_kolab::folder_id($utf7name);
+                $abook = new rcube_kolab_contacts($utf7name);
                 $this->sources[$abook_id] = $abook;
             }
         }
@@ -282,7 +323,7 @@ class kolab_addressbook extends rcube_plugin
         // Load configuration
         $this->load_config();
 
-        // Load localization and configuration
+        // Load localization
         $this->add_texts('localization');
 
         // Check that configuration is not disabled
@@ -333,4 +374,180 @@ class kolab_addressbook extends rcube_plugin
         return $args;
     }
 
+
+    /**
+     * Handler for plugin actions
+     */
+    public function book_actions()
+    {
+        $action = trim(get_input_value('_act', RCUBE_INPUT_GPC));
+
+        if ($action == 'create') {
+            $this->ui->book_edit();
+        }
+        else if ($action == 'edit') {
+            $this->ui->book_edit();
+        }
+        else if ($action == 'delete') {
+            $this->book_delete();
+        }
+    }
+
+
+    /**
+     * Handler for address book create/edit form submit
+     */
+    public function book_save()
+    {
+        $folder    = trim(get_input_value('_name', RCUBE_INPUT_POST, true, 'UTF7-IMAP'));
+        $oldfolder = trim(get_input_value('_oldname', RCUBE_INPUT_POST, true)); // UTF7-IMAP
+        $path      = trim(get_input_value('_parent', RCUBE_INPUT_POST, true)); // UTF7-IMAP
+        $delimiter = $_SESSION['imap_delimiter'];
+
+        // sanity checks (from steps/settings/save_folder.inc)
+        if (!strlen($folder)) {
+            $error = rcube_label('cannotbeempty');
+        }
+        else if (strlen($name) > 128) {
+            $error = rcube_label('nametoolong');
+        }
+        else {
+            // these characters are problematic e.g. when used in LIST/LSUB
+            foreach (array($delimiter, '%', '*') as $char) {
+                if (strpos($name, $delimiter) !== false) {
+                    $error = rcube_label('forbiddencharacter') . " ($char)";
+                    break;
+                }
+            }
+        }
+
+        if (!$error) {
+            // @TODO: $options
+            $options = array();
+            if ($options['protected'] || $options['norename']) {
+                $folder = $oldfolder;
+            }
+            else if (strlen($path)) {
+                $folder = $path . $delimiter . $folder;
+            }
+            else {
+                // add namespace prefix (when needed)
+                $this->rc->imap_init();
+                $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+            }
+
+            // update the folder name
+            if (strlen($oldfolder)) {
+                $type = 'update';
+                $plugin = $this->rc->plugins->exec_hook('addressbook_update', array(
+                    'name' => $folder, 'oldname' => $oldfolder));
+
+                if (!$plugin['abort']) {
+                    if ($oldfolder != $folder)
+                        $result = rcube_kolab::folder_rename($oldfolder, $folder);
+                    else
+                        $result = true;
+                }
+                else {
+                    $result = $plugin['result'];
+                }
+            }
+            // create new folder
+            else {
+                $type = 'create';
+                $plugin = $this->rc->plugins->exec_hook('addressbook_create', array('name' => $folder));
+
+                $folder = $plugin['name'];
+
+                if (!$plugin['abort']) {
+                    $result = rcube_kolab::folder_create($folder, 'contact', false);
+                }
+                else {
+                    $result = $plugin['result'];
+                }
+            }
+        }
+
+        if ($result) {
+            $kolab_folder = new rcube_kolab_contacts($folder);
+
+            // create display name for the folder (see self::address_sources())
+            if (strpos($folder, $delimiter)) {
+                $names = array();
+                foreach ($this->_list_sources() as $abook_id => $abook) {
+                    $realname = $abook->get_realname();
+                    // The list can be not updated yet, handle old folder name
+                    if ($type == 'update' && $realname == $oldfolder) {
+                        $abook    = $kolab_folder;
+                        $realname = $folder;
+                    }
+
+                    $name = $origname = $abook->get_name();
+
+                    // find folder prefix to truncate
+                    for ($i = count($names)-1; $i >= 0; $i--) {
+                        if (strpos($name, $names[$i].' &raquo; ') === 0) {
+                            $length = strlen($names[$i].' &raquo; ');
+                            $prefix = substr($name, 0, $length);
+                            $count  = count(explode(' &raquo; ', $prefix));
+                            $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                            break;
+                        }
+                    }
+                    $names[] = $origname;
+
+                    if ($realname == $folder) {
+                        break;
+                    }
+                }
+            }
+            else {
+                $name = $kolab_folder->get_name();
+            }
+
+            $this->rc->output->show_message('kolab_addressbook.book'.$type.'d', 'confirmation');
+            $this->rc->output->command('set_env', 'delimiter', $delimiter);
+            $this->rc->output->command('book_update', array(
+                'id'       => rcube_kolab::folder_id($folder),
+                'name'     => $name,
+                'readonly' => false,
+                'editable' => true,
+                'groups'   => true,
+                'realname' => rcube_charset_convert($folder, 'UTF7-IMAP'), // IMAP folder name
+                'class_name' => $kolab_folder->get_namespace(),
+                'kolab'    => true,
+            ), rcube_kolab::folder_id($oldfolder));
+
+            $this->rc->output->send('iframe');
+        }
+
+        if (!$error)
+            $error = $plugin['message'] ? $plugin['message'] : 'kolab_addressbook.book'.$type.'error';
+
+        $this->rc->output->show_message($error, 'error');
+        // display the form again
+        $this->ui->book_edit();
+    }
+
+
+    /**
+     * Handler for address book delete action (AJAX)
+     */
+    private function book_delete()
+    {
+        $folder = trim(get_input_value('_source', RCUBE_INPUT_GPC, true, 'UTF7-IMAP'));
+
+        if (rcube_kolab::folder_delete($folder)) {
+            $this->rc->output->show_message('kolab_addressbook.bookdeleted', 'confirmation');
+            $this->rc->output->set_env('pagecount', 0);
+            $this->rc->output->command('set_rowcount', rcmail_get_rowcount_text(new rcube_result_set()));
+            $this->rc->output->command('list_contacts_clear');
+            $this->rc->output->command('book_delete_done', rcube_kolab::folder_id($folder));
+        }
+        else {
+            $this->rc->output->show_message('kolab_addressbook.bookdeleteerror', 'error');
+        }
+
+        $this->rc->output->send();
+    }
 }

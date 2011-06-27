@@ -13,8 +13,9 @@
 class rcube_kolab_contacts extends rcube_addressbook
 {
     public $primary_key = 'ID';
-    public $readonly = false;
-    public $groups = true;
+    public $readonly = true;
+    public $editable = false;
+    public $groups = false;
     public $coltypes = array(
       'name'         => array('limit' => 1),
       'firstname'    => array('limit' => 1),
@@ -55,9 +56,6 @@ class rcube_kolab_contacts extends rcube_addressbook
     );
 
     private $gid;
-    private $imap;
-    private $kolab;
-    private $folder;
     private $contactstorage;
     private $liststorage;
     private $contacts;
@@ -66,6 +64,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     private $id2uid;
     private $filter;
     private $result;
+    private $namespace;
     private $imap_folder = 'INBOX/Contacts';
     private $gender_map = array(0 => 'male', 1 => 'female');
     private $phonetypemap = array('home' => 'home1', 'work' => 'business1', 'work2' => 'business2', 'workfax' => 'businessfax');
@@ -120,6 +119,25 @@ class rcube_kolab_contacts extends rcube_addressbook
         $this->liststorage = rcube_kolab::get_storage($this->imap_folder, 'distributionlist');
 
         $this->ready = !PEAR::isError($this->contactstorage) && !PEAR::isError($this->liststorage);
+
+        // Set readonly and editable flags according to folder permissions
+        if ($this->ready) {
+            if ($this->get_owner() == $_SESSION['username']) {
+                $this->editable = true;
+                $this->readonly = false;
+            }
+            else {
+                $acl = $this->contactstorage->_folder->getACL();
+                $acl = $acl[$_SESSION['username']];
+                if (strpos($acl, 'i') !== false)
+                    $this->readonly = false;
+                if (strpos($acl, 'a') !== false || strpos($acl, 'x') !== false)
+                    $this->editable = true;
+            }
+
+            if (!$this->readonly)
+                $this->groups = true;
+        }
     }
 
 
@@ -130,9 +148,113 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function get_name()
     {
-        $folder = rcube_charset_convert($this->imap_folder, 'UTF7-IMAP');
-        // @TODO: use namespace prefixes
-        return strtr(preg_replace('!^(INBOX|user)/!i', '', $folder), '/', ':');
+        $folder    = $this->imap_folder;
+        $namespace = $_SESSION['imap_namespace']; // from rcube_imap class
+        $found     = false;
+
+        if (!empty($namespace['shared'])) {
+            foreach ($namespace['shared'] as $ns) {
+                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                    $prefix = '';
+                    $folder = substr($folder, strlen($ns[0]));
+                    $delim  = $ns[1];
+                    $found  = true;
+                    $this->namespace = 'shared';
+                    break;
+                }
+            }
+        }
+        if (!$found && !empty($namespace['other'])) {
+            foreach ($namespace['other'] as $ns) {
+                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                    // remove namespace prefix
+                    $folder = substr($folder, strlen($ns[0]));
+                    $delim  = $ns[1];
+                    // get username
+                    $pos    = strpos($folder, $delim);
+                    $prefix = '('.substr($folder, 0, $pos).') ';
+                    $found  = true;
+                    $this->namespace = 'other';
+                    break;
+                }
+            }
+        }
+        if (!$found && !empty($namespace['personal'])) {
+            foreach ($namespace['personal'] as $ns) {
+                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                    // remove namespace prefix
+                    $folder = substr($folder, strlen($ns[0]));
+                    $prefix = '';
+                    $delim  = $ns[1];
+                    $found  = true;
+                    $this->namespace = 'personal';
+                    break;
+                }
+            }
+        }
+
+        if (empty($delim))
+            $delim = $_SESSION['imap_delimiter']; // from rcube_imap class
+
+        $folder = rcube_charset_convert($folder, 'UTF7-IMAP');
+        $folder = str_replace($delim, ' &raquo; ', $folder);
+
+        if ($prefix)
+            $folder = $prefix . ' ' . $folder;
+
+        return $folder;
+    }
+
+
+    /**
+     * Getter for the IMAP folder name
+     *
+     * @return string Name of the IMAP folder
+     */
+    public function get_realname()
+    {
+        return $this->imap_folder;
+    }
+
+
+    /**
+     * Getter for the IMAP folder owner
+     *
+     * @return string Name of the folder owner
+     */
+    public function get_owner()
+    {
+        return $this->contactstorage->_folder->getOwner();
+    }
+
+
+    /**
+     * Getter for the name of the namespace to which the IMAP folder belongs
+     *
+     * @return string Name of the namespace (personal, other, shared)
+     */
+    public function get_namespace()
+    {
+        if ($this->namespace) {
+            return $this->namespace;
+        }
+
+        $folder    = $this->imap_folder;
+        $namespace = $_SESSION['imap_namespace']; // from rcube_imap class
+
+        if (!empty($namespace)) {
+            foreach ($namespace as $nsname => $nsvalue) {
+                if (in_array($nsname, array('personal', 'other', 'shared')) && !empty($nsvalue)) {
+                    foreach ($nsvalue as $ns) {
+                        if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                            return $this->namespace = $nsname;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->namespace = 'personal';
     }
 
 
@@ -770,6 +892,10 @@ class rcube_kolab_contacts extends rcube_addressbook
             // read contacts
             $this->contacts = $this->id2uid = array();
             foreach ((array)$this->contactstorage->getObjects() as $record) {
+                // Because of a bug, sometimes group records are returned
+                if ($record['__type'] == 'Group')
+                    continue;
+
                 $contact = $this->_to_rcube_contact($record);
                 $id = $contact['ID'];
                 $this->contacts[$id] = $contact;

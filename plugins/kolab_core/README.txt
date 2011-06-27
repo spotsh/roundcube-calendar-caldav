@@ -21,7 +21,7 @@ pear install Net_SMTP
 pear install Mail_mimeDecode
 pear install Auth_SASL
 pear install Date
-
+pear install HTTP_Request
 
 Configuration
 -------------

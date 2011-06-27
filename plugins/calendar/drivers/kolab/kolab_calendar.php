@@ -12,6 +12,7 @@
  |                                                                         |
  +-------------------------------------------------------------------------+
  | Author: Thomas Bruederli <roundcube@gmail.com>                          |
+ | Author: Aleksander Machniak <machniak@kolabsys.com>                     |
  +-------------------------------------------------------------------------+
 */
 
@@ -20,7 +21,7 @@ class kolab_calendar
   public $id;
   public $ready = false;
   public $readonly = true;
-  
+
   private $cal;
   private $storage;
   private $events;
@@ -29,7 +30,7 @@ class kolab_calendar
   private $sensitivity_map = array('public', 'private', 'confidential');
   private $priority_map = array('low', 'normal', 'high');
 
-  
+
   private $fieldmap = array(
   // kolab       => roundcube
   	'summary' => 'title',
@@ -42,14 +43,14 @@ class kolab_calendar
   	'show-time-as' => 'free_busy',
   	'alarm','alarms'
     );
-  
+
   /**
    * Default constructor
    */
   public function __construct($imap_folder, $calendar)
   {
     $this->cal = $calendar;
-    
+
     if (strlen($imap_folder))
       $this->imap_folder = $imap_folder;
 
@@ -75,7 +76,19 @@ class kolab_calendar
     $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
     return rcube_charset_convert(strlen($dispname) ? $dispname : $this->imap_folder, "UTF7-IMAP");
   }
-  
+
+
+  /**
+   * Getter for the IMAP folder name
+   *
+   * @return string Name of the IMAP folder
+   */
+  public function get_realname()
+  {
+    return $this->imap_folder;
+  }
+
+
   /**
    * Getter for the top-end calendar folder name (not the entire path)
    *
@@ -84,22 +97,24 @@ class kolab_calendar
   public function get_foldername()
   {
     $parts = explode('/', $this->imap_folder);
-    return end($parts);
+    return rcube_charset_convert(end($parts), 'UTF7-IMAP');
   }
 
   /**
    * Return color to display this calendar
    */
-  public function get_color($owner)
+  public function get_color()
   {
-    // TODO: read color from backend (not yet supported)
-    //temporary color deffirence between own calendars and the rest	
-    if ($owner == $_SESSION['username'])
-      return 'd63355';
-    return '1f9ebe';
+    // Store temporarily calendar color in user prefs (will be changed)
+    $prefs = $this->cal->rc->config->get('kolab_calendars', array());
+
+    if (!empty($prefs[$this->id]) && !empty($prefs[$this->id]['color']))
+      return $prefs[$this->id]['color'];
+
+    return 'cc0000';
   }
-  
-  
+
+
   /**
    * Getter for a single event object
    */
