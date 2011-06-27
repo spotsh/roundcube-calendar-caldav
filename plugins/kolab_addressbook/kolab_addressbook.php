@@ -403,7 +403,7 @@ class kolab_addressbook extends rcube_plugin
         $oldfolder = trim(get_input_value('_oldname', RCUBE_INPUT_POST, true)); // UTF7-IMAP
         $path      = trim(get_input_value('_parent', RCUBE_INPUT_POST, true)); // UTF7-IMAP
         $delimiter = $_SESSION['imap_delimiter'];
-console($_REQUEST);
+
         // sanity checks (from steps/settings/save_folder.inc)
         if (!strlen($folder)) {
             $error = rcube_label('cannotbeempty');
@@ -431,8 +431,9 @@ console($_REQUEST);
                 $folder = $path . $delimiter . $folder;
             }
             else {
-                // namespace prefix?
-//                $name_imap = $RCMAIL->imap->mod_mailbox($name, 'in');
+                // add namespace prefix (when needed)
+                $this->rc->imap_init();
+                $folder = $this->rc->imap->mod_mailbox($folder, 'in');
             }
 
             // update the folder name
