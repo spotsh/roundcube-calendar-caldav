@@ -144,8 +144,8 @@ rcube_webmail.prototype.book_update = function(data, old)
     // set row attributes
     if (data.readonly)
         class_name += ' readonly';
-    if (data.class)
-        class_name += ' '+data.class;
+    if (data.class_name)
+        class_name += ' '+data.class_name;
     // updated currently selected book
     if (this.env.source != '' && this.env.source == old) {
         class_name += ' selected';

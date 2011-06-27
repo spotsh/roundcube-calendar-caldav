@@ -131,7 +131,7 @@ class kolab_addressbook extends rcube_plugin
                 'editable' => $abook->editable,
                 'groups'   => $abook->groups,
                 'realname' => rcube_charset_convert($abook->get_realname(), 'UTF7-IMAP'), // IMAP folder name
-                'class'    => $abook->get_namespace(),
+                'class_name' => $abook->get_namespace(),
                 'kolab'    => true,
             );
         }
@@ -514,7 +514,7 @@ class kolab_addressbook extends rcube_plugin
                 'editable' => true,
                 'groups'   => true,
                 'realname' => rcube_charset_convert($folder, 'UTF7-IMAP'), // IMAP folder name
-                'class'    => $kolab_folder->get_namespace(),
+                'class_name' => $kolab_folder->get_namespace(),
                 'kolab'    => true,
             ), rcube_kolab::folder_id($oldfolder));
 
