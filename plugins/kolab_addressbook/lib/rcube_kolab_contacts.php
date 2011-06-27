@@ -892,6 +892,10 @@ class rcube_kolab_contacts extends rcube_addressbook
             // read contacts
             $this->contacts = $this->id2uid = array();
             foreach ((array)$this->contactstorage->getObjects() as $record) {
+                // Because of a bug, sometimes group records are returned
+                if ($record['__type'] == 'Group')
+                    continue;
+
                 $contact = $this->_to_rcube_contact($record);
                 $id = $contact['ID'];
                 $this->contacts[$id] = $contact;
