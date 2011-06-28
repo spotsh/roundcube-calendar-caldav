@@ -3,6 +3,8 @@
  +-------------------------------------------------------------------------+
  | Kolab calendar storage class                                            |
  |                                                                         |
+ | Copyright (C) 2011, Kolab Systems AG                                    |
+ |                                                                         |
  | This program is free software; you can redistribute it and/or modify    |
  | it under the terms of the GNU General Public License version 2          |
  | as published by the Free Software Foundation.                           |
@@ -254,31 +256,21 @@ class kolab_calendar
 
   public function update_event($event)
   {
-    $updated = false;
-    $old = $this->storage->getObject($event['id']);
-    $object = array_merge($old, $this->_from_rcube_event($event));
-    $saved = $this->storage->save($object, $event['id']);
-    
-    if (PEAR::isError($saved)) {
-      raise_error(array(
-        'code' => 600, 'type' => 'php',
-        'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
-      true, false);
-    }
-    else {
-      $updated = true;
-    }
-      
-    // delete alarm settings in local database
-    if ($updated && ($old['alarm'] != $object['alarm'] || $old['start-date'] != $object['start-date'])) {
-      $query = $this->cal->rc->db->query(
-        "DELETE FROM kolab_alarms
-         WHERE event_id=?",
-        $event['id']
-      );
-    }
-    
+     $updated = false;
+	 $old = $this->storage->getObject($event['id']);
+	 $object = array_merge($old, $this->_from_rcube_event($event));
+	 $saved = $this->storage->save($object, $event['id']);
+            if (PEAR::isError($saved)) {
+                raise_error(array(
+                  'code' => 600, 'type' => 'php',
+                  'file' => __FILE__, 'line' => __LINE__,
+                  'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
+                true, false);
+            }
+            else {
+               $updated = true;
+            }
+	 
     return $updated;
   }
 
@@ -401,7 +393,6 @@ class kolab_calendar
       'end' => $rec['end-date'],
       'allday' => $allday,
       'recurrence' => $rrule,
-      '_alarm' => $rec['alarm'],
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],

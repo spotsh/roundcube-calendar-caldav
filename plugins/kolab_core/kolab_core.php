@@ -6,10 +6,14 @@
  * Plugin to setup a basic environment for interaction with a Kolab server.
  * Other Kolab-related plugins will depend on it and can use the static API rcube_core
  *
- * This is work-in-progress for the Roundcube+Kolab integration.
+ * Copyright (C) 2011, Kolab Systems AG
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation.
  *
  * @author Thomas Bruederli <roundcube@gmail.com>
- * 
+ *
  */
 class kolab_core extends rcube_plugin
 {

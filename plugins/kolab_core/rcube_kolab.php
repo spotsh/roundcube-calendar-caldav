@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Copyright (C) 2011, Kolab Systems AG
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation.
+ *
+ * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Aleksander Machniak <machniak@kolabsys.com>
+ *
+ */
+
 ini_set('error_reporting', E_ALL&~(E_DEPRECATED | E_NOTICE));
 
 require_once 'Horde/Kolab/Storage/List.php';
@@ -11,8 +23,6 @@ require_once 'Horde/Perms.php';
 /**
  * Glue class to handle access to the Kolab data using the Kolab_* classes
  * from the Horde project.
- *
- * @author Thomas Bruederli
  */
 class rcube_kolab
 {
