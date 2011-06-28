@@ -92,10 +92,11 @@ pre {
 
 #calendarslist li {
 	margin: 0;
-	padding: 2px;
+	padding: 1px;
 	display: block;
 	background: #fff;
 	border-bottom: 1px solid #EBEBEB;
+	white-space: nowrap;
 }
 
 #calendarslist li label {
@@ -104,6 +105,8 @@ pre {
 
 #calendarslist li span {
 	cursor: default;
+	background: url(images/calendars.png) 0 -3px no-repeat;
+	padding-left: 18px;
 }
 
 #calendarslist li input {
@@ -117,6 +120,26 @@ pre {
 
 #calendarslist li.selected span {
 	font-weight: bold;
+}
+
+#calendarslist li.readonly span {
+    background-position: 0 -21px;
+}
+
+#calendarslist li.other span {
+    background-position: 0 -39px;
+}
+
+#calendarslist li.other.readonly span {
+    background-position: 0 -57px;
+}
+
+#calendarslist li.shared span {
+    background-position: 0 -75px;
+}
+
+#calendarslist li.shared.readonly span {
+    background-position: 0 -93px;
 }
 
 #agendalist {

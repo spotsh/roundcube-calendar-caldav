@@ -29,7 +29,6 @@ class kolab_driver extends calendar_driver
   private $rc;
   private $cal;
   private $calendars;
-  private $folders;
 
   /**
    * Default constructor
@@ -49,46 +48,34 @@ class kolab_driver extends calendar_driver
   {
     // already read sources
     if (isset($this->calendars))
-        return $this->calendars;
+      return $this->calendars;
 
     // get all folders that have "event" type
     $folders = rcube_kolab::get_folders('event');
-    $this->folders = $this->calendars = array();
+    $this->calendars = array();
 
     if (PEAR::isError($folders)) {
-        raise_error(array(
-          'code' => 600, 'type' => 'php',
-          'file' => __FILE__, 'line' => __LINE__,
-          'message' => "Failed to list calendar folders from Kolab server:" . $folders->getMessage()),
-        true, false);
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Failed to list calendar folders from Kolab server:" . $folders->getMessage()),
+      true, false);
     }
     else {
-        foreach ($folders as $c_folder) {
-            $calendar = new kolab_calendar($c_folder->name, $this->cal);
-            $this->folders[$calendar->id] = $calendar;
-            if ($calendar->ready) {
-              $this->calendars[$calendar->id] = array(
-                'id' => $calendar->id,
-                'name' => $calendar->get_name(),
-                'editname' => $calendar->get_foldername(),
-                'color' => $calendar->get_color(),
-                'readonly' => $c_folder->_owner != $_SESSION['username'],
-              );
-            }
-        }
+      // convert to UTF8 and sort
+      $names = array();
+      foreach ($folders as $folder)
+        $names[$folder->name] = rcube_charset_convert($folder->name, 'UTF7-IMAP');
+
+      asort($names, SORT_LOCALE_STRING);
+
+      foreach ($names as $utf7name => $name) {
+        $calendar = new kolab_calendar($utf7name, $this->cal);
+        $this->calendars[$calendar->id] = $calendar;
+      }
     }
 
     return $this->calendars;
-  }
-
-
-  private function _get_storage($cid, $readonly = false)
-  {
-    if ($readonly)
-      return $this->folders[$cid];
-    else if (!$this->calendars[$cid]['readonly'])
-      return $this->folders[$cid];
-    return false;
   }
 
 
@@ -99,11 +86,41 @@ class kolab_driver extends calendar_driver
   {
     // attempt to create a default calendar for this user
     if (empty($this->calendars)) {
-      if ($this->create_calendar(array('name' => 'Default', 'color' => 'cc0000')))
+      if ($this->create_calendar(array('name' => 'Calendar', 'color' => 'cc0000')))
         $this->_read_calendars();
     }
 
-    return $this->calendars;
+    $calendars = $names = array();
+
+    foreach ($this->calendars as $id => $cal) {
+      if ($cal->ready) {
+        $name = $origname = $cal->get_name();
+
+        // find folder prefix to truncate (the same code as in kolab_addressbook plugin)
+        for ($i = count($names)-1; $i >= 0; $i--) {
+          if (strpos($name, $names[$i].' &raquo; ') === 0) {
+            $length = strlen($names[$i].' &raquo; ');
+            $prefix = substr($name, 0, $length);
+            $count  = count(explode(' &raquo; ', $prefix));
+            $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+            break;
+          }
+        }
+
+        $names[] = $origname;
+
+        $calendars[$cal->id] = array(
+          'id'       => $cal->id,
+          'name'     => $name,
+          'editname' => $cal->get_foldername(),
+          'color'    => $cal->get_color(),
+          'readonly' => $cal->readonly,
+          'class_name' => $cal->get_namespace(),
+        );
+      }
+    }
+
+    return $calendars;
   }
 
 
@@ -148,7 +165,7 @@ class kolab_driver extends calendar_driver
    */
   public function edit_calendar($prop)
   {
-    if ($prop['id'] && ($cal = $this->folders[$prop['id']])) {
+    if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
       $newfolder = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
       $oldfolder = $cal->get_realname();
       // add namespace prefix (when needed)
@@ -185,7 +202,7 @@ class kolab_driver extends calendar_driver
    */
   public function remove_calendar($prop)
   {
-    if ($prop['id'] && ($cal = $this->folders[$prop['id']])) {
+    if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
       $folder = $cal->get_realname();
   	  if (rcube_kolab::folder_delete($folder)) {
         // remove color in user prefs (temp. solution)
@@ -209,7 +226,7 @@ class kolab_driver extends calendar_driver
   public function new_event($event)
   {
     $cid = $event['calendar'] ? $event['calendar'] : reset(array_keys($this->calendars));
-    if ($storage = $this->_get_storage($cid))
+    if ($storage = $this->calendars($cid))
       return $storage->insert_event($event);
 
     return false;
@@ -223,7 +240,7 @@ class kolab_driver extends calendar_driver
    */
   public function edit_event($event)
   {
-    if ($storage = $this->_get_storage($event['calendar']))
+    if ($storage = $this->calendars[$event['calendar']])
       return $storage->update_event($event);
 
     return false;
@@ -237,7 +254,7 @@ class kolab_driver extends calendar_driver
    */
   public function move_event($event)
   {
-    if (($storage = $this->_get_storage($event['calendar'])) && ($ev = $storage->get_event($event['id'])))
+    if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
       return $storage->update_event($event + $ev);
 
     return false;
@@ -266,9 +283,9 @@ class kolab_driver extends calendar_driver
    */
   public function remove_event($event)
   {
-  	if (($storage = $this->_get_storage($event['calendar'])) && ($ev = $storage->get_event($event['id'])))
+  	if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
       return $storage->delete_event($event);
-	     
+
     return false;
   }
 
@@ -285,15 +302,15 @@ class kolab_driver extends calendar_driver
   {
     if ($calendars && is_string($calendars))
       $calendars = explode(',', $calendars);
-    
+
     $events = array();
     foreach ($this->calendars as $cid => $calendar) {
       if ($calendars && !in_array($cid, $calendars))
         continue;
-        
-      $events = array_merge($this->folders[$cid]->list_events($start, $end, $search));
+
+      $events = array_merge($this->calendars[$cid]->list_events($start, $end, $search));
     }
-    
+
     return $events;
   }
 

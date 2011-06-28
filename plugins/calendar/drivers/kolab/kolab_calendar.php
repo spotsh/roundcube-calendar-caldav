@@ -27,6 +27,7 @@ class kolab_calendar
   private $events;
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
+  private $namespace;
   private $sensitivity_map = array('public', 'private', 'confidential');
   private $priority_map = array('low', 'normal', 'high');
 
@@ -61,6 +62,19 @@ class kolab_calendar
     $this->storage = rcube_kolab::get_storage($this->imap_folder);
 
     $this->ready = !PEAR::isError($this->storage);
+
+    // Set readonly and editable flags according to folder permissions
+    if ($this->ready) {
+      if ($this->get_owner() == $_SESSION['username']) {
+        $this->readonly = false;
+      }
+      else {
+        $acl = $this->storage->_folder->getACL();
+        $acl = $acl[$_SESSION['username']];
+        if (strpos($acl, 'i') !== false)
+          $this->readonly = false;
+      }
+    }
   }
 
 
@@ -72,9 +86,8 @@ class kolab_calendar
    */
   public function get_name()
   {
-    // @TODO: get namespace prefixes from IMAP
-    $dispname = preg_replace(array('!INBOX/Calendar/!', '!^INBOX/!', '!^shared/!', '!^user/([^/]+)/!'), array('','','','(\\1) '), $this->imap_folder);
-    return rcube_charset_convert(strlen($dispname) ? $dispname : $this->imap_folder, "UTF7-IMAP");
+    $folder = rcube_kolab::object_name($this->imap_folder, $this->namespace);
+    return $folder;
   }
 
 
@@ -86,6 +99,31 @@ class kolab_calendar
   public function get_realname()
   {
     return $this->imap_folder;
+  }
+
+
+  /**
+   * Getter for the IMAP folder owner
+   *
+   * @return string Name of the folder owner
+   */
+  public function get_owner()
+  {
+    return $this->storage->_folder->getOwner();
+  }
+
+
+  /**
+   * Getter for the name of the namespace to which the IMAP folder belongs
+   *
+   * @return string Name of the namespace (personal, other, shared)
+   */
+  public function get_namespace()
+  {
+    if ($this->namespace === null) {
+      $this->namespace = rcube_kolab::folder_namespace($this->imap_folder);
+    }
+    return $this->namespace;
   }
 
 
@@ -195,18 +233,15 @@ class kolab_calendar
   {
   	if (!is_array($event))
             return false;
-			
-		
-		
+
 	//generate new event from RC input
 	$object = $this->_from_rcube_event($event);
-	
+
 	//generate new UID
 	$object['uid'] = $this->storage->generateUID();
-		
-	
+
 	$saved = $this->storage->save($object);
-			
+
     return $saved;
   }
 
