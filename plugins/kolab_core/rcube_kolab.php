@@ -260,6 +260,7 @@ class rcube_kolab
                     // get username
                     $pos    = strpos($folder, $delim);
                     $prefix = '('.substr($folder, 0, $pos).') ';
+                    $folder = substr($folder, $pos+1);
                     $found  = true;
                     $namespace = 'other';
                     break;
