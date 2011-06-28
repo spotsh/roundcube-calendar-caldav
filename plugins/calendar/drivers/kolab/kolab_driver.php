@@ -271,9 +271,9 @@ class kolab_driver extends calendar_driver
    */
   public function resize_event($event)
   {
-    if (($storage = $this->_get_storage($event['calendar'])) && ($ev = $storage->get_event($event['id'])))
+    if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
       return $storage->update_event($event + $ev);
-    
+
     return false;
   }
 
