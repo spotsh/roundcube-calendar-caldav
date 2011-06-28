@@ -356,6 +356,7 @@ class kolab_calendar
       'end' => $rec['end-date'],
       'allday' => $allday,
       'recurrence' => $rrule,
+      '_alarm' => $rec['alarm'],
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'free_busy' => $rec['show-time-as'],

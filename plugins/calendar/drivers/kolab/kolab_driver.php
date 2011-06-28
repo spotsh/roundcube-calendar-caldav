@@ -291,7 +291,7 @@ class kolab_driver extends calendar_driver
       if ($calendars && !in_array($cid, $calendars))
         continue;
         
-      $events = array_merge($this->folders[$cid]->list_events($start, $end, $search));
+      $events = array_merge($events, $this->folders[$cid]->list_events($start, $end, $search));
     }
     
     return $events;
@@ -317,9 +317,9 @@ class kolab_driver extends calendar_driver
   public function pending_alarms($time, $calendars = null)
   {
     $events = array();
-    foreach ($this->load_events($time, $time + 86400 * 365) as $e) {
+    foreach ($this->load_events($time, $time + 86400 * 365, $calendars) as $e) {
       // add to list if alarm is set
-      if ($e['alarm'] && ($notifyat = $e['start'] - $e['alarm'] * 60) <= $time) {
+      if ($e['_alarm'] && ($notifyat = $e['start'] - $e['_alarm'] * 60) <= $time) {
         $id = $e['id'];
         $events[$id] = $e;
         $events[$id]['notifyat'] = $notifyat;
@@ -328,12 +328,10 @@ class kolab_driver extends calendar_driver
     
     // get alarm information stored in local database
     if (!empty($events)) {
-      $event_ids = array_keys($events);
-      array_walk($event_ids, array($this->rc->db, 'quote'));
+      $event_ids = array_map(array($this->rc->db, 'quote'), array_keys($events));
       $result = $this->rc->db->query(sprintf(
         "SELECT * FROM kolab_alarms
-         WHERE event_id IN (%s)
-         AND notifyat <= %s",
+         WHERE event_id IN (%s)",
          join(',', $event_ids),
          $this->rc->db->now()
        ));
@@ -350,7 +348,7 @@ class kolab_driver extends calendar_driver
         continue;
       
       // snooze function may have shifted alarm time
-      $notifyat = $dbdata['notifyat'] ? strtotime($notifyat) : $e['notifyat'];
+      $notifyat = $dbdata[$id]['notifyat'] ? strtotime($dbdata[$id]['notifyat']) : $e['notifyat'];
       if ($notifyat <= $time)
         $alarms[] = $e;
     }
@@ -369,12 +367,12 @@ class kolab_driver extends calendar_driver
     $notifyat = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
     
     $query = $this->rc->db->query(
-      "UPDATE kolab_alarms
-       SET    dismissed=?, notifyat=?
-       WHERE  event_id=?",
+      "REPLACE INTO kolab_alarms
+       (event_id, dismissed, notifyat)
+       VALUES(?, ?, ?)",
+      $event_id,
       $snooze > 0 ? 0 : 1, 
-      $notifyat,
-      $event_id
+      $notifyat
     );
     
     return $this->rc->db->affected_rows($query);
