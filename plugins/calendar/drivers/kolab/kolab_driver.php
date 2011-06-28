@@ -185,8 +185,8 @@ class kolab_driver extends calendar_driver
         $id = rcube_kolab::folder_id($newfolder);
         // save color in user prefs (temp. solution)
         $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
-        $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
         unset($prefs['kolab_calendars'][$prop['id']]);
+        $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
 
         $this->rc->user->save_prefs($prefs);
 
