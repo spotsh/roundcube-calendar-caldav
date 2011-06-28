@@ -229,7 +229,7 @@ class kolab_driver extends calendar_driver
   public function new_event($event)
   {
     $cid = $event['calendar'] ? $event['calendar'] : reset(array_keys($this->calendars));
-    if ($storage = $this->calendars($cid))
+    if ($storage = $this->calendars[$cid])
       return $storage->insert_event($event);
 
     return false;
