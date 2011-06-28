@@ -140,15 +140,22 @@ class calendar_ui
       $prop['attendees'] = $this->calendar->driver->attendees;
       $prop['attachments'] = $this->calendar->driver->attachments;
       $jsenv[$id] = $prop;
-      
+
       $html_id = html_identifier($id);
-      $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' =>'cal-'  . asciiwords($id, true)),
+      $class = 'cal-'  . asciiwords($id, true);
+
+      if ($prop['readonly'])
+        $class .= ' readonly';
+      if ($prop['class_name'])
+        $class .= ' '.$prop['class_name'];
+
+      $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
         html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => !in_array($id, $hidden)), '') . html::span(null, Q($prop['name'])));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);
     $this->rc->output->add_gui_object('folderlist', $attrib['id']);
-    
+
     unset($attrib['name']);
     return html::tag('ul', $attrib, $li);
   }
