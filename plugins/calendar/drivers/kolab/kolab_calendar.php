@@ -219,21 +219,31 @@ class kolab_calendar
 
   public function update_event($event)
   {
-     $updated = false;
-	 $old = $this->storage->getObject($event['id']);
-	 $object = array_merge($old, $this->_from_rcube_event($event));
-	 $saved = $this->storage->save($object, $event['id']);
-            if (PEAR::isError($saved)) {
-                raise_error(array(
-                  'code' => 600, 'type' => 'php',
-                  'file' => __FILE__, 'line' => __LINE__,
-                  'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
-                true, false);
-            }
-            else {
-               $updated = true;
-            }
-	 
+    $updated = false;
+    $old = $this->storage->getObject($event['id']);
+    $object = array_merge($old, $this->_from_rcube_event($event));
+    $saved = $this->storage->save($object, $event['id']);
+    
+    if (PEAR::isError($saved)) {
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
+      true, false);
+    }
+    else {
+      $updated = true;
+    }
+      
+    // delete alarm settings in local database
+    if ($updated && ($old['alarm'] != $object['alarm'] || $old['start-date'] != $object['start-date'])) {
+      $query = $this->cal->rc->db->query(
+        "DELETE FROM kolab_alarms
+         WHERE event_id=?",
+        $event['id']
+      );
+    }
+    
     return $updated;
   }
 
