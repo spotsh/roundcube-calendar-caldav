@@ -222,4 +222,103 @@ class rcube_kolab
         return true;
     }
 
+    /**
+     * Getter for human-readable name of Kolab object (folder)
+     * See http://wiki.kolab.org/UI-Concepts/Folder-Listing for reference
+     *
+     * @param string $folder    IMAP folder name (UTF7-IMAP)
+     * @param string $namespace Will be set to namespace name of the folder
+     *
+     * @return string Name of the folder-object
+     */
+    public static function object_name($folder, &$namespace=null)
+    {
+        $rcmail = rcmail::get_instance();
+        $rcmail->imap_init();
+
+        $namespace = $rcmail->imap->get_namespace();
+        $found     = false;
+
+        if (!empty($namespace['shared'])) {
+            foreach ($namespace['shared'] as $ns) {
+                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                    $prefix = '';
+                    $folder = substr($folder, strlen($ns[0]));
+                    $delim  = $ns[1];
+                    $found  = true;
+                    $namespace = 'shared';
+                    break;
+                }
+            }
+        }
+        if (!$found && !empty($namespace['other'])) {
+            foreach ($namespace['other'] as $ns) {
+                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                    // remove namespace prefix
+                    $folder = substr($folder, strlen($ns[0]));
+                    $delim  = $ns[1];
+                    // get username
+                    $pos    = strpos($folder, $delim);
+                    $prefix = '('.substr($folder, 0, $pos).') ';
+                    $found  = true;
+                    $namespace = 'other';
+                    break;
+                }
+            }
+        }
+        if (!$found && !empty($namespace['personal'])) {
+            foreach ($namespace['personal'] as $ns) {
+                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                    // remove namespace prefix
+                    $folder = substr($folder, strlen($ns[0]));
+                    $prefix = '';
+                    $delim  = $ns[1];
+                    $found  = true;
+                    $namespace = 'personal';
+                    break;
+                }
+            }
+        }
+
+        if (empty($delim))
+            $delim = $rcmail->imap->get_hierarchy_delimiter();
+
+        $folder = rcube_charset_convert($folder, 'UTF7-IMAP');
+        $folder = str_replace($delim, ' &raquo; ', $folder);
+
+        if ($prefix)
+            $folder = $prefix . ' ' . $folder;
+
+        return $folder;
+    }
+
+    /**
+     * Getter for the name of the namespace to which the IMAP folder belongs
+     *
+     * @param string $folder    IMAP folder name (UTF7-IMAP)
+     *
+     * @return string Name of the namespace (personal, other, shared)
+     */
+    public static function folder_namespace($folder)
+    {
+        $rcmail = rcmail::get_instance();
+        $rcmail->imap_init();
+
+        $namespace = $rcmail->imap->get_namespace();
+
+        if (!empty($namespace)) {
+            foreach ($namespace as $nsname => $nsvalue) {
+                if (in_array($nsname, array('personal', 'other', 'shared')) && !empty($nsvalue)) {
+                    foreach ($nsvalue as $ns) {
+                        if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
+                            return $namespace = $nsname;
+                        }
+                    }
+                }
+            }
+        }
+
+        return 'personal';
+    }
+
 }

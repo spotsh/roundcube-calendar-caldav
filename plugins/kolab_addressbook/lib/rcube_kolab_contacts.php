@@ -148,60 +148,7 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function get_name()
     {
-        $folder    = $this->imap_folder;
-        $namespace = $_SESSION['imap_namespace']; // from rcube_imap class
-        $found     = false;
-
-        if (!empty($namespace['shared'])) {
-            foreach ($namespace['shared'] as $ns) {
-                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
-                    $prefix = '';
-                    $folder = substr($folder, strlen($ns[0]));
-                    $delim  = $ns[1];
-                    $found  = true;
-                    $this->namespace = 'shared';
-                    break;
-                }
-            }
-        }
-        if (!$found && !empty($namespace['other'])) {
-            foreach ($namespace['other'] as $ns) {
-                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
-                    // remove namespace prefix
-                    $folder = substr($folder, strlen($ns[0]));
-                    $delim  = $ns[1];
-                    // get username
-                    $pos    = strpos($folder, $delim);
-                    $prefix = '('.substr($folder, 0, $pos).') ';
-                    $found  = true;
-                    $this->namespace = 'other';
-                    break;
-                }
-            }
-        }
-        if (!$found && !empty($namespace['personal'])) {
-            foreach ($namespace['personal'] as $ns) {
-                if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
-                    // remove namespace prefix
-                    $folder = substr($folder, strlen($ns[0]));
-                    $prefix = '';
-                    $delim  = $ns[1];
-                    $found  = true;
-                    $this->namespace = 'personal';
-                    break;
-                }
-            }
-        }
-
-        if (empty($delim))
-            $delim = $_SESSION['imap_delimiter']; // from rcube_imap class
-
-        $folder = rcube_charset_convert($folder, 'UTF7-IMAP');
-        $folder = str_replace($delim, ' &raquo; ', $folder);
-
-        if ($prefix)
-            $folder = $prefix . ' ' . $folder;
-
+        $folder = rcube_kolab::object_name($this->imap_folder, $this->namespace);
         return $folder;
     }
 
@@ -235,26 +182,11 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function get_namespace()
     {
-        if ($this->namespace) {
-            return $this->namespace;
+        if ($this->namespace === null) {
+            $this->namespace = rcube_kolab::folder_namespace($this->imap_folder);
         }
 
-        $folder    = $this->imap_folder;
-        $namespace = $_SESSION['imap_namespace']; // from rcube_imap class
-
-        if (!empty($namespace)) {
-            foreach ($namespace as $nsname => $nsvalue) {
-                if (in_array($nsname, array('personal', 'other', 'shared')) && !empty($nsvalue)) {
-                    foreach ($nsvalue as $ns) {
-                        if (strlen($ns[0]) && strpos($folder, $ns[0]) === 0) {
-                            return $this->namespace = $nsname;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $this->namespace = 'personal';
+        return $this->namespace;
     }
 
 
