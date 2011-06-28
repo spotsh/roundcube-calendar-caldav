@@ -606,8 +606,7 @@ class database_driver extends calendar_driver
       $calendars = explode(',', $calendars);
     
     // only allow to select from calendars of this use
-    $calendar_ids = array_intersect($calendars, array_keys($this->calendars));
-    array_walk($calendar_ids, array($this->rc->db, 'quote'));
+    $calendar_ids = array_map(array($this->rc->db, 'quote'), array_intersect($calendars, array_keys($this->calendars)));
     
     $events = array();
     if (!empty($calendar_ids)) {
@@ -691,8 +690,7 @@ class database_driver extends calendar_driver
       $calendars = explode(',', $calendars);
     
     // only allow to select from calendars of this use
-    $calendar_ids = array_intersect($calendars, array_keys($this->calendars));
-    array_walk($calendar_ids, array($this->rc->db, 'quote'));
+    $calendar_ids = array_map(array($this->rc->db, 'quote'), array_intersect($calendars, array_keys($this->calendars)));
     
     $alarms = array();
     if (!empty($calendar_ids)) {
