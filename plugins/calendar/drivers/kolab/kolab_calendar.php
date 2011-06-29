@@ -162,6 +162,16 @@ class kolab_calendar
   public function get_event($id)
   {
     $this->_fetch_events();
+    
+    // event not found, maybe a recurring instance is requested
+    if (!$this->events[$id]) {
+      $master_id = preg_replace('/-\d+$/', '', $id);
+      if ($this->events[$master_id] && $this->events[$master_id]['recurrence']) {
+        $master = $this->events[$master_id];
+        $this->_get_recurring_events($master, $master['start'], $master['start'] + 86400 * 365, $id);
+      }
+    }
+    
     return $this->events[$id];
   }
 
@@ -174,9 +184,6 @@ class kolab_calendar
    */
   public function list_events($start, $end, $search = null)
   {
-    // use Horde classes to compute recurring instances
-    require_once 'Horde/Date/Recurrence.php';
-    
     $this->_fetch_events();
     
     $events = array();
@@ -205,33 +212,9 @@ class kolab_calendar
         $events[] = $event;
       }
       
-      // resolve recurring events (maybe move to _fetch_events() for general use?)
+      // resolve recurring events
       if ($event['recurrence']) {
-        $recurrence = new Horde_Date_Recurrence($event['start']);
-        $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
-        
-        foreach ((array)$event['recurrence']['EXDATE'] as $exdate)
-          $recurrence->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
-        
-        $duration = $event['end'] - $event['start'];
-        $next = new Horde_Date($event['start']);
-        $i = 1;
-        while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
-          $rec_start = $next->timestamp();
-          $rec_end = $rec_start + $duration;
-          
-          // add to output if in range
-          if ($rec_start <= $end && $rec_end >= $start) {
-            $rec_event = $event;
-            $rec_event['id'] .= '-' . $i++;
-            $rec_event['recurrence_id'] = $event['id'];
-            $rec_event['start'] = $rec_start;
-            $rec_event['end'] = $rec_end;
-            $events[] = $rec_event;
-          }
-          else if ($rec_start > $end)  // stop loop if out of range
-            break;
-        }
+        $events = array_merge($events, $this->_get_recurring_events($event, $start, $end));
       }
     }
     
@@ -334,6 +317,52 @@ class kolab_calendar
     }
   }
 
+
+  /**
+   * Create instances of a recurring event
+   */
+  private function _get_recurring_events($event, $start, $end, $event_id = null)
+  {
+    // use Horde classes to compute recurring instances
+    require_once 'Horde/Date/Recurrence.php';
+    
+    $recurrence = new Horde_Date_Recurrence($event['start']);
+    $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
+    
+    foreach ((array)$event['recurrence']['EXDATE'] as $exdate)
+      $recurrence->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+    
+    $events = array();
+    $duration = $event['end'] - $event['start'];
+    $next = new Horde_Date($event['start']);
+    $i = 0;
+    while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
+      $rec_start = $next->timestamp();
+      $rec_end = $rec_start + $duration;
+      $rec_id = $event['id'] . '-' . ++$i;
+      
+      // add to output if in range
+      if (($rec_start <= $end && $rec_end >= $start) || ($event_id && $rec_id == $event_id)) {
+        $rec_event = $event;
+        $rec_event['id'] = $rec_id;
+        $rec_event['recurrence_id'] = $event['id'];
+        $rec_event['start'] = $rec_start;
+        $rec_event['end'] = $rec_end;
+        $rec_event['_instance'] = $i;
+        $events[] = $rec_event;
+        
+        if ($rec_id == $event_id) {
+          $this->events[$rec_id] = $rec_event;
+          break;
+        }
+      }
+      else if ($rec_start > $end)  // stop loop if out of range
+        break;
+    }
+    
+    return $events;
+  }
+
   /**
    * Convert from Kolab_Format to internal representation
    */
@@ -394,7 +423,7 @@ class kolab_calendar
       
       if ($recurrence['exclusion']) {
         foreach ((array)$recurrence['exclusion'] as $excl)
-          $rrule['EXDATE'][] = strtotime($excl) - $this->cal->timezone * 3600 - date('Z');  // shift to user's timezone
+          $rrule['EXDATE'][] = strtotime($excl . date(' H:i:s', $rec['start-date']));  // use time of event start
       }
     }
     
@@ -428,9 +457,12 @@ class kolab_calendar
   {
     $priority_map = $this->priority_map;
     $daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
+    $monthmap = array('', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
+    $tz_offset = $this->cal->timezone * 3600;
 
     $object = array(
     // kolab         => roundcube
+      'uid'          => $event['uid'],
       'summary'      => $event['title'],
       'location'     => $event['location'],
       'body'         => $event['description'],
@@ -478,20 +510,22 @@ class kolab_calendar
       }
       
       //weekly
-      if ($ra['FREQ']=='WEEKLY') {
-        $weekdays = split(",", $ra['BYDAY']);
-        foreach ($weekdays as $days) {
-          $weekly[] = $daymap[$days];
+      if ($ra['FREQ'] == 'WEEKLY') {
+        if ($ra['BYDAY']) {
+          foreach (split(",", $ra['BYDAY']) as $day)
+            $object['recurrence']['day'][] = $daymap[$day];
         }
-        
-        $object['recurrence']['day'] = $weekly;
+        else {
+          // use weekday of start date if empty
+          $object['recurrence']['day'][] = strtolower(gmdate('l', $event['start'] + $tz_offset));
+        }
       }
       
       //monthly (temporary hack to follow current Horde logic)
-      if ($ra['FREQ']=='MONTHLY') {
-        if ($ra['BYDAY'] == 'NaN') {
-          $object['recurrence']['daynumber']=1;
-          $object['recurrence']['day'] = array(date('L', $event['start']));
+      if ($ra['FREQ'] == 'MONTHLY') {
+        if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
+          $object['recurrence']['daynumber'] = $m[1];
+          $object['recurrence']['day'] = array($daymap[$m[2]]);
           $object['recurrence']['cycle'] = 'monthly';
           $object['recurrence']['type']  = 'weekday';
         }
@@ -502,17 +536,36 @@ class kolab_calendar
         }
       }
       
-      //year ???
+      //yearly
+      if ($ra['FREQ'] == 'YEARLY') {
+        if (!$ra['BYMONTH'])
+          $ra['BYMONTH'] = gmdate('n', $event['start'] + $tz_offset);
+        
+        $object['recurrence']['cycle'] = 'yearly';
+        $object['recurrence']['month'] = $monthmap[intval($ra['BYMONTH'])];
+        
+        if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
+          $object['recurrence']['type'] = 'weekday';
+          $object['recurrence']['daynumber'] = $m[1];
+          $object['recurrence']['day'] = array($daymap[$m[2]]);
+        }
+        else {
+          $object['recurrence']['type'] = 'monthday';
+          $object['recurrence']['daynumber'] = gmdate('j', $event['start'] + $tz_offset);
+        }
+      }
       
       //exclusions
-      $object['recurrence']['exclusion'] = (array)$ra['EXDATE'];
+      foreach ((array)$ra['EXDATE'] as $excl) {
+        $object['recurrence']['exclusion'][] = gmdate('Y-m-d', $excl + $tz_offset);
+      }
     }
     
     // whole day event
     if ($event['allday']) {
       $object['end-date'] += 60;  // end is at 23:59 => jump to the next day
-      $object['end-date'] += $this->cal->timezone * 3600 - date('Z');   // shift 00 times from user's timezone to server's timezone 
-      $object['start-date'] += $this->cal->timezone * 3600 - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
+      $object['end-date'] += $tz_offset - date('Z');   // shift 00 times from user's timezone to server's timezone 
+      $object['start-date'] += $tz_offset - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
       $object['_is_all_day'] = 1;
     }
     

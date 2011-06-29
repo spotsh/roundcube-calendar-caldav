@@ -207,14 +207,14 @@ class kolab_driver extends calendar_driver
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
       $folder = $cal->get_realname();
-  	  if (rcube_kolab::folder_delete($folder)) {
+      if (rcube_kolab::folder_delete($folder)) {
         // remove color in user prefs (temp. solution)
         $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
         unset($prefs['kolab_calendars'][$prop['id']]);
 
         $this->rc->user->save_prefs($prefs);
         return true;
-  	  }
+      }
     }
 
     return false;
@@ -243,10 +243,7 @@ class kolab_driver extends calendar_driver
    */
   public function edit_event($event)
   {
-    if ($storage = $this->calendars[$event['calendar']])
-      return $storage->update_event($event);
-
-    return false;
+    return $this->update_event($event);
   }
 
   /**
@@ -258,7 +255,7 @@ class kolab_driver extends calendar_driver
   public function move_event($event)
   {
     if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
-      return $storage->update_event($event + $ev);
+      return $this->update_event($event + $ev);
 
     return false;
   }
@@ -272,7 +269,7 @@ class kolab_driver extends calendar_driver
   public function resize_event($event)
   {
     if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
-      return $storage->update_event($event + $ev);
+      return $this->update_event($event + $ev);
 
     return false;
   }
@@ -286,10 +283,141 @@ class kolab_driver extends calendar_driver
    */
   public function remove_event($event)
   {
-  	if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
-      return $storage->delete_event($event);
+    $success = false;
+    
+    if (($storage = $this->calendars[$event['calendar']]) && ($event = $storage->get_event($event['id']))) {
+      $savemode = 'all';
+      $master = $event;
+      
+      // read master if deleting a recurring event
+      if ($event['recurrence'] || $event['recurrence_id']) {
+        $master = $event['recurrence_id'] ? $storage->get_event($event['recurrence_id']) : $event;
+        $savemode = $event['savemode'];
+      }
+      
+      switch ($savemode) {
+        case 'current':
+          // add exception to master event
+          $master['recurrence']['EXDATE'][] = $event['start'];
+          $success = $storage->update_event($master);
+          break;
+        
+        case 'future':
+          if ($master['id'] != $event['id']) {
+            // set until-date on master event
+            $master['recurrence']['UNTIL'] = $event['start'] - 86400;
+            unset($master['recurrence']['COUNT']);
+            $success = $storage->update_event($master);
+            break;
+          }
+        
+        default:  // 'all' is default
+          $success = $storage->delete_event($master);
+          break;
+      }
+    }
 
-    return false;
+    return $success;
+  }
+
+  /**
+   * Wrapper to update an event object depending on the given savemode
+   */
+  private function update_event($event)
+  {
+    if (!($storage = $this->calendars[$event['calendar']]))
+      return false;
+    
+    $success = false;
+    $savemode = 'all';
+    $old = $master = $storage->get_event($event['id']);
+    
+    // modify a recurring event, check submitted savemode to do the right things
+    if ($old['recurrence'] || $old['recurrence_id']) {
+      $master = $old['recurrence_id'] ? $storage->get_event($old['recurrence_id']) : $old;
+      $savemode = $event['savemode'];
+    }
+    
+    // keep saved exceptions (not submitted by the client)
+    if ($old['recurrence']['EXDATE'])
+      $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
+    
+    switch ($savemode) {
+      case 'new':
+        // save submitted data as new (non-recurring) event
+        $event['recurrence'] = array();
+        $event['uid'] = $this->cal->generate_uid();
+        $success = $storage->insert_event($event);
+        break;
+        
+      case 'current':
+        // add exception to master event
+        $master['recurrence']['EXDATE'][] = $old['start'];
+        $storage->update_event($master);
+        
+        // insert new event for this occurence
+        $event += $old;
+        $event['recurrence'] = array();
+        $event['uid'] = $this->cal->generate_uid();
+        $success = $storage->insert_event($event);
+        break;
+        
+      case 'future':
+        if ($master['id'] != $event['id']) {
+          // set until-date on master event
+          $master['recurrence']['UNTIL'] = $old['start'] - 86400;
+          unset($master['recurrence']['COUNT']);
+          $storage->update_event($master);
+          
+          // save this instance as new recurring event
+          $event += $old;
+          $event['uid'] = $this->cal->generate_uid();
+          
+          // if recurrence COUNT, update value to the correct number of future occurences
+          if ($event['recurrence']['COUNT']) {
+            $event['recurrence']['COUNT'] -= $old['_instance'];
+          }
+          
+          // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::insert_event()
+          if (strlen($event['recurrence']['BYDAY']) == 2)
+            unset($event['recurrence']['BYDAY']);
+          if ($event['recurrence']['BYMONTH'])
+            unset($event['recurrence']['BYMONTH']);
+          
+          $success = $storage->insert_event($event);
+          break;
+        }
+
+      default:  // 'all' is default
+        $event['id'] = $master['id'];
+        $event['uid'] = $master['uid'];
+
+        // use start date from master but try to be smart on time or duration changes
+        $old_start_date = date('Y-m-d', $old['start']);
+        $old_start_time = date('H:i:s', $old['start']);
+        $old_duration = $old['end'] - $old['start'];
+        
+        $new_start_date = date('Y-m-d', $event['start']);
+        $new_start_time = date('H:i:s', $event['start']);
+        $new_duration = $event['end'] - $event['start'];
+        
+        // shifted or resized
+        if ($old_start_date == $new_start_date || $old_duration == $new_duration) {
+          $event['start'] = $master['start'] + ($event['start'] - $old['start']);
+          $event['end'] = $event['start'] + $new_duration;
+          
+          // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::update_event()
+          if (strlen($event['recurrence']['BYDAY']) == 2)
+            unset($event['recurrence']['BYDAY']);
+          if ($event['recurrence']['BYMONTH'])
+            unset($event['recurrence']['BYMONTH']);
+        }
+
+        $success = $storage->update_event($event);
+        break;
+    }
+    
+    return $success;
   }
 
   /**

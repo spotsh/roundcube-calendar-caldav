@@ -447,8 +447,8 @@ class calendar extends rcube_plugin
     
     if ($success)
       $this->rc->output->show_message('successfullysaved', 'confirmation');
-	else if ($removed)
-	  $this->rc->output->show_message('calendar.successremoval', 'confirmation');
+    else if ($removed)
+      $this->rc->output->show_message('calendar.successremoval', 'confirmation');
     else
       $this->rc->output->show_message('calendar.errorsaving', 'error');
 

@@ -321,7 +321,7 @@ class calendar_ui
         $select->add($this->calendar->gettext('daily'), 'DAILY');
         $select->add($this->calendar->gettext('weekly'), 'WEEKLY');
         $select->add($this->calendar->gettext('monthly'), 'MONTHLY');
-       // $select->add($this->calendar->gettext('yearly'), 'YEARLY');
+        $select->add($this->calendar->gettext('yearly'), 'YEARLY');
         $html = html::label('edit-frequency', $this->calendar->gettext('frequency')) . $select->show('');
         break;
 
@@ -350,39 +350,24 @@ class calendar_ui
       case 'monthly':
         $select = $this->interval_selector(array('name' => 'interval', 'class' => 'edit-recurrence-interval', 'id' => 'edit-recurrence-interval-monthly'));
         $html = html::div($attrib, html::label(null, $this->calendar->gettext('every')) . $select->show(1) . html::span('label-after', $this->calendar->gettext('months')));
-        // day of month selection
-       
-        //hidden fields to emulate user selection:
-        $input_bymonthday  = new html_hiddenfield(array('name' => 'bymonthday',  'value' => 1));
-		$input_byday  = new html_hiddenfield(array('name' => 'byday',  'value' => 1)); 
-		$input_bydayp  = new html_hiddenfield(array('name' => 'bydayprefix',  'value' => 1)); 
-		
-	    $radio = new html_radiobutton(array('name' => 'repeatmode', 'class' => 'edit-recurrence-monthly-mode'));		
-		$table = new html_table(array('cols' => 2, 'border' => 0, 'cellpadding' => 0, 'class' => 'formtable'));
-        $table->add('label', html::label(null, $radio->show('', array('value' => 'BYDAY')) . ' ' . $this->calendar->gettext('on_the_same_weekday')));
-		$table->add('label', html::label(null, $radio->show('', array('value' => 'BYMONTHDAY')) . ' ' . $this->calendar->gettext('on_the_same_date')));
-		$html .= $input_byday->show();		
-		$html .= $input_bymonthday->show();
-		$html .= $input_bydayp->show();
-		$html .= html::div($attrib, $table->show());
-       
-       /*
+        
+/* multiple month selection is not supported by Kolab
         $checkbox = new html_radiobutton(array('name' => 'bymonthday', 'class' => 'edit-recurrence-monthly-bymonthday'));
         for ($monthdays = '', $d = 1; $d <= 31; $d++) {
             $monthdays .= html::label(array('class' => 'monthday'), $checkbox->show('', array('value' => $d)) . $d);
             $monthdays .= $d % 7 ? ' ' : html::br();
         }
-        
+*/
         // rule selectors
         $radio = new html_radiobutton(array('name' => 'repeatmode', 'class' => 'edit-recurrence-monthly-mode'));
         $table = new html_table(array('cols' => 2, 'border' => 0, 'cellpadding' => 0, 'class' => 'formtable'));
-        $table->add('label topalign', html::label(null, $radio->show('BYMONTHDAY', array('value' => 'BYMONTHDAY')) . ' ' . $this->calendar->gettext('each')));
+        $table->add('label', html::label(null, $radio->show('BYMONTHDAY', array('value' => 'BYMONTHDAY')) . ' ' . $this->calendar->gettext('onsamedate')));  // $this->calendar->gettext('each')
         $table->add(null, $monthdays);
         $table->add('label', html::label(null, $radio->show('', array('value' => 'BYDAY')) . ' ' . $this->calendar->gettext('onevery')));
         $table->add(null, $this->rrule_selectors($attrib['part']));
         
         $html .= html::div($attrib, $table->show());
-	    */
+
         break;
 
       // annually recurrence form
@@ -391,9 +376,10 @@ class calendar_ui
         $html = html::div($attrib, html::label(null, $this->calendar->gettext('every')) . $select->show(1) . html::span('label-after', $this->calendar->gettext('years')));
         // month selector
         $monthmap = array('','jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec');
-        $checkbox = new html_checkbox(array('name' => 'bymonth', 'class' => 'edit-recurrence-yearly-bymonth'));
+        $boxtype = is_a($this->calendar->driver, 'kolab_driver') ? 'radio' : 'checkbox';
+        $checkbox = new html_inputfield(array('type' => $boxtype, 'name' => 'bymonth', 'class' => 'edit-recurrence-yearly-bymonth'));
         for ($months = '', $m = 1; $m <= 12; $m++) {
-            $months .= html::label(array('class' => 'month'), $checkbox->show('', array('value' => $m)) . $this->calendar->gettext($monthmap[$m]));
+            $months .= html::label(array('class' => 'month'), $checkbox->show(null, array('value' => $m)) . $this->calendar->gettext($monthmap[$m]));
             $months .= $m % 4 ? ' ' : html::br();
         }
         $html .= html::div($attrib + array('id' => 'edit-recurrence-yearly-bymonthblock'), $months);
@@ -453,10 +439,13 @@ class calendar_ui
         $this->calendar->gettext('first'),
         $this->calendar->gettext('second'),
         $this->calendar->gettext('third'),
-        $this->calendar->gettext('fourth'),
-        $this->calendar->gettext('last')
+        $this->calendar->gettext('fourth')
       ),
-      array(1, 2, 3, 4, -1));
+      array(1, 2, 3, 4));
+    
+    // Kolab doesn't support 'last' but others do.
+    if (!is_a($this->calendar->driver, 'kolab_driver'))
+      $select_prefix->add($this->calendar->gettext('last'), -1);
     
     $select_wday = new html_select(array('name' => 'byday', 'id' => "edit-recurrence-$part-byday"));
     if ($noselect) $select_wday->add($noselect, '');
