@@ -207,7 +207,6 @@ class kolab_calendar
       
       // resolve recurring events (maybe move to _fetch_events() for general use?)
       if ($event['recurrence']) {
-      	
         $recurrence = new Horde_Date_Recurrence($event['start']);
         $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
         
@@ -216,6 +215,7 @@ class kolab_calendar
         
         $duration = $event['end'] - $event['start'];
         $next = new Horde_Date($event['start']);
+        $i = 1;
         while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
           $rec_start = $next->timestamp();
           $rec_end = $rec_start + $duration;
@@ -223,6 +223,7 @@ class kolab_calendar
           // add to output if in range
           if ($rec_start <= $end && $rec_end >= $start) {
             $rec_event = $event;
+            $rec_event['id'] .= '-' . $i++;
             $rec_event['recurrence_id'] = $event['id'];
             $rec_event['start'] = $rec_start;
             $rec_event['end'] = $rec_end;
@@ -247,17 +248,22 @@ class kolab_calendar
    */
   public function insert_event($event)
   {
-  	if (!is_array($event))
-            return false;
-
-	//generate new event from RC input
-	$object = $this->_from_rcube_event($event);
-
-	//generate new UID
-	$object['uid'] = $this->storage->generateUID();
-
-	$saved = $this->storage->save($object);
-
+    if (!is_array($event))
+      return false;
+    
+    //generate new event from RC input
+    $object = $this->_from_rcube_event($event);
+    $saved = $this->storage->save($object);
+    
+    if (PEAR::isError($saved)) {
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Error saving event object to Kolab server:" . $saved->getMessage()),
+        true, false);
+      $saved = false;
+    }
+    
     return $saved;
   }
 
@@ -270,47 +276,45 @@ class kolab_calendar
 
   public function update_event($event)
   {
-     $updated = false;
-	 $old = $this->storage->getObject($event['id']);
-	 $object = array_merge($old, $this->_from_rcube_event($event));
-	 $saved = $this->storage->save($object, $event['id']);
-            if (PEAR::isError($saved)) {
-                raise_error(array(
-                  'code' => 600, 'type' => 'php',
-                  'file' => __FILE__, 'line' => __LINE__,
-                  'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
-                true, false);
-            }
-            else {
-               $updated = true;
-            }
-	 
+    $updated = false;
+    $old = $this->storage->getObject($event['id']);
+    $object = array_merge($old, $this->_from_rcube_event($event));
+    $saved = $this->storage->save($object, $event['id']);
+    if (PEAR::isError($saved)) {
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Error saving event object to Kolab server:" . $saved->getMessage()),
+        true, false);
+    }
+    else {
+      $updated = true;
+    }
+
     return $updated;
   }
 
-	/**
-	   * Delete an event record
-	   *
-	   * @see Driver:remove_event()
-	   * @return boolean True on success, False on error
-	   */
-
+  /**
+   * Delete an event record
+   *
+   * @see Driver:remove_event()
+   * @return boolean True on success, False on error
+   */
   public function delete_event($event)
   {
-			
-	 $deleted = false;
-	 $deleteme = $this->storage->delete($event['id']);
-            if (PEAR::isError($deleteme)) {
-                raise_error(array(
-                  'code' => 600, 'type' => 'php',
-                  'file' => __FILE__, 'line' => __LINE__,
-                  'message' => "Error saving contact object to Kolab server:" . $deleteme->getMessage()),
-                true, false);
-            }
-            else {
-               $deleted = true;
-            }
-	 
+    $deleted = false;
+    $deleteme = $this->storage->delete($event['id']);
+    if (PEAR::isError($deleteme)) {
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Error deleting event object from Kolab server:" . $deleteme->getMessage()),
+        true, false);
+    }
+    else {
+      $deleted = true;
+    }
+    
     return $deleted;
   }
 
@@ -390,7 +394,7 @@ class kolab_calendar
       
       if ($recurrence['exclusion']) {
         foreach ((array)$recurrence['exclusion'] as $excl)
-          $rrule['EXDATE'][] = strtotime($excl);
+          $rrule['EXDATE'][] = strtotime($excl) - $this->cal->timezone * 3600 - date('Z');  // shift to user's timezone
       }
     }
     
@@ -424,119 +428,96 @@ class kolab_calendar
   {
     $priority_map = $this->priority_map;
     $daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
-	
-		
-	$object = array(
-		// kolab       => roundcube
-	  	'summary' => $event['title'],
-	  	'location'=> $event['location'],
-	  	'body'=> $event['description'],
-	  	'categories'=> $event['categories'],
-	  	'start-date'=>$event['start'],
-	  	'end-date'=>$event['end'],
-	  	'sensitivity'=>$this->sensitivity_map[$event['sensitivity']],
-	  	'show-time-as' => $event['free_busy'],
-	  	'priority' => isset($priority_map[$event['priority']]) ? $priority_map[$event['priority']] : 1
-  	  	 
-	);
-	
-	//handle alarms
-	if ($event['alarms']) 	{
 
-		//get the value
-     	$alarmbase = explode(":",$event['alarms']);
-		
-		//get number only
-		$avalue = preg_replace('/[^0-9]/', '', $alarmbase[0]); 
-	
-		  if(preg_match("/H/",$alarmbase[0]))
-		  {
-		  	$object['alarm'] = $avalue*60;
-			
-		  }else if (preg_match("/D/",$alarmbase[0]))
-		  	{
-		  		$object['alarm'] = $avalue*24*60;
-				
-		  	}else
-				{
-					//minutes
-					$object['alarm'] = $avalue;
-				}
-	    }
-	
-	//recurr object/array
-	if (count($event['recurrence'])>1){
-		
-		$ra = $event['recurrence'];
-		
-		//Frequency abd interval
-		$object['recurrence']['cycle'] = strtolower($ra['FREQ']);
-		$object['recurrence']['interval'] = intval($ra['INTERVAL']);
-		
-		//Range Type
-		if($ra['UNTIL']){
-		  $object['recurrence']['range-type']='date';
-		  $object['recurrence']['range']=$ra['UNTIL'];
-		}
-		if($ra['COUNT']){
-		  $object['recurrence']['range-type']='number';
-		  $object['recurrence']['range']=$ra['COUNT'];
-		}
-		//weekly 
-		
-		if ($ra['FREQ']=='WEEKLY'){
-			
-			$weekdays = split(",",$ra['BYDAY']);
-			foreach ($weekdays as $days){
-			 $weekly[]=$daymap[$days]; 	
-			}
-			
-			$object['recurrence']['day']=$weekly;
-			}
-		
-		//monthly (temporary hack to follow current Horde logic)
-		if ($ra['FREQ']=='MONTHLY'){
-			
-			if($ra['BYDAY']=='NaN'){
-					      
-			   	  		   
-			   $object['recurrence']['daynumber']=1;
-			   $object['recurrence']['day']=array(date('L',$event['start']));
-			   $object['recurrence']['cycle']='monthly';
-			   $object['recurrence']['type']='weekday';
-			  
-			  
-		      }
-				else {
-					$object['recurrence']['daynumber']=date('j',$event['start']);
-					$object['recurrence']['cycle']='monthly';
-					$object['recurrence']['type']="daynumber";
-				}
-			
-		}
-	
-	//year
-	
-		
-	
-	
-	  //exclusion
-	  $object['recurrence']['type']=array(split(',',$ra['UNTIL']));
-	    
-	 }	
+    $object = array(
+    // kolab         => roundcube
+      'summary'      => $event['title'],
+      'location'     => $event['location'],
+      'body'         => $event['description'],
+      'categories'   => $event['categories'],
+      'start-date'   => $event['start'],
+      'end-date'     => $event['end'],
+      'sensitivity'  =>$this->sensitivity_map[$event['sensitivity']],
+      'show-time-as' => $event['free_busy'],
+      'priority'     => isset($priority_map[$event['priority']]) ? $priority_map[$event['priority']] : 1,
+    );
+    
+    //handle alarms
+    if ($event['alarms']) {
+      //get the value
+      $alarmbase = explode(":", $event['alarms']);
+      
+      //get number only
+      $avalue = preg_replace('/[^0-9]/', '', $alarmbase[0]); 
+      
+      if (preg_match("/H/",$alarmbase[0])) {
+        $object['alarm'] = $avalue*60;
+      } else if (preg_match("/D/",$alarmbase[0])) {
+        $object['alarm'] = $avalue*24*60;
+      } else {
+        $object['alarm'] = $avalue;
+      }
+    }
+    
+    //recurr object/array
+    if (count($event['recurrence']) > 1) {
+      $ra = $event['recurrence'];
+      
+      //Frequency abd interval
+      $object['recurrence']['cycle'] = strtolower($ra['FREQ']);
+      $object['recurrence']['interval'] = intval($ra['INTERVAL']);
 
-	// whole day event
-	if ($event['allday']) {
-		$object['end-date'] += 60;  // end is at 23:59 => jump to the next day
-		$object['end-date'] += $this->cal->timezone * 3600 - date('Z');   // shift 00 times from user's timezone to server's timezone 
-		$object['start-date'] += $this->cal->timezone * 3600 - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
-		$object['_is_all_day'] = 1;
-	}
-
-		
-	return $object;
+      //Range Type
+      if ($ra['UNTIL']) {
+        $object['recurrence']['range-type'] = 'date';
+        $object['recurrence']['range'] = $ra['UNTIL'];
+      }
+      if ($ra['COUNT']) {
+        $object['recurrence']['range-type'] = 'number';
+        $object['recurrence']['range'] = $ra['COUNT'];
+      }
+      
+      //weekly
+      if ($ra['FREQ']=='WEEKLY') {
+        $weekdays = split(",", $ra['BYDAY']);
+        foreach ($weekdays as $days) {
+          $weekly[] = $daymap[$days];
+        }
+        
+        $object['recurrence']['day'] = $weekly;
+      }
+      
+      //monthly (temporary hack to follow current Horde logic)
+      if ($ra['FREQ']=='MONTHLY') {
+        if ($ra['BYDAY'] == 'NaN') {
+          $object['recurrence']['daynumber']=1;
+          $object['recurrence']['day'] = array(date('L', $event['start']));
+          $object['recurrence']['cycle'] = 'monthly';
+          $object['recurrence']['type']  = 'weekday';
+        }
+        else {
+          $object['recurrence']['daynumber'] = date('j', $event['start']);
+          $object['recurrence']['cycle'] = 'monthly';
+          $object['recurrence']['type']  = 'daynumber';
+        }
+      }
+      
+      //year ???
+      
+      //exclusions
+      $object['recurrence']['exclusion'] = (array)$ra['EXDATE'];
+    }
+    
+    // whole day event
+    if ($event['allday']) {
+      $object['end-date'] += 60;  // end is at 23:59 => jump to the next day
+      $object['end-date'] += $this->cal->timezone * 3600 - date('Z');   // shift 00 times from user's timezone to server's timezone 
+      $object['start-date'] += $this->cal->timezone * 3600 - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
+      $object['_is_all_day'] = 1;
+    }
+    
+    return $object;
   }
 
- 
 
 }
