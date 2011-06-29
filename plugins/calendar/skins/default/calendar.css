@@ -43,7 +43,7 @@ body.calendarmain {
 	position: absolute;
 	left: 244px;
 	width: 8px;
-	top: 27px;
+	top: 37px;
 	bottom: 0;
 	background: url('images/toggle.gif') 0 48% no-repeat transparent;
 	cursor: pointer;
@@ -226,7 +226,7 @@ pre {
 }
 
 #quicksearchbar {
-	right: 10px;
+	right: 4px;
 }
 
 #eventshow,
@@ -469,7 +469,7 @@ a.alarm-action-snooze:after {
 
 /* fullcalendar style overrides */
 
-.fc-content {
+.rcube-fc-content {
 	position: absolute !important;
 	top: 37px;
 	left: 0;
@@ -543,7 +543,7 @@ div.fc-event-location {
 	background: #dddddd;
 	background-image: -moz-linear-gradient(center top, #f4f4f4, #d2d2d2);
 	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #f4f4f4), color-stop(1.00, #d2d2d2));
-	filter: progid:DXImageTransform.Microsoft.gradient(enabled='true', startColorstr=#f4f4f4, endColorstr=#d2d2d2, GradientType=1);
+	filter: progid:DXImageTransform.Microsoft.gradient(enabled='true', startColorstr=#f4f4f4, endColorstr=#d2d2d2, GradientType=0);
 	font-weight: bold;
 	color: #333;
 }

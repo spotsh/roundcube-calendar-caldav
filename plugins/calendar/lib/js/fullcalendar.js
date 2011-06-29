@@ -5666,9 +5666,17 @@ function TableEventRenderer() {
 					}
 				}
 				s += "</tr>";
+				
+				// IE doesn't like innerHTML on tbody elements so we insert every row individually
+				if (document.all) {
+					$(s).appendTo(segContainer);
+					s = '';
+				}
 			}
-			
-			segContainer[0].innerHTML = s;
+
+			if (!document.all)
+				segContainer[0].innerHTML = s;
+
 			eventElements = segContainer.children();
 
 			// retrieve elements, run through eventRender callback, bind event handlers

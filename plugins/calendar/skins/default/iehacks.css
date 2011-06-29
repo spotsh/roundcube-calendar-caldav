@@ -1,0 +1,45 @@
+/* CSS hacks for IE 6/7 */
+
+#main {
+	width: expression(Math.max(300, parseInt(document.documentElement.clientWidth)-10)+'px');
+	height: expression(Math.max(300, parseInt(document.documentElement.clientHeight)-100)+'px');
+}
+
+#sidebar,
+#sidebartoggle {
+	height: expression((parseInt(this.parentNode.offsetHeight)-37)+'px');
+}
+
+#calendar {
+	width: expression((parseInt(this.parentNode.offsetWidth)-parseInt(document.getElementById('sidebartoggle').offsetWidth)-parseInt(document.getElementById('sidebartoggle').offsetLeft)-4)+'px');
+	height: expression(parseInt(this.parentNode.offsetHeight)+'px');
+}
+
+#calendars {
+	height: expression((parseInt(this.parentNode.offsetHeight)-220)+'px');
+}
+
+#calendartoolbar a.buttonPas {
+	filter: alpha(opacity=35);
+}
+
+html #taskbar a.button-calendar {
+	background-image: url(images/calendar.gif);
+}
+
+html #calendartoolbar a.button,
+html #calendartoolbar a.buttonPas {
+	background-image: url(images/toolbar.gif);
+}
+
+html.ie #datepicker a.ui-priority-secondary {
+	filter: alpha(opacity=40);
+}
+
+#datepicker .ui-widget-header {
+	width: 102%;
+}
+
+.fc-header-title h2 {
+	font-size: 16px;
+}

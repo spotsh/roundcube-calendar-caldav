@@ -30,6 +30,7 @@ class kolab_calendar
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
   private $namespace;
+  private $search_fields = array('title', 'description', 'location');
   private $sensitivity_map = array('public', 'private', 'confidential');
   private $priority_map = array('low', 'normal', 'high');
 
@@ -180,10 +181,23 @@ class kolab_calendar
     
     $events = array();
     foreach ($this->events as $id => $event) {
-      // TODO: filter events by search query
-     
+      // filter events by search query
       if (!empty($search)) {
+        $hit = false;
+        foreach ($this->search_fields as $col) {
+          if (empty($event[$col]))
+            continue;
+          
+          // do a simple substring matching (to be improved)
+          $val = mb_strtolower($event[$col]);
+          if (strpos($val, $search) !== false) {
+            $hit = true;
+            break;
+          }
+        }
         
+        if (!$hit)  // skip this event if not match with search term
+          continue;
       }
       
       // list events in requested time window

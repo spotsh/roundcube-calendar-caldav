@@ -52,7 +52,7 @@ function rcube_calendar_ui(settings)
       monthNamesShort: settings['months'],
       changeMonth: false,
       showOtherMonths: true,
-      selectOtherMonths: true,
+      selectOtherMonths: true
     };
 
 
@@ -780,6 +780,8 @@ function rcube_calendar_ui(settings)
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
       buttonText: {
+        prev: (bw.ie6 ? '&nbsp;&lt;&lt;&nbsp;' : '&nbsp;&#9668;&nbsp;'),
+        next: (bw.ie6 ? '&nbsp;&gt;&gt;&nbsp;' : '&nbsp;&#9658;&nbsp;'),
         today: settings['today'],
         day: rcmail.gettext('day', 'calendar'),
         week: rcmail.gettext('week', 'calendar'),
@@ -875,7 +877,7 @@ function rcube_calendar_ui(settings)
           id: event.id,
           calendar: event.calendar,
           start: date2unixtime(event.start),
-          end: date2unixtime(event.end),
+          end: date2unixtime(event.end)
         };
         if (event.recurrence)
           recurring_edit_confirm(data, 'resize');
@@ -884,7 +886,8 @@ function rcube_calendar_ui(settings)
       },
       viewDisplay: function(view) {
         me.eventcount = [];
-        window.setTimeout(function(){ $('div.fc-content').css('overflow', view.name == 'month' ? 'auto' : 'hidden') }, 10);
+        if (!bw.ie)
+          window.setTimeout(function(){ $('div.fc-content').css('overflow', view.name == 'month' ? 'auto' : 'hidden') }, 10);
       },
       windowResize: function(view) {
         me.eventcount = [];
@@ -928,7 +931,7 @@ function rcube_calendar_ui(settings)
         d.setMonth(month - 1);
         minical.data('year', year).data('month', month);
         //fc.fullCalendar('gotoDate', d).fullCalendar('setDate', d);
-      },
+      }
     }));
     window.setTimeout(init_week_events, 10);
 
@@ -1033,6 +1036,10 @@ function rcube_calendar_ui(settings)
     $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
     
     $('#calendar-color').miniColors();
+
+    // add proprietary css styles if not IE
+    if (!bw.ie)
+      $('div.fc-content').addClass('rcube-fc-content');
 
     // hide event dialog when clicking somewhere into document
     $(document).bind('mousedown', dialog_check);
