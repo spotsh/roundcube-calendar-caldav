@@ -237,11 +237,11 @@ class rcube_kolab
      * See http://wiki.kolab.org/UI-Concepts/Folder-Listing for reference
      *
      * @param string $folder    IMAP folder name (UTF7-IMAP)
-     * @param string $namespace Will be set to namespace name of the folder
+     * @param string $folder_ns Will be set to namespace name of the folder
      *
      * @return string Name of the folder-object
      */
-    public static function object_name($folder, &$namespace=null)
+    public static function object_name($folder, &$folder_ns=null)
     {
         $rcmail = rcmail::get_instance();
         $rcmail->imap_init();
@@ -256,7 +256,7 @@ class rcube_kolab
                     $folder = substr($folder, strlen($ns[0]));
                     $delim  = $ns[1];
                     $found  = true;
-                    $namespace = 'shared';
+                    $folder_ns = 'shared';
                     break;
                 }
             }
@@ -272,7 +272,7 @@ class rcube_kolab
                     $prefix = '('.substr($folder, 0, $pos).') ';
                     $folder = substr($folder, $pos+1);
                     $found  = true;
-                    $namespace = 'other';
+                    $folder_ns = 'other';
                     break;
                 }
             }
@@ -285,7 +285,6 @@ class rcube_kolab
                     $prefix = '';
                     $delim  = $ns[1];
                     $found  = true;
-                    $namespace = 'personal';
                     break;
                 }
             }
@@ -299,6 +298,9 @@ class rcube_kolab
 
         if ($prefix)
             $folder = $prefix . ' ' . $folder;
+
+        if (!$folder_ns)
+            $folder_ns = 'personal';
 
         return $folder;
     }
