@@ -33,6 +33,18 @@ class calendar extends rcube_plugin
 
   public $ical;
   public $ui;
+  
+  public $defaults = array(
+    'calendar_default_view' => "agendaWeek",
+    'calendar_date_format'  => "yyyy-MM-dd",
+    'calendar_date_short'   => "M-d",
+    'calendar_date_long'    => "MMM d yyyy",
+    'calendar_date_agenda'  => "ddd MM-dd",
+    'calendar_time_format'  => "HH:mm",
+    'calendar_timeslots'    => 2,
+    'calendar_first_day'    => 1,
+    'calendar_first_hour'   => 6,
+  );
 
   private $default_categories = array(
     'Personal' => 'c0c0c0',
@@ -55,6 +67,14 @@ class calendar extends rcube_plugin
 
     // load localizations
     $this->add_texts('localization/', $this->rc->task == 'calendar' && !$this->rc->action);
+
+    // set user's timezone
+    if ($this->rc->config->get('timezone') === 'auto')
+      $this->timezone = isset($_SESSION['timezone']) ? $_SESSION['timezone'] : date('Z');
+    else
+      $this->timezone = ($this->rc->config->get('timezone') + intval($this->rc->config->get('dst_active')));
+
+    $this->gmt_offset = $this->timezone * 3600;
 
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
@@ -99,14 +119,6 @@ class calendar extends rcube_plugin
     
     // add hook to display alarms
     $this->add_hook('keep_alive', array($this, 'keep_alive'));
-    
-    // set user's timezone
-    if ($this->rc->config->get('timezone') === 'auto')
-      $this->timezone = isset($_SESSION['timezone']) ? $_SESSION['timezone'] : date('Z');
-    else
-      $this->timezone = ($this->rc->config->get('timezone') + intval($this->rc->config->get('dst_active')));
-    
-    $this->gmt_offset = $this->timezone * 3600;
   }
 
   /**
@@ -158,7 +170,6 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
     
-    $this->rc->output->set_env('calendar_settings', $this->load_settings());
     $this->rc->output->add_label('low','normal','high');
 
     $this->rc->output->send("calendar.calendar");
@@ -533,15 +544,15 @@ class calendar extends rcube_plugin
     
     // configuration
     $settings['default_calendar'] = $this->rc->config->get('calendar_default_calendar');
-    $settings['default_view'] = (string)$this->rc->config->get('calendar_default_view', "agendaWeek");
-    $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', "yyyy/MM/dd");
-    $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', "M/d");
-    $settings['date_long'] = (string)$this->rc->config->get('calendar_date_long', "M d yyyy");
-    $settings['date_agenda'] = (string)$this->rc->config->get('calendar_date_agenda', "ddd M d");
-    $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', "HH:mm");
-    $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', 2);
-    $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', 1);
-    $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', 6);
+    $settings['default_view'] = (string)$this->rc->config->get('calendar_default_view', $this->defaults['calendar_default_view']);
+    $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']);
+    $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', $this->defaults['calendar_date_short']);
+    $settings['date_long'] = (string)$this->rc->config->get('calendar_date_long', $this->defaults['calendar_date_long']);
+    $settings['date_agenda'] = (string)$this->rc->config->get('calendar_date_agenda', $this->defaults['calendar_date_agenda']);
+    $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']);
+    $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
+    $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']);
+    $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']);
     $settings['timezone'] = $this->timezone;
 
     // localization
@@ -698,7 +709,7 @@ class calendar extends rcube_plugin
     if ($rrule['COUNT'])
       $until =  $this->gettext(array('name' => 'forntimes', 'vars' => array('nr' => $rrule['COUNT'])));
     else if ($rrule['UNTIL'])
-      $until = $this->gettext('recurrencend') . ' ' . format_date($rrule['UNTIL'], self::to_php_date_format($this->rc->config->get('calendar_date_format')));
+      $until = $this->gettext('recurrencend') . ' ' . format_date($rrule['UNTIL'], self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format'])));
     else
       $until = $this->gettext('forever');
     
