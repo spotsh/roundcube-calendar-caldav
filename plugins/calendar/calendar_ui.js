@@ -70,10 +70,19 @@ function rcube_calendar_ui(settings)
     var parse_datetime = function(time, date)
     {
       // we use the utility function from datepicker to parse dates
-      var date = $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings);
-      var time_arr = time.split(/[:.]/);
-      if (!isNaN(time_arr[0])) date.setHours(time_arr[0]);
-      if (!isNaN(time_arr[1])) date.setMinutes(time_arr[1]);
+      var date = date ? $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings) : new Date();
+      
+      var time_arr = time.replace(/\s*[ap]m?/i, '').replace(/0([0-9])/g, '$1').split(/[:.]/);
+      if (!isNaN(time_arr[0])) {
+        date.setHours(time_arr[0]);
+        if (time.match(/pm?/i) && date.getHours() < 12)
+          date.setHours(parseInt(time_arr[0]) + 12);
+        else if (date.getHours() == 12)
+          date.setHours(0);
+      }
+      if (!isNaN(time_arr[1]))
+        date.setMinutes(time_arr[1]);
+      
       return date;
     };
     
@@ -947,7 +956,10 @@ function rcube_calendar_ui(settings)
 
     // format time string
     var formattime = function(hour, minutes) {
-        return ((hour < 10) ? "0" : "") + hour + ((minutes < 10) ? ":0" : ":") + minutes;
+      var d = new Date();
+      d.setHours(hour);
+      d.setMinutes(minutes);
+      return $.fullCalendar.formatDate(d, settings['time_format'])
     };
 
     // if start date is changed, shift end date according to initial duration
@@ -974,7 +986,7 @@ function rcube_calendar_ui(settings)
           var result = [];
           var now = new Date();
           var full = p.term - 1 > 0 || p.term.length > 1;
-          var hours = full? p.term - 0 : now.getHours();
+          var hours = (full ? parse_datetime(p.term, '') : now).getHours();
           var step = 15;
           var minutes = hours * 60 + (full ? 0 : now.getMinutes());
           var min = Math.ceil(minutes / step) * step % 60;
@@ -982,7 +994,7 @@ function rcube_calendar_ui(settings)
           // list hours from 0:00 till now
           for (var h = 0; h < hours; h++)
             result.push(formattime(h, 0));
-            // list 15min steps for the next two hours
+          // list 15min steps for the next two hours
           for (; h < hour + 2; h++) {
             while (min < 60) {
               result.push(formattime(h, min));
@@ -999,11 +1011,12 @@ function rcube_calendar_ui(settings)
           // scroll to current time
           var widget = $(this).autocomplete('widget');
           var menu = $(this).data('autocomplete').menu;
-          var val = $(this).val();
+          var val = $(this).val().replace(/^(.+)(am?)/i, '0:$1').replace(/^(.+)(pm?)/i, '1:$1');
           var li, html, offset = 0;
+          widget.css('width', '7em');
           widget.children().each(function(){
             li = $(this);
-            html = li.children().first().html();
+            html = li.children().first().html().replace(/^(.+)(am?)/i, '0:$1').replace(/^(.+)(pm?)/i, '1:$1');
             if (html < val)
               offset += li.height();
             if (html == val)
