@@ -247,6 +247,23 @@ a.miniColors-trigger {
 	margin-top: -3px;
 }
 
+#attachmentcontainer
+{
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+}
+
+#attachmentframe
+{
+  width: 100%;
+  height: 100%;
+  border: 1px solid #999999;
+  background-color: #F9F9F9;
+}
+
 /* jQuery UI overrides */
 
 #eventshow h1 {

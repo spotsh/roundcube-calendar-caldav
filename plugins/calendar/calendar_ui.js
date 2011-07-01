@@ -114,6 +114,78 @@ function rcube_calendar_ui(settings)
       return fromto;
     };
 
+    var load_attachment = function(event, att)
+    {
+      var qstring = '_id='+urlencode(att.id)+'&_event='+urlencode(event.id)+'&_cal='+urlencode(event.calendar);
+
+      // open attachment in frame if it's of a supported mimetype
+      if (id && att.mimetype && $.inArray(att.mimetype, rcmail.mimetypes)>=0) {
+        rcmail.attachment_win = window.open(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', 'rcubeeventattachment');
+        if (rcmail.attachment_win) {
+          window.setTimeout(function() { rcmail.attachment_win.focus(); }, 10);
+          return;
+        }
+      }
+
+      rcmail.goto_url('get-attachment', qstring+'&_download=1', false);
+    };
+
+    // build event attachments list
+    var event_show_attachments = function(list, container, event, edit)
+    {
+      var i, id, len, img, content, li, elem,
+        ul = document.createElement('UL');
+
+      for (i=0, len=list.length; i<len; i++) {
+        li = document.createElement('LI');
+        elem = list[i];
+
+        if (edit) {
+          rcmail.env.attachments[elem.id] = elem;
+          // delete icon
+          content = document.createElement('A');
+          content.href = '#delete';
+          content.title = rcmail.gettext('delete');
+          $(content).click({id: elem.id}, function(e) { remove_attachment(this, e.data.id); return false; });
+
+          if (!rcmail.env.deleteicon)
+            content.innerHTML = rcmail.gettext('delete');
+          else {
+            img = document.createElement('IMG');
+            img.src = rcmail.env.deleteicon;
+            img.alt = rcmail.gettext('delete');
+            content.appendChild(img);
+          }
+
+          li.appendChild(content);
+        }
+
+        // name/link
+        content = document.createElement('A');
+        content.innerHTML = list[i].name;
+        content.href = '#load';
+        $(content).click({event: event, att: elem}, function(e) {
+          load_attachment(e.data.event, e.data.att); return false; });
+        li.appendChild(content);
+
+        ul.appendChild(li);
+      }
+
+      if (edit && rcmail.gui_objects.attachmentlist) {
+        ul.id = rcmail.gui_objects.attachmentlist.id;
+        rcmail.gui_objects.attachmentlist = ul;
+      }
+
+      container.empty().append(ul);
+    };
+
+    var remove_attachment = function(elem, id)
+    {
+      $(elem.parentNode).hide();
+      rcmail.env.deleted_attachments.push(id);
+      delete rcmail.env.attachments[id];
+    };
+
     // event details dialog (show only)
     var event_show_dialog = function(event)
     {
@@ -151,7 +223,18 @@ function rcube_calendar_ui(settings)
         var sensitivitylabels = { 0:rcmail.gettext('public'), 1:rcmail.gettext('private'), 2:rcmail.gettext('confidential') };
         $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
       }
-      
+
+      // create attachments list
+      if ($.isArray(event.attachments)) {
+        event_show_attachments(event.attachments, $('#event-attachments').children('.event-text'), event);
+        if (event.attachments.length > 0) {
+          $('#event-attachments').show();
+        }
+      }
+      else if (calendar.attachments) {
+        // fetch attachments, some drivers doesn't set 'attachments' popr of the event
+      }
+
       var buttons = {};
       if (calendar.editable && event.editable !== false) {
         buttons[rcmail.gettext('edit', 'calendar')] = function() {
@@ -306,7 +389,24 @@ function rcube_calendar_ui(settings)
       }
       else
         $('#edit-recurring-warning').hide();
-      
+
+      // attachments
+      if (calendar.attachments) {
+        rcmail.enable_command('remove-attachment', !calendar.readonly);
+        rcmail.env.deleted_attachments = [];
+        // we're sharing some code for uploads handling with app.js
+        rcmail.env.attachments = [];
+        rcmail.env.compose_id = event.id; // for rcmail.async_upload_form()
+
+        if ($.isArray(event.attachments)) {
+          event_show_attachments(event.attachments, $('#edit-attachments'), event, true);
+        }
+        else {
+          $('#edit-attachments > ul').empty();
+          // fetch attachments, some drivers doesn't set 'attachments' array for event
+        }
+      }
+
       // buttons
       var buttons = {};
       
@@ -334,9 +434,10 @@ function rcube_calendar_ui(settings)
           priority: priority.val(),
           sensitivity: sensitivity.val(),
           recurrence: '',
-          alarms: ''
+          alarms: '',
+          deleted_attachments: rcmail.env.deleted_attachments
         };
-        
+
         // serialize alarm settings
         // TODO: support multiple alarm entries
         var alarm = $('select.edit-alarm-type').val();
@@ -347,7 +448,14 @@ function rcube_calendar_ui(settings)
           else if ((val = parseInt($('input.edit-alarm-value').val())) && !isNaN(val) && val >= 0)
             data.alarms = offset[0] + val + offset[1] + ':' + alarm;
         }
-        
+
+        // uploaded attachments list
+        var attachments = [];
+        for (var i in rcmail.env.attachments)
+          if (i.match(/^rcmfile([0-9a-z]+)/))
+            attachments.push(RegExp.$1);
+        data.attachments = attachments;
+
         // gather recurrence settings
         var freq;
         if ((freq = recurrence.val()) != '') {
@@ -1065,7 +1173,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   // configure toobar buttons
   rcmail.register_command('addevent', function(){ cal.add_event(); }, true);
-  
+
   // configure list operations
   rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);

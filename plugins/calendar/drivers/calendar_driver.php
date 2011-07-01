@@ -51,6 +51,13 @@
  *   'sensitivity' => 0|1|2,   // Event sensitivity (0=public, 1=private, 2=confidential)
  *        'alarms' => '-15M:DISPLAY',  // Reminder settings inspired by valarm definition (e.g. display alert 15 minutes before event)
  *      'savemode' => 'all|future|current|new',   // How changes on recurring event should be handled
+ *   'attachments' => array(   // List of attachments
+ *            'name' => 'File name',
+ *        'mimetype' => 'Content type',
+ *            'size' => 1..n, // in bytes
+ *              'id' => 'Attachment identifier'
+ *   ),
+ * 'deleted_attachments' => array(), // array of attachment identifiers to delete when event is updated
  *  );
  */
 
@@ -196,14 +203,49 @@ abstract class calendar_driver
   abstract function dismiss_alarm($event_id, $snooze = 0);
 
   /**
-   * Save an attachment related to the given event
+   * Get list of event's attachments.
+   * Drivers can return list of attachments as event property.
+   * If they will do not do this list_attachments() method will be used.
+   *
+   * @param array $event Hash array with event properties:
+   *         id: Event identifier
+   *   calendar: Calendar identifier
+   *
+   * @return array List of attachments, each as hash array:
+   *         id: Attachment identifier
+   *       name: Attachment name
+   *   mimetype: MIME content type of the attachment
+   *       size: Attachment size
    */
-  public function add_attachment($attachment, $event_id) { }
+  public function list_attachments($event) { }
 
   /**
-   * Remove a specific attachment from the given event
+   * Get attachment properties
+   *
+   * @param string $id    Attachment identifier
+   * @param array  $event Hash array with event properties:
+   *         id: Event identifier
+   *   calendar: Calendar identifier
+   *
+   * @return array Hash array with attachment properties:
+   *         id: Attachment identifier
+   *       name: Attachment name
+   *   mimetype: MIME content type of the attachment
+   *       size: Attachment size
    */
-  public function remove_attachment($attachment, $event_id) { }
+  public function get_attachment($id, $event) { }
+
+  /**
+   * Get attachment body
+   *
+   * @param string $id    Attachment identifier
+   * @param array  $event Hash array with event properties:
+   *         id: Event identifier
+   *   calendar: Calendar identifier
+   *
+   * @return string Attachment body
+   */
+  public function get_attachment_body($id, $event) { }
 
   /**
    * List availabale categories

@@ -156,22 +156,15 @@ class database_driver extends calendar_driver
   {
     if (!$this->calendars[$prop['id']])
       return false;
-    
-    // delete all events of this calendar
-    $query = $this->rc->db->query(
-      "DELETE FROM " . $this->db_events . "
-       WHERE calendar_id=?",
-       $prop['id']
-    );
-    
-    // TODO: also delete linked attachments
-    
+
+    // events and attachments will be deleted by foreign key cascade
+
     $query = $this->rc->db->query(
       "DELETE FROM " . $this->db_calendars . "
        WHERE calendar_id=?",
        $prop['id']
     );
-    
+
     return $this->rc->db->affected_rows($query);
   }
 
@@ -213,11 +206,28 @@ class database_driver extends calendar_driver
         $event['alarms'],
         $event['notifyat']
       );
-      
-      if ($success = $this->rc->db->insert_id($this->sequence_events))
+
+      $event_id = $this->rc->db->insert_id($this->sequence_events);
+
+      if ($event_id) {
+        // add attachments
+        if (!empty($event['attachments'])) {
+          foreach ($event['attachments'] as $attachment) {
+            $attachment = $this->rc->plugins->exec_hook('attachment_get', $attachment);
+
+            if (!$attachment['data']) {
+              $attachments['data'] = file_get_contents($attachment['path']);
+            }
+
+            $this->add_attachment($attachment, $event_id);
+            unset($attachment);
+          }
+        }
+
         $this->_update_recurring($event);
-      
-      return $success;
+      }
+
+      return $event_id;
     }
     
     return false;
@@ -403,11 +413,33 @@ class database_driver extends calendar_driver
       ),
       $event['id']
     );
-    
+
     $success = $this->rc->db->affected_rows($query);
+
+    // add attachments
+    if ($success && !empty($event['attachments'])) {
+      foreach ($event['attachments'] as $attachment) {
+        $attachment = $this->rc->plugins->exec_hook('attachment_get', $attachment);
+
+        if (!$attachment['data']) {
+          $attachments['data'] = file_get_contents($attachment['path']);
+        }
+
+        $this->add_attachment($attachment, $event['id']);
+        unset($attachment);
+      }
+    }
+
+    // remove attachments
+    if ($success && !empty($event['deleted_attachments'])) {
+      foreach ($event['deleted_attachments'] as $attachment) {
+        $this->remove_attachment($attachment, $event['id']);
+      }
+    }
+
     if ($success && $update_recurring)
       $this->_update_recurring($event);
-    
+
     return $success;
   }
 
@@ -736,19 +768,110 @@ class database_driver extends calendar_driver
   /**
    * Save an attachment related to the given event
    */
-  public function add_attachment($attachment, $event_id)
+  private function add_attachment($attachment, $event_id)
   {
-    // TBD.
-    return false;
+    $query = $this->rc->db->query(sprintf(
+      "INSERT INTO " . $this->db_attachments .
+      " (event_id, filename, mimetype, size, data)" .
+      " VALUES (?, ?, ?, ?, ?)",
+      $event_id,
+      $attachment['name'],
+      $attachment['mimetype'],
+      strlen($attachment['data']),
+      base64_encode($attachment['data']),
+    );
+
+    return $this->rc->db->affected_rows($query);
   }
 
   /**
    * Remove a specific attachment from the given event
    */
-  public function remove_attachment($attachment, $event_id)
+  private function remove_attachment($attachment_id, $event_id)
   {
-    // TBD.
-    return false;
+    $query = $this->rc->db->query(
+      "DELETE FROM " . $this->db_attachments .
+      " WHERE attachment_id = ?" .
+        " AND event_id IN (SELECT event_id FROM " . $this->db_events .
+          " WHERE event_id = ?"  .
+            " AND calendar_id IN (" . $this->calendar_ids . "))",
+      $attachment_id,
+      $event_id
+    );
+
+    return $this->rc->db->affected_rows($query);
+  }
+
+  /**
+   * List attachments of specified event
+   */
+  public function list_attachments($event)
+  {
+    $attachments = array();
+
+    if (!empty($this->rc->user->ID)) {
+      $result = $this->rc->db->query(
+        "SELECT attachment_id AS id, filename AS name, mimetype, size " .
+        " FROM " . $this->db_attachments .
+        " WHERE user_id=?".
+          " AND event_id=?".
+        "ORDER BY filename",
+        $this->rc->user->ID,
+        $event['id']
+      );
+
+      while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
+        $attachments[] = $arr;
+      }
+    }
+
+    return $attachments;
+  }
+
+  /**
+   * Get attachment properties
+   */
+  public function get_attachment($id, $event)
+  {
+    if (!empty($this->rc->user->ID)) {
+      $result = $this->rc->db->query(
+        "SELECT attachment_id AS id, filename AS name, mimetype, size " .
+        " FROM " . $this->db_attachments .
+        " WHERE attachment_id=?".
+          " AND event_id=?".
+        $id,
+        $event['id']
+      );
+
+      if ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
+        return $arr;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get attachment body
+   */
+  public function get_attachment_body($id, $event)
+  {
+    if (!empty($this->rc->user->ID)) {
+      $result = $this->rc->db->query(
+        "SELECT data " .
+        " FROM " . $this->db_attachments .
+        " WHERE attachment_id=?".
+          " AND event_id=?".
+        $id,
+        $event['id']
+      );
+
+      if ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
+        return base64_decode($arr['data']);
+      }
+    }
+
+    return null;
   }
 
   /**

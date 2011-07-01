@@ -461,4 +461,60 @@ class calendar_ui
     
     return $select_prefix->show() . '&nbsp;' . $select_wday->show();
   }
+
+  /**
+   * Generate the form for event attachments upload
+   */
+  function attachments_form($attrib = array())
+  {
+    // add ID if not given
+    if (!$attrib['id'])
+      $attrib['id'] = 'rcmUploadForm';
+
+    // find max filesize value
+    $max_filesize = parse_bytes(ini_get('upload_max_filesize'));
+    $max_postsize = parse_bytes(ini_get('post_max_size'));
+    if ($max_postsize && $max_postsize < $max_filesize)
+      $max_filesize = $max_postsize;
+
+    $this->rc->output->set_env('max_filesize', $max_filesize);
+
+    $max_filesize = show_bytes($max_filesize);
+
+    $button = new html_inputfield(array('type' => 'button'));
+    $input = new html_inputfield(array(
+      'type' => 'file', 'name' => '_attachments[]',
+      'multiple' => 'multiple', 'size' => $attrib['attachmentfieldsize']));
+
+    return html::div($attrib,
+      html::div(null, $input->show()) .
+      html::div('buttons', $button->show(rcube_label('upload'), array('class' => 'button mainaction',
+        'onclick' => JS_OBJECT_NAME . ".upload_file(this.form)"))) .
+      html::div('hint', rcube_label(array('name' => 'maxuploadsize', 'vars' => array('size' => $max_filesize))))
+    );
+  }
+
+  /**
+   * Generate HTML element for attachments list
+   */
+  function attachments_list($attrib = array())
+  {
+    if (!$attrib['id'])
+      $attrib['id'] = 'rcmAttachmentList';
+
+    $skin_path = $this->rc->config->get('skin_path');
+    if ($attrib['deleteicon']) {
+      $_SESSION['calendar_deleteicon'] = $skin_path . $attrib['deleteicon'];
+      $this->rc->output->set_env('deleteicon', $skin_path . $attrib['deleteicon']);
+    }
+    if ($attrib['cancelicon'])
+      $this->rc->output->set_env('cancelicon', $skin_path . $attrib['cancelicon']);
+    if ($attrib['loadingicon'])
+      $this->rc->output->set_env('loadingicon', $skin_path . $attrib['loadingicon']);
+
+    $this->rc->output->add_gui_object('attachmentlist', $attrib['id']);
+
+    return html::tag('ul', $attrib, '', html::$common_attrib);
+  }
+
 }

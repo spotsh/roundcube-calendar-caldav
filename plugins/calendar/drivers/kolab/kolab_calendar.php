@@ -23,6 +23,7 @@ class kolab_calendar
   public $id;
   public $ready = false;
   public $readonly = true;
+  public $attachments = true;
 
   private $cal;
   private $storage;
@@ -157,6 +158,15 @@ class kolab_calendar
 
 
   /**
+   * Getter for the attachment body
+   */
+  public function get_attachment_body($id)
+  {
+    return $this->storage->getAttachment($id);
+  }
+
+
+  /**
    * Getter for a single event object
    */
   public function get_event($id)
@@ -217,7 +227,7 @@ class kolab_calendar
         $events = array_merge($events, $this->_get_recurring_events($event, $start, $end));
       }
     }
-    
+
     return $events;
   }
 
@@ -233,7 +243,7 @@ class kolab_calendar
   {
     if (!is_array($event))
       return false;
-    
+
     //generate new event from RC input
     $object = $this->_from_rcube_event($event);
     $saved = $this->storage->save($object);
@@ -426,10 +436,24 @@ class kolab_calendar
           $rrule['EXDATE'][] = strtotime($excl . date(' H:i:s', $rec['start-date']));  // use time of event start
       }
     }
-    
+
     $sensitivity_map = array_flip($this->sensitivity_map);
     $priority_map = array_flip($this->priority_map);
-    
+
+    // @TODO: Horde code assumes that there will be no more than
+    // one file with the same name, while this is not required by MIME format
+    // and not forced by the Calendar UI
+    if (!empty($rec['_attachments'])) {
+      foreach ($rec['_attachments'] as $name => $attachment) {
+        // @TODO: 'type' and 'key' are the only supported (no 'size')
+        $attachments[] = array(
+          'id' => $attachment['key'],
+          'mimetype' => $attachment['type'],
+          'name' => $name,
+        );
+      }
+    }
+
     return array(
       'id' => $rec['uid'],
       'uid' => $rec['uid'],
@@ -442,6 +466,7 @@ class kolab_calendar
       'recurrence' => $rrule,
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
+      'attachments' => $attachments,
       'free_busy' => $rec['show-time-as'],
       'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
@@ -568,7 +593,18 @@ class kolab_calendar
       $object['start-date'] += $tz_offset - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
       $object['_is_all_day'] = 1;
     }
-    
+
+    // in Horde attachments are indexed by name
+    $object['_attachments'] = array();
+    if (!empty($event['attachments'])) {
+      foreach ($event['attachments'] as $idx => $attachment) {
+        // Roundcube ID has nothing to Horde ID, remove it
+        unset($attachment['id']);
+        $object['_attachments'][$attachment['name']] = $attachment;
+        unset($event['attachments'][$idx]);
+      }
+    }
+
     return $object;
   }
 
