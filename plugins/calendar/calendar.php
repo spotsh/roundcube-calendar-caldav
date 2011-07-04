@@ -995,7 +995,7 @@ class calendar extends rcube_plugin
       exit;
     }
 
-    unset($_SESSION['calendar_attachment']);
+    $this->rc->session->remove('calendar_attachment');
 
     if ($attachment) {
       $mimetype = strtolower($attachment['mimetype']);
@@ -1041,8 +1041,9 @@ class calendar extends rcube_plugin
           $filename = addcslashes($filename, '"');
 
         $disposition = !empty($_GET['_download']) ? 'attachment' : 'inline';
-
         header("Content-Disposition: $disposition; filename=\"$filename\"");
+
+        echo $body;
       }
 
       exit;
@@ -1080,7 +1081,7 @@ class calendar extends rcube_plugin
       if (!empty($_SESSION['event_session']['attachments'])) {
         foreach ($_SESSION['event_session']['attachments'] as $id => $attachment) {
           if (is_array($event['attachments']) && in_array($id, $event['attachments'])) {
-            $attachments[$id] = $attachment;
+            $attachments[$id] = $this->rc->plugins->exec_hook('attachment_get', $attachment);
           }
         }
       }

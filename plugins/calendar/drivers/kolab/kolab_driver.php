@@ -235,8 +235,6 @@ class kolab_driver extends calendar_driver
         foreach ($event['attachments'] as $idx => $attachment) {
           // we'll read file contacts into memory, Horde/Kolab classes does the same
           // So we cannot save memory, rcube_imap class can do this better
-          $attachment = $this->cal->rc->plugins->exec_hook('attachment_get', $attachment);
-
           $event['attachments'][$idx]['content'] = $attachment['data'] ? $attachment['data'] : file_get_contents($attachment['path']);
         }
       }
@@ -363,8 +361,6 @@ class kolab_driver extends calendar_driver
       foreach ($event['attachments'] as $attachment) {
         // we'll read file contacts into memory, Horde/Kolab classes does the same
         // So we cannot save memory, rcube_imap class can do this better
-        $attachment = $this->cal->rc->plugins->exec_hook('attachment_get', $attachment);
-
         $attachments[] = array(
           'name' => $attachment['name'],
           'type' => $attachment['mimetype'],

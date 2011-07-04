@@ -213,12 +213,6 @@ class database_driver extends calendar_driver
         // add attachments
         if (!empty($event['attachments'])) {
           foreach ($event['attachments'] as $attachment) {
-            $attachment = $this->rc->plugins->exec_hook('attachment_get', $attachment);
-
-            if (!$attachment['data']) {
-              $attachments['data'] = file_get_contents($attachment['path']);
-            }
-
             $this->add_attachment($attachment, $event_id);
             unset($attachment);
           }
@@ -419,12 +413,6 @@ class database_driver extends calendar_driver
     // add attachments
     if ($success && !empty($event['attachments'])) {
       foreach ($event['attachments'] as $attachment) {
-        $attachment = $this->rc->plugins->exec_hook('attachment_get', $attachment);
-
-        if (!$attachment['data']) {
-          $attachments['data'] = file_get_contents($attachment['path']);
-        }
-
         $this->add_attachment($attachment, $event['id']);
         unset($attachment);
       }
@@ -643,10 +631,12 @@ class database_driver extends calendar_driver
     $events = array();
     if (!empty($calendar_ids)) {
       $result = $this->rc->db->query(sprintf(
-        "SELECT * FROM " . $this->db_events . "
-         WHERE calendar_id IN (%s)
-         AND start <= %s AND end >= %s
-         %s",
+        "SELECT e.*, COUNT(a.attachment_id) AS _attachments FROM " . $this->db_events . " AS e
+         LEFT JOIN " . $this->db_attachments . " AS a ON (a.event_id = e.event_id)
+         WHERE e.calendar_id IN (%s)
+         AND e.start <= %s AND e.end >= %s
+         %s
+         GROUP BY e.event_id",
          join(',', $calendar_ids),
          $this->rc->db->fromunixtime($end),
          $this->rc->db->fromunixtime($start),
@@ -689,7 +679,10 @@ class database_driver extends calendar_driver
       }
     }
     
-    unset($event['event_id'], $event['calendar_id'], $event['notifyat']);
+    if ($event['_attachments'] > 0)
+      $event['attachments'] = (array)$this->list_attachments($event);
+    
+    unset($event['event_id'], $event['calendar_id'], $event['notifyat'], $event['_attachments']);
     return $event;
   }
 
@@ -770,16 +763,18 @@ class database_driver extends calendar_driver
    */
   private function add_attachment($attachment, $event_id)
   {
-    $query = $this->rc->db->query(sprintf(
+    $data = $attachment['data'] ? $attachment['data'] : file_get_contents($attachment['path']);
+    
+    $query = $this->rc->db->query(
       "INSERT INTO " . $this->db_attachments .
       " (event_id, filename, mimetype, size, data)" .
       " VALUES (?, ?, ?, ?, ?)",
       $event_id,
       $attachment['name'],
       $attachment['mimetype'],
-      strlen($attachment['data']),
-      base64_encode($attachment['data'])
-    ));
+      strlen($data),
+      base64_encode($data)
+    );
 
     return $this->rc->db->affected_rows($query);
   }
@@ -813,10 +808,10 @@ class database_driver extends calendar_driver
       $result = $this->rc->db->query(
         "SELECT attachment_id AS id, filename AS name, mimetype, size " .
         " FROM " . $this->db_attachments .
-        " WHERE user_id=?".
-          " AND event_id=?".
-        "ORDER BY filename",
-        $this->rc->user->ID,
+        " WHERE event_id IN (SELECT event_id FROM " . $this->db_events .
+          " WHERE event_id=?"  .
+            " AND calendar_id IN (" . $this->calendar_ids . "))".
+        " ORDER BY filename",
         $event['id']
       );
 
@@ -838,7 +833,7 @@ class database_driver extends calendar_driver
         "SELECT attachment_id AS id, filename AS name, mimetype, size " .
         " FROM " . $this->db_attachments .
         " WHERE attachment_id=?".
-          " AND event_id=?".
+          " AND event_id=?",
         $id,
         $event['id']
       );
@@ -861,7 +856,7 @@ class database_driver extends calendar_driver
         "SELECT data " .
         " FROM " . $this->db_attachments .
         " WHERE attachment_id=?".
-          " AND event_id=?".
+          " AND event_id=?",
         $id,
         $event['id']
       );
