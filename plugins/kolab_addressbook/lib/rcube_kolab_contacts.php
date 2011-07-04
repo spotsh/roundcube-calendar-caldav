@@ -825,6 +825,16 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         if (!isset($this->contactstorage)) {
             $this->contactstorage = $this->storagefolder->getData(null);
+        }
+    }
+
+
+    /**
+     * Establishes a connection to the Kolab_Data object for accessing groups data
+     */
+    private function _connect_groups()
+    {
+        if (!isset($this->liststorage)) {
             $this->liststorage = $this->storagefolder->getData('distributionlist');
         }
     }
@@ -837,7 +847,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         if (!isset($this->contacts)) {
             $this->_connect();
-            
+
             // read contacts
             $this->contacts = $this->id2uid = array();
             foreach ((array)$this->contactstorage->getObjects() as $record) {
@@ -872,8 +882,8 @@ class rcube_kolab_contacts extends rcube_addressbook
     private function _fetch_groups()
     {
         if (!isset($this->distlists)) {
-            $this->_connect();
-            
+            $this->_connect_groups();
+
             $this->distlists = $this->groupmembers = array();
             foreach ((array)$this->liststorage->getObjects() as $record) {
                 // FIXME: folders without any distribution-list objects return contacts instead ?!
