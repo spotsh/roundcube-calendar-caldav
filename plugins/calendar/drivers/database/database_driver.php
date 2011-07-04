@@ -632,7 +632,7 @@ class database_driver extends calendar_driver
     if (!empty($calendar_ids)) {
       $result = $this->rc->db->query(sprintf(
         "SELECT e.*, COUNT(a.attachment_id) AS _attachments FROM " . $this->db_events . " AS e
-         LEFT JOIN " . $this->db_attachments . " AS a ON (a.event_id = e.event_id)
+         LEFT JOIN " . $this->db_attachments . " AS a ON (a.event_id = e.event_id OR a.event_id = e.recurrence_id)
          WHERE e.calendar_id IN (%s)
          AND e.start <= %s AND e.end >= %s
          %s
@@ -803,8 +803,9 @@ class database_driver extends calendar_driver
   public function list_attachments($event)
   {
     $attachments = array();
+    $event_id = $event['recurrence_id'] ? $event['recurrence_id'] : $event['event_id'];
 
-    if (!empty($this->rc->user->ID)) {
+    if (!empty($this->calendar_ids)) {
       $result = $this->rc->db->query(
         "SELECT attachment_id AS id, filename AS name, mimetype, size " .
         " FROM " . $this->db_attachments .
@@ -812,7 +813,7 @@ class database_driver extends calendar_driver
           " WHERE event_id=?"  .
             " AND calendar_id IN (" . $this->calendar_ids . "))".
         " ORDER BY filename",
-        $event['id']
+        $event['recurrence_id'] ? $event['recurrence_id'] : $event['event_id']
       );
 
       while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
@@ -828,14 +829,14 @@ class database_driver extends calendar_driver
    */
   public function get_attachment($id, $event)
   {
-    if (!empty($this->rc->user->ID)) {
+    if (!empty($this->calendar_ids)) {
       $result = $this->rc->db->query(
         "SELECT attachment_id AS id, filename AS name, mimetype, size " .
         " FROM " . $this->db_attachments .
         " WHERE attachment_id=?".
           " AND event_id=?",
         $id,
-        $event['id']
+        $event['recurrence_id'] ? $event['recurrence_id'] : $event['id']
       );
 
       if ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
@@ -851,7 +852,7 @@ class database_driver extends calendar_driver
    */
   public function get_attachment_body($id, $event)
   {
-    if (!empty($this->rc->user->ID)) {
+    if (!empty($this->calendar_ids)) {
       $result = $this->rc->db->query(
         "SELECT data " .
         " FROM " . $this->db_attachments .

@@ -116,7 +116,7 @@ function rcube_calendar_ui(settings)
 
     var load_attachment = function(event, att)
     {
-      var qstring = '_id='+urlencode(att.id)+'&_event='+urlencode(event.id)+'&_cal='+urlencode(event.calendar);
+      var qstring = '_id='+urlencode(att.id)+'&_event='+urlencode(event.recurrence_id||event.id)+'&_cal='+urlencode(event.calendar);
 
       // open attachment in frame if it's of a supported mimetype
       if (id && att.mimetype && $.inArray(att.mimetype, rcmail.mimetypes)>=0) {
