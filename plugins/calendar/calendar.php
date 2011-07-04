@@ -174,7 +174,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
 
-    $this->rc->output->add_label('low','normal','high', 'delete', 'cancel');
+    $this->rc->output->add_label('low','normal','high','delete','cancel','uploading');
 
     $this->rc->output->send("calendar.calendar");
   }
