@@ -33,20 +33,9 @@ class kolab_calendar
   private $search_fields = array('title', 'description', 'location');
   private $sensitivity_map = array('public', 'private', 'confidential');
   private $priority_map = array('low', 'normal', 'high');
+  private $month_map = array('', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
+  private $weekday_map = array('MO'=>'monday', 'TU'=>'tuesday', 'WE'=>'wednesday', 'TH'=>'thursday', 'FR'=>'friday', 'SA'=>'saturday', 'SU'=>'sunday');
 
-
-  private $fieldmap = array(
-  // kolab       => roundcube
-  	'summary' => 'title',
-  	'location'=>'location',
-  	'body'=>'description',
-  	'categories'=>'categories',
-  	'start-date'=>'start',
-  	'end-date'=>'end',
-  	'sensitivity'=>'sensitivity',
-  	'show-time-as' => 'free_busy',
-  	'alarm','alarms'
-    );
 
   /**
    * Default constructor
@@ -168,7 +157,7 @@ class kolab_calendar
       $master_id = preg_replace('/-\d+$/', '', $id);
       if ($this->events[$master_id] && $this->events[$master_id]['recurrence']) {
         $master = $this->events[$master_id];
-        $this->_get_recurring_events($master, $master['start'], $master['start'] + 86400 * 365, $id);
+        $this->_get_recurring_events($master, $master['start'], $master['start'] + 86400 * 365 * 10, $id);
       }
     }
     
@@ -417,7 +406,7 @@ class kolab_calendar
           $rrule['BYYEARDAY'] = $recurrence['daynumber'];
       }
       if ($rec['month']) {
-        $monthmap = array('january' => 1, 'february' => 2, 'march' => 3, 'april' => 4, 'may' => 5, 'june' => 6, 'july' => 7, 'august' => 8, 'september' => 9, 'october' => 10, 'november' => 11, 'december' => 12);
+        $monthmap = array_flip($this->month_map);
         $rrule['BYMONTH'] = strtolower($monthmap[$recurrence['month']]);
       }
       
@@ -456,8 +445,6 @@ class kolab_calendar
   private function _from_rcube_event($event)
   {
     $priority_map = $this->priority_map;
-    $daymap = array('MO'=>'monday','TU'=>'tuesday','WE'=>'wednesday','TH'=>'thursday','FR'=>'friday','SA'=>'saturday','SU'=>'sunday');
-    $monthmap = array('', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
     $tz_offset = $this->cal->timezone * 3600;
 
     $object = array(
@@ -513,7 +500,7 @@ class kolab_calendar
       if ($ra['FREQ'] == 'WEEKLY') {
         if ($ra['BYDAY']) {
           foreach (split(",", $ra['BYDAY']) as $day)
-            $object['recurrence']['day'][] = $daymap[$day];
+            $object['recurrence']['day'][] = $this->weekday_map[$day];
         }
         else {
           // use weekday of start date if empty
@@ -525,7 +512,7 @@ class kolab_calendar
       if ($ra['FREQ'] == 'MONTHLY') {
         if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
           $object['recurrence']['daynumber'] = $m[1];
-          $object['recurrence']['day'] = array($daymap[$m[2]]);
+          $object['recurrence']['day'] = array($this->weekday_map[$m[2]]);
           $object['recurrence']['cycle'] = 'monthly';
           $object['recurrence']['type']  = 'weekday';
         }
@@ -542,12 +529,12 @@ class kolab_calendar
           $ra['BYMONTH'] = gmdate('n', $event['start'] + $tz_offset);
         
         $object['recurrence']['cycle'] = 'yearly';
-        $object['recurrence']['month'] = $monthmap[intval($ra['BYMONTH'])];
+        $object['recurrence']['month'] = $this->month_map[intval($ra['BYMONTH'])];
         
         if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
           $object['recurrence']['type'] = 'weekday';
           $object['recurrence']['daynumber'] = $m[1];
-          $object['recurrence']['day'] = array($daymap[$m[2]]);
+          $object['recurrence']['day'] = array($this->weekday_map[$m[2]]);
         }
         else {
           $object['recurrence']['type'] = 'monthday';
