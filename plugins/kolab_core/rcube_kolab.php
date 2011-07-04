@@ -120,6 +120,19 @@ class rcube_kolab
     }
 
     /**
+     * Getter for a specific storage folder
+     *
+     * @param string  IMAP folder to access (UTF7-IMAP)
+     * @return object Kolab_Folder  The folder object
+     */
+    public static function get_folder($folder)
+    {
+      self::setup();
+      $kolab = Kolab_List::singleton();
+      return self::$ready ? $kolab->getFolder($folder) : null;
+    }
+
+    /**
      * Get storage object for read/write access to the Kolab backend
      *
      * @param string IMAP folder to access (UTF7-IMAP)

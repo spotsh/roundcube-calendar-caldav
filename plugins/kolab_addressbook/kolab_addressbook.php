@@ -212,7 +212,7 @@ class kolab_addressbook extends rcube_plugin
             return $this->sources;
 
         $this->sources = array();
-
+$timer = rcube_timer();
         // Load configuration
         $this->load_config();
 
@@ -225,7 +225,7 @@ class kolab_addressbook extends rcube_plugin
 
         // get all folders that have "contact" type
         $this->folders = rcube_kolab::get_folders('contact');
-
+rcube_print_time($timer, 'get_folders()');
         if (PEAR::isError($this->folders)) {
             raise_error(array(
               'code' => 600, 'type' => 'php',
@@ -248,7 +248,7 @@ class kolab_addressbook extends rcube_plugin
                 $this->sources[$abook_id] = $abook;
             }
         }
-
+rcube_print_time($timer, 'list_sources() done.');
         return $this->sources;
     }
 

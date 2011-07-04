@@ -56,6 +56,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     );
 
     private $gid;
+    private $storagefolder;
     private $contactstorage;
     private $liststorage;
     private $contacts;
@@ -115,10 +116,8 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         // fetch objects from the given IMAP folder
-        $this->contactstorage = rcube_kolab::get_storage($this->imap_folder);
-        $this->liststorage = rcube_kolab::get_storage($this->imap_folder, 'distributionlist');
-
-        $this->ready = !PEAR::isError($this->contactstorage) && !PEAR::isError($this->liststorage);
+        $this->storagefolder = rcube_kolab::get_folder($this->imap_folder);
+        $this->ready = !PEAR::isError($this->storagefolder);
 
         // Set readonly and editable flags according to folder permissions
         if ($this->ready) {
@@ -127,7 +126,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $this->readonly = false;
             }
             else {
-                $acl = $this->contactstorage->_folder->getACL();
+                $acl = $this->storagefolder->getACL();
                 $acl = $acl[$_SESSION['username']];
                 if (strpos($acl, 'i') !== false)
                     $this->readonly = false;
@@ -171,7 +170,7 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function get_owner()
     {
-        return $this->contactstorage->_folder->getOwner();
+        return $this->storagefolder->getOwner();
     }
 
 
@@ -494,6 +493,8 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         if (!$existing) {
+            $this->_connect();
+
             // generate new Kolab contact item
             $object = $this->_from_rcube_contact($save_data);
             $object['uid'] = $this->contactstorage->generateUID();
@@ -601,6 +602,8 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function delete_all()
     {
+        $this->_connect();
+
         if (!PEAR::isError($this->contactstorage->deleteAll())) {
             $this->contacts = array();
             $this->id2uid = array();
@@ -816,11 +819,25 @@ class rcube_kolab_contacts extends rcube_addressbook
 
 
     /**
+     * Establishes a connection to the Kolab_Data object for accessing contact data
+     */
+    private function _connect()
+    {
+        if (!isset($this->contactstorage)) {
+            $this->contactstorage = $this->storagefolder->getData(null);
+            $this->liststorage = $this->storagefolder->getData('distributionlist');
+        }
+    }
+
+
+    /**
      * Simply fetch all records and store them in private member vars
      */
     private function _fetch_contacts()
     {
         if (!isset($this->contacts)) {
+            $this->_connect();
+            
             // read contacts
             $this->contacts = $this->id2uid = array();
             foreach ((array)$this->contactstorage->getObjects() as $record) {
@@ -855,6 +872,8 @@ class rcube_kolab_contacts extends rcube_addressbook
     private function _fetch_groups()
     {
         if (!isset($this->distlists)) {
+            $this->_connect();
+            
             $this->distlists = $this->groupmembers = array();
             foreach ((array)$this->liststorage->getObjects() as $record) {
                 // FIXME: folders without any distribution-list objects return contacts instead ?!
