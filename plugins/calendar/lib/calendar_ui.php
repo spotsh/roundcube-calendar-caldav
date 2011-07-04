@@ -350,7 +350,7 @@ class calendar_ui
       case 'monthly':
         $select = $this->interval_selector(array('name' => 'interval', 'class' => 'edit-recurrence-interval', 'id' => 'edit-recurrence-interval-monthly'));
         $html = html::div($attrib, html::label(null, $this->calendar->gettext('every')) . $select->show(1) . html::span('label-after', $this->calendar->gettext('months')));
-        
+
 /* multiple month selection is not supported by Kolab
         $checkbox = new html_radiobutton(array('name' => 'bymonthday', 'class' => 'edit-recurrence-monthly-bymonthday'));
         for ($monthdays = '', $d = 1; $d <= 31; $d++) {
@@ -470,6 +470,9 @@ class calendar_ui
     // add ID if not given
     if (!$attrib['id'])
       $attrib['id'] = 'rcmUploadForm';
+
+    // Enable upload progress bar
+    rcube_upload_progress_init();
 
     // find max filesize value
     $max_filesize = parse_bytes(ini_get('upload_max_filesize'));
