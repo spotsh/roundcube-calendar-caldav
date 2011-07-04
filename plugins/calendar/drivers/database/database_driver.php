@@ -778,8 +778,8 @@ class database_driver extends calendar_driver
       $attachment['name'],
       $attachment['mimetype'],
       strlen($attachment['data']),
-      base64_encode($attachment['data']),
-    );
+      base64_encode($attachment['data'])
+    ));
 
     return $this->rc->db->affected_rows($query);
   }
