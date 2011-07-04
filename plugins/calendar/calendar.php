@@ -106,6 +106,8 @@ class calendar extends rcube_plugin
       $this->register_action('load_events', array($this, 'load_events'));
       $this->register_action('search_events', array($this, 'search_events'));
       $this->register_action('export_events', array($this, 'export_events'));
+      $this->register_action('upload', array($this, 'attachment_upload'));
+      $this->register_action('get-attachment', array($this, 'attachment_get'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
     } 
     else if ($this->rc->task == 'settings') {
@@ -156,7 +158,7 @@ class calendar extends rcube_plugin
 
     // Add JS files to the page header
     $this->ui->addJS();
-      
+
     $this->register_handler('plugin.calendar_css', array($this->ui, 'calendar_css'));
     $this->register_handler('plugin.calendar_list', array($this->ui, 'calendar_list'));
     $this->register_handler('plugin.calendar_select', array($this->ui, 'calendar_select'));
@@ -167,14 +169,16 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.alarm_select', array($this->ui, 'alarm_select'));
     $this->register_handler('plugin.snooze_select', array($this->ui, 'snooze_select'));
     $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));
+    $this->register_handler('plugin.attachments_form', array($this->ui, 'attachments_form'));
+    $this->register_handler('plugin.attachments_list', array($this->ui, 'attachments_list'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
-    
-    $this->rc->output->add_label('low','normal','high');
+
+    $this->rc->output->add_label('low','normal','high','delete','cancel','uploading');
 
     $this->rc->output->send("calendar.calendar");
   }
-  
+
   /**
    * Handler for preferences_sections_list hook.
    * Adds Calendar settings sections into preferences sections list.
@@ -426,16 +430,20 @@ class calendar extends rcube_plugin
     $action = get_input_value('action', RCUBE_INPUT_POST);
     $event = get_input_value('e', RCUBE_INPUT_POST);
     $success = $reload = false;
-    
+
     switch ($action) {
       case "new":
         // create UID for new event
         $event['uid'] = $this->generate_uid();
-        $success = $this->driver->new_event($event);
+        $this->prepare_event($event);
+        if ($success = $this->driver->new_event($event))
+            $this->cleanup_event($event);
         $reload = true;
         break;
       case "edit":
-        $success = $this->driver->edit_event($event);
+        $this->prepare_event($event);
+        if ($success = $this->driver->edit_event($event))
+            $this->cleanup_event($event);
         $reload = true;
         break;
       case "resize":
@@ -616,7 +624,7 @@ class calendar extends rcube_plugin
         $event['alarms_text'] = $this->_alarms_text($event['alarms']);
       if ($event['recurrence'])
         $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
-      
+
       $json[] = array(
         'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
         'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
@@ -840,6 +848,252 @@ class calendar extends rcube_plugin
     }
     
     $this->rc->output->redirect('');
+  }
+
+  /**
+   * Handler for attachments upload
+   */
+  public function attachment_upload()
+  {
+    $event    = get_input_value('_id', RCUBE_INPUT_GPC);
+    $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
+    $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
+
+    $eventid = $calendar.':'.$event;
+
+    if (!is_array($_SESSION['event_session']) || $_SESSION['event_session']['id'] != $eventid) {
+      $_SESSION['event_session'] = array();
+      $_SESSION['event_session']['id'] = $eventid;
+      $_SESSION['event_session']['attachments'] = array();
+    }
+
+    // clear all stored output properties (like scripts and env vars)
+    $this->rc->output->reset();
+
+    if (is_array($_FILES['_attachments']['tmp_name'])) {
+      foreach ($_FILES['_attachments']['tmp_name'] as $i => $filepath) {
+        // Process uploaded attachment if there is no error
+        $err = $_FILES['_attachments']['error'][$i];
+
+        if (!$err) {
+          $attachment = array(
+            'path' => $filepath,
+            'size' => $_FILES['_attachments']['size'][$i],
+            'name' => $_FILES['_attachments']['name'][$i],
+            'mimetype' => rc_mime_content_type($filepath, $_FILES['_attachments']['name'][$i], $_FILES['_attachments']['type'][$i]),
+            'group' => $eventid,
+          );
+
+          $attachment = $this->rc->plugins->exec_hook('attachment_upload', $attachment);
+        }
+
+        if (!$err && $attachment['status'] && !$attachment['abort']) {
+          $id = $attachment['id'];
+
+          // store new attachment in session
+          unset($attachment['status'], $attachment['abort']);
+          $_SESSION['event_session']['attachments'][$id] = $attachment;
+
+          if (($icon = $_SESSION['calendar_deleteicon']) && is_file($icon)) {
+            $button = html::img(array(
+              'src' => $icon,
+              'alt' => rcube_label('delete')
+            ));
+          }
+          else {
+            $button = Q(rcube_label('delete'));
+          }
+
+          $content = html::a(array(
+            'href' => "#delete",
+            'onclick' => sprintf("return %s.remove_from_attachment_list('rcmfile%s')", JS_OBJECT_NAME, $id),
+            'title' => rcube_label('delete'),
+          ), $button);
+
+          $content .= Q($attachment['name']);
+
+          $this->rc->output->command('add2attachment_list', "rcmfile$id", array(
+            'html' => $content,
+            'name' => $attachment['name'],
+            'mimetype' => $attachment['mimetype'],
+            'complete' => true), $uploadid);
+        }
+        else {  // upload failed
+          if ($err == UPLOAD_ERR_INI_SIZE || $err == UPLOAD_ERR_FORM_SIZE) {
+            $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+                'size' => show_bytes(parse_bytes(ini_get('upload_max_filesize'))))));
+          }
+          else if ($attachment['error']) {
+            $msg = $attachment['error'];
+          }
+          else {
+            $msg = rcube_label('fileuploaderror');
+          }
+
+          $this->rc->output->command('display_message', $msg, 'error');
+          $this->rc->output->command('remove_from_attachment_list', $uploadid);
+        }
+      }
+    }
+    else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+      // if filesize exceeds post_max_size then $_FILES array is empty,
+      // show filesizeerror instead of fileuploaderror
+      if ($maxsize = ini_get('post_max_size'))
+        $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+            'size' => show_bytes(parse_bytes($maxsize)))));
+      else
+        $msg = rcube_label('fileuploaderror');
+
+      $this->rc->output->command('display_message', $msg, 'error');
+      $this->rc->output->command('remove_from_attachment_list', $uploadid);
+    }
+
+    $this->rc->output->send('iframe');
+  }
+
+  /**
+   * Handler for attachments download/displaying
+   */
+  public function attachment_get()
+  {
+    $event    = get_input_value('_event', RCUBE_INPUT_GPC);
+    $calendar = get_input_value('_cal', RCUBE_INPUT_GPC);
+    $id       = get_input_value('_id', RCUBE_INPUT_GPC);
+
+    $event = array('id' => $event, 'calendar' => $calendar);
+
+    // show loading page
+    if (!empty($_GET['_preload'])) {
+      $url = str_replace('&_preload=1', '', $_SERVER['REQUEST_URI']);
+      $message = rcube_label('loadingdata');
+
+      header('Content-Type: text/html; charset=' . RCMAIL_CHARSET);
+      print "<html>\n<head>\n"
+        . '<meta http-equiv="refresh" content="0; url='.Q($url).'">' . "\n"
+        . '<meta http-equiv="content-type" content="text/html; charset='.RCMAIL_CHARSET.'">' . "\n"
+        . "</head>\n<body>\n$message\n</body>\n</html>";
+      exit;
+    }
+
+    ob_end_clean();
+    send_nocacheing_headers();
+
+    if (isset($_SESSION['calendar_attachment']))
+      $attachment = $_SESSION['calendar_attachment'];
+    else
+      $attachment = $_SESSION['calendar_attachment'] = $this->driver->get_attachment($id, $event);
+
+    // show part page
+    if (!empty($_GET['_frame'])) {
+      $this->rc->output->add_handlers(array('attachmentframe' => array($this, 'attachment_frame')));
+      $this->rc->output->send('calendar.attachment');
+      exit;
+    }
+
+    unset($_SESSION['calendar_attachment']);
+
+    if ($attachment) {
+      $mimetype = strtolower($attachment['mimetype']);
+      list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
+
+      $browser = $this->rc->output->browser;
+
+      // send download headers
+      if ($_GET['_download']) {
+        header("Content-Type: application/octet-stream");
+        if ($browser->ie)
+          header("Content-Type: application/force-download");
+      }
+      else if ($ctype_primary == 'text') {
+        header("Content-Type: text/$ctype_secondary");
+      }
+      else {
+//        $mimetype = rcmail_fix_mimetype($mimetype);
+        header("Content-Type: $mimetype");
+        header("Content-Transfer-Encoding: binary");
+      }
+
+      $body = $this->driver->get_attachment_body($id, $event);
+
+      // display page, @TODO: support text/plain (and maybe some other text formats)
+      if ($mimetype == 'text/html' && empty($_GET['_download'])) {
+        $OUTPUT = new rcube_html_page();
+        // @TODO: use washtml on $body
+        $OUTPUT->write($body);
+      }
+      else {
+        // don't kill the connection if download takes more than 30 sec.
+        @set_time_limit(0);
+
+        $filename = $attachment['name'];
+        $filename = preg_replace('[\r\n]', '', $filename);
+
+        if ($browser->ie && $browser->ver < 7)
+          $filename = rawurlencode(abbreviate_string($filename, 55));
+        else if ($browser->ie)
+          $filename = rawurlencode($filename);
+        else
+          $filename = addcslashes($filename, '"');
+
+        $disposition = !empty($_GET['_download']) ? 'attachment' : 'inline';
+
+        header("Content-Disposition: $disposition; filename=\"$filename\"");
+      }
+
+      exit;
+    }
+
+    // if we arrive here, the requested part was not found
+    header('HTTP/1.1 404 Not Found');
+    exit;
+  }
+
+  /**
+   * Template object for attachment display frame
+   */
+  public function attachment_frame($attrib)
+  {
+    $attachment = $_SESSION['calendar_attachment'];
+
+    $mimetype = strtolower($attachment['mimetype']);
+    list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
+
+    $attrib['src'] = './?' . str_replace('_frame=', ($ctype_primary == 'text' ? '_show=' : '_preload='), $_SERVER['QUERY_STRING']);
+
+    return html::iframe($attrib);
+  }
+
+  /**
+   * Prepares new/edited event properties before save
+   */
+  private function prepare_event(&$event)
+  {
+    $eventid = $event['calendar'].':'.$event['id'];
+
+    $attachments = array();
+    if (is_array($_SESSION['event_session']) && $_SESSION['event_session']['id'] == $eventid) {
+      if (!empty($_SESSION['event_session']['attachments'])) {
+        foreach ($_SESSION['event_session']['attachments'] as $id => $attachment) {
+          if (is_array($event['attachments']) && in_array($id, $event['attachments'])) {
+            $attachments[$id] = $attachment;
+          }
+        }
+      }
+    }
+
+    $event['attachments'] = $attachments;
+  }
+
+  /**
+   * Releases some resources after successful event save
+   */
+  private function cleanup_event(&$event)
+  {
+    // remove temp. attachment files
+    if (!empty($_SESSION['event_session']) && ($eventid = $_SESSION['event_session']['id'])) {
+      $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $eventid));
+      unset($_SESSION['event_session']);
+    }
   }
 
 }

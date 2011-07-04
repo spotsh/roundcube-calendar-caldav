@@ -26,7 +26,7 @@ class kolab_driver extends calendar_driver
   // features this backend supports
   public $alarms = true;
   public $attendees = false;
-  public $attachments = false;
+  public $attachments = true;
   public $categoriesimmutable = true;
 
   private $rc;
@@ -229,8 +229,20 @@ class kolab_driver extends calendar_driver
   public function new_event($event)
   {
     $cid = $event['calendar'] ? $event['calendar'] : reset(array_keys($this->calendars));
-    if ($storage = $this->calendars[$cid])
+    if ($storage = $this->calendars[$cid]) {
+      // handle attachments to add
+      if (!empty($event['attachments'])) {
+        foreach ($event['attachments'] as $idx => $attachment) {
+          // we'll read file contacts into memory, Horde/Kolab classes does the same
+          // So we cannot save memory, rcube_imap class can do this better
+          $attachment = $this->cal->rc->plugins->exec_hook('attachment_get', $attachment);
+
+          $event['attachments'][$idx]['content'] = $attachment['data'] ? $attachment['data'] : file_get_contents($attachment['path']);
+        }
+      }
+
       return $storage->insert_event($event);
+    }
 
     return false;
   }
@@ -327,21 +339,52 @@ class kolab_driver extends calendar_driver
   {
     if (!($storage = $this->calendars[$event['calendar']]))
       return false;
-    
+
     $success = false;
     $savemode = 'all';
+    $attachments = array();
     $old = $master = $storage->get_event($event['id']);
-    
+
+    // delete existing attachment(s)
+    if (!empty($event['deleted_attachments'])) {
+      foreach ($event['deleted_attachments'] as $attachment) {
+        if (!empty($old['attachments'])) {
+          foreach ($old['attachments'] as $idx => $att) {
+            if ($att['id'] == $attachment) {
+              unset($old['attachments'][$idx]);
+            }
+          }
+        }
+      }
+    }
+
+    // handle attachments to add
+    if (!empty($event['attachments'])) {
+      foreach ($event['attachments'] as $attachment) {
+        // we'll read file contacts into memory, Horde/Kolab classes does the same
+        // So we cannot save memory, rcube_imap class can do this better
+        $attachment = $this->cal->rc->plugins->exec_hook('attachment_get', $attachment);
+
+        $attachments[] = array(
+          'name' => $attachment['name'],
+          'type' => $attachment['mimetype'],
+          'content' => $attachment['data'] ? $attachment['data'] : file_get_contents($attachment['path']),
+        );
+      }
+    }
+
+    $event['attachments'] = array_merge($old['attachments'], $attachments);
+
     // modify a recurring event, check submitted savemode to do the right things
     if ($old['recurrence'] || $old['recurrence_id']) {
       $master = $old['recurrence_id'] ? $storage->get_event($old['recurrence_id']) : $old;
       $savemode = $event['savemode'];
     }
-    
+
     // keep saved exceptions (not submitted by the client)
     if ($old['recurrence']['EXDATE'])
       $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
-    
+
     switch ($savemode) {
       case 'new':
         // save submitted data as new (non-recurring) event
@@ -525,23 +568,51 @@ class kolab_driver extends calendar_driver
     
     return $this->rc->db->affected_rows($query);
   }
-  
+
   /**
-   * Save an attachment related to the given event
+   * List attachments from the given event
    */
-  public function add_attachment($attachment, $event_id)
+  public function list_attachments($event)
   {
-    
+    if (!($storage = $this->calendars[$event['calendar']]))
+      return false;
+
+    $event = $storage->get_event($event['id']);
+
+    return $event['attachments'];
   }
 
   /**
-   * Remove a specific attachment from the given event
+   * Get attachment properties
    */
-  public function remove_attachment($attachment, $event_id)
+  public function get_attachment($id, $event)
   {
-    
+    if (!($storage = $this->calendars[$event['calendar']]))
+      return false;
+
+    $event = $storage->get_event($event['id']);
+
+    if ($event && !empty($event['attachments'])) {
+      foreach ($event['attachments'] as $att) {
+        if ($att['id'] == $id) {
+          return $att;
+        }
+      }
+    }
+
+    return null;
   }
 
+  /**
+   * Get attachment body
+   */
+  public function get_attachment_body($id, $event)
+  {
+    if (!($storage = $this->calendars[$event['calendar']]))
+      return false;
+
+    return $storage->get_attachment_body($id);
+  }
 
   /**
    * List availabale categories

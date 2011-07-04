@@ -7,6 +7,7 @@
 <script type="text/javascript" src="/functions.js"></script>
 </head>
 <body class="calendarmain">
+
 <roundcube:include file="/includes/taskbar.html" />
 <roundcube:include file="/includes/header.html" />
 
@@ -75,10 +76,14 @@
     <label><roundcube:label name="calendar.sensitivity" /></label>
     <span class="event-text"></span>
   </div>
+  <div class="event-section" id="event-attachments">
+    <label><roundcube:label name="attachments" /></label>
+    <span class="event-text attachments-list"></span>
+  </div>
 </div>
 
 <div id="eventedit">
-  <form id="eventtabs" action="#">
+  <form id="eventtabs" action="#" method="post">
     <ul>
       <li><a href="#event-tab-1"><roundcube:label name="calendar.tabsummary" /></a></li>
       <li id="edit-tab-recurrence"><a href="#event-tab-2"><roundcube:label name="calendar.tabrecurrence" /></a></li>
@@ -161,14 +166,19 @@
     </div>
     <!-- attendees list -->
     <div id="event-tab-3">
-      
+
     </div>
-    <!-- attachments list -->
+    <!-- attachments list (with upload form) -->
     <div id="event-tab-4">
-      
+      <div class="border-after" id="edit-attachments-form">
+        <roundcube:object name="plugin.attachments_form" id="calendar-attachment-form" attachmentFieldSize="30" />
+      </div>
+      <span id="edit-attachments" class="attachments-list">
+        <roundcube:object name="plugin.attachments_list" id="attachmentlist" deleteIcon="/images/icons/delete.png" cancelIcon="/images/icons/delete.png" loadingIcon="/images/display/loading_blue.gif" />
+      </span>
     </div>
   </form>
-  
+
   <roundcube:object name="plugin.edit_recurring_warning" class="edit-recurring-warning" style="display:none" />
 </div>
 
