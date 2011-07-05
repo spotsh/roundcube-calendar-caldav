@@ -15,7 +15,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     public $primary_key = 'ID';
     public $readonly = true;
     public $editable = false;
-    public $groups = false;
+    public $groups = true;
     public $coltypes = array(
       'name'         => array('limit' => 1),
       'firstname'    => array('limit' => 1),
@@ -133,9 +133,6 @@ class rcube_kolab_contacts extends rcube_addressbook
                 if (strpos($acl, 'a') !== false || strpos($acl, 'x') !== false)
                     $this->editable = true;
             }
-
-            if (!$this->readonly)
-                $this->groups = true;
         }
     }
 

@@ -33,7 +33,7 @@ class calendar extends rcube_plugin
 
   public $ical;
   public $ui;
-  
+
   public $defaults = array(
     'calendar_default_view' => "agendaWeek",
     'calendar_date_format'  => "yyyy-MM-dd",
@@ -92,7 +92,7 @@ class calendar extends rcube_plugin
       $this->include_stylesheet('skins/' . $skin . '/calendar.css');
     }
 
-    if ($this->rc->task == 'calendar') {
+    if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
       $this->load_driver();
 
       // load iCalendar functions
