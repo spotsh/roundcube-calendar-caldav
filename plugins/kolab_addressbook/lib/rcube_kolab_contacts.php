@@ -239,9 +239,13 @@ class rcube_kolab_contacts extends rcube_addressbook
         $groups = array();
         foreach ((array)$this->distlists as $group) {
             if (!$search || strstr(strtolower($group['last-name']), strtolower($search)))
-                $groups[] = array('ID' => $group['ID'], 'name' => $group['last-name']);
+                $groups[$group['last-name']] = array('ID' => $group['ID'], 'name' => $group['last-name']);
         }
-        return $groups;
+
+        // sort groups
+        ksort($groups, SORT_LOCALE_STRING);
+
+        return array_values($groups);
     }
 
 
