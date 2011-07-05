@@ -34,6 +34,7 @@ function rcube_calendar_ui(settings)
     this.search_request = null;
     this.search_source = null;
     this.eventcount = [];
+    this.saving_lock = null;
 
 
     /***  private vars  ***/
@@ -504,7 +505,7 @@ function rcube_calendar_ui(settings)
         else
           data.calendar = calendars.val();
 
-        rcmail.http_post('event', { action:action, e:data });
+        update_event(action, data);
         $dialog.dialog("close");
       };
 
@@ -541,6 +542,13 @@ function rcube_calendar_ui(settings)
 
       title.select();
     };
+    
+    // post the given event data to server
+    var update_event = function(action, data)
+    {
+      me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
+      rcmail.http_post('event', { action:action, e:data });
+    };
 
     // mouse-click handler to check if the show dialog is still open and prevent default action
     var dialog_check = function(e)
@@ -573,7 +581,7 @@ function rcube_calendar_ui(settings)
       
       $dialog.find('a.button').button().click(function(e){
         event.savemode = String(this.href).replace(/.+#/, '');
-        rcmail.http_post('event', { action:action, e:event });
+        update_event(action, event);
         $dialog.dialog("destroy").hide();
         return false;
       });
@@ -624,7 +632,7 @@ function rcube_calendar_ui(settings)
       
       // send remove request to plugin
       if (confirm(rcmail.gettext('deleteventconfirm', 'calendar'))) {
-        rcmail.http_post('event', { action:'remove', e:{ id:event.id, calendar:event.calendar } });
+        update_event('remove', { id:event.id, calendar:event.calendar });
         return true;
       }
 
@@ -985,7 +993,7 @@ function rcube_calendar_ui(settings)
         if (event.recurrence)
           recurring_edit_confirm(data, 'move');
         else
-          rcmail.http_post('event', { action:'move', e:data });
+          update_event('move', data);
       },
       // callback for event resizing
       eventResize: function(event, delta) {
@@ -999,7 +1007,7 @@ function rcube_calendar_ui(settings)
         if (event.recurrence)
           recurring_edit_confirm(data, 'resize');
         else
-          rcmail.http_post('event', { action:'resize', e:data });
+          update_event('resize', data);
       },
       viewDisplay: function(view) {
         me.eventcount = [];
@@ -1188,6 +1196,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
   rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
+  rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
 
 
   // let's go

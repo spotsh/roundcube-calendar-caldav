@@ -95,6 +95,7 @@ $labels['tabattachments'] = 'Attachments';
 // messages
 $labels['deleteventconfirm'] = "Do you really want to delete this event?";
 $labels['deletecalendarconfirm'] = "Do you really want to delete this calendar with all its events?";
+$labels['savingdata'] = "Saving data...";
 $labels['errorsaving'] = "Failed to save changes";
 $labels['operationfailed'] = "The requested operation failed";
 $labels['invalideventdates'] = "Invalid dates entered! Please check your input.";

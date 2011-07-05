@@ -430,7 +430,7 @@ class calendar extends rcube_plugin
     $action = get_input_value('action', RCUBE_INPUT_POST);
     $event = get_input_value('e', RCUBE_INPUT_POST);
     $success = $reload = false;
-
+    
     switch ($action) {
       case "new":
         // create UID for new event
@@ -463,6 +463,9 @@ class calendar extends rcube_plugin
           $success |= $this->driver->dismiss_alarm($id, $event['snooze']);
         break;
     }
+    
+    // unlock client
+    $this->rc->output->command('plugin.unlock_saving');
     
     if ($success)
       $this->rc->output->show_message('successfullysaved', 'confirmation');
