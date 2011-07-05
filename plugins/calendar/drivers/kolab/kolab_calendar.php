@@ -323,7 +323,7 @@ class kolab_calendar
   private function _get_recurring_events($event, $start, $end, $event_id = null)
   {
     // use Horde classes to compute recurring instances
-    require_once 'Horde/Date/Recurrence.php';
+    require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
     
     $recurrence = new Horde_Date_Recurrence($event['start']);
     $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
@@ -415,7 +415,7 @@ class kolab_calendar
         else if ($recurrence['type'] == 'yearday')
           $rrule['BYYEARDAY'] = $recurrence['daynumber'];
       }
-      if ($rec['month']) {
+      if ($recurrence['month']) {
         $monthmap = array_flip($this->month_map);
         $rrule['BYMONTH'] = strtolower($monthmap[$recurrence['month']]);
       }
@@ -585,7 +585,7 @@ class kolab_calendar
     $object['_attachments'] = array();
     if (!empty($event['attachments'])) {
       foreach ($event['attachments'] as $idx => $attachment) {
-        // Roundcube ID has nothing to Horde ID, remove it
+        // Roundcube ID has nothing to do with Horde ID, remove it
         unset($attachment['id']);
         $object['_attachments'][$attachment['name']] = $attachment;
         unset($event['attachments'][$idx]);

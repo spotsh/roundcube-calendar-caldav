@@ -369,7 +369,7 @@ class kolab_driver extends calendar_driver
       }
     }
 
-    $event['attachments'] = array_merge($old['attachments'], $attachments);
+    $event['attachments'] = array_merge((array)$old['attachments'], $attachments);
 
     // modify a recurring event, check submitted savemode to do the right things
     if ($old['recurrence'] || $old['recurrence_id']) {
@@ -420,7 +420,7 @@ class kolab_driver extends calendar_driver
           // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::insert_event()
           if (strlen($event['recurrence']['BYDAY']) == 2)
             unset($event['recurrence']['BYDAY']);
-          if ($event['recurrence']['BYMONTH'])
+          if ($master['recurrence']['BYMONTH'] == gmdate('n', $master['start']))
             unset($event['recurrence']['BYMONTH']);
           
           $success = $storage->insert_event($event);
@@ -448,7 +448,7 @@ class kolab_driver extends calendar_driver
           // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::update_event()
           if (strlen($event['recurrence']['BYDAY']) == 2)
             unset($event['recurrence']['BYDAY']);
-          if ($event['recurrence']['BYMONTH'])
+          if ($old['recurrence']['BYMONTH'] == gmdate('n', $old['start']))
             unset($event['recurrence']['BYMONTH']);
         }
 

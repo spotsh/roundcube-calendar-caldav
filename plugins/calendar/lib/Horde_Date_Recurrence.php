@@ -5313,7 +5313,7 @@ class Horde_Date_Recurrence {
      */
     function setRecurByMonth($months)
     {
-        $this->recurMonths = $months;
+        $this->recurMonths = (array)$months;
     }
 
     /**
@@ -5332,7 +5332,7 @@ class Horde_Date_Recurrence {
      */
     function setRecurNthWeekday($nthDay)
     {
-        $this->recurNthDay = $nthDay;
+        $this->recurNthDay = (int)$nthDay;
     }
 
     /**
@@ -5842,7 +5842,7 @@ class Horde_Date_Recurrence {
                 $weekday = $estart->dayOfWeek();
             }
             
-            // set month from recurrence rule (FEXME: support more than one month)
+            // set month from recurrence rule (FIXME: support more than one month)
             if ($this->recurMonths) {
                 $estart->month = $this->recurMonths[0];
             }
@@ -6430,6 +6430,21 @@ class Horde_Date_Recurrence {
             return false;
         }
 
+        $month2number = array(
+            'january'   => 1,
+            'february'  => 2,
+            'march'     => 3,
+            'april'     => 4,
+            'may'       => 5,
+            'june'      => 6,
+            'july'      => 7,
+            'august'    => 8,
+            'september' => 9,
+            'october'   => 10,
+            'november'  => 11,
+            'december'  => 12,
+        );
+
         $this->setRecurInterval((int) $hash['interval']);
 
         $parse_day = false;
@@ -6464,11 +6479,9 @@ class Horde_Date_Recurrence {
 
             case 'weekday':
                 $this->setRecurType(HORDE_DATE_RECUR_MONTHLY_WEEKDAY);
-                $nth_weekday = (int) $hash['daynumber'];
-                $hash['daynumber'] = 1;
+                $this->setRecurNthWeekday($hash['daynumber']);
                 $parse_day = true;
-                $update_daynumber = true;
-                $update_weekday = true;
+                $set_daymask = true;
                 break;
             }
             break;
@@ -6506,12 +6519,13 @@ class Horde_Date_Recurrence {
                 }
 
                 $this->setRecurType(HORDE_DATE_RECUR_YEARLY_WEEKDAY);
-                $nth_weekday = (int) $hash['daynumber'];
-                $hash['daynumber'] = 1;
+                $this->setRecurNthWeekday($hash['daynumber']);
                 $parse_day = true;
-                $update_month = true;
-                $update_daynumber = true;
-                $update_weekday = true;
+                $set_daymask = true;
+
+                if ($hash['month'] && isset($month2number[$hash['month']])) {
+                    $this->setRecurByMonth($month2number[$hash['month']]);
+                }
                 break;
             }
         }
@@ -6580,21 +6594,6 @@ class Horde_Date_Recurrence {
 
         if ($update_month || $update_daynumber || $update_weekday) {
             if ($update_month) {
-                $month2number = array(
-                    'january'   => 1,
-                    'february'  => 2,
-                    'march'     => 3,
-                    'april'     => 4,
-                    'may'       => 5,
-                    'june'      => 6,
-                    'july'      => 7,
-                    'august'    => 8,
-                    'september' => 9,
-                    'october'   => 10,
-                    'november'  => 11,
-                    'december'  => 12,
-                );
-
                 if (isset($month2number[$hash['month']])) {
                     $this->start->month = $month2number[$hash['month']];
                 }
