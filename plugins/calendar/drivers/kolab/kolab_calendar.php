@@ -429,9 +429,6 @@ class kolab_calendar
     $sensitivity_map = array_flip($this->sensitivity_map);
     $priority_map = array_flip($this->priority_map);
 
-    // @TODO: Horde code assumes that there will be no more than
-    // one file with the same name, while this is not required by MIME format
-    // and not forced by the Calendar UI
     if (!empty($rec['_attachments'])) {
       foreach ($rec['_attachments'] as $name => $attachment) {
         // @TODO: 'type' and 'key' are the only supported (no 'size')
@@ -584,9 +581,20 @@ class kolab_calendar
     // in Horde attachments are indexed by name
     $object['_attachments'] = array();
     if (!empty($event['attachments'])) {
+      $collisions = array();
       foreach ($event['attachments'] as $idx => $attachment) {
         // Roundcube ID has nothing to do with Horde ID, remove it
-        unset($attachment['id']);
+        if ($attachment['content'])
+          unset($attachment['id']);
+        
+        // Horde code assumes that there will be no more than
+        // one file with the same name: make filenames unique
+        $filename = $attachment['name'];
+        if ($collisions[$filename]++) {
+          $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
+          $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
+        }
+        
         $object['_attachments'][$attachment['name']] = $attachment;
         unset($event['attachments'][$idx]);
       }
