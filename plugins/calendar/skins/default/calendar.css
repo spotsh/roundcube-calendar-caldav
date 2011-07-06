@@ -247,68 +247,75 @@ a.miniColors-trigger {
 	margin-top: -3px;
 }
 
-#attachmentcontainer
-{
-    position: absolute;
-    top: 80px;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
+#attachmentcontainer {
+	position: absolute;
+	top: 80px;
+	left: 20px;
+	right: 20px;
+	bottom: 20px;
 }
 
-#attachmentframe
-{
-    width: 100%;
-    height: 100%;
-    border: 1px solid #999999;
-    background-color: #F9F9F9;
+#attachmentframe {
+	width: 100%;
+	height: 100%;
+	border: 1px solid #999999;
+	background-color: #F9F9F9;
 }
 
-.attachments-list ul
-{
-  margin: 0px;
-  padding: 0px;
-  list-style-image: none;
-  list-style-type: none;
+#partheader {
+	position: absolute;
+	top: 20px;
+	left: 220px;
+	right: 20px;
+	height: 40px;
 }
 
-.attachments-list ul li
-{
-  height: 18px;
-  font-size: 12px;
-  padding-left: 2px;
-  padding-top: 2px;
-  padding-right: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -o-text-overflow: ellipsis;
+#partheader table td {
+	padding-left: 2px;
+	padding-right: 4px;
+	vertical-align: middle;
+	font-size: 11px;
 }
 
-.attachments-list ul li img
-{
-  padding-right: 2px;
-  vertical-align: middle;
+
+.attachments-list ul {
+	margin: 0px;
+	padding: 0px;
+	list-style-image: none;
+	list-style-type: none;
 }
 
-.attachments-list ul li a
-{
-  text-decoration: none;
+.attachments-list ul li {
+	height: 18px;
+	font-size: 12px;
+	padding-left: 2px;
+	padding-top: 2px;
+	padding-right: 4px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
 }
 
-.attachments-list ul li a:hover
-{
-  text-decoration: underline;
+.attachments-list ul li img {
+	padding-right: 2px;
+	vertical-align: middle;
 }
 
-#eventshow .attachments-list ul
-{
-  display: block;
+.attachments-list ul li a {
+	text-decoration: none;
 }
 
-#eventshow .attachments-list ul li
-{
-  float: left;
+.attachments-list ul li a:hover {
+	text-decoration: underline;
+}
+
+#eventshow .attachments-list ul {
+	display: block;
+}
+
+#eventshow .attachments-list ul li {
+	float: left;
 }
 
 

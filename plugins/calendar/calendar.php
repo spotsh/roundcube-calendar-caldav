@@ -993,7 +993,9 @@ class calendar extends rcube_plugin
 
     // show part page
     if (!empty($_GET['_frame'])) {
-      $this->rc->output->add_handlers(array('attachmentframe' => array($this, 'attachment_frame')));
+      $this->attachment = $attachment;
+      $this->register_handler('plugin.attachmentframe', array($this, 'attachment_frame'));
+      $this->register_handler('plugin.attachmentcontrols', array($this->ui, 'attachment_controls'));
       $this->rc->output->send('calendar.attachment');
       exit;
     }

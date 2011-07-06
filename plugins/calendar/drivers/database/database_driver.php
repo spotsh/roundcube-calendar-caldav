@@ -664,6 +664,7 @@ class database_driver extends calendar_driver
     $event['allday'] = intval($event['all_day']);
     $event['free_busy'] = $free_busy_map[$event['free_busy']];
     $event['calendar'] = $event['calendar_id'];
+    $event['recurrence_id'] = intval($event['recurrence_id']);
     
     // parse recurrence rule
     if ($event['recurrence'] && preg_match_all('/([A-Z]+)=([^;]+);?/', $event['recurrence'], $m, PREG_SET_ORDER)) {

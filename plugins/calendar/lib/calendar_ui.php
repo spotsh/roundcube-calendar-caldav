@@ -520,4 +520,22 @@ class calendar_ui
     return html::tag('ul', $attrib, '', html::$common_attrib);
   }
 
+  function attachment_controls($attrib = array())
+  {
+    $table = new html_table(array('cols' => 3));
+
+    if (!empty($this->calendar->attachment['name'])) {
+      $table->add('title', Q(rcube_label('filename')));
+      $table->add(null, Q($this->calendar->attachment['name']));
+      $table->add(null, '[' . html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))) . ']');
+    }
+
+    if (!empty($this->calendar->attachment['size'])) {
+      $table->add('title', Q(rcube_label('filesize')));
+      $table->add(null, Q(show_bytes($this->calendar->attachment['size'])));
+    }
+
+    return $table->show($attrib);
+  }
+
 }
