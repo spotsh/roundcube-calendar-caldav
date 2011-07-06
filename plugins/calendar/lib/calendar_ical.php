@@ -62,19 +62,19 @@ class calendar_ical
       
       foreach ($events as $event) {
         $ical .= "BEGIN:VEVENT\n";
-        $ical .= "UID:" . $event['uid'] . "\n";
+        $ical .= "UID:" . self::escpape($event['uid']) . "\n";
         $ical .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . "\n";
         $ical .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . "\n";
-        $ical .= "SUMMARY:" . $event['title'] . "\n";
-        $ical .= "DESCRIPTION:" . $event['description'] . "\n";
+        $ical .= "SUMMARY:" . self::escpape($event['title']) . "\n";
+        $ical .= "DESCRIPTION:" . self::escpape($event['description']) . "\n";
         if (!empty($event['location'])) {
-          $ical .= "LOCATION:" . $event['location'] . "\n";
+          $ical .= "LOCATION:" . self::escpape($event['location']) . "\n";
         }
         if ($event['recurrence']) {
           $ical .= "RRULE:" . calendar::to_rrule($event['recurrence']) . "\n";
         }
         if(!empty($event['categories'])) {
-          $ical .= "CATEGORIES:" . strtoupper($event['categories']) . "\n";
+          $ical .= "CATEGORIES:" . self::escpape(strtoupper($event['categories'])) . "\n";
         }
         if ($event['sensitivity'] > 0) {
           $ical .= "X-CALENDARSERVER-ACCESS:CONFIDENTIAL";
@@ -86,8 +86,7 @@ class calendar_ical
           $ical .= "BEGIN:VALARM\n";
           if ($val[1]) $ical .= "TRIGGER:" . preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger) . "\n";
           else         $ical .= "TRIGGER;VALUE=DATE-TIME:" . gmdate('Ymd\THis\Z', $val[0]) . "\n";
-          if ($action)
-            $ical .= "ACTION:" . strtoupper($action) . "\n";
+          if ($action) $ical .= "ACTION:" . self::escpape(strtoupper($action)) . "\n";
           $ical .= "END:VALARM\n";
         }
         $ical .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . "\n";
@@ -101,5 +100,10 @@ class calendar_ical
 
       return $ical;
     }
+  }
+  
+  private function escpape($str)
+  {
+    return preg_replace('/(?<!\\\\)([\:\;\,\\n\\r])/', '\\\$1', $str);
   }
 }
