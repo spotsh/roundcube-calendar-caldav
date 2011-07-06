@@ -277,7 +277,6 @@ a.miniColors-trigger {
 	font-size: 11px;
 }
 
-
 .attachments-list ul {
 	margin: 0px;
 	padding: 0px;
@@ -292,9 +291,6 @@ a.miniColors-trigger {
 	padding-top: 2px;
 	padding-right: 4px;
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	-o-text-overflow: ellipsis;
 }
 
 .attachments-list ul li img {

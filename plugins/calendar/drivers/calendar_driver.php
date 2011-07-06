@@ -279,5 +279,17 @@ abstract class calendar_driver
   {
     return array();
   }
+  
+  /**
+   * Callback function to append additional elements to the calendar create/edit form
+   *
+   * @param array Calendar properties (e.g. id)
+   * @param array Object attributes from HTML and request (e.g. action: 'form-edit|form-new')
+   * @return string HTML to be appended to form
+   */
+  public function calendar_form($calendar, $attrib)
+  {
+    return '';
+  }
 
 }

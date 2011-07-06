@@ -166,6 +166,17 @@ function rcube_calendar(settings)
 
 }
 
+// extend jQuery
+(function($){
+  $.fn.serializeJSON = function(){
+    var json = {};
+    jQuery.map($(this).serializeArray(), function(n, i) {
+      json[n['name']] = n['value'];
+    });
+    return json;
+  };
+})(jQuery);
+
 /* calendar plugin initialization (for non-calendar tasks) */
 window.rcmail && rcmail.addEventListener('init', function(evt) {
   if (rcmail.task != 'calendar') {

@@ -638,7 +638,7 @@ function rcube_calendar_ui(settings)
 
       return false;
     };
-
+    
     // opens a jquery UI dialog with event properties (or empty for creating a new calendar)
     this.calendar_edit_dialog = function(calendar)
     {
@@ -647,14 +647,27 @@ function rcube_calendar_ui(settings)
       
       if (!calendar)
         calendar = { name:'', color:'cc0000' };
+      
+      var form, name, color;
+      
+      $dialog.html(rcmail.get_label('loading'));
+      $.ajax({
+        type: 'GET',
+        dataType: 'html',
+        url: rcmail.url('calendar'),
+        data: { action:(calendar.id ? 'form-edit' : 'form-new'), calendar:{ id:calendar.id } },
+        success: function(data){
+          // strip out body part
+          if (data.replace(/\n+/g, '').match(/<body[^>]*>(.+)<.body>/g))
+            data = RegExp.$1;
+          $dialog.html(data);
+          form = $('#calendarform > form');
+          name = $('#calendar-name').val(calendar.editname || calendar.name);
+          color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
+          name.select();
+        }
+      });
 
-      // reset form first
-      var form = $('#calendarform > form');
-      form.get(0).reset();
-      
-      var name = $('#calendar-name').val(calendar.editname || calendar.name);
-      var color = $('#calendar-color').val(calendar.color).miniColors('value', calendar.color);
-      
       // dialog buttons
       var buttons = {};
       
@@ -667,10 +680,9 @@ function rcube_calendar_ui(settings)
         }
         
         // post data to server
-        var data = {
-          name: name.val(),
-          color: color.val().replace(/^#/, '')
-        };
+        var data = form.serializeJSON();
+        if (data.color)
+          data.color = data.color.replace(/^#/, '');
         if (calendar.id)
           data.id = calendar.id;
         
@@ -695,7 +707,6 @@ function rcube_calendar_ui(settings)
         width: 420
       }).show();
 
-      name.select();
     };
     
     this.calendar_remove = function(calendar)
@@ -1163,8 +1174,6 @@ function rcube_calendar_ui(settings)
         $('#recurrence-form-'+freq+', #recurrence-form-until').show();
     });
     $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
-    
-    $('#calendar-color').miniColors();
 
     // add proprietary css styles if not IE
     if (!bw.ie)
