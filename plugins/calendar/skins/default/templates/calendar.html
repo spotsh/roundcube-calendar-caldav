@@ -78,7 +78,7 @@
   </div>
   <div class="event-section" id="event-attachments">
     <label><roundcube:label name="attachments" /></label>
-    <span class="event-text attachments-list"></span>
+    <div class="event-text attachments-list"></div>
   </div>
 </div>
 
@@ -170,12 +170,12 @@
     </div>
     <!-- attachments list (with upload form) -->
     <div id="event-tab-4">
-      <div class="border-after" id="edit-attachments-form">
+      <div id="edit-attachments" class="attachments-list">
+        <roundcube:object name="plugin.attachments_list" id="attachmentlist" deleteIcon="/images/icons/delete.png" cancelIcon="/images/icons/delete.png" loadingIcon="/images/display/loading_blue.gif" />
+      </div>
+      <div id="edit-attachments-form">
         <roundcube:object name="plugin.attachments_form" id="calendar-attachment-form" attachmentFieldSize="30" />
       </div>
-      <span id="edit-attachments" class="attachments-list">
-        <roundcube:object name="plugin.attachments_list" id="attachmentlist" deleteIcon="/images/icons/delete.png" cancelIcon="/images/icons/delete.png" loadingIcon="/images/display/loading_blue.gif" />
-      </span>
     </div>
   </form>
 

@@ -90,6 +90,7 @@ pre {
 	padding: 0;
 }
 
+#attachmentlist li,
 #calendarslist li {
 	margin: 0;
 	padding: 1px;
@@ -277,6 +278,11 @@ a.miniColors-trigger {
 	font-size: 11px;
 }
 
+#partheader table td.title {
+	color: #666;
+	font-weight: bold;
+}
+
 .attachments-list ul {
 	margin: 0px;
 	padding: 0px;
@@ -287,9 +293,8 @@ a.miniColors-trigger {
 .attachments-list ul li {
 	height: 18px;
 	font-size: 12px;
-	padding-left: 2px;
 	padding-top: 2px;
-	padding-right: 4px;
+	padding-right: 8px;
 	white-space: nowrap;
 }
 
@@ -306,12 +311,24 @@ a.miniColors-trigger {
 	text-decoration: underline;
 }
 
-#eventshow .attachments-list ul {
-	display: block;
+#attachmentlist {
+	margin: 0 -0.8em;
+}
+
+#attachmentlist li {
+	padding: 2px 2px 3px 0.8em;
 }
 
 #eventshow .attachments-list ul li {
 	float: left;
+}
+
+#edit-attachments-form {
+	padding-top: 1.2em;
+}
+
+#edit-attachments-form .buttons {
+	margin: 0.5em 0;
 }
 
 
