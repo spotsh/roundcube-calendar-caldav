@@ -538,4 +538,27 @@ class calendar_ui
     return $table->show($attrib);
   }
 
+  /**
+   * Handler for calendar form template object.
+   * Will get additional form fields from driver class
+   */
+  function calendar_editform($action, $calendar = array())
+  {
+    // compose default calendar form
+    $input_name = new html_inputfield(array('name' => 'name', 'id' => 'calendar-name', 'size' => 20));
+    $html = html::div('form-section',
+      html::label('calendar-name', $this->calendar->gettext('name')) .
+      $input_name->show($calendar['name']));
+
+    $input_color = new html_inputfield(array('name' => 'color', 'id' => 'calendar-color', 'size' => 6));
+    $html .= html::div('form-section',
+      html::label('calendar-color', $this->calendar->gettext('color')) .
+      $input_color->show($calendar['color']));
+    
+    // allow driver to extend the form
+    $html = $this->calendar->driver->calendar_form($action, $calendar, $html);
+    
+    return html::tag('form', array('action' => "#", 'method' => "get"), $html);
+  }
+
 }

@@ -657,9 +657,6 @@ function rcube_calendar_ui(settings)
         url: rcmail.url('calendar'),
         data: { action:(calendar.id ? 'form-edit' : 'form-new'), calendar:{ id:calendar.id } },
         success: function(data){
-          // strip out body part
-          if (data.replace(/\n+/g, '').match(/<body[^>]*>(.+)<.body>/g))
-            data = RegExp.$1;
           $dialog.html(data);
           form = $('#calendarform > form');
           name = $('#calendar-name').val(calendar.editname || calendar.name);
@@ -672,6 +669,10 @@ function rcube_calendar_ui(settings)
       var buttons = {};
       
       buttons[rcmail.gettext('save', 'calendar')] = function() {
+        // form is not loaded
+        if (!form)
+          return;
+          
         // TODO: do some input validation
         if (!name.val() || name.val().length < 2) {
           alert(rcmail.gettext('invalidcalendarproperties', 'calendar'));

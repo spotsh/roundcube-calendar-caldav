@@ -402,10 +402,8 @@ class calendar extends rcube_plugin
     switch ($action) {
       case "form-new":
       case "form-edit":
-        $this->rc->output->reset();
-        $this->register_handler('plugin.calendarform', array($this, 'calendar_editform'));
-        $this->rc->output->send('calendar.calendarform');
-        break;
+        echo $this->ui->calendar_editform($action, $cal);
+        exit;
       case "new":
         $success = $this->driver->create_calendar($cal);
         $reload = true;
@@ -430,16 +428,6 @@ class calendar extends rcube_plugin
       $this->rc->output->redirect('');
   }
   
-  /**
-   * Handler for calendar form template object.
-   * Will get additional form fields from driver class
-   */
-  function calendar_editform($attrib = array())
-  {
-    $cal = get_input_value('c', RCUBE_INPUT_GPC);
-    $attrib['action'] = get_input_value('action', RCUBE_INPUT_GPC);
-    return $this->driver->calendar_form($cal, $attrib['action']);
-  }
   
   /**
    * Dispatcher for event actions initiated by the client
