@@ -2,7 +2,7 @@
 /*
  +-------------------------------------------------------------------------+
  | iCalendar functions for the Calendar Plugin                             |
- | Version 0.3 beta                                                       |
+ | Version 0.3 beta                                                        |
  |                                                                         |
  | This program is free software; you can redistribute it and/or modify    |
  | it under the terms of the GNU General Public License version 2          |
@@ -27,7 +27,8 @@ class calendar_ical
   private $rc;
   private $driver;
 
-  function __construct($rc, $driver) {
+  function __construct($rc, $driver)
+  {
     $this->rc = $rc;
     $this->driver = $driver;
   }
@@ -38,7 +39,8 @@ class calendar_ical
    * @param  array Associative events array
    * @access public
    */
-  public function import($events) {
+  public function import($events)
+  {
     //TODO
     // for ($events as $event)
     //   $this->backend->newEvent(...);
@@ -49,31 +51,52 @@ class calendar_ical
    *
    * @param  array Events as array
    * @return string  Events in iCalendar format (http://tools.ietf.org/html/rfc5545)
-   * @access public
    */
-  public function export($events) {
+  public function export($events)
+  {
     if (!empty($this->rc->user->ID)) {
       $ical = "BEGIN:VCALENDAR\n";
       $ical .= "VERSION:2.0\n";
-      $ical .= "PRODID:-//Roundcube Webmail//NONSGML Calendar//EN\n";
+      $ical .= "PRODID:-//Roundcube Webmail " . RCMAIL_VERSION . "//NONSGML Calendar//EN\n";
+      $ical .= "CALSCALE:GREGORIAN\n";
+      
       foreach ($events as $event) {
         $ical .= "BEGIN:VEVENT\n";
-        $ical .= "DTSTART:" . date('Ymd\THis\Z', $event['start'] - date('Z')) . "\n";
-        $ical .= "DTEND:" . date('Ymd\THis\Z', $event['end'] - date('Z')) . "\n";
+        $ical .= "UID:" . $event['uid'] . "\n";
+        $ical .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . "\n";
+        $ical .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . "\n";
         $ical .= "SUMMARY:" . $event['title'] . "\n";
         $ical .= "DESCRIPTION:" . $event['description'] . "\n";
         if (!empty($event['location'])) {
           $ical .= "LOCATION:" . $event['location'] . "\n";
         }
+        if ($event['recurrence']) {
+          $ical .= "RRULE:" . calendar::to_rrule($event['recurrence']) . "\n";
+        }
         if(!empty($event['categories'])) {
           $ical .= "CATEGORIES:" . strtoupper($event['categories']) . "\n";
         }
-        if ($event['private']) {
-          $ical .= 'X-CALENDARSERVER-ACCESS:CONFIDENTIAL';
+        if ($event['sensitivity'] > 0) {
+          $ical .= "X-CALENDARSERVER-ACCESS:CONFIDENTIAL";
         }
-        $ical .= 'TRANSP:' . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE');
+        if ($event['alarms']) {
+          list($trigger, $action) = explode(':', $event['alarms']);
+          $val = calendar::parse_alaram_value($trigger);
+          
+          $ical .= "BEGIN:VALARM\n";
+          if ($val[1]) $ical .= "TRIGGER:" . preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger) . "\n";
+          else         $ical .= "TRIGGER;VALUE=DATE-TIME:" . gmdate('Ymd\THis\Z', $val[0]) . "\n";
+          if ($action)
+            $ical .= "ACTION:" . strtoupper($action) . "\n";
+          $ical .= "END:VALARM\n";
+        }
+        $ical .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . "\n";
+        
+        // TODO: export attachments
+        
         $ical .= "END:VEVENT\n";
       }
+      
       $ical .= "END:VCALENDAR";
 
       return $ical;
