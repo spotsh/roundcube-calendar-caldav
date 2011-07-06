@@ -111,14 +111,12 @@ class calendar extends rcube_plugin
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
     } 
     else if ($this->rc->task == 'settings') {
-      $this->load_driver();
-
       // add hooks for Calendar settings
       $this->add_hook('preferences_sections_list', array($this, 'preferences_sections_list'));
       $this->add_hook('preferences_list', array($this, 'preferences_list'));
       $this->add_hook('preferences_save', array($this, 'preferences_save')); 
     }
-    
+
     // add hook to display alarms
     $this->add_hook('keep_alive', array($this, 'keep_alive'));
   }
@@ -205,8 +203,10 @@ class calendar extends rcube_plugin
   function preferences_list($p)
   {
     if ($p['section'] == 'calendar') {
+      $this->load_driver();
+
       $p['blocks']['view']['name'] = $this->gettext('mainoptions');
- 
+
       $field_id = 'rcmfd_default_view';
       $select = new html_select(array('name' => '_default_view', 'id' => $field_id));
       $select->add($this->gettext('day'), "agendaDay");
@@ -340,6 +340,8 @@ class calendar extends rcube_plugin
   function preferences_save($p)
   {
     if ($p['section'] == 'calendar') {
+      $this->load_driver();
+
       // compose default alarm preset value
       $alarm_offset = get_input_value('_alarm_offset', RCUBE_INPUT_POST);
       $default_alam = $alarm_offset[0] . intval(get_input_value('_alarm_value', RCUBE_INPUT_POST)) . $alarm_offset[1];
