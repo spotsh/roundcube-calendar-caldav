@@ -62,7 +62,6 @@ class rcube_kolab_contacts extends rcube_addressbook
     private $contacts;
     private $distlists;
     private $groupmembers;
-    private $id2uid;
     private $filter;
     private $result;
     private $namespace;
@@ -513,7 +512,6 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $contact = $this->_to_rcube_contact($object);
                 $id = $contact['ID'];
                 $this->contacts[$id] = $contact;
-                $this->id2uid[$id] = $object['uid'];
                 $insert_id = $id;
             }
         }
@@ -535,8 +533,8 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         $updated = false;
         $this->_fetch_contacts();
-        if ($this->contacts[$id] && ($uid = $this->id2uid[$id])) {
-            $old = $this->contactstorage->getObject($uid);
+        if ($this->contacts[$id]) {
+            $old = $this->contactstorage->getObject($id);
             $object = array_merge($old, $this->_from_rcube_contact($save_data));
 
             $saved = $this->contactstorage->save($object, $uid);
@@ -572,25 +570,23 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         $count = 0;
         foreach ($ids as $id) {
-            if ($uid = $this->id2uid[$id]) {
-                $deleted = $this->contactstorage->delete($uid);
+            $deleted = $this->contactstorage->delete($id);
 
-                if (PEAR::isError($deleted)) {
-                    raise_error(array(
-                      'code' => 600, 'type' => 'php',
-                      'file' => __FILE__, 'line' => __LINE__,
-                      'message' => "Error deleting a contact object from the Kolab server:" . $deleted->getMessage()),
-                    true, false);
-                }
-                else {
-                    // remove from distribution lists
-                    foreach ((array)$this->groupmembers[$id] as $gid)
-                        $this->remove_from_group($gid, $id);
+            if (PEAR::isError($deleted)) {
+                raise_error(array(
+                  'code' => 600, 'type' => 'php',
+                  'file' => __FILE__, 'line' => __LINE__,
+                  'message' => "Error deleting a contact object from the Kolab server:" . $deleted->getMessage()),
+                true, false);
+            }
+            else {
+                // remove from distribution lists
+                foreach ((array)$this->groupmembers[$id] as $gid)
+                    $this->remove_from_group($gid, $id);
 
-                    // clear internal cache
-                    unset($this->contacts[$id], $this->id2uid[$id], $this->groupmembers[$id]);
-                    $count++;
-                }
+                // clear internal cache
+                unset($this->contacts[$id], $this->groupmembers[$id]);
+                $count++;
             }
         }
 
@@ -607,7 +603,6 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         if (!PEAR::isError($this->contactstorage->deleteAll())) {
             $this->contacts = array();
-            $this->id2uid = array();
             $this->result = null;
         }
     }
@@ -650,9 +645,8 @@ class rcube_kolab_contacts extends rcube_addressbook
             return false;
         }
         else {
-            $id = md5($list['uid']);
             $this->distlists[$record['ID']] = $list;
-            $result = array('id' => $id, 'name' => $name);
+            $result = array('id' => $list['uid'], 'name' => $name);
         }
 
         return $result;
@@ -740,11 +734,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         $ids = array_diff($ids, $exists);
 
         foreach ($ids as $contact_id) {
-            if ($uid = $this->id2uid[$contact_id]) {
-                $contact = $this->contacts[$contact_id];
+            if ($contact = $this->contacts[$contact_id]) {
                 foreach ($this->get_col_values('email', $contact, true) as $email) {
                     $list['member'][] = array(
-                        'uid' => $uid,
+                        'uid' => $contact_id,
                         'display-name' => $contact['name'],
                         'smtp-address' => $email,
                     );
@@ -850,16 +843,14 @@ class rcube_kolab_contacts extends rcube_addressbook
             $this->_connect();
 
             // read contacts
-            $this->contacts = $this->id2uid = array();
+            $this->contacts = array();
             foreach ((array)$this->contactstorage->getObjects() as $record) {
                 // Because of a bug, sometimes group records are returned
                 if ($record['__type'] == 'Group')
                     continue;
 
                 $contact = $this->_to_rcube_contact($record);
-                $id = $contact['ID'];
-                $this->contacts[$id] = $contact;
-                $this->id2uid[$id] = $record['uid'];
+                $this->contacts[$contact['ID']] = $contact;
             }
 
             // sort data arrays according to desired list sorting
@@ -890,9 +881,9 @@ class rcube_kolab_contacts extends rcube_addressbook
                 // FIXME: folders without any distribution-list objects return contacts instead ?!
                 if ($record['__type'] != 'Group')
                     continue;
-                $record['ID'] = md5($record['uid']);
+                $record['ID'] = $record['uid'];
                 foreach ((array)$record['member'] as $i => $member) {
-                    $mid = md5($member['uid']);
+                    $mid = $member['uid'];
                     $record['member'][$i]['ID'] = $mid;
                     $this->groupmembers[$mid][] = $record['ID'];
                 }
@@ -908,7 +899,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     private function _to_rcube_contact($record)
     {
         $out = array(
-          'ID' => md5($record['uid']),
+          'ID' => $record['uid'],
           'email' => array(),
           'phone' => array(),
         );
