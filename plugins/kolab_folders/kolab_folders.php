@@ -25,6 +25,8 @@
 
 class kolab_folders extends rcube_plugin
 {
+    public $task = '?(?!login).*';
+
     public $types = array('mail', 'event', 'journal', 'task', 'note', 'contact');
     public $mail_types = array('inbox', 'drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
     private $rc;
