@@ -28,7 +28,7 @@ class kolab_folders extends rcube_plugin
     public $task = '?(?!login).*';
 
     public $types = array('mail', 'event', 'journal', 'task', 'note', 'contact');
-    public $mail_types = array('inbox', 'drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
+    public $mail_types = array('drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
     private $rc;
 
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
@@ -172,11 +172,24 @@ class kolab_folders extends rcube_plugin
         if (!$this->metadata_support()) {
             return $args;
         }
+        // load translations
+        $this->add_texts('localization/', false);
+
+        // INBOX folder is of type mail.inbox and this cannot be changed
+        if ($args['name'] == 'INBOX') {
+            $args['form']['props']['fieldsets']['settings']['content']['foldertype'] = array(
+                'label' => $this->gettext('folderctype'),
+                'value' => sprintf('%s (%s)', $this->gettext('foldertypemail'), $this->gettext('inbox')),
+            );
+
+            return $args;
+        }
 
         $mbox = strlen($args['name']) ? $args['name'] : $args['parent_name'];
+
         if (isset($_POST['_ctype'])) {
             $new_ctype   = trim(get_input_value('_ctype', RCUBE_INPUT_POST));
-            $new_subtype = trim(get_input_value('_subtype', RCUBE_INPUT_POST)); 
+            $new_subtype = trim(get_input_value('_subtype', RCUBE_INPUT_POST));
         }
 
         // Get type of the folder or the parent
@@ -190,8 +203,7 @@ class kolab_folders extends rcube_plugin
             $ctype = 'mail';
         }
 
-        // load translations
-        $this->add_texts('localization/', false);
+        // Add javascript script to the client
         $this->include_script('kolab_folders.js');
 
         // build type SELECT fields

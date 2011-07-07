@@ -19,11 +19,15 @@ $(document).ready(function() {
         // For non-mail folders we must hide mail-specific subtypes
         $('option', sub).each(function() {
             var opt = $(this), val = opt.val();
-            if (val == '' || val == 'default') {
+            if (val == '')
                 return;
-            }
+            // there's no mail.default
+            if (val == 'default' && type != 'mail') {
+                opt.show();
+                return;
+            };
 
-            if (type == 'mail')
+            if (type == 'mail' && val != 'default')
                 opt.show();
             else if (bw.ie)
                 opt.remove();
