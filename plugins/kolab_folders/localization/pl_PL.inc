@@ -15,5 +15,6 @@ $labels['sentitems'] = 'Wysłane';
 $labels['outbox'] = 'Wychodzące';
 $labels['wastebasket'] = 'Kosz';
 $labels['junkemail'] = 'Spam';
+$messages['defaultfolderexists'] = 'Folder domyślny dla podanego typu już istnieje';
 
 ?>

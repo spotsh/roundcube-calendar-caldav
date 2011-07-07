@@ -25,8 +25,6 @@
 
 class kolab_folders extends rcube_plugin
 {
-    public $task = '?(?!login).*';
-
     public $types = array('mail', 'event', 'journal', 'task', 'note', 'contact');
     public $mail_types = array('inbox', 'drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
     private $rc;
@@ -182,6 +180,8 @@ class kolab_folders extends rcube_plugin
         // Get type of the folder or the parent
         if (strlen($mbox)) {
             list($ctype, $subtype) = $this->get_folder_type($mbox);
+            if (strlen($args['parent_name']) && $subtype == 'default')
+                $subtype = ''; // there can be only one
         }
 
         if (!$ctype) {
@@ -234,8 +234,23 @@ class kolab_folders extends rcube_plugin
             return $args;
         }
 
-        // @TODO: There can be only one default folder of specified type. Add check for this.
+        // load translations
+        $this->add_texts('localization/', false);
+
+        // Skip folder creation/rename in core
+        // @TODO: Maybe we should provide folder_create_after and folder_update_after hooks?
+        //        Using create_mailbox/rename_mailbox here looks bad
+        $args['abort']  = true;
+
+        // There can be only one default folder of specified type
         if ($subtype == 'default') {
+            $default = $this->get_default_folder($ctype);
+
+            if ($default !== null && $old_mbox != $default) {
+                $args['result'] = false;
+                $args['message'] = $this->gettext('defaultfolderexists');
+                return $args;
+            }
         }
         // Subtype sanity-checks
         else if ($subtype && ($ctype != 'mail' || !in_array($subtype, $this->mail_types))) {
@@ -277,11 +292,6 @@ class kolab_folders extends rcube_plugin
 
         $args['record']['class'] = self::folder_class_name($ctype);
         $args['record']['subscribe'] = $subscribe;
-
-        // Skip folder creation/rename in core
-        // @TODO: Maybe we should provide folder_create_after and folder_update_after hooks?
-        //        Using create_mailbox/rename_mailbox here looks bad
-        $args['abort']  = true;
         $args['result'] = $result;
 
         return $args;
@@ -394,6 +404,58 @@ class kolab_folders extends rcube_plugin
         $this->rc->imap->update_cache($cache_key, $metadata);
 
         return $metadata;
+    }
+
+    /**
+     * Returns the name of default folder
+     *
+     * @param string $type Folder type
+     *
+     * @return string Folder name
+     */
+    function get_default_folder($type)
+    {
+        $folderdata = $this->get_folder_type_list('*');
+
+        if (!is_array($folderdata)) {
+            return null;
+        }
+
+        $type     .= '.default';
+        $namespace = $this->rc->imap->get_namespace();
+        $delimiter = $this->rc->imap->get_hierarchy_delimiter();
+
+        foreach ($folderdata as $folder => $data) {
+            if ($data[kolab_folders::CTYPE_KEY] != $type) {
+                unset ($folderdata[$folder]);
+                continue;
+            }
+
+            // folder found, check if it is in personal namespace
+            $fname = $folder . $delimiter;
+
+            if (!empty($namespace['other'])) {
+                foreach ($namespace['other'] as $item) {
+                    if ($item[0] === $fname) {
+                        unset ($folderdata[$folder]);
+                        continue 2;
+                    }
+                }
+            }
+            if (!empty($namespace['shared'])) {
+                foreach ($namespace['shared'] as $item) {
+                    if ($item[0] === $fname) {
+                        unset ($folderdata[$folder]);
+                        continue 2;
+                    }
+                }
+            }
+
+            // There can be only one default folder of specified type
+            return $folder;
+        }
+
+        return null;
     }
 
     /**

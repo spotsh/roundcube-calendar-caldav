@@ -18,4 +18,6 @@ $labels['outbox'] = 'Outbox';
 $labels['wastebasket'] = 'Trash';
 $labels['junkemail'] = 'Junk';
 
+$messages['defaultfolderexists'] = 'There is already default folder of specified type';
+
 ?>
