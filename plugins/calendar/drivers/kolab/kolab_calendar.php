@@ -24,6 +24,7 @@ class kolab_calendar
   public $ready = false;
   public $readonly = true;
   public $attachments = true;
+  public $alarms = false;
 
   private $cal;
   private $storage;
@@ -56,10 +57,11 @@ class kolab_calendar
 
     $this->ready = !PEAR::isError($this->storage);
 
-    // Set readonly and editable flags according to folder permissions
+    // Set readonly and alarms flags according to folder permissions
     if ($this->ready) {
       if ($this->get_owner() == $_SESSION['username']) {
         $this->readonly = false;
+        $this->alarms = true;
       }
       else {
         $acl = $this->storage->_folder->getACL();
