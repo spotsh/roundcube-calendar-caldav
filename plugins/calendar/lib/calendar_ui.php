@@ -560,5 +560,31 @@ class calendar_ui
     
     return html::tag('form', array('action' => "#", 'method' => "get"), $html);
   }
+  
+  /**
+   *
+   */
+  function attendees_list($attrib = array())
+  {
+    $table = new html_table(array('cols' => 5, 'border' => 0, 'cellpadding' => 0, 'class' => 'rectable'));
+    $table->add_header('role', $this->calendar->gettext('role'));
+    $table->add_header('name', $this->calendar->gettext('attendee'));
+    $table->add_header('availability', $this->calendar->gettext('availability'));
+    $table->add_header('confirmstate', $this->calendar->gettext('confirmstate'));
+    $table->add_header('options', '');
+    
+    return $table->show($attrib);
+  }
+
+  /**
+   *
+   */
+  function attendees_form($attrib = array())
+  {
+    $input = new html_inputfield(array('name' => 'participant', 'id' => 'edit-attendee-name', 'size' => 30));
+    
+    return html::div($attrib, $input->show() . " " .
+      html::tag('input', array('type' => 'button', 'class' => 'button', 'id' => 'edit-attendee-add', 'value' => $this->calendar->gettext('addattendee'))));
+  }
 
 }

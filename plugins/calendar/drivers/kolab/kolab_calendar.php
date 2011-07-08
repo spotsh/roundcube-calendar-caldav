@@ -441,6 +441,24 @@ class kolab_calendar
         );
       }
     }
+    
+    if ($rec['organizer']) {
+      $attendees[] = array(
+        'role' => 'OWNER',
+        'name' => $rec['organizer']['display-name'],
+        'email' => $rec['organizer']['smtp-address'],
+        'status' => 'accepted',
+      );
+    }
+    
+    foreach ((array)$rec['attendee'] as $attendee) {
+      $attendees[] = array(
+        'role' => strtoupper($attendee['role']),
+        'name' => $attendee['display-name'],
+        'email' => $attendee['smtp-address'],
+        'status' => $attendee['status'],
+      );
+    }
 
     return array(
       'id' => $rec['uid'],
@@ -455,6 +473,7 @@ class kolab_calendar
       'alarms' => $alarm_value . $alarm_unit,
       'categories' => $rec['categories'],
       'attachments' => $attachments,
+      'attendees' => $attendees,
       'free_busy' => $rec['show-time-as'],
       'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
@@ -599,6 +618,25 @@ class kolab_calendar
         
         $object['_attachments'][$attachment['name']] = $attachment;
         unset($event['attachments'][$idx]);
+      }
+    }
+    
+    // process event attendees
+    foreach ((array)$event['attendees'] as $attendee) {
+      $role = $attendee['role'];
+      if ($role == 'OWNER') {
+        $object['organizer'] = array(
+          'display-name' => $attendee['name'],
+          'smtp-address' => $attendee['email'],
+        );
+      }
+      else {
+        $object['attendee'][] = array(
+          'display-name' => $attendee['name'],
+          'smtp-address' => $attendee['email'],
+          'status' => $attendee['status'],
+          'role' => strtolower($role),
+        );
       }
     }
 

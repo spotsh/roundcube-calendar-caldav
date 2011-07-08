@@ -108,6 +108,8 @@ class calendar extends rcube_plugin
       $this->register_action('export_events', array($this, 'export_events'));
       $this->register_action('upload', array($this, 'attachment_upload'));
       $this->register_action('get-attachment', array($this, 'attachment_get'));
+      $this->register_action('freebusy-status', array($this, 'freebusy_status'));
+      $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
     } 
     else if ($this->rc->task == 'settings') {
@@ -169,10 +171,12 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));
     $this->register_handler('plugin.attachments_form', array($this->ui, 'attachments_form'));
     $this->register_handler('plugin.attachments_list', array($this->ui, 'attachments_list'));
+    $this->register_handler('plugin.attendees_list', array($this->ui, 'attendees_list'));
+    $this->register_handler('plugin.attendees_form', array($this->ui, 'attendees_form'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
 
-    $this->rc->output->add_label('low','normal','high','delete','cancel','uploading');
+    $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
 
     $this->rc->output->send("calendar.calendar");
   }
@@ -442,29 +446,41 @@ class calendar extends rcube_plugin
       case "new":
         // create UID for new event
         $event['uid'] = $this->generate_uid();
+        
+        // set current user as organizer
+        if (!$event['attendees']) {
+          $identity = $this->rc->user->get_identity();
+          $event['attendees'][] = array('role' => 'OWNER', 'name' => $identity['name'], 'email' => $identity['email']);
+        }
+        
         $this->prepare_event($event);
         if ($success = $this->driver->new_event($event))
             $this->cleanup_event($event);
         $reload = true;
         break;
+      
       case "edit":
         $this->prepare_event($event);
         if ($success = $this->driver->edit_event($event))
             $this->cleanup_event($event);
         $reload = true;
         break;
+      
       case "resize":
         $success = $this->driver->resize_event($event);
         $reload = true;
         break;
+      
       case "move":
         $success = $this->driver->move_event($event);
         $reload = true;
         break;
+      
       case "remove":
         $removed = $this->driver->remove_event($event);
         $reload = true;
         break;
+      
       case "dismiss":
         foreach (explode(',', $event['id']) as $id)
           $success |= $this->driver->dismiss_alarm($id, $event['snooze']);
@@ -606,6 +622,10 @@ class calendar extends rcube_plugin
 
     // user prefs
     $settings['hidden_calendars'] = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
+    
+    // get user identity to create default attendee
+    $identity = $this->rc->user->get_identity();
+    $settings['event_owner'] = array('name' => $identity['name'], 'email' => $identity['email']);
 
     return $settings;
   }
@@ -1112,6 +1132,60 @@ class calendar extends rcube_plugin
       $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $eventid));
       unset($_SESSION['event_session']);
     }
+  }
+  
+  /**
+   * Echo simple free/busy status text for the given user and time range
+   */
+  public function freebusy_status()
+  {
+    $email = get_input_value('email', RCUBE_INPUT_GPC);
+    $start = get_input_value('start', RCUBE_INPUT_GET);
+    $end = get_input_value('end', RCUBE_INPUT_GET);
+    
+    if (!$start) $start = time();
+    if (!$end) $end = $start + 3600;
+    
+    $status = 'UNKNOWN';
+    
+    // if the backend has free-busy information
+    $fblist = $this->driver->get_freebusy_list($email, $start, $end);
+    if (is_array($fblist)) {
+      $status = 'FREE';
+      
+      foreach ($fblist as $slot) {
+        list($from, $to) = $slot;
+        if ($from <= $end && $to >= $start) {
+          $status = 'BUSY';
+          break;
+        }
+      }
+    }
+    
+    echo $status;
+    exit;
+  }
+  
+  /**
+   * Return a list of free/busy time slots within the given period
+   * Echo data in JSON encoding
+   */
+  public function freebusy_times()
+  {
+    $email = get_input_value('email', RCUBE_INPUT_GPC);
+    $start = get_input_value('start', RCUBE_INPUT_GET);
+    $end = get_input_value('end', RCUBE_INPUT_GET);
+    
+    if (!$start) $start = time();
+    if (!$end)   $end = $start + 86400 * 30;
+    
+    $fblist = $this->driver->get_freebusy_list($email, $start, $end);
+    $result = array();
+    
+    // TODO: build a list from $start till $end with blocks representing the fb-status
+    
+    echo json_encode($result);
+    exit;
   }
 
 }
