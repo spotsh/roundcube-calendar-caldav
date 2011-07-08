@@ -15,6 +15,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     public $primary_key = 'ID';
     public $readonly = true;
     public $editable = false;
+    public $undelete = true;
     public $groups = true;
     public $coltypes = array(
       'name'         => array('limit' => 1),
@@ -560,9 +561,12 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * Mark one or more contact records as deleted
      *
-     * @param array  Record identifiers
+     * @param array   Record identifiers
+     * @param boolean Remove record(s) irreversible (mark as deleted otherwise)
+     *
+     * @return int Number of records deleted
      */
-    public function delete($ids)
+    public function delete($ids, $force=true)
     {
         $this->_fetch_contacts();
         $this->_fetch_groups();
@@ -571,9 +575,12 @@ class rcube_kolab_contacts extends rcube_addressbook
             $ids = explode(',', $ids);
 
         $count = 0;
+        $imap_uids = array();
+
         foreach ($ids as $id) {
             if ($uid = $this->id2uid[$id]) {
-                $deleted = $this->contactstorage->delete($uid);
+                $imap_uid = $this->contactstorage->_getStorageId($uid);
+                $deleted = $this->contactstorage->delete($uid, $force);
 
                 if (PEAR::isError($deleted)) {
                     raise_error(array(
@@ -587,6 +594,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                     foreach ((array)$this->groupmembers[$id] as $gid)
                         $this->remove_from_group($gid, $id);
 
+                    $imap_uids[$id] = $imap_uid;
                     // clear internal cache
                     unset($this->contacts[$id], $this->id2uid[$id], $this->groupmembers[$id]);
                     $count++;
@@ -594,7 +602,69 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
 
+        // store IMAP uids for undelete()
+        if (!$force)
+            $_SESSION['kolab_delete_uids'] = $imap_uids;
+
         return $count;
+    }
+
+
+    /**
+     * Undelete one or more contact records.
+     * Only possible just after delete (see 2nd argument of delete() method).
+     *
+     * @param array  Record identifiers
+     *
+     * @return int Number of records restored
+     */
+    public function undelete($ids)
+    {
+        if (!is_array($ids))
+            $ids = explode(',', $ids);
+
+        $count     = 0;
+        $uids      = array();
+        $imap_uids = $_SESSION['kolab_delete_uids'];
+
+        // convert contact IDs into IMAP UIDs
+        foreach ($ids as $id)
+            if ($uid = $imap_uids[$id])
+                $uids[] = $uid;
+
+        if (!empty($uids)) {
+            $session = &Horde_Kolab_Session::singleton();
+            $imap = &$session->getImap();
+
+            if (is_a($imap, 'PEAR_Error')) {
+                $error = $imap;
+            }
+            else {
+                $result = $imap->select($this->imap_folder);
+                if (is_a($result, 'PEAR_Error')) {
+                    $error = $result;
+                }
+                else {
+                    $result = $imap->undeleteMessages(implode(',', $uids));
+                    if (is_a($result, 'PEAR_Error')) {
+                        $error = $result;
+                    }
+                }
+            }
+
+            if ($error) {
+                raise_error(array(
+                  'code' => 600, 'type' => 'php',
+                  'file' => __FILE__, 'line' => __LINE__,
+                  'message' => "Error undeleting a contact object(s) from the Kolab server:" . $error->getMessage()),
+                true, false);
+            }
+
+            $rcmail = rcmail::get_instance();
+            $rcmail->session->remove('kolab_delete_uids');
+        }
+
+        return count($uids);
     }
 
 
