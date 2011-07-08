@@ -274,10 +274,15 @@ abstract class calendar_driver
 
   /**
    * Fetch free/busy information from a person within the given range
+   *
+   * @param string E-mail address of attendee
+   * @param integer Requested period start date/time as unix timestamp
+   * @param integer Requested period end date/time as unix timestamp
+   * @return array List of busy timeslots within the requested range
    */
   public function get_freebusy_list($email, $start, $end)
   {
-    return array();
+    return false;
   }
   
   /**

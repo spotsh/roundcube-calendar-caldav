@@ -27,6 +27,7 @@ require_once 'Horde/Perms.php';
 class rcube_kolab
 {
     private static $horde_auth;
+    private static $config;
     private static $ready = false;
 
 
@@ -74,6 +75,7 @@ class rcube_kolab
 
         $conf['kolab']['ldap'] = array_merge($ldap, (array)$conf['kolab']['ldap']);
         $conf['kolab']['imap'] = array_merge($imap, (array)$conf['kolab']['imap']);
+        self::$config = &$conf;
 
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
@@ -145,6 +147,15 @@ class rcube_kolab
         self::setup();
         $kolab = Kolab_List::singleton();
         return self::$ready ? $kolab->getFolder($folder)->getData($data_type) : null;
+    }
+    
+    /**
+     * Compose an URL to query the free/busy status for the given user
+     */
+    public static function get_freebusy_url($email)
+    {
+        $host = self::$config['kolab']['freebusy']['server'] ? self::$config['kolab']['freebusy']['server'] : self::$config['kolab']['imap']['server'];
+        return 'https://' . $host . '/freebusy/' . $email . '.ifb';
     }
 
     /**

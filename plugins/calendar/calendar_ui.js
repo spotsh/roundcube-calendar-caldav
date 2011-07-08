@@ -42,6 +42,8 @@ function rcube_calendar_ui(settings)
     var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
+    var event_attendees = null;
+    var attendees_list;
 
     // general datepicker settings
     var datepicker_settings = {
@@ -65,6 +67,27 @@ function rcube_calendar_ui(settings)
     var nl2br = function(str)
     {
       return String(str).replace(/\n/g, "<br/>");
+    };
+    
+    // 
+    var explode_quoted_string = function(str, delimiter)
+    {
+      var result = [],
+        strlen = str.length,
+        q, p, i;
+
+      for (q = p = i = 0; i < strlen; i++) {
+        if (str[i] == '"' && str[i-1] != '\\') {
+          q = !q;
+        }
+        else if (!q && str[i] == delimiter) {
+          result.push(str.substring(p, i));
+          p = i + 1;
+        }
+      }
+
+      result.push(str.substr(p));
+      return result;
     };
 
     // from time and date strings to a real date object
@@ -390,6 +413,14 @@ function rcube_calendar_ui(settings)
       }
       else
         $('#edit-recurring-warning').hide();
+        
+      // attendees
+      event_attendees = [];
+      attendees_list = $('#edit-attendees-table > tbody').html('');
+      if (calendar.attendees && event.attendees) {
+        for (var j=0; j < event.attendees.length; j++)
+          add_attendee(event.attendees[j]);
+      }
 
       // attachments
       if (calendar.attachments) {
@@ -436,6 +467,7 @@ function rcube_calendar_ui(settings)
           sensitivity: sensitivity.val(),
           recurrence: '',
           alarms: '',
+          attendees: event_attendees,
           deleted_attachments: rcmail.env.deleted_attachments
         };
 
@@ -531,16 +563,85 @@ function rcube_calendar_ui(settings)
       $dialog.dialog({
         modal: true,
         resizable: true,
+        closeOnEscape: false,
         title: rcmail.gettext((action == 'edit' ? 'edit_event' : 'new_event'), 'calendar'),
         close: function() {
           $dialog.dialog("destroy").hide();
         },
         buttons: buttons,
-        minWidth: 440,
-        width: 480
+        minWidth: 500,
+        width: 580
       }).show();
 
       title.select();
+    };
+    
+    // add the given list of participants
+    var add_attendees = function(names)
+    {
+      names = explode_quoted_string(names.replace(/,\s*$/, ''), ',');
+
+      // parse name/email pairs
+      var item, email, name, success = false;
+      for (var i=0; i < names.length; i++) {
+        email = name = null;
+        item = $.trim(names[i]);
+        
+        if (!item.length) {
+          continue;
+        } // address in brackets without name (do nothing)
+        else if (item.match(/^<[^@]+@[^>]+>$/)) {
+          email = item.replace(/[<>]/g, '');
+        } // address without brackets and without name (add brackets)
+        else if (rcube_check_email(item)) {
+          email = item;
+        } // address with name
+        else if (item.match(/([^\s<@]+@[^>]+)>*$/)) {
+          email = RegExp.$1;
+          name = item.replace(email, '').replace(/^["\s<>]+/, '').replace(/["\s<>]+$/, '');
+        }
+        
+        if (email) {
+          add_attendee({ email:email, name:name, role:'REQUIRED', status:'unknown' });
+          success = true;
+        }
+        else {
+          alert(rcmail.gettext('noemailwarning'));
+        }
+      }
+      
+      return success;
+    };
+    
+    // add the given attendee to the list
+    var add_attendee = function(data)
+    {
+      var dispname = (data.email && data.name) ? data.name + ' <' + data.email + '>' : (data.email || data.name);
+      
+      // delete icon
+      var icon = rcmail.env.deleteicon ? '<img src="' + rcmail.env.deleteicon + '" alt="" />' : rcmail.gettext('delete');
+      var dellink = '<a href="#delete" class="deletelink" title="' + Q(rcmail.gettext('delete')) + '">' + icon + '</a>';
+      
+      var html = '<td class="role"></td>' +
+        '<td class="name">' + Q(dispname) + '</td>' +
+        '<td class="availability">' + '' + '</td>' +
+        '<td class="confirmstate">' + Q(data.status) + '</td>' +
+        '<td class="options">' + (data.role != 'OWNER' ? dellink : '') + '</td>';
+      
+      $('<tr>')
+        .addClass(String(data.role).toLowerCase())
+        .html(html)
+        .appendTo(attendees_list)
+        .find('a.deletelink').click({ id:(data.email || data.name) }, function(e) { remove_attendee(this, e.data.id); return false; });
+      
+      event_attendees.push(data);
+    };
+    
+    // remove an attendee from the list
+    var remove_attendee = function(elem, id)
+    {
+      $(elem).closest('tr').hide();
+      event_attendees = $.grep(event_attendees, function(data){ return (data.name != id && data.email != id) });
     };
     
     // post the given event data to server
@@ -1098,7 +1199,12 @@ function rcube_calendar_ui(settings)
     };
 
     // init event dialog
-    $('#eventtabs').tabs();
+    $('#eventtabs').tabs({
+      show: function(event, ui) {
+        if (ui.panel.id == 'event-tab-3')
+          $('#edit-attendee-name').select();
+      }
+    });
     $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
     $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
     $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); });
@@ -1175,6 +1281,16 @@ function rcube_calendar_ui(settings)
         $('#recurrence-form-'+freq+', #recurrence-form-until').show();
     });
     $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
+    
+    // init attendees autocompletion
+    rcmail.init_address_input_events($('#edit-attendee-name'));
+    rcmail.addEventListener('autocomplete_insert', function(e){ $('#edit-attendee-add').click(); });
+
+    $('#edit-attendee-add').click(function(){
+      var input = $('#edit-attendee-name');
+      if (add_attendees(input.val()))
+        input.val('');
+    });
 
     // add proprietary css styles if not IE
     if (!bw.ie)
@@ -1207,7 +1323,6 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
   rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
-
 
   // let's go
   var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);

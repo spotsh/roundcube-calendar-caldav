@@ -645,7 +645,29 @@ class kolab_driver extends calendar_driver
    */
   public function get_freebusy_list($email, $start, $end)
   {
-    return array();
+    require_once('Horde/iCalendar.php');
+    
+    if (empty($email) || $end < time())
+      return false;
+    
+    // load and parse free-busy information using Horde classes
+    $fburl = rcube_kolab::get_freebusy_url($email);
+    if ($fbdata = file_get_contents($fburl)) {
+      $fbcal = new Horde_iCalendar;
+      $fbcal->parsevCalendar($fbdata);
+      if ($fb = $fbcal->findComponent('vfreebusy')) {
+        $result = array();
+        foreach ($fb->getBusyPeriods() as $from => $to) {
+          if ($to == null)  // no information, assume free
+            break;
+          $result[] = array($from, $to);
+        }
+        
+        return $result;
+      }
+    }
+    
+    return false;
   }
 
 }

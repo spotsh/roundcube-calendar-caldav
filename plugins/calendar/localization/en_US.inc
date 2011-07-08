@@ -86,6 +86,13 @@ $labels['repeattomorrow'] = 'Repeat tomorrow';
 $labels['repeatinweek'] = 'Repeat in a week';
 $labels['alarmtitle'] = 'Upcoming events';
 
+// attendees
+$labels['attendee'] = 'Participant';
+$labels['role'] = 'Role';
+$labels['availability'] = 'Avail.';
+$labels['confirmstate'] = 'Confirmed';
+$labels['addattendee'] = 'Add participant';
+
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
 $labels['tabrecurrence'] = 'Recurrence';

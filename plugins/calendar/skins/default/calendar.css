@@ -467,6 +467,53 @@ td.topalign {
 	min-width: 5em;
 }
 
+#edit-attendees-table {
+	width: 100%;
+	display: table;
+	table-layout: fixed;
+	border-collapse: collapse;
+	border: 1px solid #ddd;
+}
+
+#edit-attendees-table td {
+	padding: 3px;
+	border-bottom: 1px solid #ddd;
+}
+
+#edit-attendees-table tr.owner td {
+	color: #999;
+}
+
+#edit-attendees-table td.role,
+#edit-attendees-table td.availability {
+	width: 4em;
+}
+
+#edit-attendees-table td.confirmstate {
+	width: 6em;
+}
+
+#edit-attendees-table td.options {
+	width: 3em;
+	text-align: right;
+	padding-right: 4px;
+}
+
+#edit-attendees-table td.name {
+	width: auto;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#edit-attendees-table thead td {
+	background: url(images/listheader.gif) top left repeat-x #CCC;
+}
+
+#edit-attendees-form {
+	margin-top: 1em;
+}
+
 span.edit-alarm-set {
 	white-space: nowrap;
 }
@@ -623,7 +670,8 @@ div.fc-event-location {
 }
 
 .fc-view-list div.fc-list-header,
-.fc-view-table td.fc-list-header {
+.fc-view-table td.fc-list-header,
+#edit-attendees-table thead td {
 	padding: 3px;
 	background: #dddddd;
 	background-image: -moz-linear-gradient(center top, #f4f4f4, #d2d2d2);
