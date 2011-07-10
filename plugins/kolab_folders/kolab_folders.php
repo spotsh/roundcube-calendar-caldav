@@ -48,6 +48,8 @@ class kolab_folders extends rcube_plugin
         $this->add_hook('folder_form', array($this, 'folder_form'));
         $this->add_hook('folder_update', array($this, 'folder_save'));
         $this->add_hook('folder_create', array($this, 'folder_save'));
+        $this->add_hook('folder_delete', array($this, 'folder_save'));
+        $this->add_hook('folder_rename', array($this, 'folder_save'));
         $this->add_hook('folders_list', array($this, 'folders_list'));
     }
 
@@ -238,6 +240,14 @@ class kolab_folders extends rcube_plugin
      */
     function folder_save($args)
     {
+        // Folder actions from folders list
+        if (empty($args['record'])) {
+            // Just clear Horde folders cache and return
+            $this->clear_folders_cache();
+            return $args;
+        }
+
+        // Folder create/update with form
         $ctype     = trim(get_input_value('_ctype', RCUBE_INPUT_POST));
         $subtype   = trim(get_input_value('_subtype', RCUBE_INPUT_POST));
         $mbox      = $args['record']['name'];
@@ -302,6 +312,11 @@ class kolab_folders extends rcube_plugin
                     $this->set_folder_type($mbox, $ctype);
                 }
             }
+        }
+
+        // Clear Horde folders cache
+        if ($result) {
+            $this->clear_folders_cache();
         }
 
         $args['record']['class'] = self::folder_class_name($ctype);
@@ -489,5 +504,13 @@ class kolab_folders extends rcube_plugin
             $class[] = 'subtype-' . $subtype;
 
         return implode(' ', $class);
+    }
+
+    /**
+     * Clear Horde's folder cache. See Kolab_List::singleton().
+     */
+    private function clear_folders_cache()
+    {
+        unset($_SESSION['horde_session_objects']['kolab_folderlist']);
     }
 }
