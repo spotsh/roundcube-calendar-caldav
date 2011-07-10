@@ -88,6 +88,13 @@ class rcube_kolab
             );
             Auth::setCredential('password', $pwd);
             self::$ready = true;
+
+            // Register shutdown function for storing folders cache in session
+            // This is already required, because Roundcube session handler
+            // saves data into DB before Horde's shutdown function is called
+            if (!empty($conf['kolab']['imap']['cache_folders'])) {
+                $rcmail->add_shutdown_function(array('rcube_kolab', 'save_folders_cache'));
+            }
         }
 
         NLS::setCharset('UTF-8');
@@ -148,7 +155,7 @@ class rcube_kolab
         $kolab = Kolab_List::singleton();
         return self::$ready ? $kolab->getFolder($folder)->getData($data_type) : null;
     }
-    
+
     /**
      * Compose an URL to query the free/busy status for the given user
      */
@@ -166,6 +173,18 @@ class rcube_kolab
         // unset auth data from session. no need to store it persistantly
         if (isset($_SESSION['__auth']))
             unset($_SESSION['__auth']);
+    }
+
+    /**
+     * Save Horde's folders cache in session (workaround shoutdown function issue)
+     */
+    public static function save_folders_cache()
+    {
+        require_once 'Horde/SessionObjects.php';
+
+        $kolab   = Kolab_List::singleton();
+        $session = Horde_SessionObjects::singleton();
+        $session->overwrite('kolab_folderlist', $kolab, false);
     }
 
     /**
