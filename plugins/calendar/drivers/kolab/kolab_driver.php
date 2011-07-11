@@ -503,9 +503,24 @@ class kolab_driver extends calendar_driver
    */
   public function pending_alarms($time, $calendars = null)
   {
+    $interval = 300;
+    $time -= $time % 60;
+    
+    $slot = $time;
+    $slot -= $slot % $interval;
+    
+    $last = $time - max(60, $this->rc->session->get_keep_alive());
+    $last -= $last % $interval;
+    
+    // only check for alerts once in 5 minutes
+    if ($last == $slot)
+      return false;
+    
     if ($calendars && is_string($calendars))
       $calendars = explode(',', $calendars);
-
+    
+    $time = $slot + $interval;
+    
     $events = array();
     foreach ($this->calendars as $cid => $calendar) {
       // skip calendars with alarms disabled
