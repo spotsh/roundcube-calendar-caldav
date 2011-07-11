@@ -298,6 +298,27 @@ function rcube_calendar_ui(settings)
 */
     };
 
+
+
+	//jquery-ui dialog for printing calendars - stub
+	var calendars_print_dialog = function(action, event)
+    {
+    	var $dialog = $("#printcalendar");
+    	$dialog.dialog({
+        modal: true,
+        resizable: true,
+        closeOnEscape: false,
+        title: rcmail.gettext('Print', 'calendar'),
+        close: function() {
+          $dialog.dialog("destroy").hide();
+        },
+        //buttons: buttons,
+        minWidth: 500,
+        width: 580
+      }).show();
+
+    }
+	
     // bring up the event dialog (jquery-ui popup)
     var event_edit_dialog = function(action, event)
     {
@@ -711,6 +732,13 @@ function rcube_calendar_ui(settings)
 
 
     /*** public methods ***/
+	//public method to show the print dialog.
+	this.print_calendars = function() {
+      
+        calendars_print_dialog('new');
+      
+    };
+
 
     // public method to bring up the new event dialog
     this.add_event = function() {
@@ -1305,8 +1333,9 @@ function rcube_calendar_ui(settings)
 /* calendar plugin initialization */
 window.rcmail && rcmail.addEventListener('init', function(evt) {
 
-  // configure toobar buttons
+  // configure toolbar buttons
   rcmail.register_command('addevent', function(){ cal.add_event(); }, true);
+  rcmail.register_command('print', function(){ cal.print_calendars(); }, true);
 
   // configure list operations
   rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
