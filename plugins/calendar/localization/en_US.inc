@@ -90,8 +90,12 @@ $labels['alarmtitle'] = 'Upcoming events';
 $labels['attendee'] = 'Participant';
 $labels['role'] = 'Role';
 $labels['availability'] = 'Avail.';
-$labels['confirmstate'] = 'Confirmed';
+$labels['confirmstate'] = 'Status';
 $labels['addattendee'] = 'Add participant';
+$labels['roleorganizer'] = 'Organizer';
+$labels['rolerequired'] = 'Required';
+$labels['roleoptional'] = 'Optional';
+$labels['roleresource'] = 'Resource';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';

@@ -35,6 +35,8 @@ class kolab_calendar
   private $search_fields = array('title', 'description', 'location');
   private $sensitivity_map = array('public', 'private', 'confidential');
   private $priority_map = array('low', 'normal', 'high');
+  private $role_map = array('REQ-PARTICIPANT' => 'required', 'OPT-PARTICIPANT' => 'optional', 'CHAIR' => 'resource');
+  private $status_map = array('NEEDS-ACTION' => 'none', 'TENTATIVE' => 'tentative', 'CONFIRMED' => 'accepted', 'DECLINED' => 'declined');
   private $month_map = array('', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
   private $weekday_map = array('MO'=>'monday', 'TU'=>'tuesday', 'WE'=>'wednesday', 'TH'=>'thursday', 'FR'=>'friday', 'SA'=>'saturday', 'SU'=>'sunday');
 
@@ -430,6 +432,8 @@ class kolab_calendar
 
     $sensitivity_map = array_flip($this->sensitivity_map);
     $priority_map = array_flip($this->priority_map);
+    $status_map = array_flip($this->status_map);
+    $role_map = array_flip($this->role_map);
 
     if (!empty($rec['_attachments'])) {
       foreach ($rec['_attachments'] as $name => $attachment) {
@@ -444,22 +448,22 @@ class kolab_calendar
     
     if ($rec['organizer']) {
       $attendees[] = array(
-        'role' => 'OWNER',
+        'role' => 'ORGANIZER',
         'name' => $rec['organizer']['display-name'],
         'email' => $rec['organizer']['smtp-address'],
-        'status' => 'accepted',
+        'status' => 'ACCEPTED',
       );
     }
     
     foreach ((array)$rec['attendee'] as $attendee) {
       $attendees[] = array(
-        'role' => strtoupper($attendee['role']),
+        'role' => $role_map[$attendee['role']],
         'name' => $attendee['display-name'],
         'email' => $attendee['smtp-address'],
-        'status' => $attendee['status'],
+        'status' => $status_map[$attendee['status']],
       );
     }
-
+    
     return array(
       'id' => $rec['uid'],
       'uid' => $rec['uid'],
@@ -624,7 +628,7 @@ class kolab_calendar
     // process event attendees
     foreach ((array)$event['attendees'] as $attendee) {
       $role = $attendee['role'];
-      if ($role == 'OWNER') {
+      if ($role == 'ORGANIZER') {
         $object['organizer'] = array(
           'display-name' => $attendee['name'],
           'smtp-address' => $attendee['email'],
@@ -634,8 +638,8 @@ class kolab_calendar
         $object['attendee'][] = array(
           'display-name' => $attendee['name'],
           'smtp-address' => $attendee['email'],
-          'status' => $attendee['status'],
-          'role' => strtolower($role),
+          'status' => $this->status_map[$attendee['status']],
+          'role' => $this->role_map[$role],
         );
       }
     }
