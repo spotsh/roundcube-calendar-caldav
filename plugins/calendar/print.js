@@ -300,24 +300,7 @@ function rcube_calendar_ui(settings)
 
 
 
-	//jquery-ui dialog for printing calendars - stub
-	var calendars_print_dialog = function(action, event)
-    {
-    	var $dialog = $("#printcalendar");
-    	$dialog.dialog({
-        modal: true,
-        resizable: true,
-        closeOnEscape: false,
-        title: rcmail.gettext('Print', 'calendar'),
-        close: function() {
-          $dialog.dialog("destroy").hide();
-        },
-        //buttons: buttons,
-        minWidth: 500,
-        width: 580
-      }).show();
-
-    }
+	
 	
     // bring up the event dialog (jquery-ui popup)
     var event_edit_dialog = function(action, event)
@@ -733,12 +716,7 @@ function rcube_calendar_ui(settings)
 
     /*** public methods ***/
 	//public method to show the print dialog.
-	this.print_calendars = function(view) {
-      
-        window.open ("?_task=calendar&_action=print&nview="+view.name+"","rc_print_calendars","width=670");
-      
-    };
-
+	
 
     // public method to bring up the new event dialog
     this.add_event = function() {
@@ -1004,13 +982,13 @@ function rcube_calendar_ui(settings)
     // initalize the fullCalendar plugin
     var fc = $('#calendar').fullCalendar({
       header: {
-        left: 'prev,next today',
+        left: '',
         center: 'title',
-        right: 'agendaDay,agendaWeek,month,table'
+        right: ''
       },
       aspectRatio: 1,
       ignoreTimezone: true,  // will treat the given date strings as in local (browser's) timezone
-      height: $('#main').height(),
+      height: '100%',
       eventSources: event_sources,
       monthNames : settings['months'],
       monthNamesShort : settings['months_short'],
@@ -1043,18 +1021,11 @@ function rcube_calendar_ui(settings)
       listSections: 'smart',
       listRange: 60,  // show 60 days in list view
       tableCols: ['handle', 'date', 'time', 'title', 'location'],
-      defaultView: settings['default_view'],
+      defaultView: rcmail.env.nview,
       allDayText: rcmail.gettext('all-day', 'calendar'),
       buttonText: {
-        prev: (bw.ie6 ? '&nbsp;&lt;&lt;&nbsp;' : '&nbsp;&#9668;&nbsp;'),
-        next: (bw.ie6 ? '&nbsp;&gt;&gt;&nbsp;' : '&nbsp;&#9658;&nbsp;'),
-        today: settings['today'],
-        day: rcmail.gettext('day', 'calendar'),
-        week: rcmail.gettext('week', 'calendar'),
-        month: rcmail.gettext('month', 'calendar'),
-        table: rcmail.gettext('agenda', 'calendar')
-      },
-      selectable: true,
+        },
+      selectable: false,
       selectHelper: true,
       loading: function(isLoading) {
         this._rc_loading = rcmail.set_busy(isLoading, 'loading', this._rc_loading);
@@ -1335,8 +1306,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   // configure toolbar buttons
   rcmail.register_command('addevent', function(){ cal.add_event(); }, true);
-  rcmail.register_command('print', function(){ cal.print_calendars($('#calendar').fullCalendar('getView')); }, true);
-
+  
   // configure list operations
   rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);

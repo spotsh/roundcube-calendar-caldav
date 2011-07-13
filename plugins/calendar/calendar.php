@@ -111,6 +111,7 @@ class calendar extends rcube_plugin
       $this->register_action('freebusy-status', array($this, 'freebusy_status'));
       $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
+	  $this->register_action('print',array($this,'print_view'));
     } 
     else if ($this->rc->task == 'settings') {
       // add hooks for Calendar settings
@@ -1187,5 +1188,34 @@ class calendar extends rcube_plugin
     echo json_encode($result);
     exit;
   }
+  
+  /**
+   * Handle for printing calendars
+   */
+  
+  public function print_view()
+  {
+  		
+	 
+    $this->rc->output->set_pagetitle($this->gettext('Print'));
+    $this->rc->output->set_env('nview', get_input_value('nview', RCUBE_INPUT_GPC));
+    // Add CSS stylesheets to the page header
+    $skin = $this->rc->config->get('skin');
+    $this->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
+    $this->include_stylesheet('skins/' . $skin . '/fullcalendar.printl.css');
 
+    // Add JS files to the page header
+    $this->include_script('print.js');
+   
+    $this->register_handler('plugin.calendar_css', array($this->ui, 'calendar_css'));
+    $this->register_handler('plugin.calendar_list', array($this->ui, 'calendar_list'));
+    $this->register_handler('plugin.calendar_select', array($this->ui, 'calendar_select'));
+
+
+   // $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
+    
+    $this->rc->output->send("calendar.print");
+ 
+
+}
 }
