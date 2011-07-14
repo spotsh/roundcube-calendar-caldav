@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title><roundcube:object name="pagetitle" /></title>
+<roundcube:include file="/includes/links.html" />
+<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="./plugins/calendar/skins/default/iehacks.css" /><![endif]-->
+<script type="text/javascript" src="/functions.js"></script>
+</head>
+<roundcube:object name="message" id="message" />
+<body class="calendarmain">
+<div id="noprint"><input type="button" id="printme" value="Print"></div>
+<div id="main">
+	  <div id="printablearea">
+    <div id="calendars">
+       <div class="boxlistcontent">
+      <roundcube:object name="plugin.calendar_list" id="calendarslist" />
+      </div>
+      </div>
+</div>
+
+<div id="calendar"></div>
+
+<roundcube:object name="plugin.calendar_css" />
+</div>
+<script>
+$('#printme').click(function() {
+  alert('Not working yet');
+});
+</script>
+</body>
+</html>

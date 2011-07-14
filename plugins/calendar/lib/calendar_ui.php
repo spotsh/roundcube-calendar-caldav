@@ -58,7 +58,7 @@ class calendar_ui
   {
     $skin = $this->rc->config->get('skin');
     $this->calendar->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
-    $this->calendar->include_stylesheet('skins/' . $skin . '/jquery.miniColors.css');
+	$this->calendar->include_stylesheet('skins/' . $skin . '/jquery.miniColors.css');
   }
 
   /**
