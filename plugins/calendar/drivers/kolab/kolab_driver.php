@@ -359,6 +359,9 @@ class kolab_driver extends calendar_driver
     // handle attachments to add
     if (!empty($event['attachments'])) {
       foreach ($event['attachments'] as $attachment) {
+        // skip entries without content (could be existing ones)
+        if (!$attachment['data'] && !$attachment['path'])
+          continue;
         // we'll read file contacts into memory, Horde/Kolab classes does the same
         // So we cannot save memory, rcube_imap class can do this better
         $attachments[] = array(
@@ -662,7 +665,7 @@ class kolab_driver extends calendar_driver
   {
     require_once('Horde/iCalendar.php');
     
-    if (empty($email) || $end < time())
+    if (empty($email)/* || $end < time()*/)
       return false;
     
     // load and parse free-busy information using Horde classes

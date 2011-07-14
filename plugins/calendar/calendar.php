@@ -1164,7 +1164,7 @@ class calendar extends rcube_plugin
     }
     
     // let this information be cached for 15min
-    send_future_expire_header(90);
+    send_future_expire_header(900);
     
     echo $status;
     exit;
