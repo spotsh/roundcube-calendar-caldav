@@ -1539,8 +1539,8 @@ function formatDates(date1, date2, format, options) {
 			for (i2=i+1; i2<len; i2++) {
 				if (format.charAt(i2) == ']') {
 					var subformat = format.substring(i+1, i2);
-					var subres = formatDate(otherDate, subformat, options);
-					if (subres != formatDate(date, subformat, options)) {
+					var subres = formatDate(date, subformat, options);
+					if (subres != formatDate(otherDate, subformat, options)) {
 						res += subres;
 					}
 					i = i2;
@@ -5334,6 +5334,8 @@ function ListEventRenderer() {
 					segHash = opt('listTexts', 'thisMonth');
 				} else if (md == 1) {
 					segHash = opt('listTexts', 'nextMonth');
+				} else if (md > 1) {
+					segHash = opt('listTexts', 'future');
 				}
 			} else if (segmode == 'month') {
 				segHash = formatDate(segDate, 'MMMM yyyy');
@@ -5447,7 +5449,7 @@ function ListEventRenderer() {
 			if (event.start < seg.start) {
 				datestr = opt('listTexts', 'until') + ' ' + formatDate(event.end, (event.allDay || event.end.getDate() != seg.start.getDate()) ? dateFormat : timeFormat);
 			} else if (duration > DAY_MS) {
-				datestr = formatDates(event.start, event.end, dateFormat + '[ - ' + dateFormat + ']');
+				datestr = formatDates(event.start, event.end, dateFormat + '{ - ' + dateFormat + '}');
 			} else if (seg.daydiff == 0) {
 				datestr = opt('listTexts', 'today');
 			}	else if (seg.daydiff == 1) {
@@ -5458,7 +5460,7 @@ function ListEventRenderer() {
 				datestr = formatDate(event.start, dateFormat);
 			}
 		} else if (segmode != 'day') {
-			datestr = formatDates(event.start, event.end, dateFormat + (duration > DAY_MS ? '[ - ' + dateFormat + ']' : ''));
+			datestr = formatDates(event.start, event.end, dateFormat + (duration > DAY_MS ? '{ - ' + dateFormat + '}' : ''));
 		}
 		
 		if (!datestr && event.allDay) {

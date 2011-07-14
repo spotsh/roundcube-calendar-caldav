@@ -449,9 +449,9 @@ class calendar extends rcube_plugin
         $event['uid'] = $this->generate_uid();
         
         // set current user as organizer
-        if (!$event['attendees']) {
+        if (FALSE && !$event['attendees']) {
           $identity = $this->rc->user->get_identity();
-          $event['attendees'][] = array('role' => 'OWNER', 'name' => $identity['name'], 'email' => $identity['email']);
+          $event['attendees'][] = array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email']);
         }
         
         $this->prepare_event($event);
@@ -1162,6 +1162,9 @@ class calendar extends rcube_plugin
         }
       }
     }
+    
+    // let this information be cached for 15min
+    send_future_expire_header(90);
     
     echo $status;
     exit;

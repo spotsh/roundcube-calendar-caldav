@@ -282,6 +282,7 @@ abstract class calendar_driver
    */
   public function get_freebusy_list($email, $start, $end)
   {
+    sleep(2);
     return false;
   }
   

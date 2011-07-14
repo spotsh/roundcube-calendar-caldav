@@ -440,7 +440,7 @@ function rcube_calendar_ui(settings)
       attendees_list = $('#edit-attendees-table > tbody').html('');
       if (calendar.attendees && event.attendees) {
         for (var j=0; j < event.attendees.length; j++)
-          add_attendee(event.attendees[j]);
+          add_attendee(event.attendees[j], true);
       }
 
       // attachments
@@ -509,6 +509,12 @@ function rcube_calendar_ui(settings)
           if (i.match(/^rcmfile([0-9a-z]+)/))
             attachments.push(RegExp.$1);
         data.attachments = attachments;
+        
+        // read attendee roles
+        $('select.edit-attendee-role').each(function(i, elem){
+          if (data.attendees[i])
+            data.attendees[i].role = $(elem).val();
+        });
 
         // gather recurrence settings
         var freq;
@@ -597,6 +603,19 @@ function rcube_calendar_ui(settings)
       title.select();
     };
     
+    // update event properties and attendees availability if event times have changed
+    var event_times_changed = function()
+    {
+      alert('event_times_changed')
+      if (me.selected_event) {
+        var allday = $('#edit-allday').get(0);
+        me.selected_event.start = parse_datetime(allday.checked ? '00:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
+        me.selected_event.end   = parse_datetime(allday.checked ? '23:59' : $('#edit-endtime').val(), $('#edit-enddate').val());
+        if (me.selected_event.attendees)
+          update_freebusy_status(me.selected_event);
+      }
+    };
+    
     // add the given list of participants
     var add_attendees = function(names)
     {
@@ -623,7 +642,7 @@ function rcube_calendar_ui(settings)
         }
         
         if (email) {
-          add_attendee({ email:email, name:name, role:'REQUIRED', status:'unknown' });
+          add_attendee({ email:email, name:name, role:'REQ-PARTICIPANT', status:'NEEDS-ACTION' });
           success = true;
         }
         else {
@@ -635,33 +654,93 @@ function rcube_calendar_ui(settings)
     };
     
     // add the given attendee to the list
-    var add_attendee = function(data)
+    var add_attendee = function(data, edit)
     {
-      var dispname = (data.email && data.name) ? data.name + ' <' + data.email + '>' : (data.email || data.name);
+      // check for dupes...
+      var exists = false;
+      $.each(event_attendees, function(i, v){ exists |= (v.email == data.email); });
+      if (exists)
+        return false;
       
+      var dispname = Q(data.name || data.email);
+      if (data.email)
+        dispname = '<span title="' + Q(data.email) + '">' + dispname + '</span>';
+      
+      // role selection
+      var opts = {
+        'ORGANIZER': rcmail.gettext('calendar.roleorganizer'),
+        'REQ-PARTICIPANT': rcmail.gettext('calendar.rolerequired'),
+        'OPT-PARTICIPANT': rcmail.gettext('calendar.roleoptional'),
+        'CHAIR': rcmail.gettext('calendar.roleresource')
+      };
+      var select = '<select class="edit-attendee-role">';
+      for (var r in opts)
+        select += '<option value="'+ r +'" class="' + r.toLowerCase() + '"' + (data.role == r ? ' selected="selected"' : '') +'>' + Q(opts[r]) + '</option>';
+      select += '</select>';
+      
+      // availability
+      var avail = data.email ? 'loading' : 'unknown';
+      if (edit && data.role == 'ORGANIZER' && data.status == 'ACCEPTED')
+        avail = 'free';
+
       // delete icon
       var icon = rcmail.env.deleteicon ? '<img src="' + rcmail.env.deleteicon + '" alt="" />' : rcmail.gettext('delete');
       var dellink = '<a href="#delete" class="deletelink" title="' + Q(rcmail.gettext('delete')) + '">' + icon + '</a>';
       
-      var html = '<td class="role"></td>' +
-        '<td class="name">' + Q(dispname) + '</td>' +
-        '<td class="availability">' + '' + '</td>' +
-        '<td class="confirmstate">' + Q(data.status) + '</td>' +
-        '<td class="options">' + (data.role != 'OWNER' ? dellink : '') + '</td>';
+      var html = '<td class="role">' + select + '</td>' +
+        '<td class="name">' + dispname + '</td>' +
+        '<td class="availability"><img src="./program/blank.gif" class="availabilityicon ' + avail + '" /></td>' +
+        '<td class="confirmstate"><span class="' + String(data.status).toLowerCase() + '">' + Q(data.status) + '</span></td>' +
+        '<td class="options">' + dellink + '</td>';
       
-      $('<tr>')
+      var tr = $('<tr>')
         .addClass(String(data.role).toLowerCase())
         .html(html)
-        .appendTo(attendees_list)
-        .find('a.deletelink').click({ id:(data.email || data.name) }, function(e) { remove_attendee(this, e.data.id); return false; });
+        .appendTo(attendees_list);
+      
+      tr.find('a.deletelink').click({ id:(data.email || data.name) }, function(e) { remove_attendee(this, e.data.id); return false; });
+      
+      // check free-busy status
+      if (avail == 'loading') {
+        check_freebusy_status(tr.find('img.availabilityicon'), data.email, me.selected_event);
+      }
       
       event_attendees.push(data);
+    };
+    
+    // iterate over all attendees and update their free-busy status display
+    var update_freebusy_status = function(event)
+    {
+      var icons = attendees_list.find('img.availabilityicon');
+      for (var i=0; i < event.attendees.length; i++) {
+        if (icons.get(i) && event.attendees[i].email && event.attendees[i].status != 'ACCEPTED')
+          check_freebusy_status(icons.get(i), event.attendees[i].email, event);
+      }
+    };
+    
+    // load free-busy status from server and update icon accordingly
+    var check_freebusy_status = function(icon, email, event)
+    {
+      icon = $(icon).removeClass().addClass('availabilityicon loading');
+      
+      $.ajax({
+        type: 'GET',
+        dataType: 'html',
+        url: rcmail.url('freebusy-status'),
+        data: { email:email, start:date2unixtime(event.start), end:date2unixtime(event.end), _remote: 1 },
+        success: function(status){
+          icon.removeClass('loading').addClass(String(status).toLowerCase());
+        },
+        error: function(){
+          icon.removeClass('loading').addClass('unknown');
+        }
+      });
     };
     
     // remove an attendee from the list
     var remove_attendee = function(elem, id)
     {
-      $(elem).closest('tr').hide();
+      $(elem).closest('tr').remove();
       event_attendees = $.grep(event_attendees, function(data){ return (data.name != id && data.email != id) });
     };
     
@@ -1234,7 +1313,8 @@ function rcube_calendar_ui(settings)
       }
     });
     $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
-    $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
+    $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); event_times_changed(); });
+    $('#edit-enddate, #edit-starttime, #edit-endtime').change(function(){ event_times_changed(); });
     $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); });
 
     // configure drop-down menu on time input fields based on jquery UI autocomplete
