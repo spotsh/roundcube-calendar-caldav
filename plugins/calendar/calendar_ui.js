@@ -258,6 +258,24 @@ function rcube_calendar_ui(settings)
       else if (calendar.attachments) {
         // fetch attachments, some drivers doesn't set 'attachments' popr of the event
       }
+      
+      // list event attendees
+      if (calendar.attendees && event.attendees) {
+        var data, dispname, html = '';
+        for (var j=0; j < event.attendees.length; j++) {
+          data = event.attendees[j];
+          dispname = Q(data.name || data.email);
+          if (data.email)
+            dispname = '<a href="mailto:' + data.email + '" title="' + Q(data.email) + '" class="mailtolink">' + dispname + '</a>';
+          html += '<span class="attendee ' + String(data.status).toLowerCase() + '">' + dispname + '</span> ';
+        }
+        if (html) {
+          $('#event-attendees').show()
+            .children('.event-text')
+            .html(html)
+            .find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
+        }
+      }
 
       var buttons = {};
       if (calendar.editable && event.editable !== false) {
@@ -606,13 +624,13 @@ function rcube_calendar_ui(settings)
     // update event properties and attendees availability if event times have changed
     var event_times_changed = function()
     {
-      alert('event_times_changed')
       if (me.selected_event) {
         var allday = $('#edit-allday').get(0);
         me.selected_event.start = parse_datetime(allday.checked ? '00:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
         me.selected_event.end   = parse_datetime(allday.checked ? '23:59' : $('#edit-endtime').val(), $('#edit-enddate').val());
         if (me.selected_event.attendees)
           update_freebusy_status(me.selected_event);
+        $('#edit-startdate').data('duration', Math.round((me.selected_event.end.getTime() - me.selected_event.start.getTime()) / 1000));
       }
     };
     
@@ -664,7 +682,7 @@ function rcube_calendar_ui(settings)
       
       var dispname = Q(data.name || data.email);
       if (data.email)
-        dispname = '<span title="' + Q(data.email) + '">' + dispname + '</span>';
+        dispname = '<a href="mailto:' + data.email + '" title="' + Q(data.email) + '" class="mailtolink">' + dispname + '</a>';
       
       // role selection
       var opts = {
@@ -699,6 +717,7 @@ function rcube_calendar_ui(settings)
         .appendTo(attendees_list);
       
       tr.find('a.deletelink').click({ id:(data.email || data.name) }, function(e) { remove_attendee(this, e.data.id); return false; });
+      tr.find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
       
       // check free-busy status
       if (avail == 'loading') {
@@ -1303,6 +1322,7 @@ function rcube_calendar_ui(settings)
       var newstart = parse_datetime('0', dateText);
       var newend = new Date(newstart.getTime() + $('#edit-startdate').data('duration') * 1000);
       $('#edit-enddate').val($.fullCalendar.formatDate(newend, me.settings['date_format']));
+      event_times_changed();
     };
 
     // init event dialog
@@ -1313,8 +1333,8 @@ function rcube_calendar_ui(settings)
       }
     });
     $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
-    $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); event_times_changed(); });
-    $('#edit-enddate, #edit-starttime, #edit-endtime').change(function(){ event_times_changed(); });
+    $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
+    $('#edit-enddate').datepicker('option', 'onSelect', event_times_changed).change(event_times_changed);
     $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); });
 
     // configure drop-down menu on time input fields based on jquery UI autocomplete
@@ -1365,7 +1385,8 @@ function rcube_calendar_ui(settings)
               menu.activate($.Event({ type: 'mouseenter' }), li);
           });
           widget.scrollTop(offset - 1);
-        }
+        },
+        change: event_times_changed
       })
       .click(function() {  // show drop-down upon clicks
         $(this).autocomplete('search', $(this).val() ? $(this).val().replace(/\D.*/, "") : " ");

@@ -331,6 +331,32 @@ a.miniColors-trigger {
 	margin: 0.5em 0;
 }
 
+#event-attendees span.attendee {
+	padding-right: 18px;
+	margin-right: 0.5em;
+	background: url('images/attendee-status.gif') right 0 no-repeat;
+}
+
+#event-attendees span.attendee a.mailtolink {
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+#event-attendees span.attendee a.mailtolink:hover {
+	text-decoration: underline;
+}
+
+#event-attendees span.accepted {
+	background-position: right -20px;
+}
+
+#event-attendees span.declined {
+	background-position: right -40px;
+}
+
+#event-attendees span.tentative {
+	background-position: right -60px;
+}
 
 /* jQuery UI overrides */
 
@@ -484,12 +510,9 @@ td.topalign {
 	width: 8em;
 }
 
-#edit-attendees-table td.availability {
-	width: 4em;
-}
-
+#edit-attendees-table td.availability,
 #edit-attendees-table td.confirmstate {
-	width: 6em;
+	width: 4em;
 }
 
 #edit-attendees-table td.options {
@@ -520,8 +543,9 @@ td.topalign {
 }
 
 #edit-attendees-table img.availabilityicon {
-	width: 16px;
-	height: 16px;
+	margin: 1px;
+	width: 14px;
+	height: 14px;
 	border-radius: 4px;
 	-moz-border-radius: 4px;
 }
@@ -542,32 +566,36 @@ td.topalign {
 	background: #c00;
 }
 
+#edit-attendees-table img.availabilityicon.out-of-office {
+	background: #f0b400;
+}
+
 #edit-attendees-table tbody td.confirmstate {
 	overflow: hidden;
 	white-space: nowrap;
-	font-size: 75%;
-/*	text-indent: -2000%; */
+	text-indent: -2000%;
 }
 
 #edit-attendees-table td.confirmstate span {
 	display: block;
 	width: 20px;
+	background: url('images/attendee-status.gif') 5px 0 no-repeat;
 }
 
 #edit-attendees-table td.confirmstate span.needs-action {
 	
 }
 
-#edit-attendees-table td.confirmstate span.tentative {
-	
+#edit-attendees-table td.confirmstate span.accepted {
+	background-position: 5px -20px;
 }
 
 #edit-attendees-table td.confirmstate span.declined {
-	
+	background-position: 5px -40px;
 }
 
-#edit-attendees-table td.confirmstate span.accepted {
-	
+#edit-attendees-table td.confirmstate span.tentative {
+	background-position: 5px -60px;
 }
 
 span.edit-alarm-set {

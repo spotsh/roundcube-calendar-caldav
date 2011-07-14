@@ -25,7 +25,7 @@ class kolab_driver extends calendar_driver
 {
   // features this backend supports
   public $alarms = true;
-  public $attendees = false;
+  public $attendees = true;
   public $attachments = true;
   public $categoriesimmutable = true;
 
