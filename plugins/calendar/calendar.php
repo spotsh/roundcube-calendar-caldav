@@ -1156,7 +1156,7 @@ class calendar extends rcube_plugin
       
       foreach ($fblist as $slot) {
         list($from, $to) = $slot;
-        if ($from <= $end && $to >= $start) {
+        if ($from <= $end && $to > $start) {
           $status = 'BUSY';
           break;
         }

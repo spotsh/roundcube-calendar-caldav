@@ -58,6 +58,12 @@
  *              'id' => 'Attachment identifier'
  *   ),
  * 'deleted_attachments' => array(), // array of attachment identifiers to delete when event is updated
+ *     'attendees' => array(   // List of event participants
+ *            'name' => 'Participant name',
+ *           'email' => 'Participant e-mail address',  // used as identifier
+ *            'role' => 'ORGANIZER|REQ-PARTICIPANT|OPT-PARTICIPANT|CHAIR',
+ *          'status' => 'NEEDS-ACTION|UNKNOWN|ACCEPTED|TENTATIVE|DECLINED'
+ *    ),
  *  );
  */
 
