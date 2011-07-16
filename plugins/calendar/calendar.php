@@ -29,6 +29,7 @@ class calendar extends rcube_plugin
   public $rc;
   public $driver;
   public $home;  // declare public to be used in other classes
+  public $urlbase;
   public $timezone;
 
   public $ical;
@@ -66,7 +67,7 @@ class calendar extends rcube_plugin
     $this->load_config();
 
     // load localizations
-    $this->add_texts('localization/', $this->rc->task == 'calendar' && !$this->rc->action);
+    $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
 
     // set user's timezone
     if ($this->rc->config->get('timezone') === 'auto')
@@ -87,9 +88,6 @@ class calendar extends rcube_plugin
 
       // settings are required in every GUI step
       $this->rc->output->set_env('calendar_settings', $this->load_settings());
-
-      $skin = $this->rc->config->get('skin');
-      $this->include_stylesheet('skins/' . $skin . '/calendar.css');
     }
 
     if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
@@ -1193,32 +1191,39 @@ class calendar extends rcube_plugin
   }
   
   /**
-   * Handle for printing calendars
+   * Handler for printing calendars
    */
-  
   public function print_view()
   {
-  		
-	 
-    $this->rc->output->set_pagetitle($this->gettext('Print'));
-    $this->rc->output->set_env('nview', get_input_value('nview', RCUBE_INPUT_GPC));
+    $title = $this->gettext('print');
+    
+    $view = get_input_value('view', RCUBE_INPUT_GPC);
+    if (!in_array($view, array('agendaWeek', 'agendaDay', 'month', 'table')))
+      $view = 'agendaDay';
+    
+    $this->rc->output->set_env('view',$view);
+    
+    if ($date = get_input_value('date', RCUBE_INPUT_GPC))
+      $this->rc->output->set_env('date', $date);
+    
+    if ($search = get_input_value('search', RCUBE_INPUT_GPC)) {
+      $this->rc->output->set_env('search', $search);
+      $title .= ' "' . $search . '"';
+    }
+    
     // Add CSS stylesheets to the page header
     $skin = $this->rc->config->get('skin');
     $this->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
-    $this->include_stylesheet('skins/' . $skin . '/fullcalendar.printl.css');
-
+    $this->include_stylesheet('skins/' . $skin . '/print.css');
+    
     // Add JS files to the page header
     $this->include_script('print.js');
-   
+    
     $this->register_handler('plugin.calendar_css', array($this->ui, 'calendar_css'));
     $this->register_handler('plugin.calendar_list', array($this->ui, 'calendar_list'));
-    $this->register_handler('plugin.calendar_select', array($this->ui, 'calendar_select'));
-
-
-   // $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
     
+    $this->rc->output->set_pagetitle($title);
     $this->rc->output->send("calendar.print");
- 
+  }
 
-}
 }

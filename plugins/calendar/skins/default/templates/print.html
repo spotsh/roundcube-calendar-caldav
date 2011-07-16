@@ -2,30 +2,27 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title><roundcube:object name="pagetitle" /></title>
-<roundcube:include file="/includes/links.html" />
-<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="./plugins/calendar/skins/default/iehacks.css" /><![endif]-->
-<script type="text/javascript" src="/functions.js"></script>
 </head>
-<roundcube:object name="message" id="message" />
-<body class="calendarmain">
-<div id="noprint"><input type="button" id="printme" value="Print"></div>
-<div id="main">
-	  <div id="printablearea">
-    <div id="calendars">
-       <div class="boxlistcontent">
-      <roundcube:object name="plugin.calendar_list" id="calendarslist" />
-      </div>
-      </div>
+<body class="calendarprint">
+
+<div id="printconfig" class="noprint">
+  <div class="calwidth">
+    <a href="#close" onclick="window.close()" class="rightalign"><roundcube:label name="close" /></a>
+    <span class="prop"><input type="button" id="printme" value="<roundcube:label name='print' />" onclick="window.print()"></span>
+    <span class="prop"><label><input type="checkbox" id="propdescription" checked="checked" /> <roundcube:label name="calendar.printdescriptions" /></label></span>
+  </div>
 </div>
 
-<div id="calendar"></div>
+<roundcube:object name="message" id="message" class="noprint" />
 
-<roundcube:object name="plugin.calendar_css" />
+<div id="calendar" class="calwidth"></div>
+
+<div class="calwidth">
+  <roundcube:object name="plugin.calendar_list" activeonly="true" id="calendarlist" />
 </div>
-<script>
-$('#printme').click(function() {
-  alert('Not working yet');
-});
-</script>
+
+<roundcube:object name="plugin.calendar_css" printmode="true" />
+
+<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="./plugins/calendar/skins/default/print.iehacks.css" /><![endif]-->
 </body>
 </html>

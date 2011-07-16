@@ -113,7 +113,7 @@ function rcube_calendar_ui(settings)
     // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
     var date2unixtime = function(date)
     {
-      return date.getTime()/1000 + gmt_offset * 3600;
+      return Math.round(date.getTime()/1000 + gmt_offset * 3600);
     };
     
     var fromunixtime = function(ts)
@@ -830,11 +830,14 @@ function rcube_calendar_ui(settings)
 
 
     /*** public methods ***/
-	//public method to show the print dialog.
-	this.print_calendars = function(view) {
-      
-        window.open ("?_task=calendar&_action=print&nview="+view.name+"","rc_print_calendars","width=670");
-      
+    
+    //public method to show the print dialog.
+    this.print_calendars = function(view)
+    {
+      if (!view) view = fc.fullCalendar('getView').name;
+      var date = fc.fullCalendar('getDate') || new Date();
+      var printwin = window.open(rcmail.url('print', { view: view, date: date2unixtime(date), search: this.search_query }), "rc_print_calendars", "toolbar=no,location=yes,menubar=yes,resizable=yes,scrollbars=yes,width=800");
+      window.setTimeout(function(){ printwin.focus() }, 50);
     };
 
 
@@ -994,6 +997,7 @@ function rcube_calendar_ui(settings)
           
           // replace event source from fullcalendar
           this.search_request = id;
+          this.search_query = q;
           this.search_source = {
             url: "./?_task=calendar&_action=search_events&q="+escape(q)+'&source='+escape(sources.join(',')),
             editable: false
@@ -1027,7 +1031,7 @@ function rcube_calendar_ui(settings)
         if (this.default_view)
           fc.fullCalendar('changeView', this.default_view);
         
-        this.search_request = this.search_source = null;
+        this.search_request = this.search_source = this.search_query = null;
       }
     };
     
@@ -1436,7 +1440,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   // configure toolbar buttons
   rcmail.register_command('addevent', function(){ cal.add_event(); }, true);
-  rcmail.register_command('print', function(){ cal.print_calendars($('#calendar').fullCalendar('getView')); }, true);
+  rcmail.register_command('print', function(){ cal.print_calendars(); }, true);
 
   // configure list operations
   rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);

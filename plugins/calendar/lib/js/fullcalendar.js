@@ -5664,7 +5664,7 @@ function TableEventRenderer() {
 							s += "<td class='fc-event-time'>" + htmlEscape(times[1]) + "</td>";
 						}
 					} else {
-						s += "<td class='fc-event-" + col + "'>" + htmlEscape(event[col] || '') + "</td>";
+						s += "<td class='fc-event-" + col + "'>" + (htmlEscape(event[col]) || '&nbsp;') + "</td>";
 					}
 				}
 				s += "</tr>";

@@ -49,6 +49,12 @@ class calendar_ui
     // load basic client script (which - unfortunately - requires fullcalendar)
     $this->calendar->include_script('lib/js/fullcalendar.js');
     $this->calendar->include_script('calendar_base.js');
+    
+    $skin = $this->rc->config->get('skin');
+    $this->calendar->include_stylesheet('skins/' . $skin . '/calendar.css');
+    
+    // add iehacks to page footer
+    $this->rc->output->add_footer('<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="'.$this->calendar->urlbase.'skins/'.$skin.'/iehacks.css" /><![endif]-->');
   }
   
   /**
@@ -58,7 +64,7 @@ class calendar_ui
   {
     $skin = $this->rc->config->get('skin');
     $this->calendar->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
-	$this->calendar->include_stylesheet('skins/' . $skin . '/jquery.miniColors.css');
+    $this->calendar->include_stylesheet('skins/' . $skin . '/jquery.miniColors.css');
   }
 
   /**
@@ -69,27 +75,11 @@ class calendar_ui
     $this->calendar->include_script('calendar_ui.js');
     $this->calendar->include_script('lib/js/jquery.miniColors.min.js');
   }
-  
-  /**
-   * Creates the Calendar toolbar
-   */
-  public function toolbar()
-  {
-    $skin = $this->rc->config->get('skin');
-    $this->calendar->add_button(array(
-      'command' => 'export_events',
-      'href' => './?_task=calendar&amp;_action=export_events',
-      'title' => 'calendar.export',
-      'imagepas' => 'skins/' . $skin . '/images/export.png',
-      'imageact' => 'skins/' . $skin . '/images/export.png'),
-      'toolbar'
-    );
-  }
-  
+
   /**
    *
    */
-  function calendar_css()
+  function calendar_css($attrib = array())
   {
     $categories = $this->rc->config->get('calendar_categories', array());
 
@@ -117,7 +107,8 @@ class calendar_ui
       $css .= ".fc-event-" . $class . ", ";
       $css .= ".fc-event-" . $class . " .fc-event-inner, ";
       $css .= ".fc-event-" . $class . " .fc-event-time {\n";
-      $css .= "background-color: #" . $color . ";\n";
+      if (!$attrib['printmode'])
+        $css .= "background-color: #" . $color . ";\n";
       $css .= "border-color: #" . $color . ";\n";
       $css .= "}\n";
     }
@@ -135,6 +126,9 @@ class calendar_ui
 
     $li = '';
     foreach ((array)$calendars as $id => $prop) {
+      if ($attrib['activeonly'] && in_array($id, $hidden))
+        continue;
+      
       unset($prop['user_id']);
       $prop['alarms'] = $this->calendar->driver->alarms;
       $prop['attendees'] = $this->calendar->driver->attendees;
@@ -156,8 +150,7 @@ class calendar_ui
     $this->rc->output->set_env('calendars', $jsenv);
     $this->rc->output->add_gui_object('folderlist', $attrib['id']);
 
-    unset($attrib['name']);
-    return html::tag('ul', $attrib, $li);
+    return html::tag('ul', $attrib, $li, html::$common_attrib);
   }
 
   /**
