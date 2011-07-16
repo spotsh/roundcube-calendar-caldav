@@ -618,15 +618,23 @@ class database_driver extends calendar_driver
    *
    * @see Driver:load_events()
    */
-  public function load_events($start, $end, $calendars = null, $sql_add = '')
+  public function load_events($start, $end, $query = null, $calendars = null)
   {
     if (empty($calendars))
       $calendars = array_keys($this->calendars);
     else if (is_string($calendars))
       $calendars = explode(',', $calendars);
-    
+      
     // only allow to select from calendars of this use
     $calendar_ids = array_map(array($this->rc->db, 'quote'), array_intersect($calendars, array_keys($this->calendars)));
+    
+    // compose (slow) SQL query for searching
+    // FIXME: improve searching using a dedicated col and normalized values
+    if ($query) {
+      foreach (array('title','location','description','categories','attendees') as $col)
+        $sql_query[] = $this->rc->db->ilike($col, '%'.$query.'%');
+      $sql_add = 'AND (' . join(' OR ', $sql_query) . ')';
+    }
     
     $events = array();
     if (!empty($calendar_ids)) {
@@ -685,22 +693,6 @@ class database_driver extends calendar_driver
     
     unset($event['event_id'], $event['calendar_id'], $event['notifyat'], $event['_attachments']);
     return $event;
-  }
-
-  /**
-   * Search events
-   *
-   * @see Driver:search_events()
-   */
-  public function search_events($start, $end, $query, $calendars = null)
-  {
-    // compose (slow) SQL query for searching
-    // FIXME: improve searching using a dedicated col and normalized values
-    foreach (array('title','location','description','categories','attendees') as $col) {
-      $sql_query[] = $this->rc->db->ilike($col, '%'.$query.'%');
-    }
-    
-    return $this->load_events($start, $end, $calendars, 'AND (' . join(' OR ', $sql_query) . ')');
   }
 
   /**

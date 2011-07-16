@@ -167,21 +167,11 @@ abstract class calendar_driver
    *
    * @param  integer Event's new start (unix timestamp)
    * @param  integer Event's new end (unix timestamp)
+   * @param  string  Search query (optional)
    * @param  mixed   List of calendar IDs to load events from (either as array or comma-separated string)
    * @return array A list of event objects (see header of this file for struct of an event)
    */
-  abstract function load_events($start, $end, $calendars = null);
-
-  /**
-   * Search events using the given query
-   *
-   * @param  integer Event's new start (unix timestamp)
-   * @param  integer Event's new end (unix timestamp)
-   * @param  string  Search query
-   * @param  mixed   List of calendar IDs to load events from (either as array or comma-separated string)
-   * @return array A list of event objects (see header of this file for struct of an event)
-   */
-  abstract function search_events($start, $end, $query, $calendars = null);
+  abstract function load_events($start, $end, $query = null, $calendars = null);
 
   /**
    * Get a list of pending alarms to be displayed to the user

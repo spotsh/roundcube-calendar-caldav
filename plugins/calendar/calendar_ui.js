@@ -29,10 +29,10 @@ function rcube_calendar_ui(settings)
     rcube_calendar.call(this, settings);
     
     /***  member vars  ***/
+    this.is_loading = false;
     this.selected_event = null;
     this.selected_calendar = null;
     this.search_request = null;
-    this.search_source = null;
     this.eventcount = [];
     this.saving_lock = null;
 
@@ -975,37 +975,32 @@ function rcube_calendar_ui(settings)
             rcmail.hide_message(this._search_message);
           
           for (var sid in this.calendars) {
-            if (this.calendars[sid] && this.calendars[sid].active) {
-              fc.fullCalendar('removeEventSource', this.calendars[sid]);
+            if (this.calendars[sid]) {
+              this.calendars[sid].url = this.calendars[sid].url.replace(/&q=.+/, '') + '&q='+escape(q);
               sources.push(sid);
             }
           }
           id += '@'+sources.join(',');
           
-          // just refetch events if query didn't change
+          // ignore if query didn't change
           if (this.search_request == id) {
-            fc.fullCalendar('refetchEvents');
             return;
           }
-          // remove old search results
-          else if (this.search_source) {
-            fc.fullCalendar('removeEventSource', this.search_source);
-          }
-          else {
+          // remember current view
+          else if (!this.search_request) {
             this.default_view = fc.fullCalendar('getView').name;
           }
           
-          // replace event source from fullcalendar
           this.search_request = id;
           this.search_query = q;
-          this.search_source = {
-            url: "./?_task=calendar&_action=search_events&q="+escape(q)+'&source='+escape(sources.join(',')),
-            editable: false
-          };
           
+          // change to list view
           fc.fullCalendar('option', 'listSections', 'month');
-          fc.fullCalendar('addEventSource', this.search_source);
           fc.fullCalendar('changeView', 'table');
+          
+          // refetch events with new url (if not already triggered by changeView)
+          if (!this.is_loading)
+            fc.fullCalendar('refetchEvents');
         }
         else  // empty search input equals reset
           this.reset_quicksearch();
@@ -1023,15 +1018,17 @@ function rcube_calendar_ui(settings)
       if (this.search_request) {
         // restore original event sources and view mode from fullcalendar
         fc.fullCalendar('option', 'listSections', 'smart');
-        fc.fullCalendar('removeEventSource', this.search_source);
         for (var sid in this.calendars) {
-          if (this.calendars[sid] && this.calendars[sid].active)
-            fc.fullCalendar('addEventSource', this.calendars[sid]);
+          if (this.calendars[sid])
+            this.calendars[sid].url = this.calendars[sid].url.replace(/&q=.+/, '');
         }
         if (this.default_view)
           fc.fullCalendar('changeView', this.default_view);
         
-        this.search_request = this.search_source = this.search_query = null;
+        if (!this.is_loading)
+          fc.fullCalendar('refetchEvents');
+        
+        this.search_request = this.search_query = null;
       }
     };
     
@@ -1078,14 +1075,10 @@ function rcube_calendar_ui(settings)
               me.calendars[id].active = false;
               settings.hidden_calendars.push(id);
             }
-            // just trigger search again (don't save prefs?)
-            if (me.search_request) {
-              me.quicksearch();
-            }
-            else {  // add/remove event source
-              fc.fullCalendar(action, me.calendars[id]);
-              rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
-            }
+            
+            // add/remove event source
+            fc.fullCalendar(action, me.calendars[id]);
+            rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
           }
         }).data('id', id).get(0).checked = active;
         
@@ -1159,6 +1152,7 @@ function rcube_calendar_ui(settings)
       selectable: true,
       selectHelper: true,
       loading: function(isLoading) {
+        me.is_loading = isLoading;
         this._rc_loading = rcmail.set_busy(isLoading, 'loading', this._rc_loading);
         // trigger callback
         if (!isLoading && me.search_request)

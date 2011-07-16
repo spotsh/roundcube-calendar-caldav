@@ -27,23 +27,18 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   var settings = rcmail.env.calendar_settings;
   
   // create list of event sources AKA calendars
-  var src, calendars = [], event_sources = [];
+  var src, event_sources = [];
+  var add_url = (rcmail.env.search ? '&q='+escape(rcmail.env.search) : '');
   for (var id in rcmail.env.calendars) {
     source = $.extend({
-      url: "./?_task=calendar&_action=load_events&source="+escape(id),
+      url: "./?_task=calendar&_action=load_events&source=" + escape(id) + add_url,
       className: 'fc-event-cal-'+id,
       id: id
     }, rcmail.env.calendars[id]);
 
     event_sources.push(source);
-    calendars.push(id);
   }
   
-  // search query is active
-  if (rcmail.env.search) {
-    event_sources = [{ url: "./?_task=calendar&_action=search_events&q="+escape(rcmail.env.search)+'&source='+escape(calendars.join(',')) }];
-  }
-
   var viewdate = new Date();
   if (rcmail.env.date)
     viewdate.setTime(rcmail.env.date * 1000);

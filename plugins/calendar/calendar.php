@@ -102,7 +102,6 @@ class calendar extends rcube_plugin
       $this->register_action('event', array($this, 'event_action'));
       $this->register_action('calendar', array($this, 'calendar_action'));
       $this->register_action('load_events', array($this, 'load_events'));
-      $this->register_action('search_events', array($this, 'search_events'));
       $this->register_action('export_events', array($this, 'export_events'));
       $this->register_action('upload', array($this, 'attachment_upload'));
       $this->register_action('get-attachment', array($this, 'attachment_get'));
@@ -510,25 +509,10 @@ class calendar extends rcube_plugin
     $events = $this->driver->load_events(
       get_input_value('start', RCUBE_INPUT_GET),
       get_input_value('end', RCUBE_INPUT_GET),
+      ($query = get_input_value('q', RCUBE_INPUT_GET)),
       get_input_value('source', RCUBE_INPUT_GET)
     );
-    echo $this->encode($events);
-    exit;
-  }
-  
-  /**
-   * Handler for search-requests from client
-   * This will return pure JSON formatted output for fullcalendar
-   */
-  function search_events()
-  {
-    $events = $this->driver->search_events(
-      get_input_value('start', RCUBE_INPUT_GET),
-      get_input_value('end', RCUBE_INPUT_GET),
-      get_input_value('q', RCUBE_INPUT_GET),
-      get_input_value('source', RCUBE_INPUT_GET)
-    );
-    echo $this->encode($events, true);
+    echo $this->encode($events, !empty($query));
     exit;
   }
   
@@ -642,6 +626,7 @@ class calendar extends rcube_plugin
    * Encode events as JSON
    *
    * @param  array  Events as array
+   * @param  boolean Add CSS class names according to calendar and categories
    * @return string JSON encoded events
    */
   function encode($events, $addcss = false)
