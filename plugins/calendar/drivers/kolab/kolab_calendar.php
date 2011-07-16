@@ -151,6 +151,14 @@ class kolab_calendar
 
 
   /**
+   * Return the corresponding Kolab_Folder instance
+   */
+  public function get_folder()
+  {
+    return $this->storage->_folder;
+  }
+
+  /**
    * Getter for the attachment body
    */
   public function get_attachment_body($id)

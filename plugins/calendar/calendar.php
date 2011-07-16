@@ -109,7 +109,7 @@ class calendar extends rcube_plugin
       $this->register_action('freebusy-status', array($this, 'freebusy_status'));
       $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
-	  $this->register_action('print',array($this,'print_view'));
+      $this->register_action('print',array($this,'print_view'));
     } 
     else if ($this->rc->task == 'settings') {
       // add hooks for Calendar settings

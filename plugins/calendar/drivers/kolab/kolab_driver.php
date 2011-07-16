@@ -41,6 +41,8 @@ class kolab_driver extends calendar_driver
     $this->cal = $cal;
     $this->rc = $cal->rc;
     $this->_read_calendars();
+    
+    $this->cal->register_action('push-freebusy', array($this, 'push_freebusy'));
   }
 
 
@@ -239,7 +241,13 @@ class kolab_driver extends calendar_driver
         }
       }
 
-      return $storage->insert_event($event);
+      $GLOBALS['conf']['kolab']['no_triggering'] = true;
+      $success = $storage->insert_event($event);
+      
+      if ($success)
+        $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
+      
+      return $success;
     }
 
     return false;
@@ -299,6 +307,8 @@ class kolab_driver extends calendar_driver
       $savemode = 'all';
       $master = $event;
       
+      $GLOBALS['conf']['kolab']['no_triggering'] = true;
+      
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
         $master = $event['recurrence_id'] ? $storage->get_event($event['recurrence_id']) : $event;
@@ -326,6 +336,9 @@ class kolab_driver extends calendar_driver
           break;
       }
     }
+
+    if ($success)
+      $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
 
     return $success;
   }
@@ -384,6 +397,8 @@ class kolab_driver extends calendar_driver
     if ($old['recurrence']['EXDATE'])
       $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
 
+    $GLOBALS['conf']['kolab']['no_triggering'] = true;
+    
     switch ($savemode) {
       case 'new':
         // save submitted data as new (non-recurring) event
@@ -458,6 +473,9 @@ class kolab_driver extends calendar_driver
         $success = $storage->update_event($event);
         break;
     }
+    
+    if ($success)
+      $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
     
     return $success;
   }
@@ -668,9 +686,31 @@ class kolab_driver extends calendar_driver
     if (empty($email)/* || $end < time()*/)
       return false;
     
-    // load and parse free-busy information using Horde classes
-    $fburl = rcube_kolab::get_freebusy_url($email);
-    if ($fbdata = file_get_contents($fburl)) {
+    // ask kolab server first
+    $fbdata = @file_get_contents(rcube_kolab::get_freebusy_url($email));
+      
+    // get free-busy url from contacts
+    if (!$fbdata) {
+      $fburl = null;
+      foreach ((array)$this->rc->config->get('autocomplete_addressbooks', 'sql') as $book) {
+        $abook = $this->rc->get_address_book($book);
+        
+        if ($result = $abook->search(array('email'), $email, true, true, true/*, 'freebusyurl'*/)) {
+          while ($contact = $result->iterate()) {
+            if ($fburl = $contact['freebusyurl']) {
+              $fbdata = @file_get_contents($fburl);
+              break;
+            }
+          }
+        }
+        
+        if ($fbdata)
+          break;
+      }
+    }
+    
+    // parse free-busy information using Horde classes
+    if ($fbdata) {
       $fbcal = new Horde_iCalendar;
       $fbcal->parsevCalendar($fbdata);
       if ($fb = $fbcal->findComponent('vfreebusy')) {
@@ -686,6 +726,34 @@ class kolab_driver extends calendar_driver
     }
     
     return false;
+  }
+  
+  /**
+   * Handler to push folder triggers when sent from client.
+   * Used to push free-busy changes asynchronously after updating an event
+   */
+  public function push_freebusy()
+  {
+    // make shure triggering completes
+    set_time_limit(0);
+    ignore_user_abort(true);
+
+    $cal = get_input_value('source', RCUBE_INPUT_GPC);
+    if (!($storage = $this->calendars[$cal]))
+      return false;
+    
+    // trigger updates on folder
+    $folder = $storage->get_folder();
+    $trigger = $folder->trigger();
+    if (is_a($trigger, 'PEAR_Error')) {
+      raise_error(array(
+        'code' => 900, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Failed triggering folder. Error was " . $trigger->getMessage()),
+        true, false);
+    }
+    
+    exit;
   }
 
 }

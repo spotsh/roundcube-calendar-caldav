@@ -1457,6 +1457,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
   rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
+  rcmail.addEventListener('plugin.ping_url', function(p){ p.event = null; new Image().src = rcmail.url(p.action, p); });
 
   // let's go
   var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);
