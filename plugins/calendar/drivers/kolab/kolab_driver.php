@@ -177,21 +177,20 @@ class kolab_driver extends calendar_driver
       $this->rc->imap_init();
       $newfolder = $this->rc->imap->mod_mailbox($newfolder, 'in');
 
-      if ($newfolder != $oldfolder)
+      if (!$cal->readonly && $newfolder != $oldfolder)
         $result = rcube_kolab::folder_rename($oldfolder, $newfolder);
       else
         $result = true;
 
       if ($result) {
         // create ID
-        $id = rcube_kolab::folder_id($newfolder);
+        $id = $newfolder ? rcube_kolab::folder_id($newfolder) : $prop['id'];
         // save color in user prefs (temp. solution)
         $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
         unset($prefs['kolab_calendars'][$prop['id']]);
         $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
 
         $this->rc->user->save_prefs($prefs);
-
         return true;
       }
     }

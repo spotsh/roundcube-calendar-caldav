@@ -876,7 +876,7 @@ function rcube_calendar_ui(settings)
       var $dialog = $("#calendarform").dialog('close');
       
       if (!calendar)
-        calendar = { name:'', color:'cc0000' };
+        calendar = { name:'', color:'cc0000', editable:true };
       
       var form, name, color;
       
@@ -889,7 +889,7 @@ function rcube_calendar_ui(settings)
         success: function(data){
           $dialog.html(data);
           form = $('#calendarform > form');
-          name = $('#calendar-name').val(calendar.editname || calendar.name);
+          name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
           name.select();
         }
