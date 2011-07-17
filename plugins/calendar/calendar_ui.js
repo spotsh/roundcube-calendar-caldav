@@ -1087,7 +1087,9 @@ function rcube_calendar_ui(settings)
           rcmail.select_folder(id, me.selected_calendar, 'rcmlical');
           rcmail.enable_command('calendar-edit','calendar-remove', !me.calendars[id].readonly);
           me.selected_calendar = id;
-        }).data('id', id);
+        })
+        .dblclick(function(){ me.calendar_edit_dialog(me.calendars[me.selected_calendar]); })
+        .data('id', id);
       }
       
       if (!cal.readonly && !this.selected_calendar && (!settings.default_calendar || settings.default_calendar == id)) {
