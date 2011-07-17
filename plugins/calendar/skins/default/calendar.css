@@ -8,6 +8,11 @@ body.calendarmain {
 	background: url('images/calendar.png') 0px 1px no-repeat;
 }
 
+/* hack for IE 6/7 */
+* html #taskbar a.button-calendar {
+	background-image: url('images/calendar.gif');
+}
+
 #main {
 	position: absolute;
 	clear: both;
@@ -106,7 +111,7 @@ pre {
 
 #calendarslist li span {
 	cursor: default;
-	background: url('images/calendars.png') 0 -3px no-repeat;
+	background: url('images/calendars.png') 0 -2px no-repeat;
 	padding-left: 18px;
 }
 
@@ -124,23 +129,23 @@ pre {
 }
 
 #calendarslist li.readonly span {
-    background-position: 0 -21px;
+    background-position: 0 -20px;
 }
 
 #calendarslist li.other span {
-    background-position: 0 -39px;
+    background-position: 0 -38px;
 }
 
 #calendarslist li.other.readonly span {
-    background-position: 0 -57px;
+    background-position: 0 -56px;
 }
 
 #calendarslist li.shared span {
-    background-position: 0 -75px;
+    background-position: 0 -74px;
 }
 
 #calendarslist li.shared.readonly span {
-    background-position: 0 -93px;
+    background-position: 0 -92px;
 }
 
 #agendalist {

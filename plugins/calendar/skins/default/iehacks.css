@@ -23,17 +23,17 @@
 	filter: alpha(opacity=35);
 }
 
-html #taskbar a.button-calendar {
-	background-image: url(images/calendar.gif);
-}
-
 html #calendartoolbar a.button,
 html #calendartoolbar a.buttonPas {
 	background-image: url(images/toolbar.gif);
 }
 
-html.ie #datepicker a.ui-priority-secondary {
+#datepicker a.ui-priority-secondary {
 	filter: alpha(opacity=40);
+}
+
+#calendarslist li span {
+	background-image: url(images/calendars.gif);
 }
 
 #datepicker .ui-widget-header {

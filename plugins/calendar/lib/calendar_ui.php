@@ -52,9 +52,6 @@ class calendar_ui
     
     $skin = $this->rc->config->get('skin');
     $this->calendar->include_stylesheet('skins/' . $skin . '/calendar.css');
-    
-    // add iehacks to page footer
-    $this->rc->output->add_footer('<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="'.$this->calendar->urlbase.'skins/'.$skin.'/iehacks.css" /><![endif]-->');
   }
   
   /**
