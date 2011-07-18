@@ -109,7 +109,17 @@ class calendar extends rcube_plugin
       $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
       $this->register_action('print',array($this,'print_view'));
-    } 
+
+      // remove undo information...
+      if ($undo = $_SESSION['calendar_event_undo']) {
+        // ...after timeout
+        $undo_time = $this->rc->config->get('undo_timeout', 0);
+        if ($undo['ts'] < time() - $undo_time) {
+          $this->rc->session->remove('calendar_event_undo');
+          // @TODO: do EXPUNGE on kolab objects?
+        }
+      }
+    }
     else if ($this->rc->task == 'settings') {
       // add hooks for Calendar settings
       $this->add_hook('preferences_sections_list', array($this, 'preferences_sections_list'));
@@ -436,10 +446,10 @@ class calendar extends rcube_plugin
    */
   function event_action()
   {
-    $action = get_input_value('action', RCUBE_INPUT_POST);
-    $event = get_input_value('e', RCUBE_INPUT_POST);
-    $success = $reload = false;
-    
+    $action = get_input_value('action', RCUBE_INPUT_GPC);
+    $event  = get_input_value('e', RCUBE_INPUT_POST);
+    $success = $reload = $got_msg = false;
+
     switch ($action) {
       case "new":
         // create UID for new event
@@ -475,31 +485,66 @@ class calendar extends rcube_plugin
         break;
       
       case "remove":
-        $removed = $this->driver->remove_event($event);
-        $reload = true;
+        // remove previous deletes
+        $undo_time = $this->driver->undelete ? $this->rc->config->get('undo_timeout', 0) : 0;
+        $this->rc->session->remove('calendar_event_undo');
+
+        $success = $this->driver->remove_event($event, $undo_time < 1);
+        $reload  = true;
+
+        if ($undo_time > 0 && $success) {
+          $_SESSION['calendar_event_undo'] = array('ts' => time(), 'data' => $event);
+          // display message with Undo link.
+          $msg = html::span(null, $this->gettext('successremoval'))
+            . ' ' . html::a(array('onclick' => sprintf("%s.http_request('event', 'action=undo', %s.display_message('', 'loading'))",
+              JS_OBJECT_NAME, JS_OBJECT_NAME)), rcube_label('undo'));
+          $this->rc->output->show_message($msg, 'confirmation', null, true, $undo_time);
+        }
+        else if ($success) {
+          $this->rc->output->show_message('calendar.successremoval', 'confirmation');
+          $got_msg = true;
+        }
+
         break;
-      
+
+      case "undo":
+        // Restore deleted event
+        $event  = $_SESSION['calendar_event_undo']['data'];
+        $reload = true;
+
+        if ($event)
+          $success = $this->driver->restore_event($event);
+
+        if ($success) {
+          $this->rc->session->remove('calendar_event_undo');
+          $this->rc->output->show_message('calendar.successrestore', 'confirmation');
+          $got_msg = true;
+        }
+
+        break;
+
       case "dismiss":
         foreach (explode(',', $event['id']) as $id)
           $success |= $this->driver->dismiss_alarm($id, $event['snooze']);
         break;
     }
-    
+
+    // show confirmation/error message
+    if (!$got_msg) {
+      if ($success)
+        $this->rc->output->show_message('successfullysaved', 'confirmation');
+      else
+        $this->rc->output->show_message('calendar.errorsaving', 'error');
+    }
+
     // unlock client
     $this->rc->output->command('plugin.unlock_saving');
-    
-    if ($success)
-      $this->rc->output->show_message('successfullysaved', 'confirmation');
-    else if ($removed)
-      $this->rc->output->show_message('calendar.successremoval', 'confirmation');
-    else
-      $this->rc->output->show_message('calendar.errorsaving', 'error');
 
     // FIXME: update a single event object on the client instead of reloading the entire source
-    if ($success && $reload || ($removed && $reload))
+    if ($success && $reload)
       $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
   }
-  
+
   /**
    * Handler for load-requests from fullcalendar
    * This will return pure JSON formatted output

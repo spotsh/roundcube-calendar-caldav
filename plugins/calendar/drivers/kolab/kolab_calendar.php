@@ -294,10 +294,17 @@ class kolab_calendar
    * @see Driver:remove_event()
    * @return boolean True on success, False on error
    */
-  public function delete_event($event)
+  public function delete_event($event, $force = true)
   {
-    $deleted = false;
-    $deleteme = $this->storage->delete($event['id']);
+    $deleted  = false;
+
+    if (!$force) {
+      // Get IMAP object ID
+      $imap_uid = $this->storage->_getStorageId($event['id']);
+    }
+
+    $deleteme = $this->storage->delete($event['id'], $force);
+
     if (PEAR::isError($deleteme)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
@@ -306,12 +313,67 @@ class kolab_calendar
         true, false);
     }
     else {
+      // Save IMAP object ID in session, will be used for restore action
+      if ($imap_uid)
+        $_SESSION['kolab_delete_uids'][$event['id']] = $imap_uid;
+
       $deleted = true;
     }
-    
+
     return $deleted;
   }
 
+  /**
+   * Restore deleted event record
+   *
+   * @see Driver:undelete_event()
+   * @return boolean True on success, False on error
+   */
+  public function restore_event($event)
+  {
+    $imap_uid = $_SESSION['kolab_delete_uids'][$event['id']];
+
+    if (!$imap_uid)
+      return false;
+
+    $session = &Horde_Kolab_Session::singleton();
+    $imap    = &$session->getImap();
+
+    if (is_a($imap, 'PEAR_Error')) {
+      $error = $imap;
+    }
+    else {
+      $result = $imap->select($this->imap_folder);
+      if (is_a($result, 'PEAR_Error')) {
+        $error = $result;
+      }
+      else {
+        $result = $imap->undeleteMessages($imap_uid);
+        if (is_a($result, 'PEAR_Error')) {
+          $error = $result;
+        }
+        else {
+          // re-sync the cache
+          $this->storage->synchronize();
+        }
+      }
+    }
+
+    if ($error) {
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Error undeleting an event object(s) from the Kolab server:" . $error->getMessage()),
+        true, false);
+
+      return false;
+    }
+
+    $rcmail = rcmail::get_instance();
+    $rcmail->session->remove('kolab_delete_uids');
+
+    return true;
+  }
 
   /**
    * Simply fetch all records and store them in private member vars

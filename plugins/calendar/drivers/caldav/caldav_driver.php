@@ -49,7 +49,7 @@ class caldav_driver extends calendar_driver
     // FIXME Implement. Can be done via editEvent
   }
 
-  public function remove_event($event) {
+  public function remove_event($event, $force = true) {
     // FIXME Implement.
   }
   

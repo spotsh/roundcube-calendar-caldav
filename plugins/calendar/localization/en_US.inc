@@ -100,15 +100,16 @@ $labels['tabattendees'] = 'Participants';
 $labels['tabattachments'] = 'Attachments';
 
 // messages
-$labels['deleteventconfirm'] = "Do you really want to delete this event?";
-$labels['deletecalendarconfirm'] = "Do you really want to delete this calendar with all its events?";
-$labels['savingdata'] = "Saving data...";
-$labels['errorsaving'] = "Failed to save changes";
-$labels['operationfailed'] = "The requested operation failed";
-$labels['invalideventdates'] = "Invalid dates entered! Please check your input.";
-$labels['invalidcalendarproperties'] = "Invalid calendar properties! Please set a valid name.";
-$labels['searchnoresults'] = 'No events found in the selected calendars';
-$labels['successremoval'] = "The event was deleted successfully";
+$labels['deleteventconfirm'] = 'Do you really want to delete this event?';
+$labels['deletecalendarconfirm'] = 'Do you really want to delete this calendar with all its events?';
+$labels['savingdata'] = 'Saving data...';
+$labels['errorsaving'] = 'Failed to save changes.';
+$labels['operationfailed'] = 'The requested operation failed.';
+$labels['invalideventdates'] = 'Invalid dates entered! Please check your input.';
+$labels['invalidcalendarproperties'] = 'Invalid calendar properties! Please set a valid name.';
+$labels['searchnoresults'] = 'No events found in the selected calendars.';
+$labels['successremoval'] = 'The event has been deleted successfully.';
+$labels['successrestore'] = 'The event has been restored successfully.';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

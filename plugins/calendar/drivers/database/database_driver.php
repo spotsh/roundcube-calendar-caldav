@@ -513,10 +513,12 @@ class database_driver extends calendar_driver
   /**
    * Remove a single event from the database
    *
-   * @param array Hash array with event properties
+   * @param array   Hash array with event properties
+   * @param boolean Remove record irreversible (@TODO)
+   *
    * @see Driver:remove_event()
    */
-  public function remove_event($event)
+  public function remove_event($event, $force = true)
   {
     if (!empty($this->calendars)) {
       $event += (array)$this->get_event($event['id']);

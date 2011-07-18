@@ -27,6 +27,7 @@ class kolab_driver extends calendar_driver
   public $alarms = true;
   public $attendees = true;
   public $attachments = true;
+  public $undelete = true;
   public $categoriesimmutable = true;
 
   private $rc;
@@ -292,35 +293,37 @@ class kolab_driver extends calendar_driver
   }
 
   /**
-   * Remove a single event from the database
+   * Remove a single event
    *
-   * @param array Hash array with event properties:
-   *      id: Event identifier 
+   * @param array   Hash array with event properties:
+   *      id: Event identifier
+   * @param boolean Remove record(s) irreversible (mark as deleted otherwise)
+   *
    * @return boolean True on success, False on error
    */
-  public function remove_event($event)
+  public function remove_event($event, $force = true)
   {
     $success = false;
-    
+
     if (($storage = $this->calendars[$event['calendar']]) && ($event = $storage->get_event($event['id']))) {
       $savemode = 'all';
       $master = $event;
-      
+
       $GLOBALS['conf']['kolab']['no_triggering'] = true;
-      
+
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
         $master = $event['recurrence_id'] ? $storage->get_event($event['recurrence_id']) : $event;
         $savemode = $event['savemode'];
       }
-      
+
       switch ($savemode) {
         case 'current':
           // add exception to master event
           $master['recurrence']['EXDATE'][] = $event['start'];
           $success = $storage->update_event($master);
           break;
-        
+
         case 'future':
           if ($master['id'] != $event['id']) {
             // set until-date on master event
@@ -329,9 +332,9 @@ class kolab_driver extends calendar_driver
             $success = $storage->update_event($master);
             break;
           }
-        
+
         default:  // 'all' is default
-          $success = $storage->delete_event($master);
+          $success = $storage->delete_event($master, $force);
           break;
       }
     }
@@ -340,6 +343,22 @@ class kolab_driver extends calendar_driver
       $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
 
     return $success;
+  }
+
+  /**
+   * Restore a single deleted event
+   *
+   * @param array Hash array with event properties:
+   *      id: Event identifier
+   * @return boolean True on success, False on error
+   */
+  public function restore_event($event)
+  {
+    if ($storage = $this->calendars[$event['calendar']]) {
+      return $storage->restore_event($event);
+    }
+
+    return false;
   }
 
   /**
