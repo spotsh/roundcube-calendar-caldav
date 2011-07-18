@@ -649,6 +649,10 @@ class rcube_kolab_contacts extends rcube_addressbook
                     if (is_a($result, 'PEAR_Error')) {
                         $error = $result;
                     }
+                    else {
+                        $this->_connect();
+                        $this->contactstorage->synchronize();
+                    }
                 }
             }
 

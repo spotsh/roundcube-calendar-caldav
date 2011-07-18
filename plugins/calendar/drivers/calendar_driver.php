@@ -72,10 +72,11 @@
  */
 abstract class calendar_driver
 {
-  // backend features
+  // features supported by backend
   public $alarms = false;
   public $attendees = false;
   public $attachments = false;
+  public $undelete = false; // event undelete action
   public $categoriesimmutable = false;
   public $alarm_types = array('DISPLAY');
 
@@ -156,11 +157,27 @@ abstract class calendar_driver
   /**
    * Remove a single event from the database
    *
-   * @param array Hash array with event properties:
-   *      id: Event identifier 
+   * @param array   Hash array with event properties:
+   *      id: Event identifier
+   * @param boolean Remove event irreversible (mark as deleted otherwise,
+   *                if supported by the backend)
+   *
    * @return boolean True on success, False on error
    */
-  abstract function remove_event($event);
+  abstract function remove_event($event, $force = true);
+
+  /**
+   * Restores a single deleted event (if supported)
+   *
+   * @param array Hash array with event properties:
+   *      id: Event identifier
+   *
+   * @return boolean True on success, False on error
+   */
+  public function restore_event($event)
+  {
+    return false;
+  }
 
   /**
    * Get events from source.

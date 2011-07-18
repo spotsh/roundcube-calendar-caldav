@@ -377,4 +377,52 @@ class rcube_kolab
         return 'personal';
     }
 
+    /**
+     * Creates a SELECT field with folders list
+     *
+     * @param string $type  Folder type
+     * @param array  $attrs SELECT field attributes (e.g. name)
+     *
+     * @return html_select SELECT object
+     */
+    public static function folder_selector($type, $attrs)
+    {
+        // get all folders of specified type
+        $folders = self::get_folders($type);
+
+        $names = array();
+        foreach ($folders as $c_folder)
+            $names[$c_folder->name] = rcube_charset_convert($c_folder->name, 'UTF7-IMAP');
+        asort($names, SORT_LOCALE_STRING);
+
+        $folders = array_keys($names);
+        $names   = array();
+
+        // Build SELECT field of parent folder
+        $select = new html_select($attrs);
+        $select->add('---', '');
+
+        foreach ($folders as $name) {
+            $imap_name = $name;
+            $name      = $origname = self::object_name($name);
+
+            // find folder prefix to truncate
+            for ($i = count($names)-1; $i >= 0; $i--) {
+                if (strpos($name, $names[$i].' &raquo; ') === 0) {
+                    $length = strlen($names[$i].' &raquo; ');
+                    $prefix = substr($name, 0, $length);
+                    $count  = count(explode(' &raquo; ', $prefix));
+                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                    break;
+                }
+            }
+
+            $names[] = $origname;
+
+            $select->add($name, $imap_name);
+        }
+
+        return $select;
+    }
+
 }
