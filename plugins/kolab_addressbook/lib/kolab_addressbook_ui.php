@@ -163,17 +163,11 @@ class kolab_addressbook_ui
                 $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
             }
             else {
-                $radio1 = new html_radiobutton(array('name' => '_parent', 'value' => ''));
-                $radio2 = new html_radiobutton(array('name' => '_parent', 'value' => $path_imap));
-
-                $html_path = str_replace($delim, ' &raquo; ', $path);
-
-                $folderpath = $radio1->show($path_imap) . Q(rcube_label('none')) . '&nbsp;'
-                    .$radio2->show($path_imap) . Q($html_path);
+                $select = rcube_kolab::folder_selector('contact', array('name' => '_parent'));
 
                 $form['props']['fieldsets']['location']['content']['path'] = array(
                     'label' => $this->plugin->gettext('parentbook'),
-                    'value' => $folderpath,
+                    'value' => $select->show($path_imap),
                 );
             }
         }
