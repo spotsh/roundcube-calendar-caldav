@@ -96,12 +96,12 @@ function rcube_calendar_ui(settings)
       // we use the utility function from datepicker to parse dates
       var date = date ? $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings) : new Date();
       
-      var time_arr = time.replace(/\s*[ap]m?/i, '').replace(/0([0-9])/g, '$1').split(/[:.]/);
+      var time_arr = time.replace(/\s*[ap][.m]*/i, '').replace(/0([0-9])/g, '$1').split(/[:.]/);
       if (!isNaN(time_arr[0])) {
         date.setHours(time_arr[0]);
-        if (time.match(/pm?/i) && date.getHours() < 12)
+        if (time.match(/p[.m]*/i) && date.getHours() < 12)
           date.setHours(parseInt(time_arr[0]) + 12);
-        else if (date.getHours() == 12)
+        else if (time.match(/a[.m]*/i) && date.getHours() == 12)
           date.setHours(0);
       }
       if (!isNaN(time_arr[1]))
