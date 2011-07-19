@@ -91,11 +91,13 @@ class calendar extends rcube_plugin
     }
 
     if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
-      $this->load_driver();
+      if ($this->rc->action != 'upload') {
+        $this->load_driver();
 
-      // load iCalendar functions
-      require($this->home . '/lib/calendar_ical.php');
-      $this->ical = new calendar_ical($this->rc, $this->driver);
+        // load iCalendar functions
+        require($this->home . '/lib/calendar_ical.php');
+        $this->ical = new calendar_ical($this->rc, $this->driver);
+      }
 
       // register calendar actions
       $this->register_action('index', array($this, 'calendar_view'));
