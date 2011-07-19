@@ -1149,6 +1149,26 @@ class calendar extends rcube_plugin
     }
 
     $event['attachments'] = $attachments;
+    
+    // check for organizer in attendees
+    if ($event['attendees']) {
+      $identity = $this->rc->user->get_identity();
+      $organizer = $owner = false;
+      foreach ($event['attendees'] as $i => $attendee) {
+        if ($attendee['role'] == 'ORGANIZER')
+          $organizer = true;
+        if ($attendee['email'] == $identity['email'])
+          $owner = $i;
+      }
+      
+      // set owner as organizer if yet missing
+      if (!$organizer && $owner !== false) {
+        $event['attendees'][$i]['role'] = 'ORGANIZER';
+      }
+      else if (!$organizer && $identity['email']) {
+        $event['attendees'][] = array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED');
+      }
+    }
   }
 
   /**
