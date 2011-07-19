@@ -256,7 +256,7 @@ function rcube_calendar_ui(settings)
         }
       }
       else if (calendar.attachments) {
-        // fetch attachments, some drivers doesn't set 'attachments' popr of the event
+        // fetch attachments, some drivers doesn't set 'attachments' prop of the event?
       }
       
       // list event attendees
@@ -474,7 +474,7 @@ function rcube_calendar_ui(settings)
         }
         else {
           $('#edit-attachments > ul').empty();
-          // fetch attachments, some drivers doesn't set 'attachments' array for event
+          // fetch attachments, some drivers doesn't set 'attachments' array for event?
         }
       }
 
@@ -507,7 +507,8 @@ function rcube_calendar_ui(settings)
           recurrence: '',
           alarms: '',
           attendees: event_attendees,
-          deleted_attachments: rcmail.env.deleted_attachments
+          deleted_attachments: rcmail.env.deleted_attachments,
+          attachments: []
         };
 
         // serialize alarm settings
@@ -522,12 +523,10 @@ function rcube_calendar_ui(settings)
         }
 
         // uploaded attachments list
-        var attachments = [];
         for (var i in rcmail.env.attachments)
-          if (i.match(/^rcmfile([0-9a-z]+)/))
-            attachments.push(RegExp.$1);
-        data.attachments = attachments;
-        
+          if (i.match(/^rcmfile(.+)/))
+            data.attachments.push(RegExp.$1);
+
         // read attendee roles
         $('select.edit-attendee-role').each(function(i, elem){
           if (data.attendees[i])

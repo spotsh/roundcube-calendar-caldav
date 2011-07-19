@@ -160,7 +160,8 @@ pre {
 	width: 100%;
 }
 
-#agendalist td, th {
+#agendalist td,
+#agendalist th {
 	border-right: 1px solid #C1DAD7;
 	border-bottom: 1px solid #C1DAD7;
 	background: #fff;
@@ -670,6 +671,11 @@ a.alarm-action-snooze:after {
 .ui-datepicker-calendar .ui-datepicker-week-col {
 	text-align: right;
 	padding-right: 0.5em;
+}
+
+.ui-datepicker th {
+    padding: 0.3em 0;
+    font-size: 10px;
 }
 
 .ui-datepicker td span,
