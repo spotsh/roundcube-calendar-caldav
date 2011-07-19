@@ -505,9 +505,10 @@ class kolab_driver extends calendar_driver
    * @param  integer Event's new end (unix timestamp)
    * @param  string  Search query (optional)
    * @param  mixed   List of calendar IDs to load events from (either as array or comma-separated string)
+   * @param  boolean Strip virtual events (optional)
    * @return array A list of event records
    */
-  public function load_events($start, $end, $search = null, $calendars = null)
+  public function load_events($start, $end, $search = null, $calendars = null, $virtual = 1)
   {
     if ($calendars && is_string($calendars))
       $calendars = explode(',', $calendars);
@@ -517,7 +518,7 @@ class kolab_driver extends calendar_driver
       if ($calendars && !in_array($cid, $calendars))
         continue;
 
-      $events = array_merge($events, $this->calendars[$cid]->list_events($start, $end, $search));
+      $events = array_merge($events, $this->calendars[$cid]->list_events($start, $end, $search, $virtual));
     }
 
     return $events;
