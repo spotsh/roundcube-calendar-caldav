@@ -191,9 +191,10 @@ class kolab_calendar
    * @param  integer Event's new start (unix timestamp)
    * @param  integer Event's new end (unix timestamp)
    * @param  string  Search query (optional)
+   * @param  boolean Strip virtual events (optional)
    * @return array A list of event records
    */
-  public function list_events($start, $end, $search = null)
+  public function list_events($start, $end, $search = null, $virtual = 1)
   {
     $this->_fetch_events();
     
@@ -224,7 +225,7 @@ class kolab_calendar
       }
       
       // resolve recurring events
-      if ($event['recurrence']) {
+      if ($event['recurrence'] && $virtual == 1) {
         $events = array_merge($events, $this->_get_recurring_events($event, $start, $end));
       }
     }
