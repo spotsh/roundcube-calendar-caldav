@@ -572,9 +572,32 @@ class calendar_ui
   function attendees_form($attrib = array())
   {
     $input = new html_inputfield(array('name' => 'participant', 'id' => 'edit-attendee-name', 'size' => 30));
+    $checkbox = new html_checkbox(array('name' => 'notify', 'id' => 'edit-attendees-notify', 'value' => 1, 'disabled' => true));  // disabled for now
     
-    return html::div($attrib, $input->show() . " " .
-      html::tag('input', array('type' => 'button', 'class' => 'button', 'id' => 'edit-attendee-add', 'value' => $this->calendar->gettext('addattendee'))));
+    return html::div($attrib,
+      html::div(null, $input->show() . " " .
+        html::tag('input', array('type' => 'button', 'class' => 'button', 'id' => 'edit-attendee-add', 'value' => $this->calendar->gettext('addattendee'))) . " " .
+        html::tag('input', array('type' => 'button', 'class' => 'button', 'id' => 'edit-attendee-schedule', 'value' => $this->calendar->gettext('scheduletime').'...'))) .
+      html::p('attendees-notifybox', html::label(null, $checkbox->show(1) . $this->calendar->gettext('sendnotifications')))
+      );
+  }
+  
+  /**
+   *
+   */
+  function attendees_freebusy_table($attrib = array())
+  {
+    $table = new html_table(array('cols' => 2, 'border' => 0, 'cellspacing' => 0));
+    $table->add('attendees',
+      html::tag('h3', 'boxtitle', $this->calendar->gettext('tabattendees')) .
+      html::div('timesheader', '&nbsp;') .
+      html::div(array('id' => 'schedule-attendees-list'), '')
+    );
+    $table->add('times',
+      html::div('scroll', html::tag('table', array('id' => 'schedule-freebusy-times', 'border' => 0, 'cellspacing' => 0), html::tag('thead') . html::tag('tbody')))
+    );
+    
+    return $table->show($attrib);
   }
 
 }

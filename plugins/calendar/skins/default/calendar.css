@@ -235,9 +235,7 @@ pre {
 	right: 4px;
 }
 
-#eventshow,
-#eventedit,
-#calendarform {
+div.uidialog {
 	display: none;
 }
 
@@ -361,6 +359,10 @@ a.miniColors-trigger {
 
 #event-attendees span.tentative {
 	background-position: right -60px;
+}
+
+#event-attendees span.organizer {
+	background-position: right -80px;
 }
 
 /* jQuery UI overrides */
@@ -503,12 +505,12 @@ td.topalign {
 	display: table;
 	table-layout: fixed;
 	border-collapse: collapse;
-	border: 1px solid #ddd;
+	border: 1px solid #ccc;
 }
 
 #edit-attendees-table td {
 	padding: 3px;
-	border-bottom: 1px solid #ddd;
+	border-bottom: 1px solid #ccc;
 }
 
 #edit-attendees-table td.role {
@@ -538,7 +540,14 @@ td.topalign {
 }
 
 #edit-attendees-form {
+	position: relative;
 	margin-top: 1em;
+}
+
+#edit-attendees-form #edit-attendee-schedule {
+	position: absolute;
+	top: 0;
+	right: 0;
 }
 
 #edit-attendees-table select.edit-attendee-role {
@@ -547,7 +556,7 @@ td.topalign {
 	background: white;
 }
 
-#edit-attendees-table img.availabilityicon {
+.availability img.availabilityicon {
 	margin: 1px;
 	width: 14px;
 	height: 14px;
@@ -555,24 +564,41 @@ td.topalign {
 	-moz-border-radius: 4px;
 }
 
-#edit-attendees-table img.availabilityicon.loading {
+.availability img.availabilityicon.loading {
 	background: url('images/loading-small.gif') top left no-repeat;
 }
 
-#edit-attendees-table img.availabilityicon.unknown {
-	background: #ccc;
+#schedule-freebusy-times td.unknown,
+.availability img.availabilityicon.unknown {
+	background: #ddd;
 }
 
-#edit-attendees-table img.availabilityicon.free {
+#schedule-freebusy-times td.free,
+.availability img.availabilityicon.free {
 	background: #0c0;
 }
 
-#edit-attendees-table img.availabilityicon.busy {
+#schedule-freebusy-times td.busy,
+.availability img.availabilityicon.busy {
 	background: #c00;
 }
 
-#edit-attendees-table img.availabilityicon.out-of-office {
+#schedule-freebusy-times td.out-of-office,
+.availability img.availabilityicon.out-of-office {
 	background: #f0b400;
+}
+
+#edit-attendees-legend {
+	margin-top: 3em;
+}
+
+#edit-attendees-legend .legend {
+	margin-right: 2em;
+	white-space: nowrap;
+}
+
+#edit-attendees-legend img.availabilityicon {
+	vertical-align: middle;
 }
 
 #edit-attendees-table tbody td.confirmstate {
@@ -601,6 +627,67 @@ td.topalign {
 
 #edit-attendees-table td.confirmstate span.tentative {
 	background-position: 5px -60px;
+}
+
+#attendees-freebusy-table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	margin-bottom: 2em;
+}
+
+#attendees-freebusy-table td.attendees {
+	width: 16em;
+	border: 1px solid #ccc;
+	vertical-align: top;
+	overflow: hidden;
+}
+
+#attendees-freebusy-table td.times {
+	width: auto;
+	vertical-align: top;
+	border: 1px solid #ccc;
+}
+
+#attendees-freebusy-table div.scroll {
+	overflow: auto;
+}
+
+#attendees-freebusy-table h3.boxtitle {
+	margin: 0;
+	height: auto !important;
+	border-color: #ccc;
+}
+
+#attendees-freebusy-table div.timesheader {
+	padding: 0.3em;
+}
+
+#schedule-attendees-list div.attendee {
+	padding: 3px 20px 3px 6px;
+	border-top: 1px solid #ccc;
+}
+
+#schedule-attendees-list div.loading {
+	background: url('images/loading-small.gif') top right no-repeat;
+}
+
+#schedule-freebusy-times {
+	border-collapse: collapse;
+}
+
+#schedule-freebusy-times td {
+	padding: 3px;
+	border: 1px solid #ccc;
+}
+
+#schedule-freebusy-times tr.dates th {
+	border-bottom: 0;
+}
+
+#schedule-freebusy-times tr.times td {
+	font-size: 9px;
+	padding: 5px 2px 6px 2px;
 }
 
 span.edit-alarm-set {

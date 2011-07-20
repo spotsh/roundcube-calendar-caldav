@@ -92,6 +92,12 @@ $labels['roleorganizer'] = 'Organizer';
 $labels['rolerequired'] = 'Required';
 $labels['roleoptional'] = 'Optional';
 $labels['roleresource'] = 'Resource';
+$labels['availfree'] = 'Free';
+$labels['availbusy'] = 'Busy';
+$labels['availunknown'] = 'Unknown';
+$labels['availoutofoffice'] = 'Out of Office';
+$labels['scheduletime'] = 'Available times';
+$labels['sendnotifications'] = 'Send notifications';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';

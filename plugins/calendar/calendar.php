@@ -23,8 +23,14 @@
  +-------------------------------------------------------------------------+
 */
 
+
 class calendar extends rcube_plugin
 {
+  const FREEBUSY_UNKNOWN = 0;
+  const FREEBUSY_FREE = 1;
+  const FREEBUSY_BUSY = 2;
+  const FREEBUSY_OOF = 4;
+  
   public $task = '?(?!login|logout).*';
   public $rc;
   public $driver;
@@ -181,6 +187,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.attachments_list', array($this->ui, 'attachments_list'));
     $this->register_handler('plugin.attendees_list', array($this->ui, 'attendees_list'));
     $this->register_handler('plugin.attendees_form', array($this->ui, 'attendees_form'));
+    $this->register_handler('plugin.attendees_freebusy_table', array($this->ui, 'attendees_freebusy_table'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
 
@@ -1207,16 +1214,36 @@ class calendar extends rcube_plugin
     $email = get_input_value('email', RCUBE_INPUT_GPC);
     $start = get_input_value('start', RCUBE_INPUT_GET);
     $end = get_input_value('end', RCUBE_INPUT_GET);
+    $interval = 60;  // in minutes
     
     if (!$start) $start = time();
-    if (!$end)   $end = $start + 86400 * 30;
+    if (!$end)   $end = $start + 86400 * 7;
     
     $fblist = $this->driver->get_freebusy_list($email, $start, $end);
-    $result = array();
+    $slots = array();
     
-    // TODO: build a list from $start till $end with blocks representing the fb-status
+    // build a list from $start till $end with blocks representing the fb-status
+    for ($s = 0, $t = $start; $t <= $end; $s++) {
+      $status = self::FREEBUSY_UNKNOWN;
+      $t_end = $t + $interval*60;
+        
+      // determine attendee's status
+      if (is_array($fblist)) {
+        $status = self::FREEBUSY_FREE;
+        foreach ($fblist as $slot) {
+          list($from, $to) = $slot;
+          if ($from <= $t_end && $to > $t) {
+            $status = self::FREEBUSY_BUSY;
+            break;
+          }
+        }
+      }
+        
+      $slots[$s] = $status;
+      $t = $t_end;
+    }
     
-    echo json_encode($result);
+    echo json_encode(array('email' => $email, 'slots' => $slots, 'interval' => $interval));
     exit;
   }
   

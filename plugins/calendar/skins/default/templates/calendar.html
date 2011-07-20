@@ -36,7 +36,7 @@
   </ul>
 </div>
 
-<div id="eventshow">
+<div id="eventshow" class="uidialog">
   <h1 id="event-title">Event Title</h1>
   <div class="event-section" id="event-location">Location</div>
   <div class="event-section" id="event-date">From-To</div>
@@ -82,7 +82,7 @@
   </div>
 </div>
 
-<div id="eventedit">
+<div id="eventedit" class="uidialog">
   <form id="eventtabs" action="#" method="post">
     <ul>
       <li><a href="#event-tab-1"><roundcube:label name="calendar.tabsummary" /></a></li>
@@ -168,6 +168,7 @@
     <div id="event-tab-3">
       <roundcube:object name="plugin.attendees_list" id="edit-attendees-table" cellspacing="0" cellpadding="0" border="0" />
       <roundcube:object name="plugin.attendees_form" id="edit-attendees-form" />
+      <roundcube:include file="/templates/freebusylegend.html" />
     </div>
     <!-- attachments list (with upload form) -->
     <div id="event-tab-4">
@@ -183,7 +184,24 @@
   <roundcube:object name="plugin.edit_recurring_warning" class="edit-recurring-warning" style="display:none" />
 </div>
 
-<div id="calendarform">
+<div id="eventfreebusy" class="uidialog">
+  <roundcube:object name="plugin.attendees_freebusy_table" id="attendees-freebusy-table" cellspacing="0" cellpadding="0" border="0" />
+    
+  <div class="form-section">
+    <label for="schedule-startdate"><roundcube:label name="calendar.start" /></label>
+    <input type="text" name="startdate" size="10" id="schedule-startdate" disabled="true" /> &nbsp;
+    <input type="text" name="starttime" size="6" id="schedule-starttime" disabled="true" />
+  </div>
+  <div class="form-section">
+    <label for="schedule-enddate"><roundcube:label name="calendar.end" /></label>
+    <input type="text" name="enddate" size="10" id="schedule-enddate" disabled="true" /> &nbsp;
+    <input type="text" name="endtime" size="6"  id="schedule-endtime" disabled="true" />
+  </div>
+  
+  <roundcube:include file="/templates/freebusylegend.html" />
+</div>
+
+<div id="calendarform" class="uidialog">
   <roundcube:label name="loading" />
 </div>
 
