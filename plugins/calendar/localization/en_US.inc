@@ -98,6 +98,7 @@ $labels['availunknown'] = 'Unknown';
 $labels['availoutofoffice'] = 'Out of Office';
 $labels['scheduletime'] = 'Available times';
 $labels['sendnotifications'] = 'Send notifications';
+$labels['onlyworkinghours'] = 'Show only working hours';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';

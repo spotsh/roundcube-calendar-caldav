@@ -1235,11 +1235,15 @@ class calendar extends rcube_plugin
   {
     $email = get_input_value('email', RCUBE_INPUT_GPC);
     $start = get_input_value('start', RCUBE_INPUT_GET);
-    $end = get_input_value('end', RCUBE_INPUT_GET);
-    $interval = 60;  // in minutes
+#    $end = get_input_value('end', RCUBE_INPUT_GET);
+    $interval = 3600;  // in seconds
     
     if (!$start) $start = time();
-    if (!$end)   $end = $start + 86400 * 7;
+    if (!$end)   $end = $start + 86400 * 30;
+    
+    // reset $start/$end to midnight
+    #$start = gmmktime(0, 0, 0, gmdate('n', $start), gmdate('j'), gmdate('Y'));
+    #$end = gmmktime(23, 59, 59, gmdate('n', $end), gmdate('j'), gmdate('Y'));
     
     $fblist = $this->driver->get_freebusy_list($email, $start, $end);
     $slots = array();
@@ -1247,7 +1251,7 @@ class calendar extends rcube_plugin
     // build a list from $start till $end with blocks representing the fb-status
     for ($s = 0, $t = $start; $t <= $end; $s++) {
       $status = self::FREEBUSY_UNKNOWN;
-      $t_end = $t + $interval*60;
+      $t_end = $t + $interval;
         
       // determine attendee's status
       if (is_array($fblist)) {
@@ -1260,12 +1264,12 @@ class calendar extends rcube_plugin
           }
         }
       }
-        
+      
       $slots[$s] = $status;
       $t = $t_end;
     }
     
-    echo json_encode(array('email' => $email, 'slots' => $slots, 'interval' => $interval));
+    echo json_encode(array('email' => $email, 'start' => intval($start), 'interval' => $interval, 'slots' => $slots));
     exit;
   }
   

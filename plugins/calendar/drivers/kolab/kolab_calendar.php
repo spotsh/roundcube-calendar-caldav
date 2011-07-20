@@ -198,6 +198,9 @@ class kolab_calendar
   {
     $this->_fetch_events();
     
+    if (!empty($search))
+      $search =  mb_strtolower($search);
+    
     $events = array();
     foreach ($this->events as $id => $event) {
       // filter events by search query

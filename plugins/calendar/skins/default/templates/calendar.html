@@ -186,7 +186,15 @@
 
 <div id="eventfreebusy" class="uidialog">
   <roundcube:object name="plugin.attendees_freebusy_table" id="attendees-freebusy-table" cellspacing="0" cellpadding="0" border="0" />
-    
+  
+  <div class="schedule-options">
+    <label><input type="checkbox" id="schedule-freebusy-wokinghours" value="1" /><roundcube:label name="calendar.onlyworkinghours" /></label>
+    <div class="schedule-buttons">
+      <button id="shedule-freebusy-prev" title="<roundcube:label name='previouspage' />">&#9668;</button>
+      <button id="shedule-freebusy-next" title="<roundcube:label name='nextpage' />">&#9658;</button>
+    </div>
+  </div>
+  
   <div class="form-section">
     <label for="schedule-startdate"><roundcube:label name="calendar.start" /></label>
     <input type="text" name="startdate" size="10" id="schedule-startdate" disabled="true" /> &nbsp;

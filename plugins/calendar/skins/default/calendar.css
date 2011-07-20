@@ -634,7 +634,7 @@ td.topalign {
 	width: 100%;
 	table-layout: fixed;
 	border-collapse: collapse;
-	margin-bottom: 2em;
+	margin: 0.5em 0;
 }
 
 #attendees-freebusy-table td.attendees {
@@ -683,12 +683,27 @@ td.topalign {
 }
 
 #schedule-freebusy-times tr.dates th {
-	border-bottom: 0;
+	border-color: #aaa;
+	border-style: solid;
+	border-width: 0 1px 0 1px;
 }
 
 #schedule-freebusy-times tr.times td {
+	min-width: 30px;
 	font-size: 9px;
 	padding: 5px 2px 6px 2px;
+	text-align: center;
+}
+
+#eventfreebusy .schedule-options {
+	position: relative;
+	margin-bottom: 2em;
+}
+
+#eventfreebusy .schedule-buttons {
+	position: absolute;
+	top: 0;
+	right: 0;
 }
 
 span.edit-alarm-set {
