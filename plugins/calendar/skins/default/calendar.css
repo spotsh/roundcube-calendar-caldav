@@ -791,6 +791,10 @@ a.alarm-action-snooze:after {
 	overflow-x: hidden;
 }
 
+.ui-autocomplete .ui-menu-item {
+	white-space: nowrap;
+}
+
 * html .ui-autocomplete {
 	height: 160px;
 }

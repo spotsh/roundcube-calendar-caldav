@@ -595,6 +595,7 @@ function rcube_calendar_ui(settings)
         title: rcmail.gettext((action == 'edit' ? 'edit_event' : 'new_event'), 'calendar'),
         close: function() {
           $dialog.dialog("destroy").hide();
+          freebusy_data = {};
         },
         buttons: buttons,
         minWidth: 500,
@@ -608,6 +609,9 @@ function rcube_calendar_ui(settings)
     {
       var $dialog = $('#eventfreebusy').dialog('close');
       var event = me.selected_event;
+      
+      if (!event_attendees.length)
+        return false;
       
       // set form elements
       var duration = Math.round((event.end.getTime() - event.start.getTime()) / 1000);
@@ -1478,11 +1482,74 @@ function rcube_calendar_ui(settings)
     $("#calendar .fc-button-today").click(fullcalendar_update);
 
     // format time string
-    var formattime = function(hour, minutes) {
-      var d = new Date();
+    var formattime = function(hour, minutes, start) {
+      var time, diff, unit, duration = '', d = new Date();
       d.setHours(hour);
       d.setMinutes(minutes);
-      return $.fullCalendar.formatDate(d, settings['time_format'])
+      time = $.fullCalendar.formatDate(d, settings['time_format']);
+      if (start) {
+        diff = Math.floor((d.getTime() - start.getTime()) / 60000);
+        if (diff > 0) {
+          unit = 'm';
+          if (diff >= 60) {
+            unit = 'h';
+            diff = Math.round(diff / 3) / 20;
+          }
+          duration = ' (' + diff + unit + ')';
+        }
+      }
+      return [time, duration];
+    };
+    
+    var autocomplete_times = function(p, callback) {
+      /* Time completions */
+      var result = [];
+      var now = new Date();
+      var st, start = (this.element.attr('id').indexOf('endtime') > 0
+        && (st = $('#edit-starttime').val())
+        && $('#edit-startdate').val() == $('#edit-enddate').val())
+        ? parse_datetime(st, '') : null;
+      var full = p.term - 1 > 0 || p.term.length > 1;
+      var hours = start ? start.getHours() :
+        (full ? parse_datetime(p.term, '') : now).getHours();
+      var step = 15;
+      var minutes = hours * 60 + (full ? 0 : now.getMinutes());
+      var min = Math.ceil(minutes / step) * step % 60;
+      var hour = Math.floor(Math.ceil(minutes / step) * step / 60);
+      // list hours from 0:00 till now
+      for (var h = start ? start.getHours() : 0; h < hours; h++)
+        result.push(formattime(h, 0, start));
+      // list 15min steps for the next two hours
+      for (; h < hour + 2 && h < 24; h++) {
+        while (min < 60) {
+          result.push(formattime(h, min, start));
+          min += step;
+        }
+        min = 0;
+      }
+      // list the remaining hours till 23:00
+      while (h < 24)
+        result.push(formattime((h++), 0, start));
+      
+      return callback(result);
+    };
+    
+    var autocomplete_open = function(event, ui) {
+      // scroll to current time
+      var $this = $(this);
+      var widget = $this.autocomplete('widget');
+      var menu = $this.data('autocomplete').menu;
+      var amregex = /^(.+)(a[.m]*)/i;
+      var pmregex = /^(.+)(a[.m]*)/i;
+      var val = $(this).val().replace(amregex, '0:$1').replace(pmregex, '1:$1');
+      var li, html;
+      widget.css('width', '10em');
+      widget.children().each(function(){
+        li = $(this);
+        html = li.children().first().html().replace(/\s+\(.+\)$/, '').replace(amregex, '0:$1').replace(pmregex, '1:$1');
+        if (html == val)
+          menu.activate($.Event({ type:'keypress' }), li);
+      });
     };
 
     // if start date is changed, shift end date according to initial duration
@@ -1511,53 +1578,23 @@ function rcube_calendar_ui(settings)
       .autocomplete({
         delay: 100,
         minLength: 1,
-        source: function(p, callback) {
-          /* Time completions */
-          var result = [];
-          var now = new Date();
-          var full = p.term - 1 > 0 || p.term.length > 1;
-          var hours = (full ? parse_datetime(p.term, '') : now).getHours();
-          var step = 15;
-          var minutes = hours * 60 + (full ? 0 : now.getMinutes());
-          var min = Math.ceil(minutes / step) * step % 60;
-          var hour = Math.floor(Math.ceil(minutes / step) * step / 60);
-          // list hours from 0:00 till now
-          for (var h = 0; h < hours; h++)
-            result.push(formattime(h, 0));
-          // list 15min steps for the next two hours
-          for (; h < hour + 2; h++) {
-            while (min < 60) {
-              result.push(formattime(h, min));
-              min += step;
-            }
-            min = 0;
-          }
-          // list the remaining hours till 23:00
-          while (h < 24)
-            result.push(formattime((h++), 0));
-          return callback(result);
-        },
-        open: function(event, ui) {
-          // scroll to current time
-          var widget = $(this).autocomplete('widget');
-          var menu = $(this).data('autocomplete').menu;
-          var val = $(this).val().replace(/^(.+)(am?)/i, '0:$1').replace(/^(.+)(pm?)/i, '1:$1');
-          var li, html, offset = 0;
-          widget.css('width', '7em');
-          widget.children().each(function(){
-            li = $(this);
-            html = li.children().first().html().replace(/^(.+)(am?)/i, '0:$1').replace(/^(.+)(pm?)/i, '1:$1');
-            if (html < val)
-              offset += li.height();
-            if (html == val)
-              menu.activate($.Event({ type: 'mouseenter' }), li);
-          });
-          widget.scrollTop(offset - 1);
-        },
-        change: event_times_changed
+        source: autocomplete_times,
+        open: autocomplete_open,
+        change: event_times_changed,
+        select: function(event, ui) {
+          $(this).val(ui.item[0]);
+          return false;
+        }
       })
       .click(function() {  // show drop-down upon clicks
         $(this).autocomplete('search', $(this).val() ? $(this).val().replace(/\D.*/, "") : " ");
+      }).each(function(){
+        $(this).data('autocomplete')._renderItem = function(ul, item) {
+          return $('<li>')
+            .data('item.autocomplete', item)
+            .append('<a>' + item[0] + item[1] + '</a>')
+            .appendTo(ul);
+          };
       });
 
     // register events on alarm fields
