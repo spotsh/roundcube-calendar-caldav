@@ -155,10 +155,6 @@ class kolab_addressbook_ui
             ),
         );
 
-        if (strlen($path_imap)) {
-            $path = rcube_charset_convert($path_imap, 'UTF7-IMAP');
-        }
-
         if (!empty($options) && ($options['norename'] || $options['namespace'] != 'personal')) {
             // prevent user from moving folder
             $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
