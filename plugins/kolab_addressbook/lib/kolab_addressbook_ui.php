@@ -155,21 +155,17 @@ class kolab_addressbook_ui
             ),
         );
 
-        if (strlen($path_imap)) {
-            $path = rcube_charset_convert($path_imap, 'UTF7-IMAP');
-            // @TODO: $options
-            if (!empty($options) && ($options['norename'] || $options['namespace'] != 'personal')) {
-                // prevent user from moving folder
-                $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
-            }
-            else {
-                $select = rcube_kolab::folder_selector('contact', array('name' => '_parent'));
+        if (!empty($options) && ($options['norename'] || $options['namespace'] != 'personal')) {
+            // prevent user from moving folder
+            $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
+        }
+        else {
+            $select = rcube_kolab::folder_selector('contact', array('name' => '_parent'));
 
-                $form['props']['fieldsets']['location']['content']['path'] = array(
-                    'label' => $this->plugin->gettext('parentbook'),
-                    'value' => $select->show($path_imap),
-                );
-            }
+            $form['props']['fieldsets']['location']['content']['path'] = array(
+                'label' => $this->plugin->gettext('parentbook'),
+                'value' => $select->show($path_imap),
+            );
         }
 
         // Allow plugins to modify address book form content (e.g. with ACL form)
