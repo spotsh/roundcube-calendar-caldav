@@ -623,19 +623,15 @@ function rcube_calendar_ui(settings)
       }
       
       // render time slots
-      var interval = 60;
       var now = new Date(), fb_start = new Date(), fb_end = new Date();
       fb_start.setTime(Math.max(now, event.start));
-      fb_start.setHours(0);
-      fb_start.setMinutes(0);
-      fb_start.setSeconds(0);
-      fb_start.setMilliseconds(0);
+      fb_start.setHours(0); fb_start.setMinutes(0); fb_start.setSeconds(0); fb_start.setMilliseconds(0);
       fb_end.setTime(fb_start.getTime() + 86400000);
       
       freebusy_data = {};
-      freebusy_ui.loading = 1;
-      freebusy_ui.numdays = 1;
-      freebusy_ui.interval = interval;
+      freebusy_ui.loading = 1;  // prevent render_freebusy_grid() to load data
+      freebusy_ui.numdays = allday.checked ? 7 : 1;
+      freebusy_ui.interval = allday.checked ? 360 : 60;
       freebusy_ui.start = fb_start;
       freebusy_ui.end = new Date(freebusy_ui.start.getTime() + 86400000 * freebusy_ui.numdays);
       render_freebusy_grid(0);
@@ -673,7 +669,7 @@ function rcube_calendar_ui(settings)
       
       // fetch data from server
       freebusy_ui.loading = 0;
-      load_freebusy_data(fb_start, interval);
+      load_freebusy_data(freebusy_ui.start, freebusy_ui.interval);
     };
 
     // render an HTML table showing free-busy status for all the event attendees
@@ -695,7 +691,7 @@ function rcube_calendar_ui(settings)
         }
         
         // TODO: define working hours by config
-        css = !(curdate.getHours() >= 6 && curdate.getHours() <= 18) ? 'offhours' : 'workinghours';
+        css = (freebusy_ui.numdays == 1 && (curdate.getHours() < 6 || curdate.getHours() > 18)) ? 'offhours' : 'workinghours';
         times_row += '<td class="' + css + '">' + Q($.fullCalendar.formatDate(curdate, settings['time_format'])) + '</td>';
         slots_row += '<td class="' + css + ' unknown">&nbsp;</td>';
         
@@ -717,7 +713,7 @@ function rcube_calendar_ui(settings)
       
       // if we have loaded free-busy data, show it
       if (!freebusy_ui.loading) {
-        if (date2unixtime(freebusy_ui.start) < freebusy_data.start || date2unixtime(freebusy_ui.end) > freebusy_data.end) {
+        if (date2unixtime(freebusy_ui.start) < freebusy_data.start || date2unixtime(freebusy_ui.end) > freebusy_data.end || freebusy_ui.interval != freebusy_data.interval) {
           load_freebusy_data(freebusy_ui.start, freebusy_ui.interval)
           return;
         }
@@ -747,7 +743,7 @@ function rcube_calendar_ui(settings)
             type: 'GET',
             dataType: 'json',
             url: rcmail.url('freebusy-times'),
-            data: { email:email, start:date2unixtime(start), end:date2unixtime(end), _remote: 1 },
+            data: { email:email, start:date2unixtime(start), end:date2unixtime(end), interval:interval, _remote: 1 },
             success: function(data){
               freebusy_ui.loading--;
               
@@ -757,9 +753,10 @@ function rcube_calendar_ui(settings)
               freebusy_data[data.email] = {};
               for (var i=0; i < data.slots.length; i++) {
                 freebusy_data[data.email][ts] = data.slots[i];
-                ts += data.interval;
+                ts += data.interval * 60;
               }
               freebusy_data.end = ts;
+              freebusy_data.interval = data.interval;
 
               // hide loading indicator
               var domid = String(data.email).replace(rcmail.identifier_expr, '');

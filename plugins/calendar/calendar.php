@@ -1235,15 +1235,12 @@ class calendar extends rcube_plugin
   {
     $email = get_input_value('email', RCUBE_INPUT_GPC);
     $start = get_input_value('start', RCUBE_INPUT_GET);
-#    $end = get_input_value('end', RCUBE_INPUT_GET);
-    $interval = 3600;  // in seconds
+    $end = get_input_value('end', RCUBE_INPUT_GET);
+    $interval = intval(get_input_value('interval', RCUBE_INPUT_GET));
     
     if (!$start) $start = time();
     if (!$end)   $end = $start + 86400 * 30;
-    
-    // reset $start/$end to midnight
-    #$start = gmmktime(0, 0, 0, gmdate('n', $start), gmdate('j'), gmdate('Y'));
-    #$end = gmmktime(23, 59, 59, gmdate('n', $end), gmdate('j'), gmdate('Y'));
+    if (!$interval) $interval = 60;  // 1 hour
     
     $fblist = $this->driver->get_freebusy_list($email, $start, $end);
     $slots = array();
@@ -1251,7 +1248,7 @@ class calendar extends rcube_plugin
     // build a list from $start till $end with blocks representing the fb-status
     for ($s = 0, $t = $start; $t <= $end; $s++) {
       $status = self::FREEBUSY_UNKNOWN;
-      $t_end = $t + $interval;
+      $t_end = $t + $interval * 60;
         
       // determine attendee's status
       if (is_array($fblist)) {
