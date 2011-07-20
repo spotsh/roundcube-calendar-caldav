@@ -283,7 +283,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         for ($i = $start_row; $i < $last_row; $i++) {
             if ($id = $ids[$i])
-                $this->result->add($this->_fetch_record($id));
+                $this->result->add($this->contacts[$id]);
         }
 
         return $this->result;
@@ -345,8 +345,6 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // search be iterating over all records in memory
         foreach ($this->contacts as $id => $contact) {
-            $contact = $this->_fetch_record($id);
-
             // check if current contact has required values, otherwise skip it
             if ($required) {
                 foreach ($required as $f)
@@ -442,7 +440,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         $this->_fetch_contacts();
         if ($this->contacts[$id]) {
             $this->result = new rcube_result_set(1);
-            $this->result->add($this->_fetch_record($id));
+            $this->result->add($this->contacts[$id]);
             return $assoc ? $this->contacts[$id] : $this->result;
         }
 
@@ -817,7 +815,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         foreach ($ids as $contact_id) {
             if ($uid = $this->id2uid[$contact_id]) {
-                $contact = $this->_fetch_record($contact_id);
+                $contact = $this->contacts[$contact_id];
                 foreach ($this->get_col_values('email', $contact, true) as $email) {
                     $list['member'][] = array(
                         'uid' => $uid,
@@ -932,31 +930,15 @@ class rcube_kolab_contacts extends rcube_addressbook
                 if ($record['__type'] == 'Group')
                     continue;
 
-                // only create a meta record in $this->contacts to save resouces
-                $id = md5($record['uid']);
-                $this->contacts[$id] = array('uid' => $record['uid'], 'name' => $record['full-name'], '_meta' => true);
+                $contact = $this->_to_rcube_contact($record);
+                $id = $contact['ID'];
+                $this->contacts[$id] = $contact;
                 $this->id2uid[$id] = $record['uid'];
             }
 
             // sort data arrays according to desired list sorting
             uasort($this->contacts, array($this, '_sort_contacts_comp'));
         }
-    }
-
-
-    /**
-     * Fetch the entire contact object from storage
-     * and convert it into Roundcube internal format
-     */
-    private function _fetch_record($id)
-    {
-        // replace meta record with a full copy of the contact
-        if ($this->contacts[$id] && $this->contacts[$id]['_meta']) {
-            if ($record = $this->contactstorage->getObject($this->contacts[$id]['uid']))
-                $this->contacts[$id] = $this->_to_rcube_contact($record);
-        }
-
-        return $this->contacts[$id];
     }
 
 
