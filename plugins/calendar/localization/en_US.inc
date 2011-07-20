@@ -57,10 +57,10 @@ $labels['selectdate'] = 'Select date';
 $labels['printdescriptions'] = 'Print descriptions';
 
 // alarm/reminder settings
-$labels['alarmemail'] = 'Send E-mail';
+$labels['alarmemail'] = 'Send Email';
 $labels['alarmdisplay'] = 'Show message';
 $labels['alarmdisplayoption'] = 'Message';
-$labels['alarmemailoption'] = 'E-mail';
+$labels['alarmemailoption'] = 'Email';
 $labels['alarmat'] = 'at $datetime';
 $labels['trigger@'] = 'on date';
 $labels['trigger-M'] = 'minutes before';

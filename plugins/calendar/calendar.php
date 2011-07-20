@@ -97,11 +97,13 @@ class calendar extends rcube_plugin
     }
 
     if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
-      $this->load_driver();
+      if ($this->rc->action != 'upload') {
+        $this->load_driver();
 
-      // load iCalendar functions
-      require($this->home . '/lib/calendar_ical.php');
-      $this->ical = new calendar_ical($this->rc, $this->driver);
+        // load iCalendar functions
+        require($this->home . '/lib/calendar_ical.php');
+        $this->ical = new calendar_ical($this->rc, $this->driver);
+      }
 
       // register calendar actions
       $this->register_action('index', array($this, 'calendar_view'));
@@ -587,7 +589,7 @@ class calendar extends rcube_plugin
   }
   
   /**
-   *
+   * Construct the ics file for exporting events to iCalendar format;
    */
   function export_events()
   {
@@ -595,8 +597,8 @@ class calendar extends rcube_plugin
     $end = get_input_value('end', RCUBE_INPUT_GET);
     if (!$start) $start = mktime(0, 0, 0, 1, date('n'), date('Y')-1);
     if (!$end) $end = mktime(0, 0, 0, 31, 12, date('Y')+10);
-    $events = $this->driver->load_events($start, $end, get_input_value('source', RCUBE_INPUT_GET));
-
+    $events = $this->driver->load_events($start, $end, null, get_input_value('source', RCUBE_INPUT_GET), 0);
+   
     header("Content-Type: text/calendar");
     header("Content-Disposition: inline; filename=calendar.ics");
     
@@ -1156,6 +1158,26 @@ class calendar extends rcube_plugin
     }
 
     $event['attachments'] = $attachments;
+    
+    // check for organizer in attendees
+    if ($event['attendees']) {
+      $identity = $this->rc->user->get_identity();
+      $organizer = $owner = false;
+      foreach ($event['attendees'] as $i => $attendee) {
+        if ($attendee['role'] == 'ORGANIZER')
+          $organizer = true;
+        if ($attendee['email'] == $identity['email'])
+          $owner = $i;
+      }
+      
+      // set owner as organizer if yet missing
+      if (!$organizer && $owner !== false) {
+        $event['attendees'][$i]['role'] = 'ORGANIZER';
+      }
+      else if (!$organizer && $identity['email']) {
+        $event['attendees'][] = array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED');
+      }
+    }
   }
 
   /**

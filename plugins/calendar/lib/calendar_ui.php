@@ -279,7 +279,7 @@ class calendar_ui
         $this->calendar->gettext(array('name' => $label, 'vars' => array('min' => $n % 60, 'hrs' => intval($n / 60))))));
     }
     
-    return html::tag('ul', $attrib, join("\n", $items));
+    return html::tag('ul', $attrib, join("\n", $items), html::$common_attrib);
   }
 
   /**
