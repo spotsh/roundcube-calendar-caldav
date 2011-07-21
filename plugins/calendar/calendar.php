@@ -116,7 +116,7 @@ class calendar extends rcube_plugin
       $this->register_action('freebusy-status', array($this, 'freebusy_status'));
       $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
-      $this->register_action('print',array($this,'print_view'));
+      $this->register_action('print', array($this,'print_view'));
 
       // remove undo information...
       if ($undo = $_SESSION['calendar_event_undo']) {
@@ -508,6 +508,7 @@ class calendar extends rcube_plugin
             . ' ' . html::a(array('onclick' => sprintf("%s.http_request('event', 'action=undo', %s.display_message('', 'loading'))",
               JS_OBJECT_NAME, JS_OBJECT_NAME)), rcube_label('undo'));
           $this->rc->output->show_message($msg, 'confirmation', null, true, $undo_time);
+          $got_msg = true;
         }
         else if ($success) {
           $this->rc->output->show_message('calendar.successremoval', 'confirmation');
