@@ -363,6 +363,8 @@ class rcube_kolab_contacts extends rcube_addressbook
                     $search = $value;
                 }
 
+                $s_len = strlen($search);
+
                 foreach ((array)$contact[$col] as $val) {
                     // composite field, e.g. address
                     if (is_array($val)) {
@@ -370,7 +372,9 @@ class rcube_kolab_contacts extends rcube_addressbook
                     }
                     $val = mb_strtolower($val);
 
-                    if (($strict && $val == $search) || (!$strict && strpos($val, $search) !== false)) {
+                    if (($strict && $val == $search)
+                        || (!$strict && $s_len && strpos($val, $search) !== false)
+                    ) {
                         if (!$advanced) {
                             $this->filter['ids'][] = $id;
                             break 2;
