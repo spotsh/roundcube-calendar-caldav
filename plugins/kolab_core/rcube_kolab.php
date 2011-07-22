@@ -266,11 +266,21 @@ class rcube_kolab
 
         $folder = $kolab->getFolder($oldname);
         $folder->setFolder($newname);
+
+        // We're not using $folder->save() because some caching issues
         $result = $kolab->rename($folder);
 
         if (is_a($result, 'PEAR_Error')) {
             return false;
         }
+
+        // need to re-set some properties
+        $folder->name     = $folder->new_name;
+        $folder->new_name = null;
+        $folder->_title   = null;
+        $folder->_owner   = null;
+        // resetting _data prevents from some wierd cache unserialization issue
+        $folder->_data    = null;
 
         return true;
     }
