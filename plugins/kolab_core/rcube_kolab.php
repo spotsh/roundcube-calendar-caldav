@@ -72,9 +72,11 @@ class rcube_kolab
         // Re-set LDAP/IMAP host config
         $ldap = array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
         $imap = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+        $freebusy = array('server' => $_SESSION['imap_host']);
 
         $conf['kolab']['ldap'] = array_merge($ldap, (array)$conf['kolab']['ldap']);
         $conf['kolab']['imap'] = array_merge($imap, (array)$conf['kolab']['imap']);
+        $conf['kolab']['freebusy'] = array_merge($freebusy, (array)$conf['kolab']['freebusy']);
         self::$config = &$conf;
 
         // pass the current IMAP authentication credentials to the Horde auth system
