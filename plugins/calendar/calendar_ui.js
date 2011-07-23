@@ -46,6 +46,7 @@ function rcube_calendar_ui(settings)
     var attendees_list;
     var freebusy_ui = {};
     var freebusy_data = {};
+    var freebusy_needsupdate;
 
     // general datepicker settings
     var datepicker_settings = {
@@ -330,6 +331,7 @@ function rcube_calendar_ui(settings)
       var $dialog = $("#eventedit");
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
       me.selected_event = event;
+      freebusy_needsupdate = false;
 
       // reset dialog first, enable/disable fields according to editable state
       $('#eventtabs').get(0).reset();
@@ -799,8 +801,8 @@ function rcube_calendar_ui(settings)
         var allday = $('#edit-allday').get(0);
         me.selected_event.start = parse_datetime(allday.checked ? '00:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
         me.selected_event.end   = parse_datetime(allday.checked ? '23:59' : $('#edit-endtime').val(), $('#edit-enddate').val());
-        if (me.selected_event.attendees)
-          update_freebusy_status(me.selected_event);
+        if (event_attendees)
+          freebusy_needsupdate = true;
         $('#edit-startdate').data('duration', Math.round((me.selected_event.end.getTime() - me.selected_event.start.getTime()) / 1000));
       }
     };
@@ -902,10 +904,12 @@ function rcube_calendar_ui(settings)
     var update_freebusy_status = function(event)
     {
       var icons = attendees_list.find('img.availabilityicon');
-      for (var i=0; i < event.attendees.length; i++) {
-        if (icons.get(i) && event.attendees[i].email && event.attendees[i].status != 'ACCEPTED')
-          check_freebusy_status(icons.get(i), event.attendees[i].email, event);
+      for (var i=0; i < event_attendees.length; i++) {
+        if (icons.get(i) && event_attendees[i].email && event_attendees[i].status != 'ACCEPTED')
+          check_freebusy_status(icons.get(i), event_attendees[i].email, event);
       }
+      
+      freebusy_needsupdate = false;
     };
     
     // load free-busy status from server and update icon accordingly
@@ -1563,8 +1567,11 @@ function rcube_calendar_ui(settings)
     // init event dialog
     $('#eventtabs').tabs({
       show: function(event, ui) {
-        if (ui.panel.id == 'event-tab-3')
+        if (ui.panel.id == 'event-tab-3') {
           $('#edit-attendee-name').select();
+          if (freebusy_needsupdate && me.selected_event)
+            update_freebusy_status(me.selected_event);
+        }
       }
     });
     $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);

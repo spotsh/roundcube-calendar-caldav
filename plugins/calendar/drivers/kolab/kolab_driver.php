@@ -693,9 +693,19 @@ class kolab_driver extends calendar_driver
     if (empty($email)/* || $end < time()*/)
       return false;
     
+    // map vcalendar fbtypes to internal values
+    $fbtypemap = array(
+      'FREE' => calendar::FREEBUSY_FREE,
+      'BUSY-TENTATIVE' => calendar::FREEBUSY_TENTATIVE,
+      'X-OUT-OF-OFFICE' => calendar::FREEBUSY_OOF,
+      'OOF' => calendar::FREEBUSY_OOF);
+    
     // ask kolab server first
     $fbdata = @file_get_contents(rcube_kolab::get_freebusy_url($email));
-      
+
+    if (!$fbdata)
+      $fbdata = file_get_contents('http://localhost/roundcube/kolab/sample.ifb');
+
     // get free-busy url from contacts
     if (!$fbdata) {
       $fburl = null;
@@ -722,10 +732,12 @@ class kolab_driver extends calendar_driver
       $fbcal->parsevCalendar($fbdata);
       if ($fb = $fbcal->findComponent('vfreebusy')) {
         $result = array();
+        $params = $fb->getExtraParams();
         foreach ($fb->getBusyPeriods() as $from => $to) {
           if ($to == null)  // no information, assume free
             break;
-          $result[] = array($from, $to);
+          $type = $params[$from]['FBTYPE'];
+          $result[] = array($from, $to, isset($fbtypemap[$type]) ? $fbtypemap[$type] : calendar::FREEBUSY_BUSY);
         }
         
         return $result;

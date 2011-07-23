@@ -95,6 +95,7 @@ $labels['roleresource'] = 'Resource';
 $labels['availfree'] = 'Free';
 $labels['availbusy'] = 'Busy';
 $labels['availunknown'] = 'Unknown';
+$labels['availtentative'] = 'Tentative';
 $labels['availoutofoffice'] = 'Out of Office';
 $labels['scheduletime'] = 'Available times';
 $labels['sendnotifications'] = 'Send notifications';

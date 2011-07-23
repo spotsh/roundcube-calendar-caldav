@@ -566,7 +566,7 @@ td.topalign {
 }
 
 .availability img.availabilityicon.loading {
-	background: url('images/loading-small.gif') top left no-repeat;
+	background: url('images/loading-small.gif') middle middle no-repeat;
 }
 
 #schedule-freebusy-times td.unknown,
@@ -582,6 +582,11 @@ td.topalign {
 #schedule-freebusy-times td.busy,
 .availability img.availabilityicon.busy {
 	background: #c00;
+}
+
+#schedule-freebusy-times td.tentative,
+.availability img.availabilityicon.tentative {
+	background: #66d;
 }
 
 #schedule-freebusy-times td.out-of-office,

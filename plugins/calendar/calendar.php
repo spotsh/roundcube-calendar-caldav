@@ -29,6 +29,7 @@ class calendar extends rcube_plugin
   const FREEBUSY_UNKNOWN = 0;
   const FREEBUSY_FREE = 1;
   const FREEBUSY_BUSY = 2;
+  const FREEBUSY_TENTATIVE = 3;
   const FREEBUSY_OOF = 4;
   
   public $task = '?(?!login|logout).*';
@@ -1206,6 +1207,7 @@ class calendar extends rcube_plugin
     if (!$start) $start = time();
     if (!$end) $end = $start + 3600;
     
+    $fbtypemap = array(calendar::FREEBUSY_FREE => 'FREE', calendar::FREEBUSY_BUSY => 'BUSY', calendar::FREEBUSY_TENTATIVE => 'TENTATIVE', calendar::FREEBUSY_OOF => 'OUT-OF-OFFICE');
     $status = 'UNKNOWN';
     
     // if the backend has free-busy information
@@ -1214,9 +1216,9 @@ class calendar extends rcube_plugin
       $status = 'FREE';
       
       foreach ($fblist as $slot) {
-        list($from, $to) = $slot;
+        list($from, $to, $type) = $slot;
         if ($from <= $end && $to > $start) {
-          $status = 'BUSY';
+          $status = $type && $fbtypemap[$type] ? $fbtypemap[$type] : 'BUSY';
           break;
         }
       }
@@ -1256,9 +1258,9 @@ class calendar extends rcube_plugin
       if (is_array($fblist)) {
         $status = self::FREEBUSY_FREE;
         foreach ($fblist as $slot) {
-          list($from, $to) = $slot;
+          list($from, $to, $type) = $slot;
           if ($from <= $t_end && $to > $t) {
-            $status = self::FREEBUSY_BUSY;
+            $status = isset($type) ? $type : self::FREEBUSY_BUSY;
             break;
           }
         }
