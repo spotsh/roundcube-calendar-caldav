@@ -703,9 +703,6 @@ class kolab_driver extends calendar_driver
     // ask kolab server first
     $fbdata = @file_get_contents(rcube_kolab::get_freebusy_url($email));
 
-    if (!$fbdata)
-      $fbdata = file_get_contents('http://localhost/roundcube/kolab/sample.ifb');
-
     // get free-busy url from contacts
     if (!$fbdata) {
       $fburl = null;
