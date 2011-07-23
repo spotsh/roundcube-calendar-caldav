@@ -594,7 +594,10 @@ class calendar_ui
       html::div(array('id' => 'schedule-attendees-list'), '')
     );
     $table->add('times',
-      html::div('scroll', html::tag('table', array('id' => 'schedule-freebusy-times', 'border' => 0, 'cellspacing' => 0), html::tag('thead') . html::tag('tbody')))
+      html::div('scroll',
+        html::tag('table', array('id' => 'schedule-freebusy-times', 'border' => 0, 'cellspacing' => 0), html::tag('thead') . html::tag('tbody')) .
+        html::div(array('id' => 'schedule-event-time', 'style' => 'display:none'), '&nbsp;')
+      )
     );
     
     return $table->show($attrib);
