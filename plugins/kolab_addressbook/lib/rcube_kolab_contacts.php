@@ -896,6 +896,31 @@ class rcube_kolab_contacts extends rcube_addressbook
         return false;
     }
 
+    /**
+     * Check the given data before saving.
+     * If input not valid, the message to display can be fetched using get_error()
+     *
+     * @param array Associative array with contact data to save
+     *
+     * @return boolean True if input is valid, False if not.
+     */
+    public function validate($save_data)
+    {
+        // validate e-mail addresses
+        $valid = parent::validate($save_data);
+
+        // require at least one e-mail address (syntax check is already done)
+        if ($valid) {
+            if (!strlen($save_data['name'])
+                && !array_filter($this->get_col_values('email', $save_data, true))
+            ) {
+                $this->set_error('warning', 'kolab_addressbook.noemailnamewarning');
+                $valid = false;
+            }
+        }
+
+        return $valid;
+    }
 
     /**
      * Establishes a connection to the Kolab_Data object for accessing contact data
@@ -907,7 +932,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
     }
 
-
     /**
      * Establishes a connection to the Kolab_Data object for accessing groups data
      */
@@ -917,7 +941,6 @@ class rcube_kolab_contacts extends rcube_addressbook
             $this->liststorage = $this->storagefolder->getData('distributionlist');
         }
     }
-
 
     /**
      * Simply fetch all records and store them in private member vars
@@ -945,7 +968,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
     }
 
-
     /**
      * Callback function for sorting contacts
      */
@@ -953,7 +975,6 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
       return strcasecmp($a['name'], $b['name']);
     }
-
 
     /**
      * Read distribution-lists AKA groups from server
@@ -978,7 +999,6 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
     }
-
 
     /**
      * Map fields from internal Kolab_Format to Roundcube contact format
@@ -1030,6 +1050,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         return array_filter($out);
     }
 
+    /**
+     * Map fields from Roundcube format to internal Kolab_Format
+     */
     private function _from_rcube_contact($contact)
     {
         $object = array();
