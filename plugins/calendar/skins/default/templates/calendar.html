@@ -188,27 +188,32 @@
   <roundcube:object name="plugin.attendees_freebusy_table" id="attendees-freebusy-table" cellspacing="0" cellpadding="0" border="0" />
   
   <div class="schedule-options">
-    <label><input type="checkbox" id="schedule-freebusy-wokinghours" value="1" /><roundcube:label name="calendar.onlyworkinghours" /></label>
+    &nbsp;
     <div class="schedule-buttons">
       <button id="shedule-freebusy-prev" title="<roundcube:label name='previouspage' />">&#9668;</button><button id="shedule-freebusy-next" title="<roundcube:label name='nextpage' />">&#9658;</button>
     </div>
   </div>
   
-  <div style="float:left; width:30em">
-  <div class="form-section">
-    <label for="schedule-startdate"><roundcube:label name="calendar.start" /></label>
-    <input type="text" name="startdate" size="10" id="schedule-startdate" disabled="true" /> &nbsp;
-    <input type="text" name="starttime" size="6" id="schedule-starttime" disabled="true" />
+  <div style="float:left; width:28em">
+    <div class="form-section">
+      <label for="schedule-startdate"><roundcube:label name="calendar.start" /></label>
+      <input type="text" name="startdate" size="10" id="schedule-startdate" disabled="true" /> &nbsp;
+      <input type="text" name="starttime" size="6" id="schedule-starttime" disabled="true" />
+    </div>
+    <div class="form-section">
+      <label for="schedule-enddate"><roundcube:label name="calendar.end" /></label>
+      <input type="text" name="enddate" size="10" id="schedule-enddate" disabled="true" /> &nbsp;
+      <input type="text" name="endtime" size="6"  id="schedule-endtime" disabled="true" />
+    </div>
   </div>
-  <div class="form-section">
-    <label for="schedule-enddate"><roundcube:label name="calendar.end" /></label>
-    <input type="text" name="enddate" size="10" id="schedule-enddate" disabled="true" /> &nbsp;
-    <input type="text" name="endtime" size="6"  id="schedule-endtime" disabled="true" />
-  </div>
-  </div>
-  <div class="schedule-find-buttons" style="float:left">
-    <button id="shedule-find-prev">&#9668; <roundcube:label name="calendar.prevslot" /></button>
-    <button id="shedule-find-next"><roundcube:label name="calendar.nextslot" /> &#9658;</button>
+  <div style="float:left">
+    <div class="schedule-find-buttons">
+      <button id="shedule-find-prev">&#9668; <roundcube:label name="calendar.prevslot" /></button>
+      <button id="shedule-find-next"><roundcube:label name="calendar.nextslot" /> &#9658;</button>
+    </div>
+    <div class="schedule-options">
+      <label><input type="checkbox" id="schedule-freebusy-wokinghours" value="1" /><roundcube:label name="calendar.onlyworkinghours" /></label>
+    </div>
   </div>
   <br style="clear:both;" />
   

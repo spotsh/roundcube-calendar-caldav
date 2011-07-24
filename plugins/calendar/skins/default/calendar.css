@@ -731,7 +731,7 @@ td.topalign {
 
 #eventfreebusy .schedule-options {
 	position: relative;
-	margin-bottom: 2em;
+	margin-bottom: 1.5em;
 }
 
 #eventfreebusy .schedule-buttons {
@@ -741,7 +741,7 @@ td.topalign {
 }
 
 #eventfreebusy .schedule-find-buttons {
-	padding-top:1em;
+	padding-bottom:0.5em;
 }
 
 #eventfreebusy .schedule-find-buttons button {

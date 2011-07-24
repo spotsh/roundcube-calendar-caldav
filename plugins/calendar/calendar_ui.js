@@ -626,6 +626,7 @@ function rcube_calendar_ui(settings)
       if (allday.checked) {
         starttime.val("00:00").hide();
         endtime.val("23:59").hide();
+        event.allDay = true;
       }
       
       // read attendee roles from drop-downs
@@ -642,7 +643,7 @@ function rcube_calendar_ui(settings)
       
       freebusy_data = {};
       freebusy_ui.loading = 1;  // prevent render_freebusy_grid() to load data yet
-      freebusy_ui.numdays = allday.checked ? 7 : 1;
+      freebusy_ui.numdays = allday.checked ? 7 : Math.ceil(duration * 2 / 86400);
       freebusy_ui.interval = allday.checked ? 360 : 60;
       freebusy_ui.start = fb_start;
       freebusy_ui.end = new Date(freebusy_ui.start.getTime() + 86400000 * freebusy_ui.numdays);
@@ -780,7 +781,7 @@ function rcube_calendar_ui(settings)
       else {
         var table = $('#schedule-freebusy-times'),
           width = 0,
-          pos = { top:table.children('thead').height(), left:-1 },
+          pos = { top:table.children('thead').height(), left:0 },
           eventstart = date2unixtime(me.selected_event.start),
           eventend = date2unixtime(me.selected_event.end),
           slotstart = date2unixtime(freebusy_ui.start),
@@ -808,7 +809,7 @@ function rcube_calendar_ui(settings)
           width = table.width() - pos.left;
 
         // overlay is visible
-        if (width > 0 && pos.left >= 0)
+        if (width > 0)
           overlay.css({ width: (width-5)+'px', height:(table.children('tbody').height() - 4)+'px', left:pos.left+'px', top:pos.top+'px' }).show();
         else
           overlay.hide();
@@ -886,12 +887,13 @@ function rcube_calendar_ui(settings)
         eventend = date2unixtime(event.end),
         duration = eventend - eventstart,
         sinterval = freebusy_data.interval * 60,
+        intvlslots = event.allDay ? 4 : 1,
         numslots = Math.ceil(duration / sinterval),
         checkdate, slotend, email, curdate;
 
       // shift event times to next possible slot
-      eventstart += sinterval * dir;
-      eventend += sinterval * dir;
+      eventstart += sinterval * intvlslots * dir;
+      eventend += sinterval * intvlslots * dir;
 
       var candidatecount = 0, candidatestart = candidateend = success = false;
       for (var slot = dir > 0 ? freebusy_data.start : freebusy_data.end - sinterval; (dir > 0 && slot < freebusy_data.end) || (dir < 0 && slot >= freebusy_data.start); slot += sinterval * dir) {
@@ -915,15 +917,17 @@ function rcube_calendar_ui(settings)
         // check freebusy data for all attendees
         for (var i=0; i < event_attendees.length; i++) {
           if ((email = event_attendees[i].email) && freebusy_data[email][slot] > 1) {
-            candidatestart = false;
-            candidatecount = 0;
+            candidatestart = candidateend = false;
             break;
           }
         }
         
         // occupied slot
-        if (!candidatestart)
+        if (!candidatestart) {
+          slot += Math.max(0, intvlslots - candidatecount - 1) * sinterval * dir;
+          candidatecount = 0;
           continue;
+        }
         
         // set candidate end to slot end time
         candidatecount++;
@@ -975,6 +979,7 @@ function rcube_calendar_ui(settings)
     {
       if (me.selected_event) {
         var allday = $('#edit-allday').get(0);
+        me.selected_event.allDay = allday.checked;
         me.selected_event.start = parse_datetime(allday.checked ? '00:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
         me.selected_event.end   = parse_datetime(allday.checked ? '23:59' : $('#edit-endtime').val(), $('#edit-enddate').val());
         if (event_attendees)
