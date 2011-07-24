@@ -727,6 +727,7 @@ td.topalign {
 	background: rgba(60, 60, 60, 0.6);
 	opacity: 0.5;
 	border-radius: 4px;
+	cursor: move;
 }
 
 #eventfreebusy .schedule-options {

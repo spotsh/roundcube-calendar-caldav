@@ -616,12 +616,12 @@ function rcube_calendar_ui(settings)
         return false;
       
       // set form elements
-      var duration = Math.round((event.end.getTime() - event.start.getTime()) / 1000);
-      var startdate = $('#schedule-startdate').val($.fullCalendar.formatDate(event.start, settings['date_format'])).data('duration', duration);
-      var starttime = $('#schedule-starttime').val($.fullCalendar.formatDate(event.start, settings['time_format'])).show();
-      var enddate = $('#schedule-enddate').val($.fullCalendar.formatDate(event.end, settings['date_format']));
-      var endtime = $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       var allday = $('#edit-allday').get(0);
+      var duration = Math.round((event.end.getTime() - event.start.getTime()) / 1000);
+      freebusy_ui.startdate = $('#schedule-startdate').val($.fullCalendar.formatDate(event.start, settings['date_format'])).data('duration', duration);
+      freebusy_ui.starttime = $('#schedule-starttime').val($.fullCalendar.formatDate(event.start, settings['time_format'])).show();
+      freebusy_ui.enddate = $('#schedule-enddate').val($.fullCalendar.formatDate(event.end, settings['date_format']));
+      freebusy_ui.endtime = $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       
       if (allday.checked) {
         starttime.val("00:00").hide();
@@ -667,10 +667,10 @@ function rcube_calendar_ui(settings)
       var buttons = {};
       
       buttons[rcmail.gettext('adobt', 'calendar')] = function() {
-        $('#edit-startdate').val(startdate.val());
-        $('#edit-starttime').val(starttime.val());
-        $('#edit-enddate').val(enddate.val());
-        $('#edit-endtime').val(endtime.val());
+        $('#edit-startdate').val(freebusy_ui.startdate.val());
+        $('#edit-starttime').val(freebusy_ui.starttime.val());
+        $('#edit-enddate').val(freebusy_ui.enddate.val());
+        $('#edit-endtime').val(freebusy_ui.endtime.val());
         if (freebusy_needsupdate)
           update_freebusy_status(me.selected_event);
         freebusy_needsupdate = false;
@@ -776,7 +776,7 @@ function rcube_calendar_ui(settings)
     {
       var overlay = $('#schedule-event-time');
       if (me.selected_event.end.getTime() < freebusy_ui.start.getTime() || me.selected_event.start.getTime() > freebusy_ui.end.getTime()) {
-        overlay.hide();
+        overlay.draggable('disable').hide();
       }
       else {
         var table = $('#schedule-freebusy-times'),
@@ -809,13 +809,37 @@ function rcube_calendar_ui(settings)
           width = table.width() - pos.left;
 
         // overlay is visible
-        if (width > 0)
-          overlay.css({ width: (width-5)+'px', height:(table.children('tbody').height() - 4)+'px', left:pos.left+'px', top:pos.top+'px' }).show();
+        if (width > 0) {
+          overlay.css({ width: (width-5)+'px', height:(table.children('tbody').height() - 4)+'px', left:pos.left+'px', top:pos.top+'px' }).draggable('enable').show();
+          
+          // configure draggable
+          if (!overlay.data('isdraggable')) {
+            overlay.draggable({
+              axis: 'x',
+              scroll: true,
+              stop: function(e, ui){
+                // convert pixels to time
+                var px = ui.position.left;
+                var range_p = $('#schedule-freebusy-times').width();
+                var range_t = freebusy_ui.end.getTime() - freebusy_ui.start.getTime();
+                var newstart = new Date(freebusy_ui.start.getTime() + px * (range_t / range_p));
+                newstart.setSeconds(0); newstart.setMilliseconds(0);
+                // round to 5 minutes
+                var round = newstart.getMinutes() % 5;
+                if (round > 2.5) newstart.setTime(newstart.getTime() + (5 - round) * 60000);
+                else if (round > 0) newstart.setTime(newstart.getTime() - round * 60000);
+                // update event times
+                update_freebusy_dates(newstart, new Date(newstart.getTime() + freebusy_ui.startdate.data('duration') * 1000));
+              }
+            }).data('isdraggable', true);
+          }
+        }
         else
-          overlay.hide();
+          overlay.draggable('disable').hide();
       }
       
     };
+    
     
     // fetch free-busy information for each attendee from server
     var load_freebusy_data = function(from, interval)
@@ -878,6 +902,18 @@ function rcube_calendar_ui(settings)
         });
       }
     };
+    
+    // write changed event date/times back to form fields
+    var update_freebusy_dates = function(start, end)
+    {
+      me.selected_event.start = start;
+      me.selected_event.end = end;
+      freebusy_ui.startdate.val($.fullCalendar.formatDate(start, settings['date_format']));
+      freebusy_ui.starttime.val($.fullCalendar.formatDate(start, settings['time_format']));
+      freebusy_ui.enddate.val($.fullCalendar.formatDate(end, settings['date_format']));
+      freebusy_ui.endtime.val($.fullCalendar.formatDate(end, settings['time_format']));
+      freebusy_needsupdate = true;
+    };
 
     // attempt to find a time slot where all attemdees are available
     var freebusy_find_slot = function(dir)
@@ -895,6 +931,7 @@ function rcube_calendar_ui(settings)
       eventstart += sinterval * intvlslots * dir;
       eventend += sinterval * intvlslots * dir;
 
+      // iterate through free-busy slots and find candidates
       var candidatecount = 0, candidatestart = candidateend = success = false;
       for (var slot = dir > 0 ? freebusy_data.start : freebusy_data.end - sinterval; (dir > 0 && slot < freebusy_data.end) || (dir < 0 && slot >= freebusy_data.start); slot += sinterval * dir) {
         slotend = slot + sinterval;
@@ -949,13 +986,9 @@ function rcube_calendar_ui(settings)
         }
       }
       
-      // update event date/time fields
+      // update event date/time display
       if (success) {
-        $('#schedule-startdate').val($.fullCalendar.formatDate(event.start, settings['date_format']));
-        $('#schedule-starttime').val($.fullCalendar.formatDate(event.start, settings['time_format']));
-        $('#schedule-enddate').val($.fullCalendar.formatDate(event.end, settings['date_format']));
-        $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format']));
-        freebusy_needsupdate = true;
+        update_freebusy_dates(event.start, event.end);
         
         // move freebusy grid if necessary
         if (event.start.getTime() >= freebusy_ui.end.getTime())
