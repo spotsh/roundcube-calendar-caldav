@@ -25,12 +25,13 @@ $labels['globalonly'] = 'Global address book(s) only';
 $messages['bookdeleteconfirm']  = 'Do you really want to delete the selected address book and all contacts in it?';
 $messages['bookdeleting'] = 'Deleting address book...';
 $messages['booksaving'] = 'Saving address book...';
-$messages['bookdeleted'] = 'Address book deleted successfully';
-$messages['bookupdated'] = 'Address book updated successfully';
-$messages['bookcreated'] = 'Address book created successfully';
-$messages['bookdeleteerror'] = 'An error occured while deleting address book';
-$messages['bookupdateerror'] = 'An error occured while updating address book';
-$messages['bookcreateerror'] = 'An error occured while creating address book';
-$messages['nobooknamewarning'] = 'Please, enter address book name';
+$messages['bookdeleted'] = 'Address book deleted successfully.';
+$messages['bookupdated'] = 'Address book updated successfully.';
+$messages['bookcreated'] = 'Address book created successfully.';
+$messages['bookdeleteerror'] = 'An error occured while deleting address book.';
+$messages['bookupdateerror'] = 'An error occured while updating address book.';
+$messages['bookcreateerror'] = 'An error occured while creating address book.';
+$messages['nobooknamewarning'] = 'Please, enter address book name.';
+$messages['noemailnamewarning'] = 'Please, enter email address or contact name.';
 
 ?>
