@@ -52,6 +52,12 @@ $rcmail_config['calendar_first_day'] = 1;
 // first hour of the calendar (0-23)
 $rcmail_config['calendar_first_hour'] = 6;
 
+// working hours begin
+$rcmail_config['calendar_work_start'] = 6;
+
+// working hours end
+$rcmail_config['calendar_work_end'] = 18;
+
 // event categories
 $rcmail_config['calendar_categories'] = array(
   'Personal' => 'c0c0c0',

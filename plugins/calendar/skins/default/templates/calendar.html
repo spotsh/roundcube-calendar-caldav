@@ -190,11 +190,11 @@
   <div class="schedule-options">
     <label><input type="checkbox" id="schedule-freebusy-wokinghours" value="1" /><roundcube:label name="calendar.onlyworkinghours" /></label>
     <div class="schedule-buttons">
-      <button id="shedule-freebusy-prev" title="<roundcube:label name='previouspage' />">&#9668;</button>
-      <button id="shedule-freebusy-next" title="<roundcube:label name='nextpage' />">&#9658;</button>
+      <button id="shedule-freebusy-prev" title="<roundcube:label name='previouspage' />">&#9668;</button><button id="shedule-freebusy-next" title="<roundcube:label name='nextpage' />">&#9658;</button>
     </div>
   </div>
   
+  <div style="float:left; width:30em">
   <div class="form-section">
     <label for="schedule-startdate"><roundcube:label name="calendar.start" /></label>
     <input type="text" name="startdate" size="10" id="schedule-startdate" disabled="true" /> &nbsp;
@@ -205,8 +205,20 @@
     <input type="text" name="enddate" size="10" id="schedule-enddate" disabled="true" /> &nbsp;
     <input type="text" name="endtime" size="6"  id="schedule-endtime" disabled="true" />
   </div>
+  </div>
+  <div class="schedule-find-buttons" style="float:left">
+    <button id="shedule-find-prev">&#9668; <roundcube:label name="calendar.prevslot" /></button>
+    <button id="shedule-find-next"><roundcube:label name="calendar.nextslot" /> &#9658;</button>
+  </div>
+  <br style="clear:both;" />
   
   <roundcube:include file="/templates/freebusylegend.html" />
+  <div class="attendees-list">
+    <span class="attendee organizer"><roundcube:label name="calendar.roleorganizer" /></span>
+    <span class="attendee req-participant"><roundcube:label name="calendar.rolerequired" /></span>
+    <span class="attendee opt-participant"><roundcube:label name="calendar.roleoptional" /></span>
+    <span class="attendee chair"><roundcube:label name="calendar.roleresource" /></span>
+  </div>
 </div>
 
 <div id="calendarform" class="uidialog">

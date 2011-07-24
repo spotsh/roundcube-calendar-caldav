@@ -52,6 +52,8 @@ class calendar extends rcube_plugin
     'calendar_timeslots'    => 2,
     'calendar_first_day'    => 1,
     'calendar_first_hour'   => 6,
+    'calendar_work_start'   => 6,
+    'calendar_work_end'     => 18,
   );
 
   private $default_categories = array(
@@ -627,6 +629,8 @@ class calendar extends rcube_plugin
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
     $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']);
     $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']);
+    $settings['work_start'] = (int)$this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']);
+    $settings['work_end'] = (int)$this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']);
     $settings['timezone'] = $this->timezone;
 
     // localization
