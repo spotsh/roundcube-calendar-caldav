@@ -597,6 +597,7 @@ td.topalign {
 
 #edit-attendees-legend {
 	margin-top: 3em;
+	margin-bottom: 0.5em;
 }
 
 #edit-attendees-legend .legend {
@@ -667,13 +668,33 @@ td.topalign {
 	border-color: #ccc;
 }
 
-#schedule-attendees-list div.attendee {
-	padding: 3px 20px 3px 6px;
+.attendees-list .attendee {
+	padding: 3px 4px 3px 20px;
+	background: url('images/attendee-status.gif') 2px -97px no-repeat;
+}
+
+.attendees-list div.attendee {
 	border-top: 1px solid #ccc;
 }
 
-#schedule-attendees-list div.loading {
-	background: url('images/loading-small.gif') top right no-repeat;
+.attendees-list span.attendee {
+	margin-right: 2em;
+}
+
+.attendees-list .organizer {
+	background-position: 3px -77px;
+}
+
+.attendees-list .opt-participant {
+	background-position: 2px -117px;
+}
+
+.attendees-list .chair {
+	background-position: 2px -137px;
+}
+
+.attendees-list .loading {
+	background: url('images/loading-small.gif') 1px 50% no-repeat;
 }
 
 #schedule-freebusy-times {
@@ -706,17 +727,27 @@ td.topalign {
 	background: rgba(60, 60, 60, 0.6);
 	opacity: 0.5;
 	border-radius: 4px;
+	cursor: move;
 }
 
 #eventfreebusy .schedule-options {
 	position: relative;
-	margin-bottom: 2em;
+	margin-bottom: 1.5em;
 }
 
 #eventfreebusy .schedule-buttons {
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+#eventfreebusy .schedule-find-buttons {
+	padding-bottom:0.5em;
+}
+
+#eventfreebusy .schedule-find-buttons button {
+	min-width: 9em;
+	text-align: center;
 }
 
 span.edit-alarm-set {

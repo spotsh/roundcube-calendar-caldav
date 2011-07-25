@@ -591,7 +591,7 @@ class calendar_ui
     $table->add('attendees',
       html::tag('h3', 'boxtitle', $this->calendar->gettext('tabattendees')) .
       html::div('timesheader', '&nbsp;') .
-      html::div(array('id' => 'schedule-attendees-list'), '')
+      html::div(array('id' => 'schedule-attendees-list', 'class' => 'attendees-list'), '')
     );
     $table->add('times',
       html::div('scroll',
