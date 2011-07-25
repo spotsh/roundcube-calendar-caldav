@@ -42,6 +42,7 @@ function rcube_calendar_ui(settings)
     var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
+    var event_defaults = { free_busy:'busy' };
     var event_attendees = null;
     var attendees_list;
     var freebusy_ui = { workinhoursonly:false };
@@ -330,7 +331,8 @@ function rcube_calendar_ui(settings)
       
       var $dialog = $("#eventedit");
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
-      me.selected_event = $.extend({}, event);  // clone event object
+      me.selected_event = $.extend(event_defaults, event);  // clone event object (with defaults)
+      event = me.selected_event; // change reference to clone
       freebusy_needsupdate = false;
 
       // reset dialog first, enable/disable fields according to editable state
