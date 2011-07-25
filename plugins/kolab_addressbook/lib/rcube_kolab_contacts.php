@@ -128,11 +128,13 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
             else {
                 $acl = $this->storagefolder->getACL();
-                $acl = $acl[$_SESSION['username']];
-                if (strpos($acl, 'i') !== false)
-                    $this->readonly = false;
-                if (strpos($acl, 'a') !== false || strpos($acl, 'x') !== false)
-                    $this->editable = true;
+                if (is_array($acl)) {
+                    $acl = $acl[$_SESSION['username']];
+                    if (strpos($acl, 'i') !== false)
+                        $this->readonly = false;
+                    if (strpos($acl, 'a') !== false || strpos($acl, 'x') !== false)
+                        $this->editable = true;
+                }
             }
         }
     }
