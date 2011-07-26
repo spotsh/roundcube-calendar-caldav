@@ -288,28 +288,29 @@ abstract class calendar_driver
   /**
    * Fetch free/busy information from a person within the given range
    *
-   * @param string E-mail address of attendee
+   * @param string  E-mail address of attendee
    * @param integer Requested period start date/time as unix timestamp
    * @param integer Requested period end date/time as unix timestamp
-   * @return array List of busy timeslots within the requested range
+   *
+   * @return array  List of busy timeslots within the requested range
    */
   public function get_freebusy_list($email, $start, $end)
   {
     sleep(2);
     return false;
   }
-  
+
   /**
-   * Callback function to append additional elements to the calendar create/edit form
+   * Callback function to produce driver-specific calendar create/edit form
    *
    * @param string Request action 'form-edit|form-new'
-   * @param array Calendar properties (e.g. id)
-   * @param string HTML code for default edit form
-   * @return string HTML to be appended to form
+   * @param array  Calendar properties (e.g. id, color)
+   *
+   * @return string HTML content of the form
    */
-  public function calendar_form($action, $calendar, $html)
+  public function calendar_form($action, $calendar)
   {
-    return $html;
+    return null;
   }
 
 }

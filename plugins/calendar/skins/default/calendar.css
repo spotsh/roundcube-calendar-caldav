@@ -843,6 +843,28 @@ a.alarm-action-snooze:after {
 	height: 160px;
 }
 
+#calendar-details {
+    left: 5px;
+    position: absolute;
+    right: 5px;
+}
+
+#calendar-details div.tabsbar {
+    top: 0;
+    left: 2px;
+}
+
+#calendar-details fieldset {
+    background-color: #F2F2F2;
+}
+
+#calendar-details table td.title {
+  font-weight: bold;
+  white-space: nowrap;
+  color: #666;
+  padding-right: 10px;
+}
+
 
 /* fullcalendar style overrides */
 

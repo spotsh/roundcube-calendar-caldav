@@ -420,9 +420,9 @@ class calendar extends rcube_plugin
   function calendar_action()
   {
     $action = get_input_value('action', RCUBE_INPUT_GPC);
-    $cal = get_input_value('c', RCUBE_INPUT_POST);
+    $cal = get_input_value('c', RCUBE_INPUT_GPC);
     $success = $reload = false;
-    
+
     switch ($action) {
       case "form-new":
       case "form-edit":

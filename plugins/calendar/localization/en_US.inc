@@ -1,4 +1,5 @@
 <?php
+
 $labels = array();
 
 // preferences
@@ -56,6 +57,7 @@ $labels['alarms'] = 'Reminder';
 $labels['generated'] = 'generated at';
 $labels['selectdate'] = 'Select date';
 $labels['printdescriptions'] = 'Print descriptions';
+$labels['parentcalendar'] = 'Superior calendar';
 
 // alarm/reminder settings
 $labels['alarmemail'] = 'Send Email';

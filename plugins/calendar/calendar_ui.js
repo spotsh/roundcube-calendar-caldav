@@ -1276,10 +1276,10 @@ function rcube_calendar_ui(settings)
         type: 'GET',
         dataType: 'html',
         url: rcmail.url('calendar'),
-        data: { action:(calendar.id ? 'form-edit' : 'form-new'), calendar:{ id:calendar.id } },
-        success: function(data){
+        data: { action:(calendar.id ? 'form-edit' : 'form-new'), c:{ id:calendar.id } },
+        success: function(data) {
           $dialog.html(data);
-          form = $('#calendarform > form');
+          form = $('form', $('#calendarform')); // '#calendarform > form' doesn't work here
           name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
           name.select();
@@ -1291,7 +1291,7 @@ function rcube_calendar_ui(settings)
       
       buttons[rcmail.gettext('save', 'calendar')] = function() {
         // form is not loaded
-        if (!form)
+        if (!form || !form.length)
           return;
           
         // TODO: do some input validation
@@ -1307,7 +1307,7 @@ function rcube_calendar_ui(settings)
           data.color = data.color.replace(/^#/, '');
         if (calendar.id)
           data.id = calendar.id;
-        
+
         rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });
         $dialog.dialog("close");
       };

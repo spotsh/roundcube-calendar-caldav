@@ -529,28 +529,19 @@ class calendar_ui
   }
 
   /**
-   * Handler for calendar form template object.
-   * Will get additional form fields from driver class
+   * Handler for calendar form template.
+   * The form content could be overriden by the driver
    */
   function calendar_editform($action, $calendar = array())
   {
-    // compose default calendar form
-    $input_name = new html_inputfield(array('name' => 'name', 'id' => 'calendar-name', 'size' => 20));
-    $html = html::div('form-section',
-      html::label('calendar-name', $this->calendar->gettext('name')) .
-      $input_name->show($calendar['name']));
+    $html = $this->calendar->driver->calendar_form($action, $calendar);
 
-    $input_color = new html_inputfield(array('name' => 'color', 'id' => 'calendar-color', 'size' => 6));
-    $html .= html::div('form-section',
-      html::label('calendar-color', $this->calendar->gettext('color')) .
-      $input_color->show($calendar['color']));
-    
-    // allow driver to extend the form
-    $html = $this->calendar->driver->calendar_form($action, $calendar, $html);
-    
-    return html::tag('form', array('action' => "#", 'method' => "get"), $html);
+    if (!$html)
+      $html = $this->rc->output->parse('calendar.calendarform', false, false);
+
+    return $html;
   }
-  
+
   /**
    *
    */

@@ -140,27 +140,22 @@ class kolab_driver extends calendar_driver
    */
   public function create_calendar($prop)
   {
-    $folder = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+    $folder = $this->folder_update($prop);
 
-    // add namespace prefix (when needed)
-    $this->rc->imap_init();
-    $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+    if ($folder === false) {
+      return false;
+    }
 
     // create ID
     $id = rcube_kolab::folder_id($folder);
 
-    // create IMAP folder
-    if (rcube_kolab::folder_create($folder, 'event')) {
-      // save color in user prefs (temp. solution)
-      $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
-      $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+    // save color in user prefs (temp. solution)
+    $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
+    $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
 
-      $this->rc->user->save_prefs($prefs);
+    $this->rc->user->save_prefs($prefs);
 
-      return $id;
-    }
-
-    return false;
+    return $id;
   }
 
 
@@ -172,31 +167,86 @@ class kolab_driver extends calendar_driver
   public function edit_calendar($prop)
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
-      $newfolder = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
       $oldfolder = $cal->get_realname();
-      // add namespace prefix (when needed)
-      $this->rc->imap_init();
-      $newfolder = $this->rc->imap->mod_mailbox($newfolder, 'in');
+      $newfolder = $this->folder_update($prop);
 
-      if (!$cal->readonly && $newfolder != $oldfolder)
-        $result = rcube_kolab::folder_rename($oldfolder, $newfolder);
-      else
-        $result = true;
-
-      if ($result) {
-        // create ID
-        $id = $newfolder ? rcube_kolab::folder_id($newfolder) : $prop['id'];
-        // save color in user prefs (temp. solution)
-        $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
-        unset($prefs['kolab_calendars'][$prop['id']]);
-        $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
-
-        $this->rc->user->save_prefs($prefs);
-        return true;
+      if ($newfolder === false) {
+        return false;
       }
+
+      // create ID
+      $id = rcube_kolab::folder_id($newfolder);
+
+      // save color in user prefs (temp. solution)
+      $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
+      unset($prefs['kolab_calendars'][$prop['id']]);
+      $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+
+      $this->rc->user->save_prefs($prefs);
+      return true;
     }
 
   	 return false;
+  }
+
+
+  /**
+   * Rename or Create a new IMAP folder
+   *
+   * @param array Hash array with calendar properties
+   *
+   * @return mixed New folder name or False on failure
+   */
+  private function folder_update($prop)
+  {
+    $folder    = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+    $oldfolder = $prop['oldname']; // UTF7
+    $parent    = $prop['parent']; // UTF7
+    $delimiter = $_SESSION['imap_delimiter'];
+
+    // sanity checks (from steps/settings/save_folder.inc)
+    if (!strlen($folder)) {
+      return false;
+    }
+    else if (strlen($folder) > 128) {
+      return false;
+    }
+    else {
+      // these characters are problematic e.g. when used in LIST/LSUB
+      foreach (array($delimiter, '%', '*') as $char) {
+        if (strpos($folder, $delimiter) !== false) {
+          return false;
+        }
+      }
+    }
+
+    // @TODO: $options
+    $options = array();
+    if ($options['protected'] || $options['norename']) {
+      $folder = $oldfolder;
+    }
+    else if (strlen($parent)) {
+      $folder = $parent . $delimiter . $folder;
+    }
+    else {
+      // add namespace prefix (when needed)
+      $this->rc->imap_init();
+      $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+    }
+
+    // update the folder name
+    if (strlen($oldfolder)) {
+      if ($oldfolder != $folder)
+        $result = rcube_kolab::folder_rename($oldfolder, $folder);
+      else
+        $result = true;
+    }
+    // create new folder
+    else {
+      $result = rcube_kolab::folder_create($folder, 'event', false);
+    }
+
+    return $result ? $folder : false;
   }
 
 
@@ -768,8 +818,171 @@ class kolab_driver extends calendar_driver
         'message' => "Failed triggering folder. Error was " . $trigger->getMessage()),
         true, false);
     }
-    
+
     exit;
+  }
+
+  /**
+   * Callback function to produce driver-specific calendar create/edit form
+   *
+   * @param string Request action 'form-edit|form-new'
+   * @param array  Calendar properties (e.g. id, color)
+   *
+   * @return string HTML content of the form
+   */
+  public function calendar_form($action, $calendar)
+  {
+    // Remove any scripts/css/js
+    $this->rc->output->reset();
+    // Produce form content
+    $content = $this->calendar_form_content($calendar);
+    // Parse form template, write to output buffer
+    // This way other plugins (e.g. acl) will be able to add scripts/style to the content
+    ob_start();
+    $this->rc->output->parse('calendar.calendarform-kolab', false, true);
+    $html = ob_get_clean();
+
+    return str_replace('%FORM_CONTENT%', $content, $html);
+  }
+
+  /**
+   * Produces calendar edit/create form content
+   *
+   * @return string HTML content of the form
+   */
+  private function calendar_form_content($calendar)
+  {
+    if ($calendar['id'] && ($cal = $this->calendars[$calendar['id']])) {
+      $folder = $cal->get_realname(); // UTF7
+      $color  = $cal->get_color();
+    }
+    else {
+      $folder = '';
+      $color  = '';
+    }
+
+    $hidden_fields[] = array('name' => 'oldname', 'value' => $folder);
+
+    $delim  = $_SESSION['imap_delimiter'];
+    $form   = array();
+
+    if (strlen($folder)) {
+      $path_imap = explode($delim, $folder);
+      $name      = rcube_charset_convert(array_pop($path_imap), 'UTF7-IMAP');
+      $path_imap = implode($path_imap, $delim);
+
+      $this->rc->imap_connect();
+      $options = $this->rc->imap->mailbox_info($folder);
+    }
+    else {
+      $path_imap = '';
+      $name      = '';
+    }
+
+    // General tab
+    $form['props'] = array(
+      'name' => $this->rc->gettext('properties'),
+    );
+
+    // calendar name
+    $foldername = new html_inputfield(array('name' => 'name', 'id' => 'calendar-name', 'size' => 20));
+
+    $form['props']['fieldsets']['location'] = array(
+      'name'  => $this->rc->gettext('location'),
+      'content' => array(
+        'name' => array(
+          'label' => $this->cal->gettext('name'),
+          'value' => $foldername->show($name),
+        ),
+      ),
+    );
+
+    if (!empty($options) && ($options['norename'] || $options['namespace'] != 'personal')) {
+      // prevent user from moving folder
+      $hidden_fields[] = array('name' => 'parent', 'value' => $path_imap);
+    }
+    else {
+      $select = rcube_kolab::folder_selector('event', array('name' => 'parent'));
+
+      $form['props']['fieldsets']['location']['content']['path'] = array(
+        'label' => $this->cal->gettext('parentcalendar'),
+        'value' => $select->show($path_imap),
+      );
+    }
+
+    // calendar color
+    $color = new html_inputfield(array('name' => 'color', 'id' => 'calendar-color', 'size' => 6));
+
+    $form['props']['fieldsets']['settings'] = array(
+      'name'  => $this->rc->gettext('settings'),
+      'content' => array(
+        'color' => array(
+          'label' => $this->cal->gettext('color'),
+          'value' => $color->show($calendar['color']),
+        ),
+      ),
+    );
+
+    // Allow plugins to modify the form content (e.g. with ACL form)
+    $plugin = $this->rc->plugins->exec_hook('calendar_form_kolab',
+      array('form' => $form, 'options' => $options, 'name' => $folder));
+
+    $form = $plugin['form'];
+    $out = '';
+
+    if (is_array($hidden_fields)) {
+        foreach ($hidden_fields as $field) {
+            $hiddenfield = new html_hiddenfield($field);
+            $out .= $hiddenfield->show() . "\n";
+        }
+    }
+
+    // Create form output
+    foreach ($form as $tab) {
+      if (!empty($tab['fieldsets']) && is_array($tab['fieldsets'])) {
+        $content = '';
+        foreach ($tab['fieldsets'] as $fieldset) {
+          $subcontent = $this->get_form_part($fieldset);
+          if ($subcontent) {
+            $content .= html::tag('fieldset', null, html::tag('legend', null, Q($fieldset['name'])) . $subcontent) ."\n";
+          }
+        }
+      }
+      else {
+        $content = $this->get_form_part($tab);
+      }
+
+      if ($content) {
+        $out .= html::tag('fieldset', null, html::tag('legend', null, Q($tab['name'])) . $content) ."\n";
+      }
+    }
+
+    return $out;
+  }
+
+  /**
+   * Helper function used in calendar_form_content(). Creates a part of the form.
+   */
+  private function get_form_part($form)
+  {
+    $content = '';
+
+    if (is_array($form['content']) && !empty($form['content'])) {
+      $table = new html_table(array('cols' => 2));
+      foreach ($form['content'] as $col => $colprop) {
+        $colprop['id'] = '_'.$col;
+        $label = !empty($colprop['label']) ? $colprop['label'] : rcube_label($col);
+
+        $table->add('title', sprintf('<label for="%s">%s</label>', $colprop['id'], Q($label)));
+        $table->add(null, $colprop['value']);
+      }
+      $content = $table->show();
+    }
+    else {
+      $content = $form['content'];
+    }
+
+    return $content;
   }
 
 }
