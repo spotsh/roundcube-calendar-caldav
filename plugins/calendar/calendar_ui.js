@@ -1142,7 +1142,7 @@ function rcube_calendar_ui(settings)
     var check_freebusy_status = function(icon, email, event)
     {
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { freebusy:false };
-      if (!calendar) {
+      if (!calendar.freebusy) {
         $(icon).removeClass().addClass('availabilityicon unknown');
         return;
       }

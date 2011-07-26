@@ -473,14 +473,14 @@ class calendar extends rcube_plugin
           $event['attendees'][] = array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email']);
         }
         
-        $this->prepare_event($event);
+        $this->prepare_event($event, $action);
         if ($success = $this->driver->new_event($event))
             $this->cleanup_event($event);
         $reload = true;
         break;
       
       case "edit":
-        $this->prepare_event($event);
+        $this->prepare_event($event, $action);
         if ($success = $this->driver->edit_event($event))
             $this->cleanup_event($event);
         $reload = true;
@@ -1149,7 +1149,7 @@ class calendar extends rcube_plugin
   /**
    * Prepares new/edited event properties before save
    */
-  private function prepare_event(&$event)
+  private function prepare_event(&$event, $action)
   {
     $eventid = $event['calendar'].':'.$event['id'];
 
@@ -1181,7 +1181,7 @@ class calendar extends rcube_plugin
       if (!$organizer && $owner !== false) {
         $event['attendees'][$i]['role'] = 'ORGANIZER';
       }
-      else if (!$organizer && $identity['email']) {
+      else if (!$organizer && $identity['email'] && $action == 'new') {
         array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
       }
     }
