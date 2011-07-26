@@ -417,13 +417,13 @@ class kolab_addressbook extends rcube_plugin
         if (!strlen($folder)) {
             $error = rcube_label('cannotbeempty');
         }
-        else if (strlen($name) > 128) {
+        else if (strlen($folder) > 128) {
             $error = rcube_label('nametoolong');
         }
         else {
             // these characters are problematic e.g. when used in LIST/LSUB
             foreach (array($delimiter, '%', '*') as $char) {
-                if (strpos($name, $delimiter) !== false) {
+                if (strpos($folder, $delimiter) !== false) {
                     $error = rcube_label('forbiddencharacter') . " ($char)";
                     break;
                 }
