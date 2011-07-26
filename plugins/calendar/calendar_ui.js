@@ -42,10 +42,12 @@ function rcube_calendar_ui(settings)
     var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
+    var event_defaults = { free_busy:'busy' };
     var event_attendees = null;
     var attendees_list;
-    var freebusy_ui = {};
+    var freebusy_ui = { workinhoursonly:false };
     var freebusy_data = {};
+    var freebusy_needsupdate;
 
     // general datepicker settings
     var datepicker_settings = {
@@ -329,7 +331,9 @@ function rcube_calendar_ui(settings)
       
       var $dialog = $("#eventedit");
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
-      me.selected_event = event;
+      me.selected_event = $.extend(event_defaults, event);  // clone event object (with defaults)
+      event = me.selected_event; // change reference to clone
+      freebusy_needsupdate = false;
 
       // reset dialog first, enable/disable fields according to editable state
       $('#eventtabs').get(0).reset();
@@ -614,27 +618,34 @@ function rcube_calendar_ui(settings)
         return false;
       
       // set form elements
-      var duration = Math.round((event.end.getTime() - event.start.getTime()) / 1000);
-      var startdate = $('#schedule-startdate').val($.fullCalendar.formatDate(event.start, settings['date_format'])).data('duration', duration);
-      var starttime = $('#schedule-starttime').val($.fullCalendar.formatDate(event.start, settings['time_format'])).show();
-      var enddate = $('#schedule-enddate').val($.fullCalendar.formatDate(event.end, settings['date_format']));
-      var endtime = $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       var allday = $('#edit-allday').get(0);
+      var duration = Math.round((event.end.getTime() - event.start.getTime()) / 1000);
+      freebusy_ui.startdate = $('#schedule-startdate').val($.fullCalendar.formatDate(event.start, settings['date_format'])).data('duration', duration);
+      freebusy_ui.starttime = $('#schedule-starttime').val($.fullCalendar.formatDate(event.start, settings['time_format'])).show();
+      freebusy_ui.enddate = $('#schedule-enddate').val($.fullCalendar.formatDate(event.end, settings['date_format']));
+      freebusy_ui.endtime = $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       
       if (allday.checked) {
         starttime.val("00:00").hide();
         endtime.val("23:59").hide();
+        event.allDay = true;
       }
+      
+      // read attendee roles from drop-downs
+      $('select.edit-attendee-role').each(function(i, elem){
+        if (event_attendees[i])
+          event_attendees[i].role = $(elem).val();
+      });
       
       // render time slots
       var now = new Date(), fb_start = new Date(), fb_end = new Date();
-      fb_start.setTime(Math.max(now, event.start));
+      fb_start.setTime(event.start);
       fb_start.setHours(0); fb_start.setMinutes(0); fb_start.setSeconds(0); fb_start.setMilliseconds(0);
       fb_end.setTime(fb_start.getTime() + 86400000);
       
       freebusy_data = {};
-      freebusy_ui.loading = 1;  // prevent render_freebusy_grid() to load data
-      freebusy_ui.numdays = allday.checked ? 7 : 1;
+      freebusy_ui.loading = 1;  // prevent render_freebusy_grid() to load data yet
+      freebusy_ui.numdays = allday.checked ? 7 : Math.ceil(duration * 2 / 86400);
       freebusy_ui.interval = allday.checked ? 360 : 60;
       freebusy_ui.start = fb_start;
       freebusy_ui.end = new Date(freebusy_ui.start.getTime() + 86400000 * freebusy_ui.numdays);
@@ -651,8 +662,22 @@ function rcube_calendar_ui(settings)
       
       $('#schedule-attendees-list').html(list_html);
       
+      // enable/disable buttons
+      $('#shedule-find-prev').button('option', 'disabled', (fb_start.getTime() < now.getTime()));
+      
       // dialog buttons
       var buttons = {};
+      
+      buttons[rcmail.gettext('adobt', 'calendar')] = function() {
+        $('#edit-startdate').val(freebusy_ui.startdate.val());
+        $('#edit-starttime').val(freebusy_ui.starttime.val());
+        $('#edit-enddate').val(freebusy_ui.enddate.val());
+        $('#edit-endtime').val(freebusy_ui.endtime.val());
+        if (freebusy_needsupdate)
+          update_freebusy_status(me.selected_event);
+        freebusy_needsupdate = false;
+        $dialog.dialog("close");
+      };
       
       buttons[rcmail.gettext('cancel', 'calendar')] = function() {
         $dialog.dialog("close");
@@ -664,12 +689,26 @@ function rcube_calendar_ui(settings)
         closeOnEscape: true,
         title: rcmail.gettext('scheduletime', 'calendar'),
         close: function() {
+          if (bw.ie6)
+            $("#edit-attendees-table").css('visibility','visible');
           $dialog.dialog("destroy").hide();
         },
         buttons: buttons,
         minWidth: 640,
         width: 850
       }).show();
+      
+      // hide edit dialog on IE6 because of drop-down elements
+      if (bw.ie6)
+        $("#edit-attendees-table").css('visibility','hidden');
+      
+      // adjust dialog size to fit grid without scrolling
+      var gridw = $('#schedule-freebusy-times').width();
+      var overflow = gridw - $('#attendees-freebusy-table td.times').width() + 1;
+      if (overflow > 0) {
+        $dialog.dialog('option', 'width', Math.min((window.innerWidth || document.documentElement.clientWidth) - 40, 850 + overflow));
+        $dialog.dialog('option', 'position', ['center', 'center']);
+      }
       
       // fetch data from server
       freebusy_ui.loading = 0;
@@ -694,8 +733,8 @@ function rcube_calendar_ui(settings)
           lastdate = datestr;
         }
         
-        // TODO: define working hours by config
-        css = (freebusy_ui.numdays == 1 && (curdate.getHours() < 6 || curdate.getHours() > 18)) ? 'offhours' : 'workinghours';
+        // set css class according to working hours
+        css = (freebusy_ui.numdays == 1 && (curdate.getHours() < settings['work_start'] || curdate.getHours() > settings['work_end'])) ? 'offhours' : 'workinghours';
         times_row += '<td class="' + css + '">' + Q($.fullCalendar.formatDate(curdate, settings['time_format'])) + '</td>';
         slots_row += '<td class="' + css + ' unknown">&nbsp;</td>';
         
@@ -712,22 +751,97 @@ function rcube_calendar_ui(settings)
         times_html += '<tr id="fbrow' + domid + '">' + slots_row + '</tr>';
       }
       
-      $('#schedule-freebusy-times > thead').html(dates_row + times_row);
-      $('#schedule-freebusy-times > tbody').html(times_html);
+      var table = $('#schedule-freebusy-times');
+      table.children('thead').html(dates_row + times_row);
+      table.children('tbody').html(times_html);
       
       // if we have loaded free-busy data, show it
       if (!freebusy_ui.loading) {
         if (date2unixtime(freebusy_ui.start) < freebusy_data.start || date2unixtime(freebusy_ui.end) > freebusy_data.end || freebusy_ui.interval != freebusy_data.interval) {
-          load_freebusy_data(freebusy_ui.start, freebusy_ui.interval)
-          return;
+          load_freebusy_data(freebusy_ui.start, freebusy_ui.interval);
         }
-        
-        for (var email, i=0; i < event_attendees.length; i++) {
-          if ((email = event_attendees[i].email))
-            update_freebusy_display(email);
+        else {
+          for (var email, i=0; i < event_attendees.length; i++) {
+            if ((email = event_attendees[i].email))
+              update_freebusy_display(email);
+          }
         }
       }
+      
+      // render current event date/time selection over grid table
+      // use timeout to let the dom attributes (width/height/offset) be set first
+      window.setTimeout(function(){ render_freebusy_overlay(); }, 10);
     };
+    
+    // render overlay element over the grid to visiualize the current event date/time
+    var render_freebusy_overlay = function()
+    {
+      var overlay = $('#schedule-event-time');
+      if (me.selected_event.end.getTime() < freebusy_ui.start.getTime() || me.selected_event.start.getTime() > freebusy_ui.end.getTime()) {
+        overlay.draggable('disable').hide();
+      }
+      else {
+        var table = $('#schedule-freebusy-times'),
+          width = 0,
+          pos = { top:table.children('thead').height(), left:0 },
+          eventstart = date2unixtime(me.selected_event.start),
+          eventend = date2unixtime(me.selected_event.end),
+          slotstart = date2unixtime(freebusy_ui.start),
+          slotsize = freebusy_ui.interval * 60,
+          slotend, fraction, $cell;
+        
+        // iterate through slots to determine position and size of the overlay
+        table.children('thead').find('td').each(function(i, cell){
+          slotend = slotstart + slotsize - 60;
+          // event starts in this slot: compute left
+          if (eventstart >= slotstart && eventstart <= slotend) {
+            fraction = 1 - (slotend - eventstart) / slotsize;
+            pos.left = Math.round(cell.offsetLeft + cell.offsetWidth * fraction);
+          }
+          // event ends in this slot: compute width
+          else if (eventend >= slotstart && eventend <= slotend) {
+            fraction = 1 - (slotend - eventend) / slotsize;
+            width = Math.round(cell.offsetLeft + cell.offsetWidth * fraction) - pos.left;
+          }
+
+          slotstart = slotstart + slotsize;
+        });
+
+        if (!width)
+          width = table.width() - pos.left;
+
+        // overlay is visible
+        if (width > 0) {
+          overlay.css({ width: (width-5)+'px', height:(table.children('tbody').height() - 4)+'px', left:pos.left+'px', top:pos.top+'px' }).draggable('enable').show();
+          
+          // configure draggable
+          if (!overlay.data('isdraggable')) {
+            overlay.draggable({
+              axis: 'x',
+              scroll: true,
+              stop: function(e, ui){
+                // convert pixels to time
+                var px = ui.position.left;
+                var range_p = $('#schedule-freebusy-times').width();
+                var range_t = freebusy_ui.end.getTime() - freebusy_ui.start.getTime();
+                var newstart = new Date(freebusy_ui.start.getTime() + px * (range_t / range_p));
+                newstart.setSeconds(0); newstart.setMilliseconds(0);
+                // round to 5 minutes
+                var round = newstart.getMinutes() % 5;
+                if (round > 2.5) newstart.setTime(newstart.getTime() + (5 - round) * 60000);
+                else if (round > 0) newstart.setTime(newstart.getTime() - round * 60000);
+                // update event times
+                update_freebusy_dates(newstart, new Date(newstart.getTime() + freebusy_ui.startdate.data('duration') * 1000));
+              }
+            }).data('isdraggable', true);
+          }
+        }
+        else
+          overlay.draggable('disable').hide();
+      }
+      
+    };
+    
     
     // fetch free-busy information for each attendee from server
     var load_freebusy_data = function(from, interval)
@@ -790,6 +904,109 @@ function rcube_calendar_ui(settings)
         });
       }
     };
+    
+    // write changed event date/times back to form fields
+    var update_freebusy_dates = function(start, end)
+    {
+      me.selected_event.start = start;
+      me.selected_event.end = end;
+      freebusy_ui.startdate.val($.fullCalendar.formatDate(start, settings['date_format']));
+      freebusy_ui.starttime.val($.fullCalendar.formatDate(start, settings['time_format']));
+      freebusy_ui.enddate.val($.fullCalendar.formatDate(end, settings['date_format']));
+      freebusy_ui.endtime.val($.fullCalendar.formatDate(end, settings['time_format']));
+      freebusy_needsupdate = true;
+    };
+
+    // attempt to find a time slot where all attemdees are available
+    var freebusy_find_slot = function(dir)
+    {
+      var event = me.selected_event,
+        eventstart = date2unixtime(event.start),  // calculate with unitimes
+        eventend = date2unixtime(event.end),
+        duration = eventend - eventstart,
+        sinterval = freebusy_data.interval * 60,
+        intvlslots = event.allDay ? 4 : 1,
+        numslots = Math.ceil(duration / sinterval),
+        checkdate, slotend, email, curdate;
+
+      // shift event times to next possible slot
+      eventstart += sinterval * intvlslots * dir;
+      eventend += sinterval * intvlslots * dir;
+
+      // iterate through free-busy slots and find candidates
+      var candidatecount = 0, candidatestart = candidateend = success = false;
+      for (var slot = dir > 0 ? freebusy_data.start : freebusy_data.end - sinterval; (dir > 0 && slot < freebusy_data.end) || (dir < 0 && slot >= freebusy_data.start); slot += sinterval * dir) {
+        slotend = slot + sinterval;
+        if ((dir > 0 && slotend <= eventstart) || (dir < 0 && slot >= eventend))  // skip
+          continue;
+        
+        // respect workingours setting
+        if (freebusy_ui.workinhoursonly && freebusy_data.interval <= 60) {
+          curdate = fromunixtime(dir > 0 || !candidateend ? slot : (candidateend - duration));
+          if (curdate.getHours() < settings['work_start'] || curdate.getHours() > settings['work_end']) {  // skip off-hours
+            candidatestart = candidateend = false;
+            candidatecount = 0;
+            continue;
+          }
+        }
+        
+        if (!candidatestart)
+          candidatestart = slot;
+        
+        // check freebusy data for all attendees
+        for (var i=0; i < event_attendees.length; i++) {
+          if ((email = event_attendees[i].email) && freebusy_data[email][slot] > 1) {
+            candidatestart = candidateend = false;
+            break;
+          }
+        }
+        
+        // occupied slot
+        if (!candidatestart) {
+          slot += Math.max(0, intvlslots - candidatecount - 1) * sinterval * dir;
+          candidatecount = 0;
+          continue;
+        }
+        
+        // set candidate end to slot end time
+        candidatecount++;
+        if (dir < 0 && !candidateend)
+          candidateend = slotend;
+        
+        // if candidate is big enough, this is it!
+        if (candidatecount == numslots) {
+          if (dir > 0) {
+            event.start = fromunixtime(candidatestart);
+            event.end = fromunixtime(candidatestart + duration);
+          }
+          else {
+            event.end = fromunixtime(candidateend);
+            event.start = fromunixtime(candidateend - duration);
+          }
+          success = true;
+          break;
+        }
+      }
+      
+      // update event date/time display
+      if (success) {
+        update_freebusy_dates(event.start, event.end);
+        
+        // move freebusy grid if necessary
+        if (event.start.getTime() >= freebusy_ui.end.getTime())
+          render_freebusy_grid(1);
+        else if (event.end.getTime() <= freebusy_ui.start.getTime())
+          render_freebusy_grid(-1);
+        else
+          render_freebusy_overlay();
+        
+        var now = new Date();
+        $('#shedule-find-prev').button('option', 'disabled', (event.start.getTime() < now.getTime()));
+      }
+      else {
+        alert(rcmail.gettext('noslotfound','calendar'));
+      }
+    };
 
 
     // update event properties and attendees availability if event times have changed
@@ -797,10 +1014,11 @@ function rcube_calendar_ui(settings)
     {
       if (me.selected_event) {
         var allday = $('#edit-allday').get(0);
+        me.selected_event.allDay = allday.checked;
         me.selected_event.start = parse_datetime(allday.checked ? '00:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
         me.selected_event.end   = parse_datetime(allday.checked ? '23:59' : $('#edit-endtime').val(), $('#edit-enddate').val());
-        if (me.selected_event.attendees)
-          update_freebusy_status(me.selected_event);
+        if (event_attendees)
+          freebusy_needsupdate = true;
         $('#edit-startdate').data('duration', Math.round((me.selected_event.end.getTime() - me.selected_event.start.getTime()) / 1000));
       }
     };
@@ -902,10 +1120,12 @@ function rcube_calendar_ui(settings)
     var update_freebusy_status = function(event)
     {
       var icons = attendees_list.find('img.availabilityicon');
-      for (var i=0; i < event.attendees.length; i++) {
-        if (icons.get(i) && event.attendees[i].email && event.attendees[i].status != 'ACCEPTED')
-          check_freebusy_status(icons.get(i), event.attendees[i].email, event);
+      for (var i=0; i < event_attendees.length; i++) {
+        if (icons.get(i) && event_attendees[i].email && event_attendees[i].status != 'ACCEPTED')
+          check_freebusy_status(icons.get(i), event_attendees[i].email, event);
       }
+      
+      freebusy_needsupdate = false;
     };
     
     // load free-busy status from server and update icon accordingly
@@ -1372,8 +1592,10 @@ function rcube_calendar_ui(settings)
       // callback for clicks in all-day box
       dayClick: function(date, allDay, e, view) {
         var now = new Date().getTime();
-        if (now - day_clicked_ts < 400 && day_clicked == date.getTime())  // emulate double-click on day
-          return event_edit_dialog('new', { start:date, end:date, allDay:allDay, calendar:me.selected_calendar });
+        if (now - day_clicked_ts < 400 && day_clicked == date.getTime()) {  // emulate double-click on day
+          var enddate = new Date(); enddate.setTime(date.getTime() + 86400000 - 60000);
+          return event_edit_dialog('new', { start:date, end:enddate, allDay:allDay, calendar:me.selected_calendar });
+        }
         
         if (!ignore_click) {
           view.calendar.gotoDate(date);
@@ -1563,14 +1785,17 @@ function rcube_calendar_ui(settings)
     // init event dialog
     $('#eventtabs').tabs({
       show: function(event, ui) {
-        if (ui.panel.id == 'event-tab-3')
+        if (ui.panel.id == 'event-tab-3') {
           $('#edit-attendee-name').select();
+          if (freebusy_needsupdate && me.selected_event)
+            update_freebusy_status(me.selected_event);
+        }
       }
     });
     $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
     $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
     $('#edit-enddate').datepicker('option', 'onSelect', event_times_changed).change(event_times_changed);
-    $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); });
+    $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); event_times_changed(); });
 
     // configure drop-down menu on time input fields based on jquery UI autocomplete
     $('#edit-starttime, #edit-endtime, input.edit-alarm-time')
@@ -1630,13 +1855,17 @@ function rcube_calendar_ui(settings)
       event_freebusy_dialog();
     });
     
-    $('#shedule-freebusy-prev').button().click(function(){ render_freebusy_grid(-1); });
-    $('#shedule-freebusy-next').button().click(function(){ render_freebusy_grid(1); }).parent().buttonset();
-
+    $('#shedule-freebusy-prev').html(bw.ie6 ? '&lt;&lt;' : '&#9668;').button().click(function(){ render_freebusy_grid(-1); });
+    $('#shedule-freebusy-next').html(bw.ie6 ? '&gt;&gt;' : '&#9658;').button().click(function(){ render_freebusy_grid(1); }).parent().buttonset();
+    
+    $('#shedule-find-prev').button().click(function(){ freebusy_find_slot(-1); });
+    $('#shedule-find-next').button().click(function(){ freebusy_find_slot(1); });
+    
     $('#schedule-freebusy-wokinghours').click(function(){
+      freebusy_ui.workinhoursonly = this.checked;
       $('#workinghourscss').remove();
       if (this.checked)
-        $('<style type="text/css" id="workinghourscss"> td.offhours { display:none } </style>').appendTo('head');
+        $('<style type="text/css" id="workinghourscss"> td.offhours { opacity:0.3; filter:alpha(opacity=30) } </style>').appendTo('head');
     });
 
     // add proprietary css styles if not IE

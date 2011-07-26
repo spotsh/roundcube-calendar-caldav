@@ -29,6 +29,7 @@ class calendar extends rcube_plugin
   const FREEBUSY_UNKNOWN = 0;
   const FREEBUSY_FREE = 1;
   const FREEBUSY_BUSY = 2;
+  const FREEBUSY_TENTATIVE = 3;
   const FREEBUSY_OOF = 4;
   
   public $task = '?(?!login|logout).*';
@@ -51,6 +52,8 @@ class calendar extends rcube_plugin
     'calendar_timeslots'    => 2,
     'calendar_first_day'    => 1,
     'calendar_first_hour'   => 6,
+    'calendar_work_start'   => 6,
+    'calendar_work_end'     => 18,
   );
 
   private $default_categories = array(
@@ -116,7 +119,7 @@ class calendar extends rcube_plugin
       $this->register_action('freebusy-status', array($this, 'freebusy_status'));
       $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
-      $this->register_action('print',array($this,'print_view'));
+      $this->register_action('print', array($this,'print_view'));
 
       // remove undo information...
       if ($undo = $_SESSION['calendar_event_undo']) {
@@ -508,6 +511,7 @@ class calendar extends rcube_plugin
             . ' ' . html::a(array('onclick' => sprintf("%s.http_request('event', 'action=undo', %s.display_message('', 'loading'))",
               JS_OBJECT_NAME, JS_OBJECT_NAME)), rcube_label('undo'));
           $this->rc->output->show_message($msg, 'confirmation', null, true, $undo_time);
+          $got_msg = true;
         }
         else if ($success) {
           $this->rc->output->show_message('calendar.successremoval', 'confirmation');
@@ -597,10 +601,11 @@ class calendar extends rcube_plugin
     $end = get_input_value('end', RCUBE_INPUT_GET);
     if (!$start) $start = mktime(0, 0, 0, 1, date('n'), date('Y')-1);
     if (!$end) $end = mktime(0, 0, 0, 31, 12, date('Y')+10);
-    $events = $this->driver->load_events($start, $end, null, get_input_value('source', RCUBE_INPUT_GET), 0);
+	$calendar_name = get_input_value('source', RCUBE_INPUT_GET);
+    $events = $this->driver->load_events($start, $end, null, $calendar_name, 0);
    
     header("Content-Type: text/calendar");
-    header("Content-Disposition: inline; filename=calendar.ics");
+    header("Content-Disposition: inline; filename=".$calendar_name);
     
     echo $this->ical->export($events);
     exit;
@@ -624,6 +629,8 @@ class calendar extends rcube_plugin
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
     $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']);
     $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']);
+    $settings['work_start'] = (int)$this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']);
+    $settings['work_end'] = (int)$this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']);
     $settings['timezone'] = $this->timezone;
 
     // localization
@@ -1204,6 +1211,7 @@ class calendar extends rcube_plugin
     if (!$start) $start = time();
     if (!$end) $end = $start + 3600;
     
+    $fbtypemap = array(calendar::FREEBUSY_FREE => 'FREE', calendar::FREEBUSY_BUSY => 'BUSY', calendar::FREEBUSY_TENTATIVE => 'TENTATIVE', calendar::FREEBUSY_OOF => 'OUT-OF-OFFICE');
     $status = 'UNKNOWN';
     
     // if the backend has free-busy information
@@ -1212,9 +1220,9 @@ class calendar extends rcube_plugin
       $status = 'FREE';
       
       foreach ($fblist as $slot) {
-        list($from, $to) = $slot;
+        list($from, $to, $type) = $slot;
         if ($from <= $end && $to > $start) {
-          $status = 'BUSY';
+          $status = $type && $fbtypemap[$type] ? $fbtypemap[$type] : 'BUSY';
           break;
         }
       }
@@ -1254,9 +1262,9 @@ class calendar extends rcube_plugin
       if (is_array($fblist)) {
         $status = self::FREEBUSY_FREE;
         foreach ($fblist as $slot) {
-          list($from, $to) = $slot;
+          list($from, $to, $type) = $slot;
           if ($from <= $t_end && $to > $t) {
-            $status = self::FREEBUSY_BUSY;
+            $status = isset($type) ? $type : self::FREEBUSY_BUSY;
             break;
           }
         }

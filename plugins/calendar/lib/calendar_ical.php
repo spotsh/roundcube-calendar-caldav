@@ -67,7 +67,7 @@ class calendar_ical
         $ical .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . "\r\n";
         $ical .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . "\r\n";
         $ical .= "SUMMARY:" . self::escpape($event['title']) . "\r\n";
-        $ical .= "DESCRIPTION:" . wordwrap(self::escpape($event['description']),75,'\r\n ') . "\r\n";
+        $ical .= "DESCRIPTION:" . wordwrap(self::escpape($event['description']),75,"\r\n ") . "\r\n";
 		
 		if (!empty($event['attendees'])){
 				

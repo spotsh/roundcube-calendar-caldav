@@ -191,7 +191,7 @@ rcube_webmail.prototype.book_update = function(data, old)
         level = olddata.realname.split(this.env.delimiter).length - data.realname.split(this.env.delimiter).length;
         // update (realname and ID of) subfolders
         for (n in sources) {
-            if (n.indexOf(old) == 0) {
+            if (n != data.id && n.indexOf(old) == 0) {
                 // new ID
                 id = data.id + '-' + n.substr(old.length);
                 name = sources[n].name;

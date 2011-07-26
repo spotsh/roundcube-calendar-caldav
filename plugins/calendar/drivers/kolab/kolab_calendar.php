@@ -67,9 +67,11 @@ class kolab_calendar
       }
       else {
         $acl = $this->storage->_folder->getACL();
-        $acl = $acl[$_SESSION['username']];
-        if (strpos($acl, 'i') !== false)
-          $this->readonly = false;
+        if (is_array($acl)) {
+          $acl = $acl[$_SESSION['username']];
+          if (strpos($acl, 'i') !== false)
+            $this->readonly = false;
+        }
       }
     }
   }

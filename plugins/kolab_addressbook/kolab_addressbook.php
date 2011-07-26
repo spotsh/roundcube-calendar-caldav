@@ -27,7 +27,7 @@
  */
 class kolab_addressbook extends rcube_plugin
 {
-    public $task = 'mail|settings|addressbook';
+    public $task = 'mail|settings|addressbook|calendar';
 
     private $folders;
     private $sources;
@@ -54,6 +54,7 @@ class kolab_addressbook extends rcube_plugin
         // register hooks
         $this->add_hook('addressbooks_list', array($this, 'address_sources'));
         $this->add_hook('addressbook_get', array($this, 'get_address_book'));
+        $this->add_hook('config_get', array($this, 'config_get'));
 
         if ($this->rc->task == 'addressbook') {
             $this->add_texts('localization');
@@ -73,10 +74,6 @@ class kolab_addressbook extends rcube_plugin
             $this->add_texts('localization');
             $this->add_hook('preferences_list', array($this, 'prefs_list'));
             $this->add_hook('preferences_save', array($this, 'prefs_save'));
-        }
-        // extend list of address sources to be used for autocompletion
-        else if ($this->rc->task == 'mail' && $this->rc->action == 'autocomplete') {
-            $this->autocomplete_sources();
         }
     }
 
@@ -149,20 +146,30 @@ class kolab_addressbook extends rcube_plugin
 
 
     /**
-     * Setts autocomplete_addressbooks option according to
-     * kolab_addressbook_prio setting.
+     * Sets autocomplete_addressbooks option according to
+     * kolab_addressbook_prio setting extending list of address sources
+     * to be used for autocompletion.
      */
-    public function autocomplete_sources()
+    public function config_get($args)
     {
+        if ($args['name'] != 'autocomplete_addressbooks') {
+            return $args;
+        }
+
         // Load configuration
         $this->load_config();
 
         $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
-        $sources    = (array) $this->rc->config->get('autocomplete_addressbooks', array());
+        // here we cannot use rc->config->get()
+        $sources    = $GLOBALS['CONFIG']['autocomplete_addressbooks'];
 
         // Disable all global address books
         // Assumes that all non-kolab_addressbook sources are global
         if ($abook_prio == self::PERSONAL_ONLY) {
+            $sources = array();
+        }
+
+        if (!is_array($sources)) {
             $sources = array();
         }
 
@@ -180,9 +187,11 @@ class kolab_addressbook extends rcube_plugin
             else {
                 $sources = array_merge($sources, $kolab_sources);
             }
-
-            $this->rc->config->set('autocomplete_addressbooks', $sources);
         }
+
+        $args['result'] = $sources;
+
+        return $args;
     }
 
 

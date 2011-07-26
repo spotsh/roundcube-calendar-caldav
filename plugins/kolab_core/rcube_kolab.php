@@ -29,6 +29,8 @@ class rcube_kolab
     private static $horde_auth;
     private static $config;
     private static $ready = false;
+    private static $list;
+    private static $cache;
 
 
     /**
@@ -72,9 +74,11 @@ class rcube_kolab
         // Re-set LDAP/IMAP host config
         $ldap = array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
         $imap = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
+        $freebusy = array('server' => $_SESSION['imap_host']);
 
         $conf['kolab']['ldap'] = array_merge($ldap, (array)$conf['kolab']['ldap']);
         $conf['kolab']['imap'] = array_merge($imap, (array)$conf['kolab']['imap']);
+        $conf['kolab']['freebusy'] = array_merge($freebusy, (array)$conf['kolab']['freebusy']);
         self::$config = &$conf;
 
         // pass the current IMAP authentication credentials to the Horde auth system
@@ -88,17 +92,55 @@ class rcube_kolab
             );
             Auth::setCredential('password', $pwd);
             self::$ready = true;
-
-            // Register shutdown function for storing folders cache in session
-            // This is already required, because Roundcube session handler
-            // saves data into DB before Horde's shutdown function is called
-            if (!empty($conf['kolab']['imap']['cache_folders'])) {
-                $rcmail->add_shutdown_function(array('rcube_kolab', 'save_folders_cache'));
-            }
         }
 
         NLS::setCharset('UTF-8');
         String::setDefaultCharset('UTF-8');
+    }
+
+    /**
+     * Get instance of Kolab_List object
+     *
+     * @return object Kolab_List Folders list object
+     */
+    public static function get_folders_list()
+    {
+        self::setup();
+
+        if (self::$list)
+            return self::$list;
+
+        if (!self::$ready)
+            return null;
+
+        $rcmail = rcmail::get_instance();
+        $imap_cache = $rcmail->config->get('imap_cache');
+
+        if ($imap_cache) {
+            self::$cache = $rcmail->get_cache('IMAP', $imap_cache);
+            self::$list  = self::$cache->get('mailboxes.kolab');
+
+            // Disable Horde folders caching, we're using our own cache
+            self::$config['kolab']['imap']['cache_folders'] = false;
+            // Register shutdown function for saving folders list cache
+            $rcmail->add_shutdown_function(array('rcube_kolab', 'save_folders_list'));
+        }
+
+        if (empty(self::$list)) {
+            self::$list = Kolab_List::singleton();
+        }
+
+        return self::$list;
+    }
+
+    /**
+     * Store Kolab_List instance in Roundcube cache
+     */
+    public static function save_folders_list()
+    {
+        if (self::$cache && self::$list) {
+            self::$cache->set('mailboxes.kolab', self::$list);
+        }
     }
 
     /**
@@ -123,8 +165,7 @@ class rcube_kolab
      */
     public static function get_folders($type)
     {
-        self::setup();
-        $kolab = Kolab_List::singleton();
+        $kolab = self::get_folders_list();
         return self::$ready ? $kolab->getByType($type) : array();
     }
 
@@ -136,9 +177,8 @@ class rcube_kolab
      */
     public static function get_folder($folder)
     {
-      self::setup();
-      $kolab = Kolab_List::singleton();
-      return self::$ready ? $kolab->getFolder($folder) : null;
+        $kolab = self::get_folders_list();
+        return self::$ready ? $kolab->getFolder($folder) : null;
     }
 
     /**
@@ -151,8 +191,7 @@ class rcube_kolab
      */
     public static function get_storage($folder, $data_type = null)
     {
-        self::setup();
-        $kolab = Kolab_List::singleton();
+        $kolab = self::get_folders_list();
         return self::$ready ? $kolab->getFolder($folder)->getData($data_type) : null;
     }
 
@@ -176,18 +215,6 @@ class rcube_kolab
     }
 
     /**
-     * Save Horde's folders cache in session (workaround shoutdown function issue)
-     */
-    public static function save_folders_cache()
-    {
-        require_once 'Horde/SessionObjects.php';
-
-        $kolab   = Kolab_List::singleton();
-        $session = Horde_SessionObjects::singleton();
-        $session->overwrite('kolab_folderlist', $kolab, false);
-    }
-
-    /**
      * Creates folder ID from folder name
      *
      * @param string $folder Folder name (UTF7-IMAP)
@@ -208,8 +235,7 @@ class rcube_kolab
      */
     public static function folder_delete($name)
     {
-        self::setup();
-        $kolab  = Kolab_List::singleton();
+        $kolab = self::get_folders_list();
 
         $folder = $kolab->getFolder($name);
         $result = $folder->delete();
@@ -232,8 +258,7 @@ class rcube_kolab
      */
     public static function folder_create($name, $type=null, $default=false)
     {
-        self::setup();
-        $kolab  = Kolab_List::singleton();
+        $kolab = self::get_folders_list();
 
         $folder = new Kolab_Folder();
         $folder->setList($kolab);
@@ -261,16 +286,25 @@ class rcube_kolab
      */
     public static function folder_rename($oldname, $newname)
     {
-        self::setup();
-        $kolab  = Kolab_List::singleton();
+        $kolab = self::get_folders_list();
 
         $folder = $kolab->getFolder($oldname);
         $folder->setFolder($newname);
+
+        // We're not using $folder->save() because some caching issues
         $result = $kolab->rename($folder);
 
         if (is_a($result, 'PEAR_Error')) {
             return false;
         }
+
+        // need to re-set some properties
+        $folder->name     = $folder->new_name;
+        $folder->new_name = null;
+        $folder->_title   = null;
+        $folder->_owner   = null;
+        // resetting _data prevents from some wierd cache unserialization issue
+        $folder->_data    = null;
 
         return true;
     }

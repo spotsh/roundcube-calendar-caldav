@@ -43,3 +43,12 @@ html #calendartoolbar a.buttonPas {
 .fc-header-title h2 {
 	font-size: 16px;
 }
+
+#schedule-event-time {
+	filter: alpha(opacity=40);
+}
+
+#eventfreebusy .schedule-buttons,
+#edit-attendees-form #edit-attendee-schedule {
+	right: 0.6em;
+}

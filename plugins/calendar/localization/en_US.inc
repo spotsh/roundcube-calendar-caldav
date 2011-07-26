@@ -31,6 +31,7 @@ $labels['edit'] = 'Edit';
 $labels['save'] = 'Save';
 $labels['remove'] = 'Remove';
 $labels['cancel'] = 'Cancel';
+$labels['adobt'] = 'Adopt changes';
 $labels['print'] = 'Print calendars';
 $labels['title'] = 'Summary';
 $labels['description'] = 'Description';
@@ -95,10 +96,14 @@ $labels['roleresource'] = 'Resource';
 $labels['availfree'] = 'Free';
 $labels['availbusy'] = 'Busy';
 $labels['availunknown'] = 'Unknown';
+$labels['availtentative'] = 'Tentative';
 $labels['availoutofoffice'] = 'Out of Office';
 $labels['scheduletime'] = 'Available times';
 $labels['sendnotifications'] = 'Send notifications';
-$labels['onlyworkinghours'] = 'Show only working hours';
+$labels['onlyworkinghours'] = 'Only working hours';
+$labels['prevslot'] = 'Previous Slot';
+$labels['nextslot'] = 'Next Slot';
+$labels['noslotfound'] = 'Unable to find a free time slot';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
