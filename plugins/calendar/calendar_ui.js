@@ -448,6 +448,7 @@ function rcube_calendar_ui(settings)
         for (var j=0; j < event.attendees.length; j++)
           add_attendee(event.attendees[j], true);
       }
+      $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
 
       // attachments
       if (calendar.attachments) {
@@ -626,8 +627,8 @@ function rcube_calendar_ui(settings)
       freebusy_ui.endtime = $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       
       if (allday.checked) {
-        starttime.val("00:00").hide();
-        endtime.val("23:59").hide();
+        freebusy_ui.starttime.val("00:00").hide();
+        freebusy_ui.endtime.val("23:59").hide();
         event.allDay = true;
       }
       
@@ -826,12 +827,21 @@ function rcube_calendar_ui(settings)
                 var range_t = freebusy_ui.end.getTime() - freebusy_ui.start.getTime();
                 var newstart = new Date(freebusy_ui.start.getTime() + px * (range_t / range_p));
                 newstart.setSeconds(0); newstart.setMilliseconds(0);
-                // round to 5 minutes
-                var round = newstart.getMinutes() % 5;
-                if (round > 2.5) newstart.setTime(newstart.getTime() + (5 - round) * 60000);
-                else if (round > 0) newstart.setTime(newstart.getTime() - round * 60000);
-                // update event times
+                // set time to 00:00
+                if (me.selected_event.allDay) {
+                  newstart.setMinutes(0);
+                  newstart.setHours(0);
+                }
+                else {
+                  // round to 5 minutes
+                  var round = newstart.getMinutes() % 5;
+                  if (round > 2.5) newstart.setTime(newstart.getTime() + (5 - round) * 60000);
+                  else if (round > 0) newstart.setTime(newstart.getTime() - round * 60000);
+                }
+                // update event times and display
                 update_freebusy_dates(newstart, new Date(newstart.getTime() + freebusy_ui.startdate.data('duration') * 1000));
+                if (me.selected_event.allDay)
+                  render_freebusy_overlay();
               }
             }).data('isdraggable', true);
           }
@@ -1131,6 +1141,12 @@ function rcube_calendar_ui(settings)
     // load free-busy status from server and update icon accordingly
     var check_freebusy_status = function(icon, email, event)
     {
+      var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { freebusy:false };
+      if (!calendar.freebusy) {
+        $(icon).removeClass().addClass('availabilityicon unknown');
+        return;
+      }
+      
       icon = $(icon).removeClass().addClass('availabilityicon loading');
       
       $.ajax({

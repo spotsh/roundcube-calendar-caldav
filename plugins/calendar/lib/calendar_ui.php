@@ -26,11 +26,13 @@ class calendar_ui
 {
   private $rc;
   private $calendar;
+  public $screen;
 
   function __construct($calendar)
   {
     $this->calendar = $calendar;
     $this->rc = $calendar->rc;
+    $this->screen = $this->rc->task == 'calendar' ? ($this->rc->action ? $this->rc->action: 'calendar') : 'other';
   }
     
   /**
@@ -129,6 +131,7 @@ class calendar_ui
       unset($prop['user_id']);
       $prop['alarms'] = $this->calendar->driver->alarms;
       $prop['attendees'] = $this->calendar->driver->attendees;
+      $prop['freebusy'] = $this->calendar->driver->freebusy;
       $prop['attachments'] = $this->calendar->driver->attachments;
       $jsenv[$id] = $prop;
 

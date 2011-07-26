@@ -28,6 +28,7 @@ class database_driver extends calendar_driver
   // features this backend supports
   public $alarms = true;
   public $attendees = true;
+  public $freebusy = false;
   public $attachments = true;
   public $alarm_types = array('DISPLAY','EMAIL');
 
@@ -185,7 +186,7 @@ class database_driver extends calendar_driver
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
-         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, notifyat)
+         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, attendees, alarms, notifyat)
          VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           $this->rc->db->now(),
           $this->rc->db->now(),
@@ -203,6 +204,7 @@ class database_driver extends calendar_driver
         intval($event['free_busy']),
         intval($event['priority']),
         intval($event['sensitivity']),
+        $event['attendees'],
         $event['alarms'],
         $event['notifyat']
       );
@@ -342,6 +344,17 @@ class database_driver extends calendar_driver
     // compute absolute time to notify the user
     $event['notifyat'] = $this->_get_notification($event);
     
+    // process event attendees
+    $_attendees = '';
+    foreach ((array)$event['attendees'] as $attendee) {
+      $_attendees .= 'NAME="'.addcslashes($attendee['name'], '"') . '"' .
+        ';STATUS=' . $attendee['status'].
+        ';ROLE=' . $attendee['role'] .
+        ';EMAIL=' . $attendee['email'] .
+        "\n";
+    }
+    $event['attendees'] = rtrim($_attendees);
+
     return $event;
   }
   
@@ -387,9 +400,9 @@ class database_driver extends calendar_driver
   private function _update_event($event, $update_recurring = true)
   {
     $event = $this->_save_preprocess($event);
-    
+    console($event);
     $sql_set = array();
-    $set_cols = array('all_day', 'recurrence', 'recurrence_id', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'alarms', 'notifyat');
+    $set_cols = array('all_day', 'recurrence', 'recurrence_id', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'attendees', 'alarms', 'notifyat');
     foreach ($set_cols as $col) {
       if (isset($event[$col]))
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]);
@@ -693,6 +706,20 @@ class database_driver extends calendar_driver
     if ($event['_attachments'] > 0)
       $event['attachments'] = (array)$this->list_attachments($event);
     
+    // decode serialized event attendees
+    if ($event['attendees']) {
+      $attendees = array();
+      foreach (explode("\n", $event['attendees']) as $line) {
+        $att = array();
+        foreach (rcube_explode_quoted_string(';', $line) as $prop) {
+          list($key, $value) = explode("=", $prop);
+          $att[strtolower($key)] = stripslashes(trim($value, '""'));
+        }
+        $attendees[] = $att;
+      }
+      $event['attendees'] = $attendees;
+    }
+
     unset($event['event_id'], $event['calendar_id'], $event['notifyat'], $event['_attachments']);
     return $event;
   }
