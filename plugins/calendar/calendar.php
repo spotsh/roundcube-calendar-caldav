@@ -1182,7 +1182,7 @@ class calendar extends rcube_plugin
         $event['attendees'][$i]['role'] = 'ORGANIZER';
       }
       else if (!$organizer && $identity['email']) {
-        $event['attendees'][] = array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED');
+        array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
       }
     }
   }
