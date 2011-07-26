@@ -26,11 +26,13 @@ class calendar_ui
 {
   private $rc;
   private $calendar;
+  public $screen;
 
   function __construct($calendar)
   {
     $this->calendar = $calendar;
     $this->rc = $calendar->rc;
+    $this->screen = $this->rc->task == 'calendar' ? ($this->rc->action ? $this->rc->action: 'calendar') : 'other';
   }
     
   /**
