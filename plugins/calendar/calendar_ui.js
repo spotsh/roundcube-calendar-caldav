@@ -124,7 +124,21 @@ function rcube_calendar_ui(settings)
     {
       ts -= gmt_offset * 3600;
       return new Date(ts * 1000);
-    }
+    };
+    
+    // determine whether the given date is on a weekend
+    var is_weekend = function(date)
+    {
+      return date.getDay() == 0 || date.getDay() == 6;
+    };
+
+    var is_workinghour = function(date)
+    {
+      if (settings['work_start'] > settings['work_end'])
+        return date.getHours() >= settings['work_start'] || date.getHours() < settings['work_end'];
+      else
+        return date.getHours() >= settings['work_start'] && date.getHours() < settings['work_end'];
+    };
 
     // create a nice human-readable string for the date/time range
     var event_date_text = function(event)
@@ -448,7 +462,7 @@ function rcube_calendar_ui(settings)
         for (var j=0; j < event.attendees.length; j++)
           add_attendee(event.attendees[j], true);
       }
-      $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
+//      $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
 
       // attachments
       if (calendar.attachments) {
@@ -728,14 +742,14 @@ function rcube_calendar_ui(settings)
       var lastdate, datestr, css, curdate = new Date(), dates_row = '<tr class="dates">', times_row = '<tr class="times">', slots_row = '';
       for (var s = 0, t = freebusy_ui.start.getTime(); t < freebusy_ui.end.getTime(); s++) {
         curdate.setTime(t);
-        datestr = $.fullCalendar.formatDate(curdate, settings['date_format']);
+        datestr = fc.fullCalendar('formatDate', curdate, 'ddd '+settings['date_format']);
         if (datestr != lastdate) {
           dates_row += '<th colspan="' + dayslots + '" class="boxtitle date' + $.fullCalendar.formatDate(curdate, 'ddMMyyyy') + '">' + Q(datestr) + '</th>';
           lastdate = datestr;
         }
         
         // set css class according to working hours
-        css = (freebusy_ui.numdays == 1 && (curdate.getHours() < settings['work_start'] || curdate.getHours() > settings['work_end'])) ? 'offhours' : 'workinghours';
+        css = is_weekend(curdate) || (freebusy_ui.interval <= 60 && !is_workinghour(curdate)) ? 'offhours' : 'workinghours';
         times_row += '<td class="' + css + '">' + Q($.fullCalendar.formatDate(curdate, settings['time_format'])) + '</td>';
         slots_row += '<td class="' + css + ' unknown">&nbsp;</td>';
         
@@ -951,9 +965,9 @@ function rcube_calendar_ui(settings)
           continue;
         
         // respect workingours setting
-        if (freebusy_ui.workinhoursonly && freebusy_data.interval <= 60) {
+        if (freebusy_ui.workinhoursonly) {
           curdate = fromunixtime(dir > 0 || !candidateend ? slot : (candidateend - duration));
-          if (curdate.getHours() < settings['work_start'] || curdate.getHours() > settings['work_end']) {  // skip off-hours
+          if (is_weekend(curdate) || (freebusy_data.interval <= 60 && !is_workinghour(curdate))) {  // skip off-hours
             candidatestart = candidateend = false;
             candidatecount = 0;
             continue;

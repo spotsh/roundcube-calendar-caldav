@@ -239,7 +239,7 @@ class calendar extends rcube_plugin
       $select->add($this->gettext('agenda'), "table");
       $p['blocks']['view']['options']['default_view'] = array(
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
-        'content' => $select->show($this->rc->config->get('calendar_default_view', "agendaWeek")),
+        'content' => $select->show($this->rc->config->get('calendar_default_view', $this->defaults['calendar_default_view'])),
       );
 /*
       $field_id = 'rcmfd_time_format';
@@ -257,7 +257,7 @@ class calendar extends rcube_plugin
       $select->add($choices);
       $p['blocks']['view']['options']['timeslots'] = array(
         'title' => html::label($field_id, Q($this->gettext('timeslots'))),
-        'content' => $select->show($this->rc->config->get('calendar_timeslots', 2)),
+        'content' => $select->show($this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots'])),
       );
       
       $field_id = 'rcmfd_firstday';
@@ -271,9 +271,27 @@ class calendar extends rcube_plugin
       $select->add(rcube_label('saturday'), '6');
       $p['blocks']['view']['options']['first_day'] = array(
         'title' => html::label($field_id, Q($this->gettext('first_day'))),
-        'content' => $select->show($this->rc->config->get('calendar_first_day', 1)),
+        'content' => $select->show($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day'])),
       );
       
+      $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format'));
+      $select_hours = new html_select();
+      for ($h = 0; $h < 24; $h++)
+        $select_hours->add(date($time_format, mktime($h, 0, 0)), $h);
+
+      $field_id = 'rcmfd_firsthour';
+      $p['blocks']['view']['options']['first_hour'] = array(
+        'title' => html::label($field_id, Q($this->gettext('first_hour'))),
+        'content' => $select_hours->show($this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']), array('name' => '_first_hour', 'id' => $field_id)),
+      );
+      
+      $field_id = 'rcmfd_workstart';
+      $p['blocks']['view']['options']['workinghours'] = array(
+        'title' => html::label($field_id, Q($this->gettext('workinghours'))),
+        'content' => $select_hours->show($this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']), array('name' => '_work_start', 'id' => $field_id)) .
+        ' &mdash; ' . $select_hours->show($this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']), array('name' => '_work_end', 'id' => $field_id)),
+      );
+
       $field_id = 'rcmfd_alarm';
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
@@ -372,9 +390,12 @@ class calendar extends rcube_plugin
 
       $p['prefs'] = array(
         'calendar_default_view' => get_input_value('_default_view', RCUBE_INPUT_POST),
-        'calendar_time_format'  => get_input_value('_time_format', RCUBE_INPUT_POST),
+#        'calendar_time_format'  => get_input_value('_time_format', RCUBE_INPUT_POST),
         'calendar_timeslots'    => get_input_value('_timeslots', RCUBE_INPUT_POST),
         'calendar_first_day'    => get_input_value('_first_day', RCUBE_INPUT_POST),
+        'calendar_first_hour'   => intval(get_input_value('_first_hour', RCUBE_INPUT_POST)),
+        'calendar_work_start'   => intval(get_input_value('_work_start', RCUBE_INPUT_POST)),
+        'calendar_work_end'     => intval(get_input_value('_work_end', RCUBE_INPUT_POST)),
         'calendar_default_alarm_type'   => get_input_value('_alarm_type', RCUBE_INPUT_POST),
         'calendar_default_alarm_offset' => $default_alam,
         'calendar_default_calendar'     => get_input_value('_default_calendar', RCUBE_INPUT_POST),
