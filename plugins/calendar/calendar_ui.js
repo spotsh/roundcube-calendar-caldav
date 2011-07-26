@@ -1309,6 +1309,8 @@ function rcube_calendar_ui(settings)
         data: { action:(calendar.id ? 'form-edit' : 'form-new'), c:{ id:calendar.id } },
         success: function(data) {
           $dialog.html(data);
+          // resize and reposition dialog window
+          me.dialog_resize('#calendarform', $('#calendar-details').height(), $('#calendar-details').width());
           form = $('form', $('#calendarform')); // '#calendarform > form' doesn't work here
           name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
@@ -1458,8 +1460,21 @@ function rcube_calendar_ui(settings)
     {
       if (this.search_request && !count)
         this._search_message = rcmail.display_message(rcmail.gettext('searchnoresults', 'calendar'), 'notice');
-    }
+    };
 
+    // resize and reposition (center) the dialog window
+    this.dialog_resize = function(id, height, width)
+    {
+      height = Math.min(400, height+90);
+      width = Math.min(500, width+50);
+
+      var win = $(window), w = win.width(), h = win.height();
+
+      w = w - width < 0 ? 0 : (w - width) / 2;
+      h = h - height < 0 ? 0 : (h - height) / 2;
+
+      $(id).dialog('option', { height: height, width: width, position: [w, h] });
+    };
 
     /***  startup code  ***/
 
