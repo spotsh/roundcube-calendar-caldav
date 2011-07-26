@@ -75,6 +75,7 @@ abstract class calendar_driver
   // features supported by backend
   public $alarms = false;
   public $attendees = false;
+  public $freebusy = false;
   public $attachments = false;
   public $undelete = false; // event undelete action
   public $categoriesimmutable = false;
@@ -295,7 +296,6 @@ abstract class calendar_driver
    */
   public function get_freebusy_list($email, $start, $end)
   {
-    sleep(2);
     return false;
   }
   

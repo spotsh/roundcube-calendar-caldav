@@ -129,6 +129,7 @@ class calendar_ui
       unset($prop['user_id']);
       $prop['alarms'] = $this->calendar->driver->alarms;
       $prop['attendees'] = $this->calendar->driver->attendees;
+      $prop['freebusy'] = $this->calendar->driver->freebusy;
       $prop['attachments'] = $this->calendar->driver->attachments;
       $jsenv[$id] = $prop;
 
