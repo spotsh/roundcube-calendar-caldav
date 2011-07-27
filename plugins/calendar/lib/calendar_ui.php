@@ -537,23 +537,27 @@ class calendar_ui
    */
   function calendar_editform($action, $calendar = array())
   {
-    // compose default calendar form
+    // compose default calendar form fields
     $input_name = new html_inputfield(array('name' => 'name', 'id' => 'calendar-name', 'size' => 20));
-    $html = html::div('form-section',
-      html::label('calendar-name', $this->calendar->gettext('name')) .
-      $input_name->show($calendar['name']));
-
     $input_color = new html_inputfield(array('name' => 'color', 'id' => 'calendar-color', 'size' => 6));
-    $html .= html::div('form-section',
-      html::label('calendar-color', $this->calendar->gettext('color')) .
-      $input_color->show($calendar['color']));
 
-    $html = html::tag('form', array('action' => "#", 'method' => "get", 'id' => 'calendarpropform'), $html);
+    $formfields = array(
+      'name' => array(
+        'label' => $this->calendar->gettext('name'),
+        'value' => $input_name->show($name),
+        'id' => 'calendar-name',
+      ),
+      'color' => array(
+        'label' => $this->calendar->gettext('color'),
+        'value' => $input_color->show($calendar['color']),
+        'id' => 'calendar-color',
+      ),
+    );
 
     // allow driver to extend or replace the form content
-    $html = $this->calendar->driver->calendar_form($action, $calendar, $html);
-
-    return $html;
+    return html::tag('form', array('action' => "#", 'method' => "get", 'id' => 'calendarpropform'),
+      $this->calendar->driver->calendar_form($action, $calendar, $formfields)
+    );
   }
 
   /**

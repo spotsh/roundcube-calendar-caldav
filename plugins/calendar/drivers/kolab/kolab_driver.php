@@ -832,21 +832,21 @@ class kolab_driver extends calendar_driver
    *
    * @param string Request action 'form-edit|form-new'
    * @param array  Calendar properties (e.g. id, color)
-   * @param string HTML code of default edit form
+   * @param array  Edit form fields
    *
    * @return string HTML content of the form
    */
-  public function calendar_form($action, $calendar, $html)
+  public function calendar_form($action, $calendar, $formfields)
   {
     // Remove any scripts/css/js
     $this->rc->output->reset();
+    
     // Produce form content
-    $content = $this->calendar_form_content($calendar);
-    // Parse form template, write to output buffer
-    // This way other plugins (e.g. acl) will be able to add scripts/style to the content
-    ob_start();
-    $this->rc->output->parse('calendar.calendarform-kolab', false, true);
-    $html = ob_get_clean();
+    $content = $this->calendar_form_content($calendar, $formfields);
+    
+    // Parse form template for skin-dependent stuff
+    // TODO: copy scripts and styles added by other plugins (e.g. acl) from $this->rc->output
+    $html = $this->rc->output->parse('calendar.calendarform-kolab', false, false);
 
     return str_replace('%FORM_CONTENT%', $content, $html);
   }
@@ -856,7 +856,7 @@ class kolab_driver extends calendar_driver
    *
    * @return string HTML content of the form
    */
-  private function calendar_form_content($calendar)
+  private function calendar_form_content($calendar, $formfields)
   {
     if ($calendar['id'] && ($cal = $this->calendars[$calendar['id']])) {
       $folder = $cal->get_realname(); // UTF7
@@ -874,7 +874,7 @@ class kolab_driver extends calendar_driver
 
     if (strlen($folder)) {
       $path_imap = explode($delim, $folder);
-      $name      = rcube_charset_convert(array_pop($path_imap), 'UTF7-IMAP');
+      array_pop($path_imap);  // pop off name part
       $path_imap = implode($path_imap, $delim);
 
       $this->rc->imap_connect();
@@ -882,7 +882,6 @@ class kolab_driver extends calendar_driver
     }
     else {
       $path_imap = '';
-      $name      = '';
     }
 
     // General tab
@@ -890,16 +889,11 @@ class kolab_driver extends calendar_driver
       'name' => $this->rc->gettext('properties'),
     );
 
-    // calendar name
-    $foldername = new html_inputfield(array('name' => 'name', 'id' => 'calendar-name', 'size' => 20));
-
+    // calendar name (default field)
     $form['props']['fieldsets']['location'] = array(
       'name'  => $this->rc->gettext('location'),
       'content' => array(
-        'name' => array(
-          'label' => $this->cal->gettext('name'),
-          'value' => $foldername->show($name),
-        ),
+        'name' => $formfields['name']
       ),
     );
 
@@ -909,23 +903,17 @@ class kolab_driver extends calendar_driver
     }
     else {
       $select = rcube_kolab::folder_selector('event', array('name' => 'parent'));
-
       $form['props']['fieldsets']['location']['content']['path'] = array(
         'label' => $this->cal->gettext('parentcalendar'),
         'value' => $select->show($path_imap),
       );
     }
 
-    // calendar color
-    $color = new html_inputfield(array('name' => 'color', 'id' => 'calendar-color', 'size' => 6));
-
+    // calendar color (default field)
     $form['props']['fieldsets']['settings'] = array(
       'name'  => $this->rc->gettext('settings'),
       'content' => array(
-        'color' => array(
-          'label' => $this->cal->gettext('color'),
-          'value' => $color->show($calendar['color']),
-        ),
+        'color' => $formfields['color'],
       ),
     );
 

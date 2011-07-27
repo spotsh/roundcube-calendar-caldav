@@ -843,31 +843,33 @@ a.alarm-action-snooze:after {
 	height: 160px;
 }
 
-#calendar-details {
-    left: 5px;
-    position: absolute;
-    right: 5px;
+#calendar-kolabform {
+	position: relative;
+	padding-top: 22px;
+	margin: 0 -8px;
 }
 
-#calendar-details div.tabsbar {
-    top: 0;
-    left: 2px;
+#calendar-kolabform div.tabsbar {
+	top: 0;
+	right: 2px;
+	left: 2px;
 }
 
-#calendar-details fieldset {
-    background-color: #fff;
+#calendar-kolabform fieldset.tabbed {
+	background-color: #fff;
+	margin-top: 0;
 }
 
-#calendar-details span.tablink {
+#calendar-kolabform span.tablink {
 	background: #E6E6E7;
 }
 
-#calendar-details span.tablink-selected {
+#calendar-kolabform span.tablink-selected {
 	background: #fff;
 }
 
-#calendar-details span.tablink a,
-#calendar-details span.tablink-selected a {
+#calendar-kolabform span.tablink a,
+#calendar-kolabform span.tablink-selected a {
 	background: none;
 	border: 1px solid #AAAAAA;
 	border-top-left-radius: 2px;
@@ -875,7 +877,7 @@ a.alarm-action-snooze:after {
 	margin-left: 0;
 }
 
-#calendar-details table td.title {
+#calendar-kolabform table td.title {
   font-weight: bold;
   white-space: nowrap;
   color: #666;

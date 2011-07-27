@@ -1311,7 +1311,7 @@ function rcube_calendar_ui(settings)
         success: function(data) {
           $dialog.html(data);
           // resize and reposition dialog window
-          form = $('form', $('#calendarform')); // '#calendarform > form' doesn't work here
+          form = $('#calendarpropform');
           me.dialog_resize('#calendarform', form.height(), form.width());
           name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
@@ -1467,7 +1467,7 @@ function rcube_calendar_ui(settings)
     this.dialog_resize = function(id, height, width)
     {
       var win = $(window), w = win.width(), h = win.height();
-      $(id).dialog('option', { height: Math.min(h-20, height+125), width: Math.min(w-20, width+50) })
+      $(id).dialog('option', { height: Math.min(h-20, height+110), width: Math.min(w-20, width+50) })
         .dialog('option', 'position', ['center', 'center']);  // only works in a separate call (!?)
     };
 

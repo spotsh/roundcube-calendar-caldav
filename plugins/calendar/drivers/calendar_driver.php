@@ -305,12 +305,19 @@ abstract class calendar_driver
    *
    * @param string Request action 'form-edit|form-new'
    * @param array  Calendar properties (e.g. id, color)
-   * @param string HTML code of default edit form
+   * @param array  Edit form fields
    *
    * @return string HTML content of the form
    */
-  public function calendar_form($action, $calendar, $html)
+  public function calendar_form($action, $calendar, $formfields)
   {
+    $html = '';
+    foreach ($formfields as $prop => $field) {
+      $html .= html::div('form-section',
+        html::label($field['id'], $field['label']) .
+        $field['value']);
+    }
+    
     return $html;
   }
 
