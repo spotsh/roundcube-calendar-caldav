@@ -400,7 +400,6 @@ class database_driver extends calendar_driver
   private function _update_event($event, $update_recurring = true)
   {
     $event = $this->_save_preprocess($event);
-    console($event);
     $sql_set = array();
     $set_cols = array('all_day', 'recurrence', 'recurrence_id', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'attendees', 'alarms', 'notifyat');
     foreach ($set_cols as $col) {
