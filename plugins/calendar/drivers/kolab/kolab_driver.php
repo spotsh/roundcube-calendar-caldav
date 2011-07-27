@@ -26,6 +26,7 @@ class kolab_driver extends calendar_driver
   // features this backend supports
   public $alarms = true;
   public $attendees = true;
+  public $freebusy = true;
   public $attachments = true;
   public $undelete = true;
   public $categoriesimmutable = true;
@@ -786,7 +787,11 @@ class kolab_driver extends calendar_driver
           $type = $params[$from]['FBTYPE'];
           $result[] = array($from, $to, isset($fbtypemap[$type]) ? $fbtypemap[$type] : calendar::FREEBUSY_BUSY);
         }
-        
+
+        // set period from $start till the begin of the free-busy information as 'unknown'
+        if (($fbstart = $fb->getStart()) && $start < $fbstart) {
+          array_unshift($result, array($start, $fbstart, calendar::FREEBUSY_UNKNOWN));
+        }
         return $result;
       }
     }

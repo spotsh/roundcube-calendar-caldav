@@ -462,7 +462,7 @@ function rcube_calendar_ui(settings)
         for (var j=0; j < event.attendees.length; j++)
           add_attendee(event.attendees[j], true);
       }
-//      $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
+      $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
 
       // attachments
       if (calendar.attachments) {
