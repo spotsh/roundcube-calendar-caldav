@@ -311,7 +311,7 @@ abstract class calendar_driver
    */
   public function calendar_form($action, $calendar, $html)
   {
-    return null;
+    return $html;
   }
 
 }
