@@ -74,7 +74,7 @@ class rcube_kolab
         // Re-set LDAP/IMAP host config
         $ldap = array('server' => 'ldap://' . $_SESSION['imap_host'] . ':389');
         $imap = array('server' => $_SESSION['imap_host'], 'port' => $_SESSION['imap_port']);
-        $freebusy = array('server' => $_SESSION['imap_host']);
+        $freebusy = array('server' => 'https://' . $_SESSION['imap_host'] . '/freebusy');
 
         $conf['kolab']['ldap'] = array_merge($ldap, (array)$conf['kolab']['ldap']);
         $conf['kolab']['imap'] = array_merge($imap, (array)$conf['kolab']['imap']);
@@ -200,8 +200,7 @@ class rcube_kolab
      */
     public static function get_freebusy_url($email)
     {
-        $host = self::$config['kolab']['freebusy']['server'] ? self::$config['kolab']['freebusy']['server'] : self::$config['kolab']['imap']['server'];
-        return 'https://' . $host . '/freebusy/' . $email . '.ifb';
+        return unslashify(self::$config['kolab']['freebusy']['server']) . '/' . $email . '.ifb';
     }
 
     /**
