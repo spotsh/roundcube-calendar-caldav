@@ -1311,8 +1311,8 @@ function rcube_calendar_ui(settings)
         success: function(data) {
           $dialog.html(data);
           // resize and reposition dialog window
-          me.dialog_resize('#calendarform', $('#calendar-details').height(), $('#calendar-details').width());
           form = $('form', $('#calendarform')); // '#calendarform > form' doesn't work here
+          me.dialog_resize('#calendarform', form.height(), form.width());
           name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
           name.select();
@@ -1363,7 +1363,7 @@ function rcube_calendar_ui(settings)
       }).show();
 
     };
-    
+
     this.calendar_remove = function(calendar)
     {
       if (confirm(rcmail.gettext('deletecalendarconfirm', 'calendar'))) {
@@ -1372,7 +1372,7 @@ function rcube_calendar_ui(settings)
       }
       return false;
     };
-    
+
     this.calendar_destroy_source = function(id)
     {
       if (this.calendars[id]) {
@@ -1430,7 +1430,7 @@ function rcube_calendar_ui(settings)
           this.reset_quicksearch();
       }
     };
-    
+
     // reset search and get back to normal event listing
     this.reset_quicksearch = function()
     {
@@ -1455,7 +1455,7 @@ function rcube_calendar_ui(settings)
         this.search_request = this.search_query = null;
       }
     };
-    
+
     // callback if all sources have been fetched from server
     this.events_loaded = function(count)
     {
@@ -1466,16 +1466,17 @@ function rcube_calendar_ui(settings)
     // resize and reposition (center) the dialog window
     this.dialog_resize = function(id, height, width)
     {
-      height = Math.min(400, height+90);
-      width = Math.min(500, width+50);
-
       var win = $(window), w = win.width(), h = win.height();
+
+      height = Math.min(h-20, height+125);
+      width = Math.min(w-20, width+50);
 
       w = w - width < 0 ? 0 : (w - width) / 2;
       h = h - height < 0 ? 0 : (h - height) / 2;
 
       $(id).dialog('option', { height: height, width: width, position: [w, h] });
     };
+
 
     /***  startup code  ***/
 

@@ -305,12 +305,13 @@ abstract class calendar_driver
    *
    * @param string Request action 'form-edit|form-new'
    * @param array  Calendar properties (e.g. id, color)
+   * @param string HTML code of default edit form
    *
    * @return string HTML content of the form
    */
-  public function calendar_form($action, $calendar)
+  public function calendar_form($action, $calendar, $html)
   {
-    return null;
+    return $html;
   }
 
 }
