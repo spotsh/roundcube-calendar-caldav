@@ -317,7 +317,7 @@ class calendar extends rcube_plugin
       $field_id = 'rcmfd_default_calendar';
       $select_cal = new html_select(array('name' => '_default_calendar', 'id' => $field_id));
       foreach ((array)$this->driver->list_calendars() as $id => $prop) {
-        if (!$prop['readononly'])
+        if (!$prop['readonly'])
           $select_cal->add($prop['name'], strval($id));
       }
       $p['blocks']['view']['options']['defaultcalendar'] = array(
