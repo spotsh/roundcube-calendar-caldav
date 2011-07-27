@@ -242,7 +242,7 @@ class kolab_calendar
   /**
    * Create a new event record
    *
-   * @see Driver:new_event()
+   * @see calendar_driver::new_event()
    * 
    * @return mixed The created record ID on success, False on error
    */
@@ -263,6 +263,9 @@ class kolab_calendar
         true, false);
       $saved = false;
     }
+    else {
+      $this->events[$event['uid']] = $event;
+    }
     
     return $saved;
   }
@@ -270,7 +273,7 @@ class kolab_calendar
   /**
    * Update a specific event record
    *
-   * @see Driver:new_event()
+   * @see calendar_driver::new_event()
    * @return boolean True on success, False on error
    */
 
@@ -289,6 +292,7 @@ class kolab_calendar
     }
     else {
       $updated = true;
+      $this->events[$event['id']] = $this->_to_rcube_event($object);
     }
 
     return $updated;
@@ -297,7 +301,7 @@ class kolab_calendar
   /**
    * Delete an event record
    *
-   * @see Driver:remove_event()
+   * @see calendar_driver::remove_event()
    * @return boolean True on success, False on error
    */
   public function delete_event($event, $force = true)
@@ -332,7 +336,7 @@ class kolab_calendar
   /**
    * Restore deleted event record
    *
-   * @see Driver:undelete_event()
+   * @see calendar_driver::undelete_event()
    * @return boolean True on success, False on error
    */
   public function restore_event($event)

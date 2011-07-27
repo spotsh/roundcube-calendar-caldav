@@ -181,6 +181,16 @@ abstract class calendar_driver
   }
 
   /**
+   * Return data of a single event
+   *
+   * @param array  Hash array with event properties:
+   *        id: Event identifier
+   *  calendar: Calendar identifier
+   * @return array Event object as hash array
+   */
+  abstract function get_event($event);
+
+  /**
    * Get events from source.
    *
    * @param  integer Event's new start (unix timestamp)

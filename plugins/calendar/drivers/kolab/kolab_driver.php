@@ -275,9 +275,23 @@ class kolab_driver extends calendar_driver
 
 
   /**
+   * Move a single event
+   *
+   * @see calendar_driver::get_event()
+   * @return array Hash array with event properties, false if not found
+   */
+  public function get_event($event)
+  {
+    if ($storage = $this->calendars[$event['calendar']])
+      return $storage->get_event($event['id']);
+
+    return false;
+  }
+
+  /**
    * Add a single event to the database
    *
-   * @see Driver:new_event()
+   * @see calendar_driver::new_event()
    */
   public function new_event($event)
   {
@@ -307,7 +321,7 @@ class kolab_driver extends calendar_driver
   /**
    * Update an event entry with the given data
    *
-   * @see Driver:new_event()
+   * @see calendar_driver::new_event()
    * @return boolean True on success, False on error
    */
   public function edit_event($event)
@@ -318,7 +332,7 @@ class kolab_driver extends calendar_driver
   /**
    * Move a single event
    *
-   * @see Driver:move_event()
+   * @see calendar_driver::move_event()
    * @return boolean True on success, False on error
    */
   public function move_event($event)
@@ -332,7 +346,7 @@ class kolab_driver extends calendar_driver
   /**
    * Resize a single event
    *
-   * @see Driver:resize_event()
+   * @see calendar_driver::resize_event()
    * @return boolean True on success, False on error
    */
   public function resize_event($event)
@@ -578,7 +592,7 @@ class kolab_driver extends calendar_driver
   /**
    * Get a list of pending alarms to be displayed to the user
    *
-   * @see Driver:pending_alarms()
+   * @see calendar_driver::pending_alarms()
    */
   public function pending_alarms($time, $calendars = null)
   {
@@ -649,7 +663,7 @@ class kolab_driver extends calendar_driver
   /**
    * Feedback after showing/sending an alarm notification
    *
-   * @see Driver:dismiss_alarm()
+   * @see calendar_driver::dismiss_alarm()
    */
   public function dismiss_alarm($event_id, $snooze = 0)
   {
