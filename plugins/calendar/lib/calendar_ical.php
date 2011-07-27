@@ -133,15 +133,15 @@ class calendar_ical
         //I am an orginizer
         $organizer .= "ORGANIZER;";
         if (!empty($at['name']))
-          $organizer .= 'CN="' . $at['name'] . '":';
-        $organizer .= "mailto:". $at['email'] . self::EOL;
+          $organizer .= 'CN="' . $at['name'] . '"';
+        $organizer .= ":mailto:". $at['email'] . self::EOL;
       }
       else {
         //I am an attendee 
         $attendees .= "ATTENDEE;ROLE=" . $at['role'] . ";PARTSTAT=" . $at['status'];
         if (!empty($at['name']))
-          $attendees .= ';CN="' . $at['name'] . '":';
-        $attendees .= "mailto:" . $at['email'] . self::EOL;
+          $attendees .= ';CN="' . $at['name'] . '"';
+        $attendees .= ":mailto:" . $at['email'] . self::EOL;
       }
     }
 

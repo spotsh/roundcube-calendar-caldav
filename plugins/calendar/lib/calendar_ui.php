@@ -284,6 +284,15 @@ class calendar_ui
     
     return html::tag('ul', $attrib, join("\n", $items), html::$common_attrib);
   }
+  
+  /**
+   *
+   */
+  function edit_attendees_notify($attrib = array())
+  {
+    $checkbox = new html_checkbox(array('name' => 'notify', 'id' => 'edit-attendees-donotify', 'value' => 1));
+    return html::div($attrib, html::label(null, $checkbox->show(1) . ' ' . $this->calendar->gettext('sendnotifications')));
+  }
 
   /**
    * Generate the form for recurrence settings
@@ -581,13 +590,13 @@ class calendar_ui
   function attendees_form($attrib = array())
   {
     $input = new html_inputfield(array('name' => 'participant', 'id' => 'edit-attendee-name', 'size' => 30));
-    $checkbox = new html_checkbox(array('name' => 'notify', 'id' => 'edit-attendees-notify', 'value' => 1, 'disabled' => true));  // disabled for now
+    $checkbox = new html_checkbox(array('name' => 'invite', 'id' => 'edit-attendees-invite', 'value' => 1));
     
     return html::div($attrib,
       html::div(null, $input->show() . " " .
         html::tag('input', array('type' => 'button', 'class' => 'button', 'id' => 'edit-attendee-add', 'value' => $this->calendar->gettext('addattendee'))) . " " .
         html::tag('input', array('type' => 'button', 'class' => 'button', 'id' => 'edit-attendee-schedule', 'value' => $this->calendar->gettext('scheduletime').'...'))) .
-      html::p('attendees-notifybox', html::label(null, $checkbox->show(1) . $this->calendar->gettext('sendnotifications')))
+      html::p('attendees-invitebox', html::label(null, $checkbox->show(1) . $this->calendar->gettext('sendinvitations')))
       );
   }
   

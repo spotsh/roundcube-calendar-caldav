@@ -193,6 +193,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.attendees_list', array($this->ui, 'attendees_list'));
     $this->register_handler('plugin.attendees_form', array($this->ui, 'attendees_form'));
     $this->register_handler('plugin.attendees_freebusy_table', array($this->ui, 'attendees_freebusy_table'));
+    $this->register_handler('plugin.edit_attendees_notify', array($this->ui, 'edit_attendees_notify'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
 
@@ -485,6 +486,10 @@ class calendar extends rcube_plugin
     $action = get_input_value('action', RCUBE_INPUT_GPC);
     $event  = get_input_value('e', RCUBE_INPUT_POST);
     $success = $reload = $got_msg = false;
+    
+    // read old event data in order to find changes
+    if ($event['_notify'])
+      $old = $this->driver->get_event($event);
 
     switch ($action) {
       case "new":
@@ -557,6 +562,18 @@ class calendar extends rcube_plugin
         foreach (explode(',', $event['id']) as $id)
           $success |= $this->driver->dismiss_alarm($id, $event['snooze']);
         break;
+    }
+    
+    // send out notifications
+    if ($success && $event['_notify'] && $event['attendees']) {
+      // make sure we have the complete record
+      $event = $this->driver->get_event($event);
+      
+      // only notify if data really changed (TODO: do diff check on client already)
+      if (self::event_diff($event, $old)) {
+        if ($this->notify_attendees($event, $old) < 0)
+          $this->rc->output->show_message('calendar.errornotifying', 'error');
+        }
     }
 
     // show confirmation/error message
@@ -1217,7 +1234,117 @@ class calendar extends rcube_plugin
       unset($_SESSION['event_session']);
     }
   }
+
+  /**
+   * Send out an invitation/notification to all event attendees
+   */
+  private function notify_attendees($event, $old)
+  {
+    $sent = 0;
+    $myself = $this->rc->user->get_identity();
+    $from = rcube_idn_to_ascii($myself['email']);
+    $sender = format_email_recipient($from, $myself['name']);
+    
+    // compose multipart message using PEAR:Mail_Mime
+    $message = new Mail_mime("\r\n");
+    $message->setParam('text_encoding', 'quoted-printable');
+    $message->setParam('head_encoding', 'quoted-printable');
+    $message->setParam('head_charset', RCMAIL_CHARSET);
+    $message->setParam('text_charset', RCMAIL_CHARSET);
+    
+    // compose common headers array
+    $headers = array(
+      'From' => $sender,
+      'Date' => rcmail_user_date(),
+      'Message-ID' => rcmail_gen_message_id(),
+      'X-Sender' => $from,
+    );
+    if ($agent = $this->rc->config->get('useragent'))
+      $headers['User-Agent'] = $agent;
+    
+    
+    // attach ics file for this event
+    $vcal = $this->ical->export(array($event), 'REQUEST');
+    $message->addAttachment($vcal, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET);
+    
+    // list existing attendees from $old event
+    $old_attendees = array();
+    foreach ((array)$old['attendees'] as $attendee) {
+      $old_attendees[] = $attendee['email'];
+    }
+    
+    // compose a list of all event attendees
+    $attendees_list = array();
+    foreach ((array)$event['attendees'] as $attendee) {
+      $attendees_list[] = ($attendee['name'] && $attendee['email']) ?
+        $attendee['name'] . ' <' . $attendee['email'] . '>' :
+        ($attendee['name'] ? $attendee['name'] : $attendee['email']);
+    }
+    
+    // send to every attendee
+    foreach ((array)$event['attendees'] as $attendee) {
+      // skip myself for obvious reasons
+      if (!$attendee['email'] || $attendee['email'] == $myself['email'])
+        continue;
+      
+      $is_new = !in_array($attendee['email'], $old_attendees);
+      $mailto = rcube_idn_to_ascii($attendee['email']);
+      $headers['To'] = format_email_recipient($mailto, $attendee['name']);
+      
+      $headers['Subject'] = $this->gettext(array(
+        'name' => $is_new ? 'invitationsubject' : 'eventupdatesubject',
+        'vars' => array('title' => $event['title']),
+      ));
+      
+      // compose message body
+      $body = $this->gettext(array(
+        'name' => $is_new ? 'invitationmailbody' : 'eventupdatemailbody',
+        'vars' => array(
+          'title' => $event['title'],
+          'date' => $this->event_date_text($event),
+          'attendees' => join(', ', $attendees_list),
+        )
+      ));
+      
+      $message->headers($headers);
+      $message->setTXTBody(rc_wordwrap($body, 75, "\r\n"));
+      
+      // finally send the message
+      if (rcmail_deliver_message($message, $from, $mailto, $smtp_error))
+        $sent++;
+      else
+        $sent = -100;
+    }
+    
+    return $sent;
+  }
   
+  /**
+   * Compose a date string for the given event
+   */
+  public function event_date_text($event)
+  {
+    $fromto = '';
+    $duration = $event['end'] - $event['start'];
+    $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format'));
+    $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format'));
+    
+    if ($event['allday']) {
+      $fromto = format_date($event['start'], $date_format) .
+        ($duration > 86400 || date('d', $event['start']) != date('d', $event['end']) ? ' - ' . format_date($event['end'], $date_format) : '');
+    }
+    else if ($duration < 86400 && date('d', $event['start']) == date('d', $event['end'])) {
+      $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
+        ' - ' . format_date($event['end'], $time_format);
+    }
+    else {
+      $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
+        ' - ' . format_date($event['end'], $date_format) . ' ' . format_date($event['end'], $time_format);
+    }
+    
+    return $fromto;
+  }
+
   /**
    * Echo simple free/busy status text for the given user and time range
    */
@@ -1331,6 +1458,29 @@ class calendar extends rcube_plugin
     
     $this->rc->output->set_pagetitle($title);
     $this->rc->output->send("calendar.print");
+  }
+
+  /**
+   * Compare two event objects and return differing properties
+   *
+   * @param array Event A
+   * @param array Event B
+   * @return array List of differing event properties
+   */
+  public static function event_diff($a, $b)
+  {
+    $diff = array();
+    $ignore = array('attachments' => 1);
+    foreach (array_unique(array_merge(array_keys($a), array_keys($b))) as $key) {
+      if (!$ignore[$key] && $a[$key] != $b[$key])
+        $diff[] = $key;
+    }
+    
+    // only compare number of attachments
+    if (count($a['attachments']) != count($b['attachments']))
+      $diff[] = 'attachments';
+    
+    return $diff;
   }
 
 }
