@@ -128,7 +128,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
             else {
                 $acl = $this->storagefolder->getACL();
-                if (is_array($acl)) {
+                if (!PEAR::isError($acl) && is_array($acl)) {
                     $acl = $acl[$_SESSION['username']];
                     if (strpos($acl, 'i') !== false)
                         $this->readonly = false;
