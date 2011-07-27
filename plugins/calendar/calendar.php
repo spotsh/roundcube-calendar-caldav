@@ -198,6 +198,9 @@ class calendar extends rcube_plugin
 
     $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
 
+    // initialize attendees autocompletion
+    rcube_autocomplete_init();
+
     $this->rc->output->send("calendar.calendar");
   }
 
