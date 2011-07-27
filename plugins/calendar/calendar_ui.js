@@ -1885,9 +1885,17 @@ function rcube_calendar_ui(settings)
         $('#recurrence-form-'+freq+', #recurrence-form-until').show();
     });
     $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
-    
+
     // init attendees autocompletion
-    rcmail.init_address_input_events($('#edit-attendee-name'));
+    var ac_props;
+    // parallel autocompletion
+    if (rcmail.env.autocomplete_threads > 0) {
+      ac_props = {
+        threads: rcmail.env.autocomplete_threads,
+        sources: rcmail.env.autocomplete_sources,
+      };
+    }
+    rcmail.init_address_input_events($('#edit-attendee-name'), ac_props);
     rcmail.addEventListener('autocomplete_insert', function(e){ $('#edit-attendee-add').click(); });
 
     $('#edit-attendee-add').click(function(){
