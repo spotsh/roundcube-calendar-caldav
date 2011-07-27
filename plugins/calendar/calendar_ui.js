@@ -38,6 +38,7 @@ function rcube_calendar_ui(settings)
 
 
     /***  private vars  ***/
+    var DAY_MS = 86400000;
     var me = this;
     var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
     var day_clicked = day_clicked_ts = 0;
@@ -655,14 +656,14 @@ function rcube_calendar_ui(settings)
       var now = new Date(), fb_start = new Date(), fb_end = new Date();
       fb_start.setTime(event.start);
       fb_start.setHours(0); fb_start.setMinutes(0); fb_start.setSeconds(0); fb_start.setMilliseconds(0);
-      fb_end.setTime(fb_start.getTime() + 86400000);
+      fb_end.setTime(fb_start.getTime() + DAY_MS);
       
       freebusy_data = {};
       freebusy_ui.loading = 1;  // prevent render_freebusy_grid() to load data yet
       freebusy_ui.numdays = allday.checked ? 7 : Math.ceil(duration * 2 / 86400);
       freebusy_ui.interval = allday.checked ? 360 : 60;
       freebusy_ui.start = fb_start;
-      freebusy_ui.end = new Date(freebusy_ui.start.getTime() + 86400000 * freebusy_ui.numdays);
+      freebusy_ui.end = new Date(freebusy_ui.start.getTime() + DAY_MS * freebusy_ui.numdays);
       render_freebusy_grid(0);
       
       // render list of attendees
@@ -682,7 +683,7 @@ function rcube_calendar_ui(settings)
       // dialog buttons
       var buttons = {};
       
-      buttons[rcmail.gettext('adobt', 'calendar')] = function() {
+      buttons[rcmail.gettext('select', 'calendar')] = function() {
         $('#edit-startdate').val(freebusy_ui.startdate.val());
         $('#edit-starttime').val(freebusy_ui.starttime.val());
         $('#edit-enddate').val(freebusy_ui.enddate.val());
@@ -733,8 +734,8 @@ function rcube_calendar_ui(settings)
     var render_freebusy_grid = function(delta)
     {
       if (delta) {
-        freebusy_ui.start.setTime(freebusy_ui.start.getTime() + 86400000 * delta);
-        freebusy_ui.end = new Date(freebusy_ui.start.getTime() + 86400000 * freebusy_ui.numdays);
+        freebusy_ui.start.setTime(freebusy_ui.start.getTime() + DAY_MS * delta);
+        freebusy_ui.end = new Date(freebusy_ui.start.getTime() + DAY_MS * freebusy_ui.numdays);
       }
       
       var dayslots = Math.floor(1440 / freebusy_ui.interval);
@@ -869,8 +870,8 @@ function rcube_calendar_ui(settings)
     // fetch free-busy information for each attendee from server
     var load_freebusy_data = function(from, interval)
     {
-      var start = new Date(from.getTime() - 86400000 * 2);  // start 1 days before event
-      var end = new Date(start.getTime() + 86400000 * 14);   // load 14 days
+      var start = new Date(from.getTime() - DAY_MS * 2);  // start 1 days before event
+      var end = new Date(start.getTime() + DAY_MS * 14);   // load 14 days
       
       // load free-busy information for every attendee
       var domid, email
@@ -1016,10 +1017,11 @@ function rcube_calendar_ui(settings)
         update_freebusy_dates(event.start, event.end);
         
         // move freebusy grid if necessary
+        var offset = Math.ceil((event.start.getTime() - freebusy_ui.end.getTime()) / DAY_MS);
         if (event.start.getTime() >= freebusy_ui.end.getTime())
-          render_freebusy_grid(1);
+          render_freebusy_grid(Math.max(1, offset));
         else if (event.end.getTime() <= freebusy_ui.start.getTime())
-          render_freebusy_grid(-1);
+          render_freebusy_grid(Math.min(-1, offset));
         else
           render_freebusy_overlay();
         
@@ -1637,7 +1639,7 @@ function rcube_calendar_ui(settings)
       dayClick: function(date, allDay, e, view) {
         var now = new Date().getTime();
         if (now - day_clicked_ts < 400 && day_clicked == date.getTime()) {  // emulate double-click on day
-          var enddate = new Date(); enddate.setTime(date.getTime() + 86400000 - 60000);
+          var enddate = new Date(); enddate.setTime(date.getTime() + DAY_MS - 60000);
           return event_edit_dialog('new', { start:date, end:enddate, allDay:allDay, calendar:me.selected_calendar });
         }
         
@@ -1705,9 +1707,9 @@ function rcube_calendar_ui(settings)
         if (day_off < 0) day_off = 6;
         var base_kw = $.datepicker.iso8601Week(base_date);
         var kw = parseInt($(this).html());
-        var diff = (kw - base_kw) * 7 * 86400000;
+        var diff = (kw - base_kw) * 7 * DAY_MS;
         // select monday of the chosen calendar week
-        var date = new Date(base_date.getTime() - day_off * 86400000 + diff);
+        var date = new Date(base_date.getTime() - day_off * DAY_MS + diff);
         fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
         minical.datepicker('setDate', date);
         window.setTimeout(init_week_events, 10);
