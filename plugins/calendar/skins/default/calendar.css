@@ -855,7 +855,24 @@ a.alarm-action-snooze:after {
 }
 
 #calendar-details fieldset {
-    background-color: #F2F2F2;
+    background-color: #fff;
+}
+
+#calendar-details span.tablink {
+	background: #E6E6E7;
+}
+
+#calendar-details span.tablink-selected {
+	background: #fff;
+}
+
+#calendar-details span.tablink a,
+#calendar-details span.tablink-selected a {
+	background: none;
+	border: 1px solid #AAAAAA;
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	margin-left: 0;
 }
 
 #calendar-details table td.title {
