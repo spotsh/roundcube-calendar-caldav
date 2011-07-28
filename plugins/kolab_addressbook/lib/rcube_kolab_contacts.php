@@ -982,7 +982,25 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     private function _sort_contacts_comp($a, $b)
     {
-      return strcasecmp($a['name'], $b['name']);
+        $a_name = $a['name'];
+        $b_name = $b['name'];
+
+        if (!$a_name) {
+            $a_name = join(' ', array_filter(array($a['prefix'], $a['firstname'],
+                $a['middlename'], $a['surname'], $a['suffix'])));
+            if (!$a_name) {
+                $a_name = is_array($a['email']) ? $a['email'][0] : $a['email'];
+            }
+        }
+        if (!$b_name) {
+            $b_name = join(' ', array_filter(array($b['prefix'], $b['firstname'],
+                $b['middlename'], $b['surname'], $b['suffix'])));
+            if (!$b_name) {
+                $b_name = is_array($b['email']) ? $b['email'][0] : $b['email'];
+            }
+        }
+
+        return strcasecmp($a_name, $b_name);
     }
 
     /**
