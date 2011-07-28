@@ -281,9 +281,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // sort data arrays according to desired list sorting
         if ($count = count($ids)) {
-$aa = rcube_timer();
             uasort($this->contacts, array($this, '_sort_contacts_comp'));
-rcube_print_time($aa);
             // get sorted IDs
             if ($count != count($this->contacts))
                 $ids = array_intersect(array_keys($this->contacts), $ids);
