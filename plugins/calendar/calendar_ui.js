@@ -1538,12 +1538,17 @@ function rcube_calendar_ui(settings)
         .data('id', id);
       }
       
-      if (!cal.readonly && !this.selected_calendar && (!settings.default_calendar || settings.default_calendar == id)) {
+      if (!cal.readonly && !this.selected_calendar) {
         this.selected_calendar = id;
         rcmail.enable_command('addevent', true);
       }
     }
-
+    
+    // select default calendar
+    if (settings.default_calendar && this.calendars[settings.default_calendar] && !this.calendars[settings.default_calendar].readonly)
+      this.selected_calendar = settings.default_calendar;
+    
+    
     // initalize the fullCalendar plugin
     var fc = $('#calendar').fullCalendar({
       header: {
