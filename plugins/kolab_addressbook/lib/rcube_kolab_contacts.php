@@ -128,7 +128,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
             else {
                 $acl = $this->storagefolder->getACL();
-                if (is_array($acl)) {
+                if (!PEAR::isError($acl) && is_array($acl)) {
                     $acl = $acl[$_SESSION['username']];
                     if (strpos($acl, 'i') !== false)
                         $this->readonly = false;
@@ -1092,10 +1092,13 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
 
+        $object['address'] = array();
+
         foreach ($this->get_col_values('address', $contact) as $type => $values) {
             if ($this->addresstypemap[$type])
                 $type = $this->addresstypemap[$type];
 
+            $updated = false;
             $basekey = 'addr-' . $type . '-';
             foreach ((array)$values as $adr) {
                 // switch type if slot is already taken
@@ -1111,8 +1114,16 @@ class rcube_kolab_contacts extends rcube_addressbook
                     $object[$basekey . 'postal-code'] = $adr['zipcode'];
                     $object[$basekey . 'region'] = $adr['region'];
                     $object[$basekey . 'country'] = $adr['country'];
+
+                    // Update existing address entry of this type
+                    foreach($object['address'] as $index => $address) {
+                        if ($address['type'] == $type) {
+                            $object['address'][$index] = $new_address;
+                            $updated = true;
+                        }
+                    }
                 }
-                else {
+                if (!$updated) {
                     $object['address'][] = array(
                         'type' => $type,
                         'street' => $adr['street'],

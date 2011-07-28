@@ -502,6 +502,13 @@ td.topalign {
 	min-width: 5em;
 }
 
+#edit-attendees-notify {
+	margin: 0.3em 0;
+	padding: 0.5em;
+	background-color: #F7FDCB;
+	border: 1px solid #C2D071;
+}
+
 #edit-attendees-table {
 	width: 100%;
 	display: table;

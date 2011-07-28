@@ -39,7 +39,7 @@ $labels['print'] = 'Print calendars';
 $labels['title'] = 'Summary';
 $labels['description'] = 'Description';
 $labels['all-day'] = 'all-day';
-$labels['export'] = 'Export to ICS';
+$labels['export'] = 'Export to iCalendar';
 $labels['location'] = 'Location';
 $labels['date'] = 'Date';
 $labels['start'] = 'Start';
@@ -103,11 +103,16 @@ $labels['availunknown'] = 'Unknown';
 $labels['availtentative'] = 'Tentative';
 $labels['availoutofoffice'] = 'Out of Office';
 $labels['scheduletime'] = 'Find availability';
-$labels['sendnotifications'] = 'Send notifications';
+$labels['sendinvitations'] = 'Send invitations';
+$labels['sendnotifications'] = 'Notify attendees about modifications';
 $labels['onlyworkinghours'] = 'Find availability within my working hours';
 $labels['prevslot'] = 'Previous Slot';
 $labels['nextslot'] = 'Next Slot';
 $labels['noslotfound'] = 'Unable to find a free time slot';
+$labels['invitationsubject'] = 'You\'ve been invited to "$title"';
+$labels['invitationmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with all the event details which you can import to your calendar application.";
+$labels['eventupdatesubject'] = '"$title" has been updated';
+$labels['eventupdatemailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with the updated event details which you can import to your calendar application.";
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
@@ -126,6 +131,7 @@ $labels['invalidcalendarproperties'] = 'Invalid calendar properties! Please set 
 $labels['searchnoresults'] = 'No events found in the selected calendars.';
 $labels['successremoval'] = 'The event has been deleted successfully.';
 $labels['successrestore'] = 'The event has been restored successfully.';
+$labels['errornotifying'] = 'Failed to send notifications to event participants';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

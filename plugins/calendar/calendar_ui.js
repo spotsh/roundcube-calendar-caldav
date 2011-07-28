@@ -369,6 +369,9 @@ function rcube_calendar_ui(settings)
       var enddate = $('#edit-enddate').val($.fullCalendar.formatDate(event.end, settings['date_format']));
       var endtime = $('#edit-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       var allday = $('#edit-allday').get(0);
+      var notify = $('#edit-attendees-donotify').get(0);
+      var invite = $('#edit-attendees-invite').get(0);
+      notify.checked = invite.checked = true;  // enable notification by default
       
       if (event.allDay) {
         starttime.val("00:00").hide();
@@ -461,7 +464,11 @@ function rcube_calendar_ui(settings)
       if (calendar.attendees && event.attendees) {
         for (var j=0; j < event.attendees.length; j++)
           add_attendee(event.attendees[j], true);
+        $('#edit-attendees-notify').show();
       }
+      else
+        $('#edit-attendees-notify').hide();
+      
       $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
 
       // attachments
@@ -535,6 +542,11 @@ function rcube_calendar_ui(settings)
           if (data.attendees[i])
             data.attendees[i].role = $(elem).val();
         });
+        
+        // tell server to send notifications
+        if (data.attendees.length && ((event.id && notify.checked) || (!event.id && invite.checked))) {
+          data._notify = 1;
+        }
 
         // gather recurrence settings
         var freq;
@@ -624,6 +636,7 @@ function rcube_calendar_ui(settings)
       title.select();
     };
 
+    // open a dialog to display detailed free-busy information and to find free slots
     var event_freebusy_dialog = function()
     {
       var $dialog = $('#eventfreebusy').dialog('close');
@@ -1056,7 +1069,7 @@ function rcube_calendar_ui(settings)
       // parse name/email pairs
       var item, email, name, success = false;
       for (var i=0; i < names.length; i++) {
-        email = name = null;
+        email = name = '';
         item = $.trim(names[i]);
         
         if (!item.length) {
@@ -1525,12 +1538,17 @@ function rcube_calendar_ui(settings)
         .data('id', id);
       }
       
-      if (!cal.readonly && !this.selected_calendar && (!settings.default_calendar || settings.default_calendar == id)) {
+      if (!cal.readonly && !this.selected_calendar) {
         this.selected_calendar = id;
         rcmail.enable_command('addevent', true);
       }
     }
-
+    
+    // select default calendar
+    if (settings.default_calendar && this.calendars[settings.default_calendar] && !this.calendars[settings.default_calendar].readonly)
+      this.selected_calendar = settings.default_calendar;
+    
+    
     // initalize the fullCalendar plugin
     var fc = $('#calendar').fullCalendar({
       header: {
@@ -1902,6 +1920,11 @@ function rcube_calendar_ui(settings)
       var input = $('#edit-attendee-name');
       if (add_attendees(input.val()))
         input.val('');
+    });
+    
+    // keep these two checkboxes in sync
+    $('#edit-attendees-donotify, #edit-attendees-invite').click(function(){
+      $('#edit-attendees-donotify, #edit-attendees-invite').prop('checked', this.checked);
     });
     
     $('#edit-attendee-schedule').click(function(){

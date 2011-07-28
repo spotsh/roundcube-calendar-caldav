@@ -173,7 +173,7 @@ class database_driver extends calendar_driver
    * Add a single event to the database
    *
    * @param array Hash array with event properties
-   * @see Driver:new_event()
+   * @see calendar_driver::new_event()
    */
   public function new_event($event)
   {
@@ -233,7 +233,7 @@ class database_driver extends calendar_driver
    * Update an event entry with the given data
    *
    * @param array Hash array with event properties
-   * @see Driver:edit_event()
+   * @see calendar_driver::edit_event()
    */
   public function edit_event($event)
   {
@@ -502,7 +502,7 @@ class database_driver extends calendar_driver
    * Move a single event
    *
    * @param array Hash array with event properties
-   * @see Driver:move_event()
+   * @see calendar_driver::move_event()
    */
   public function move_event($event)
   {
@@ -514,7 +514,7 @@ class database_driver extends calendar_driver
    * Resize a single event
    *
    * @param array Hash array with event properties
-   * @see Driver:resize_event()
+   * @see calendar_driver::resize_event()
    */
   public function resize_event($event)
   {
@@ -528,7 +528,7 @@ class database_driver extends calendar_driver
    * @param array   Hash array with event properties
    * @param boolean Remove record irreversible (@TODO)
    *
-   * @see Driver:remove_event()
+   * @see calendar_driver::remove_event()
    */
   public function remove_event($event, $force = true)
   {
@@ -601,12 +601,14 @@ class database_driver extends calendar_driver
 
   /**
    * Return data of a specific event
-   * @param string Event ID
+   * @param mixed  Hash array with event properties or event ID
    * @return array Hash array with event properties
    */
-  public function get_event($id)
+  public function get_event($event)
   {
     static $cache = array();
+    
+    $id = is_array($event) ? $event['id'] : $event;
     
     if ($cache[$id])
       return $cache[$id];
@@ -630,7 +632,7 @@ class database_driver extends calendar_driver
   /**
    * Get event data
    *
-   * @see Driver:load_events()
+   * @see calendar_driver::load_events()
    */
   public function load_events($start, $end, $query = null, $calendars = null)
   {
@@ -726,7 +728,7 @@ class database_driver extends calendar_driver
   /**
    * Get a list of pending alarms to be displayed to the user
    *
-   * @see Driver:pending_alarms()
+   * @see calendar_driver::pending_alarms()
    */
   public function pending_alarms($time, $calendars = null)
   {
@@ -759,7 +761,7 @@ class database_driver extends calendar_driver
   /**
    * Feedback after showing/sending an alarm notification
    *
-   * @see Driver:dismiss_alarm()
+   * @see calendar_driver::dismiss_alarm()
    */
   public function dismiss_alarm($event_id, $snooze = 0)
   {
