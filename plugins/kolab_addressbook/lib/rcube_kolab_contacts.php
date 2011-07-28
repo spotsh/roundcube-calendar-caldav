@@ -281,7 +281,9 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // sort data arrays according to desired list sorting
         if ($count = count($ids)) {
+$aa = rcube_timer();
             uasort($this->contacts, array($this, '_sort_contacts_comp'));
+rcube_print_time($aa);
             // get sorted IDs
             if ($count != count($this->contacts))
                 $ids = array_intersect(array_keys($this->contacts), $ids);
@@ -1000,7 +1002,14 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
 
-        return strcasecmp($a_name, $b_name);
+        // return strcasecmp($a_name, $b_name);
+        // make sorting unicode-safe and locale-dependent
+        if ($a_name == $b_name)
+            return 0;
+
+        $arr = array($a_name, $b_name);
+        sort($arr, SORT_LOCALE_STRING);
+        return $a_name == $arr[0] ? -1 : 1;
     }
 
     /**
