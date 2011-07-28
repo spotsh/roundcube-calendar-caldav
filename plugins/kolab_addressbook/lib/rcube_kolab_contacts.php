@@ -279,9 +279,19 @@ class rcube_kolab_contacts extends rcube_addressbook
         else
             $ids = is_array($this->filter['ids']) ? $this->filter['ids'] : array_keys($this->contacts);
 
+        // sort data arrays according to desired list sorting
+        if ($count = count($ids)) {
+            uasort($this->contacts, array($this, '_sort_contacts_comp'));
+            // get sorted IDs
+            if ($count != count($this->contacts))
+                $ids = array_intersect(array_keys($this->contacts), $ids);
+            else
+                $ids = array_keys($this->contacts);
+        }
+
         // fill contact data into the current result set
         $start_row = $subset < 0 ? $this->result->first + $this->page_size + $subset : $this->result->first;
-        $last_row = min($subset != 0 ? $start_row + abs($subset) : $this->result->first + $this->page_size, count($ids));
+        $last_row = min($subset != 0 ? $start_row + abs($subset) : $this->result->first + $this->page_size, $count);
 
         for ($i = $start_row; $i < $last_row; $i++) {
             if ($id = $ids[$i])
@@ -964,9 +974,6 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $this->contacts[$id] = $contact;
                 $this->id2uid[$id] = $record['uid'];
             }
-
-            // sort data arrays according to desired list sorting
-            uasort($this->contacts, array($this, '_sort_contacts_comp'));
         }
     }
 
