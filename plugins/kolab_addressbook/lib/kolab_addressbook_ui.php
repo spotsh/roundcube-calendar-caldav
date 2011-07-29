@@ -102,40 +102,42 @@ class kolab_addressbook_ui
     {
         $action = trim(get_input_value('_act', RCUBE_INPUT_GPC));
         $folder = trim(get_input_value('_source', RCUBE_INPUT_GPC, true)); // UTF8
-        $name   = trim(get_input_value('_name', RCUBE_INPUT_GPC, true)); // UTF8
-        $old    = trim(get_input_value('_oldname', RCUBE_INPUT_GPC, true)); // UTF7-IMAP
-        $path_imap = trim(get_input_value('_parent', RCUBE_INPUT_GPC, true)); // UTF7-IMAP
 
         $hidden_fields[] = array('name' => '_source', 'value' => $folder);
 
         $folder = rcube_charset_convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
         $delim  = $_SESSION['imap_delimiter'];
-        $form   = array();
 
         if ($this->rc->action == 'plugin.book-save') {
             // save error
-            $path_imap = $folder;
+            $name      = trim(get_input_value('_name', RCUBE_INPUT_GPC, true)); // UTF8
+            $old       = trim(get_input_value('_oldname', RCUBE_INPUT_GPC, true)); // UTF7-IMAP
+            $path_imap = trim(get_input_value('_parent', RCUBE_INPUT_GPC, true)); // UTF7-IMAP
+
             $hidden_fields[] = array('name' => '_oldname', 'value' => $old);
 
-            if (strlen($old)) {
-                $this->rc->imap_connect();
-                $options = $this->rc->imap->mailbox_info($old);
-            }
+            $folder = $old;
         }
         else if ($action == 'edit') {
             $path_imap = explode($delim, $folder);
             $name      = rcube_charset_convert(array_pop($path_imap), 'UTF7-IMAP');
             $path_imap = implode($path_imap, $delim);
+        }
+        else { // create
+            $path_imap = $folder;
+            $name      = '';
+            $folder    = '';
+        }
+
+        // Store old name, get folder options
+        if (strlen($folder)) {
+            $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
 
             $this->rc->imap_connect();
             $options = $this->rc->imap->mailbox_info($folder);
+        }
 
-            $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
-        }
-        else {
-            $path_imap = $folder;
-            $name      = '';
-        }
+        $form   = array();
 
         // General tab
         $form['props'] = array(
