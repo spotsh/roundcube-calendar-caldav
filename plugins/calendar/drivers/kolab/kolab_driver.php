@@ -923,7 +923,7 @@ class kolab_driver extends calendar_driver
       $select = rcube_kolab::folder_selector('event', array('name' => 'parent'), $folder);
       $form['props']['fieldsets']['location']['content']['path'] = array(
         'label' => $this->cal->gettext('parentcalendar'),
-        'value' => $select->show($path_imap),
+        'value' => $select->show(strlen($folder) ? $path_imap : ''),
       );
     }
 

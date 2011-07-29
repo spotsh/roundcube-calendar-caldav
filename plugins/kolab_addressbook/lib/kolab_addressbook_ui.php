@@ -166,7 +166,7 @@ class kolab_addressbook_ui
 
             $form['props']['fieldsets']['location']['content']['path'] = array(
                 'label' => $this->plugin->gettext('parentbook'),
-                'value' => $select->show($path_imap),
+                'value' => $select->show(strlen($folder) ? $path_imap : ''),
             );
         }
 
