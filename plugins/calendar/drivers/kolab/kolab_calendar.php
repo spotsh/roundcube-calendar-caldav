@@ -561,6 +561,7 @@ class kolab_calendar
       'free_busy' => $rec['show-time-as'],
       'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
+      'changed' => $rec['last-modification-date'],
       'calendar' => $this->id,
     );
   }

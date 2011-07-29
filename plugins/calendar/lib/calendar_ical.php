@@ -78,13 +78,15 @@ class calendar_ical
   {
     $event = array(
       'uid' => $ve->getAttributeDefault('UID'),
+      'changed' => $ve->getAttributeDefault('DTSTAMP', 0),
       'title' => $ve->getAttributeDefault('SUMMARY'),
-      'description' => $ve->getAttributeDefault('DESCRIPTION'),
-      'location' => $ve->getAttributeDefault('LOCATION'),
       'start' => $ve->getAttribute('DTSTART'),
       'end' => $ve->getAttribute('DTEND'),
+      // set defaults
+      'free_busy' => 'busy',
+      'priority' => 1,
     );
-
+    
     // check for all-day dates
     if (is_array($event['start'])) {
       $event['start'] = gmmktime(0, 0, 0, $event['start']['month'], $event['start']['mday'], $event['start']['year']) + $this->cal->gmt_offset;
@@ -93,11 +95,97 @@ class calendar_ical
     if (is_array($event['end'])) {
       $event['end'] = gmmktime(0, 0, 0, $event['end']['month'], $event['end']['mday'], $event['end']['year']) + $this->cal->gmt_offset - 60;
     }
+    
+    // map other attributes to internal fields
+    $_attendees = array();
+    foreach ($ve->getAllAttributes() as $attr) {
+      switch ($attr['name']) {
+        case 'ORGANIZER':
+          $organizer = array(
+            'name' => $attr['params']['CN'],
+            'email' => preg_replace('/^mailto:/', '', $attr['value']),
+            'role' => 'ORGANIZER',
+            'status' => 'ACCEPTED',
+          );
+          if (isset($_attendees[$organizer['email']])) {
+            $i = $_attendees[$organizer['email']];
+            $event['attendees'][$i]['role'] = $organizer['role'];
+          }
+          break;
+        
+        case 'ATTENDEE':
+          $attendee = array(
+            'name' => $attr['params']['CN'],
+            'email' => preg_replace('/^mailto:/', '', $attr['value']),
+            'role' => $attr['params']['ROLE'] ? $attr['params']['ROLE'] : 'REQ-PARTICIPANT',
+            'status' => $attr['params']['PARTSTAT'],
+            'rsvp' => $attr['params']['RSVP'] == 'TRUE',
+          );
+          if ($organizer && $organizer['email'] == $attendee['email'])
+            $attendee['role'] = 'ORGANIZER';
+          
+          $event['attendees'][] = $attendee;
+          $_attendees[$attendee['email']] = count($event['attendees']) - 1;
+          break;
+          
+        case 'TRANSP':
+          $event['free_busy'] = $attr['value'] == 'TRANSPARENT' ? 'free' : 'busy';
+          break;
+        
+        case 'STATUS':
+          if ($attr['value'] == 'TENTATIVE')
+            $event['free_busy'] == 'tentative';
+          break;
+        
+        case 'PRIORITY':
+          if (is_numeric($attr['value'])) {
+            $event['priority'] = $attr['value'] <= 4 ? 2 /* high */ :
+              ($attr['value'] == 5 ? 1 /* normal */ : 0 /* low */);
+          }
+          break;
+        
+        case 'RRULE':
+          // parse recurrence rule attributes
+          foreach (explode(';', $attr['value']) as $par) {
+            list($k, $v) = explode('=', $par);
+            $params[$k] = $v;
+          }
+          if ($params['UNTIL'])
+            $params['UNTIL'] = $ve->_parseDateTime($params['UNTIL']);
+          if (!$params['INTERVAL'])
+            $params['INTERVAL'] = 1;
+          
+          $event['recurrence'] = $params;
+          break;
+        
+        case 'EXDATE':
+          break;
+        
+        case 'DESCRIPTION':
+        case 'LOCATION':
+          $event[strtolower($attr['name'])] = $attr['value'];
+          break;
+        
+        case 'CLASS':
+        case 'X-CALENDARSERVER-ACCESS':
+          $sensitivity_map = array('PUBLIC' => 0, 'PRIVATE' => 1, 'CONFIDENTIAL' => 2);
+          $event['sensitivity'] = $sensitivity_map[$attr['value']];
+          break;
 
-    // TODO: complete this
+        case 'X-MICROSOFT-CDO-BUSYSTATUS':
+          if ($attr['value'] == 'OOF')
+            $event['free_busy'] == 'outofoffice';
+          else if (in_array($attr['value'], array('FREE', 'BUSY', 'TENTATIVE')))
+            $event['free_busy'] = strtolower($attr['value']);
+          break;
+      }
+    }
     
-    
-    // make sure event has an UID
+    // add organizer to attendees list if not already present
+    if ($organizer && !isset($_attendees[$organizer['email']]))
+      array_unshift($event['attendees'], $organizer);
+
+    // make sure the event has an UID
     if (!$event['uid'])
       $event['uid'] = $this->cal->$this->generate_uid();
     
@@ -108,10 +196,12 @@ class calendar_ical
   /**
    * Export events to iCalendar format
    *
-   * @param  array Events as array
+   * @param  array   Events as array
+   * @param  string  VCalendar method to advertise
+   * @param  boolean Directly send data to stdout instead of returning
    * @return string  Events in iCalendar format (http://tools.ietf.org/html/rfc5545)
    */
-  public function export($events, $method = null)
+  public function export($events, $method = null, $write = false)
   {
     if (!empty($this->rc->user->ID)) {
       $ical = "BEGIN:VCALENDAR" . self::EOL;
@@ -121,56 +211,72 @@ class calendar_ical
       
       if ($method)
         $ical .= "METHOD:" . strtoupper($method) . self::EOL;
+        
+      if ($write) {
+        echo $ical;
+        $ical = '';
+      }
       
       foreach ($events as $event) {
-        $ical .= "BEGIN:VEVENT" . self::EOL;
-        $ical .= "UID:" . self::escpape($event['uid']) . self::EOL;
+        $vevent = "BEGIN:VEVENT" . self::EOL;
+        $vevent .= "UID:" . self::escpape($event['uid']) . self::EOL;
+        $vevent .= "DTSTAMP:" . gmdate('Ymd\THis\Z', $event['changed'] ? $event['changed'] : time()) . self::EOL;
         // correctly set all-day dates
         if ($event['allday']) {
-          $ical .= "DTSTART;VALUE=DATE:" . gmdate('Ymd', $event['start'] + $this->cal->gmt_offset) . self::EOL;
-          $ical .= "DTEND;VALUE=DATE:" . gmdate('Ymd', $event['end'] + $this->cal->gmt_offset + 60) . self::EOL;  // ends the next day
+          $vevent .= "DTSTART;VALUE=DATE:" . gmdate('Ymd', $event['start'] + $this->cal->gmt_offset) . self::EOL;
+          $vevent .= "DTEND;VALUE=DATE:" . gmdate('Ymd', $event['end'] + $this->cal->gmt_offset + 60) . self::EOL;  // ends the next day
         }
         else {
-          $ical .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . self::EOL;
-          $ical .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . self::EOL;
+          $vevent .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . self::EOL;
+          $vevent .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . self::EOL;
         }
-        $ical .= "SUMMARY:" . self::escpape($event['title']) . self::EOL;
-        $ical .= "DESCRIPTION:" . self::escpape($event['description']) . self::EOL;
+        $vevent .= "SUMMARY:" . self::escpape($event['title']) . self::EOL;
+        $vevent .= "DESCRIPTION:" . self::escpape($event['description']) . self::EOL;
         
         if (!empty($event['attendees'])){
-          $ical .= $this->_get_attendees($event['attendees']);
+          $vevent .= $this->_get_attendees($event['attendees']);
         }
 
         if (!empty($event['location'])) {
-          $ical .= "LOCATION:" . self::escpape($event['location']) . self::EOL;
+          $vevent .= "LOCATION:" . self::escpape($event['location']) . self::EOL;
         }
         if ($event['recurrence']) {
-          $ical .= "RRULE:" . calendar::to_rrule($event['recurrence']) . self::EOL;
+          $vevent .= "RRULE:" . calendar::to_rrule($event['recurrence'], self::EOL) . self::EOL;
         }
         if(!empty($event['categories'])) {
-          $ical .= "CATEGORIES:" . self::escpape(strtoupper($event['categories'])) . self::EOL;
+          $vevent .= "CATEGORIES:" . self::escpape(strtoupper($event['categories'])) . self::EOL;
         }
         if ($event['sensitivity'] > 0) {
-          $ical .= "X-CALENDARSERVER-ACCESS:CONFIDENTIAL";
+          $vevent .= "CLASS:" . ($event['sensitivity'] == 2 ? 'CONFIDENTIAL' : 'PRIVATE') . self::EOL;
         }
         if ($event['alarms']) {
           list($trigger, $action) = explode(':', $event['alarms']);
           $val = calendar::parse_alaram_value($trigger);
           
-          $ical .= "BEGIN:VALARM\n";
-          if ($val[1]) $ical .= "TRIGGER:" . preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger) . self::EOL;
-          else         $ical .= "TRIGGER;VALUE=DATE-TIME:" . gmdate('Ymd\THis\Z', $val[0]) . self::EOL;
-          if ($action) $ical .= "ACTION:" . self::escpape(strtoupper($action)) . self::EOL;
-          $ical .= "END:VALARM\n";
+          $vevent .= "BEGIN:VALARM\n";
+          if ($val[1]) $vevent .= "TRIGGER:" . preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger) . self::EOL;
+          else         $vevent .= "TRIGGER;VALUE=DATE-TIME:" . gmdate('Ymd\THis\Z', $val[0]) . self::EOL;
+          if ($action) $vevent .= "ACTION:" . self::escpape(strtoupper($action)) . self::EOL;
+          $vevent .= "END:VALARM\n";
         }
-        $ical .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . self::EOL;
+        $vevent .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . self::EOL;
         
         // TODO: export attachments
         
-        $ical .= "END:VEVENT" . self::EOL;
+        $vevent .= "END:VEVENT" . self::EOL;
+        
+        if ($write)
+          echo rcube_vcard::rfc2425_fold($vevent);
+        else
+          $ical .= $vevent;
       }
       
       $ical .= "END:VCALENDAR" . self::EOL;
+      
+      if ($write) {
+        echo $ical;
+        return true;
+      }
 
       // fold lines to 75 chars
       return rcube_vcard::rfc2425_fold($ical);

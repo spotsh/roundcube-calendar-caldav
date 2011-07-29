@@ -139,6 +139,12 @@ function rcube_calendar_ui(settings)
       else
         return date.getHours() >= settings['work_start'] && date.getHours() < settings['work_end'];
     };
+    
+    // check if the event has 'real' attendees, excluding the current user
+    var has_attendees = function(event)
+    {
+      return (event.attendees && (event.attendees.length > 1 || event.attendees[0].email != settings.event_owner.email));
+    };
 
     // create a nice human-readable string for the date/time range
     var event_date_text = function(event)
@@ -465,7 +471,7 @@ function rcube_calendar_ui(settings)
         for (var j=0; j < event.attendees.length; j++)
           add_attendee(event.attendees[j], true);
         
-        if (event.attendees.length > 1 || event.attendees[0].email != settings.event_owner.email) {
+        if (has_attendees(event)) {
           notify.checked = invite.checked = true;  // enable notification by default
         }
       }
@@ -1292,43 +1298,86 @@ function rcube_calendar_ui(settings)
       return true;
     };
 
-    // display confirm dialog when modifying/deleting a recurring event where the user needs to select the savemode
-    var recurring_edit_confirm = function(event, action) {
-      var $dialog = $('<div>').addClass('edit-recurring-warning');
-      $dialog.html('<div class="message"><span class="ui-icon ui-icon-alert"></span>' +
-        rcmail.gettext((action == 'remove' ? 'removerecurringeventwarning' : 'changerecurringeventwarning'), 'calendar') + '</div>' +
-        '<div class="savemode">' +
-          '<a href="#current" class="button">' + rcmail.gettext('currentevent', 'calendar') + '</a>' +
-          '<a href="#future" class="button">' + rcmail.gettext('futurevents', 'calendar') + '</a>' +
-          '<a href="#all" class="button">' + rcmail.gettext('allevents', 'calendar') + '</a>' +
-          (action != 'remove' ? '<a href="#new" class="button">' + rcmail.gettext('saveasnew', 'calendar') + '</a>' : '') +
-        '</div>');
+    // display confirm dialog when modifying/deleting an event
+    var update_event_confirm = function(action, event, data)
+    {
+      if (!data) data = event;
+      var html = '';
       
-      $dialog.find('a.button').button().click(function(e){
-        event.savemode = String(this.href).replace(/.+#/, '');
-        update_event(action, event);
-        $dialog.dialog("destroy").hide();
-        return false;
-      });
+      // event has attendees, ask whether to notify them
+      if (has_attendees(event)) {
+        html += '<div class="message">' +
+          '<label><input class="confirm-attendees-donotify" type="checkbox" checked="checked" value="1" name="notify" />&nbsp;' +
+          rcmail.gettext('sendnotifications', 'calendar') + 
+          '</label></div>';
+      }
       
-      $dialog.dialog({
-        modal: true,
-        width: 420,
-        dialogClass: 'warning',
-        title: rcmail.gettext((action == 'remove' ? 'removerecurringevent' : 'changerecurringevent'), 'calendar'),
-        buttons: [
-          {
-            text: rcmail.gettext('cancel', 'calendar'),
+      // recurring event: user needs to select the savemode
+      if (event.recurrence) {
+        html += '<div class="message"><span class="ui-icon ui-icon-alert"></span>' +
+          rcmail.gettext((action == 'remove' ? 'removerecurringeventwarning' : 'changerecurringeventwarning'), 'calendar') + '</div>' +
+          '<div class="savemode">' +
+            '<a href="#current" class="button">' + rcmail.gettext('currentevent', 'calendar') + '</a>' +
+            '<a href="#future" class="button">' + rcmail.gettext('futurevents', 'calendar') + '</a>' +
+            '<a href="#all" class="button">' + rcmail.gettext('allevents', 'calendar') + '</a>' +
+            (action != 'remove' ? '<a href="#new" class="button">' + rcmail.gettext('saveasnew', 'calendar') + '</a>' : '') +
+          '</div>';
+      }
+      
+      // show dialog
+      if (html) {
+        var $dialog = $('<div>').html(html);
+      
+        $dialog.find('a.button').button().click(function(e){
+          data.savemode = String(this.href).replace(/.+#/, '');
+          if ($dialog.find('input.confirm-attendees-donotify').get(0))
+            data._notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+          update_event(action, data);
+          $dialog.dialog("destroy").hide();
+          return false;
+        });
+        
+        var buttons = [{
+          text: rcmail.gettext('cancel', 'calendar'),
+          click: function() {
+            $(this).dialog("close");
+          }
+        }];
+        
+        if (!event.recurrence) {
+          buttons.push({
+            text: rcmail.gettext((action == 'remove' ? 'remove' : 'save'), 'calendar'),
             click: function() {
+              data._notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+              update_event(action, data);
               $(this).dialog("close");
             }
-          }
-        ],
-        close: function(){
-          $dialog.dialog("destroy").hide();
-          fc.fullCalendar('refetchEvents');
+          });
         }
-      }).show();
+      
+        $dialog.dialog({
+          modal: true,
+          width: 420,
+          dialogClass: 'warning',
+          title: rcmail.gettext((action == 'remove' ? 'removeeventconfirm' : 'changeeventconfirm'), 'calendar'),
+          buttons: buttons,
+          close: function(){
+            $dialog.dialog("destroy").hide();
+            if (!rcmail.busy)
+              fc.fullCalendar('refetchEvents');
+          }
+        }).addClass('event-update-confirm').show();
+        
+        return false;
+      }
+      // show regular confirm box when deleting
+      else if (action == 'remove') {
+        if (!confirm(rcmail.gettext('deleteventconfirm', 'calendar')))
+          return false;
+      }
+
+      // do update
+      update_event(action, data);
       
       return true;
     };
@@ -1361,17 +1410,8 @@ function rcube_calendar_ui(settings)
 
     // delete the given event after showing a confirmation dialog
     this.delete_event = function(event) {
-      // show extended confirm dialog for recurring events, use jquery UI dialog
-      if (event.recurrence)
-        return recurring_edit_confirm({ id:event.id, calendar:event.calendar }, 'remove');
-      
-      // send remove request to plugin
-      if (confirm(rcmail.gettext('deleteventconfirm', 'calendar'))) {
-        update_event('remove', { id:event.id, calendar:event.calendar });
-        return true;
-      }
-
-      return false;
+      // show confirm dialog for recurring events, use jquery UI dialog
+      return update_event_confirm('remove', event, { id:event.id, calendar:event.calendar });
     };
     
     // opens a jquery UI dialog with event properties (or empty for creating a new calendar)
@@ -1752,10 +1792,7 @@ function rcube_calendar_ui(settings)
           end: date2unixtime(event.end),
           allday: allDay?1:0
         };
-        if (event.recurrence)
-          recurring_edit_confirm(data, 'move');
-        else
-          update_event('move', data);
+        update_event_confirm('move', event, data);
       },
       // callback for event resizing
       eventResize: function(event, delta) {
@@ -1766,10 +1803,7 @@ function rcube_calendar_ui(settings)
           start: date2unixtime(event.start),
           end: date2unixtime(event.end)
         };
-        if (event.recurrence)
-          recurring_edit_confirm(data, 'resize');
-        else
-          update_event('resize', data);
+        update_event_confirm('resize', event, data);
       },
       viewDisplay: function(view) {
         me.eventcount = [];
@@ -2046,7 +2080,6 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
   rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
-  rcmail.addEventListener('plugin.ping_url', function(p){ p.event = null; new Image().src = rcmail.url(p.action, p); });
 
   // let's go
   var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);
