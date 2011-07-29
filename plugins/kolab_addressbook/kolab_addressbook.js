@@ -56,7 +56,7 @@ rcube_webmail.prototype.book_show_contentframe = function(action, framed)
         return false;
 
     if (action) {
-        this.set_busy(true);
+        this.lock_frame();
         this.location_href(this.env.comm_path+'&_action=plugin.book&_act='+action
             +'&_source='+urlencode(this.book_realname())
             +add_url, target);
