@@ -166,6 +166,15 @@ function rcube_calendar(settings)
 
 }
 
+// static methods
+rcube_calendar.add_event_from_mail = function(mime_id, title)
+{
+  var lock = rcmail.set_busy(true, 'loading');
+  rcmail.http_post('calendar/mailimportevent', '_uid='+rcmail.env.uid+'&_mbox='+urlencode(rcmail.env.mailbox)+'&_part='+urlencode(mime_id), lock);
+  return false;
+};
+
+
 // extend jQuery
 (function($){
   $.fn.serializeJSON = function(){
@@ -183,5 +192,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     var cal = new rcube_calendar(rcmail.env.calendar_settings);
     rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
   }
+  rcmail.addEventListener('plugin.ping_url', function(p){
+    var action = p.action;
+    p.action = p.event = null;
+    new Image().src = rcmail.url(action, p);
+  });
 });
 

@@ -60,6 +60,7 @@ $labels['generated'] = 'generated at';
 $labels['selectdate'] = 'Select date';
 $labels['printdescriptions'] = 'Print descriptions';
 $labels['parentcalendar'] = 'Superior calendar';
+$labels['importtocalendar'] = 'Save to my calendar';
 
 // alarm/reminder settings
 $labels['alarmemail'] = 'Send Email';
@@ -104,7 +105,8 @@ $labels['availtentative'] = 'Tentative';
 $labels['availoutofoffice'] = 'Out of Office';
 $labels['scheduletime'] = 'Find availability';
 $labels['sendinvitations'] = 'Send invitations';
-$labels['sendnotifications'] = 'Notify attendees about modifications';
+$labels['sendnotifications'] = 'Notify participants about modifications';
+$labels['sendcancellation'] = 'Notify participants about event cancellation';
 $labels['onlyworkinghours'] = 'Find availability within my working hours';
 $labels['reqallattendees'] = 'Required/all participants';
 $labels['prevslot'] = 'Previous Slot';
@@ -114,6 +116,8 @@ $labels['invitationsubject'] = 'You\'ve been invited to "$title"';
 $labels['invitationmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with all the event details which you can import to your calendar application.";
 $labels['eventupdatesubject'] = '"$title" has been updated';
 $labels['eventupdatemailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with the updated event details which you can import to your calendar application.";
+$labels['eventcancelsubject'] = '"$title" has been canceled';
+$labels['eventcancelmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nThe event has been cancelled by \$organizer.\n\nPlease find attached an iCalendar file with the updated event details.";
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
@@ -133,6 +137,10 @@ $labels['searchnoresults'] = 'No events found in the selected calendars.';
 $labels['successremoval'] = 'The event has been deleted successfully.';
 $labels['successrestore'] = 'The event has been restored successfully.';
 $labels['errornotifying'] = 'Failed to send notifications to event participants';
+$labels['errorimportingevent'] = 'Failed to import the event';
+$labels['newerversionexists'] = 'A newer version of this event already exists! Aborted.';
+$labels['nowritecalendarfound'] = 'No calendar found to save the event';
+$labels['importedsuccessfully'] = 'The event was successfully added to \'$calendar\'';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';
@@ -162,8 +170,8 @@ $labels['fourth'] = 'fourth';
 $labels['last'] = 'last';
 $labels['dayofmonth'] = 'Day of month';
 
-$labels['changerecurringevent'] = 'Change recurring event';
-$labels['removerecurringevent'] = 'Remove recurring event';
+$labels['changeeventconfirm'] = 'Change event';
+$labels['removeeventconfirm'] = 'Remove event';
 $labels['changerecurringeventwarning'] = 'This is a recurring event. Would you like to edit the current event only, this and all future occurences, all occurences or save it as a new event?';
 $labels['removerecurringeventwarning'] = 'This is a recurring event. Would you like to remove the current event only, this and all future occurences or all occurences of this event?';
 $labels['currentevent'] = 'Current';

@@ -120,6 +120,7 @@ class calendar extends rcube_plugin
       $this->register_action('freebusy-times', array($this, 'freebusy_times'));
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
       $this->register_action('print', array($this,'print_view'));
+      $this->register_action('mailimportevent', array($this, 'mail_import_event'));
 
       // remove undo information...
       if ($undo = $_SESSION['calendar_event_undo']) {
@@ -137,11 +138,14 @@ class calendar extends rcube_plugin
       $this->add_hook('preferences_list', array($this, 'preferences_list'));
       $this->add_hook('preferences_save', array($this, 'preferences_save')); 
     }
-    else if ($this->rc->task == 'mail' && ($this->rc->action == 'show' || $this->rc->action == 'preview')) {
+    else if ($this->rc->task == 'mail') {
+      // hooks to catch event invitations on incoming mails
+      if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
         $this->add_hook('message_load', array($this, 'mail_message_load'));
         $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
+      }
     }
-
+    
     // add hook to display alarms
     $this->add_hook('keep_alive', array($this, 'keep_alive'));
   }
@@ -505,8 +509,12 @@ class calendar extends rcube_plugin
     $event  = get_input_value('e', RCUBE_INPUT_POST);
     $success = $reload = $got_msg = false;
     
+    // don't notify if modifying a recurring instance (really?)
+    if ($event['savemode'] && $event['savemode'] != 'all' && $event['notify'])
+      unset($event['notify']);
+    
     // read old event data in order to find changes
-    if ($event['_notify'] && $action != 'new')
+    if ($event['notify'] && $action != 'new')
       $old = $this->driver->get_event($event);
 
     switch ($action) {
@@ -583,13 +591,13 @@ class calendar extends rcube_plugin
     }
     
     // send out notifications
-    if ($success && $event['_notify'] && $event['attendees']) {
+    if ($success && $event['notify'] && ($event['attendees'] || $old['attendees'])) {
       // make sure we have the complete record
-      $event = $this->driver->get_event($event);
+      $event = $action == 'remove' ? $old : $this->driver->get_event($event);
       
       // only notify if data really changed (TODO: do diff check on client already)
-      if (!$old || self::event_diff($event, $old)) {
-        if ($this->notify_attendees($event, $old) < 0)
+      if (!$old || $action == 'remove' || self::event_diff($event, $old)) {
+        if ($this->notify_attendees($event, $old, $action) < 0)
           $this->rc->output->show_message('calendar.errornotifying', 'error');
         }
     }
@@ -657,10 +665,10 @@ class calendar extends rcube_plugin
     $events = $this->driver->load_events($start, $end, null, $calendar_name, 0);
    
     header("Content-Type: text/calendar");
-    header("Content-Disposition: inline; filename=".$calendar_name);
+    header("Content-Disposition: inline; filename=".$calendar_name.'.ics');
     
     $this->load_ical();
-    echo $this->ical->export($events);
+    $this->ical->export($events, '', true);
     exit;
   }
 
@@ -841,7 +849,7 @@ class calendar extends rcube_plugin
         break;
     }
     
-    if ($rrule['INTERVAL'] == 1)
+    if ($rrule['INTERVAL'] <= 1)
       $freq = $this->gettext(strtolower($rrule['FREQ']));
       
     if ($rrule['COUNT'])
@@ -1257,7 +1265,7 @@ class calendar extends rcube_plugin
   /**
    * Send out an invitation/notification to all event attendees
    */
-  private function notify_attendees($event, $old)
+  private function notify_attendees($event, $old, $action = 'edit')
   {
     $sent = 0;
     $myself = $this->rc->user->get_identity();
@@ -1281,6 +1289,10 @@ class calendar extends rcube_plugin
     if ($agent = $this->rc->config->get('useragent'))
       $headers['User-Agent'] = $agent;
     
+    if ($action == 'remove') {
+      $event['cancelled'] = true;
+      $is_cancelled = true;
+    }
     
     // attach ics file for this event
     $this->load_ical();
@@ -1312,17 +1324,18 @@ class calendar extends rcube_plugin
       $headers['To'] = format_email_recipient($mailto, $attendee['name']);
       
       $headers['Subject'] = $this->gettext(array(
-        'name' => $is_new ? 'invitationsubject' : 'eventupdatesubject',
+        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : 'eventupdatesubject'),
         'vars' => array('title' => $event['title']),
       ));
       
       // compose message body
       $body = $this->gettext(array(
-        'name' => $is_new ? 'invitationmailbody' : 'eventupdatemailbody',
+        'name' => $is_cancelled ? 'eventcancelmailbody' : ($is_new ? 'invitationmailbody' : 'eventupdatemailbody'),
         'vars' => array(
           'title' => $event['title'],
           'date' => $this->event_date_text($event),
           'attendees' => join(', ', $attendees_list),
+          'organizer' => $myself['name'],
         )
       ));
       
@@ -1526,7 +1539,7 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Add UI elements to copy event invitations or updates to the calendar
+   * Add UI element to copy event invitations or updates to the calendar
    */
   public function mail_messagebody_html($p)
   {
@@ -1545,6 +1558,7 @@ class calendar extends rcube_plugin
       if (empty($events))
           continue;
 
+      // TODO: show more iTip options like (accept, deny, etc.)
       foreach ($events as $idx => $event) {
         // add box below messsage body
         $html .= html::p('calendar-invitebox',
@@ -1553,7 +1567,7 @@ class calendar extends rcube_plugin
           html::tag('input', array(
             'type' => 'button',
             'class' => 'button',
-          #  'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($part.':'.$idx) . "', '" . JQ($event['title']) . "')",
+            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($part.':'.$idx) . "', '" . JQ($event['title']) . "')",
             'value' => $this->gettext('importtocalendar'),
           ))
         );
@@ -1568,6 +1582,75 @@ class calendar extends rcube_plugin
 
     return $p;
   }
+  
+  /**
+   * Handler for POST request to import an event attached to a mail message
+   */
+  public function mail_import_event()
+  {
+    $uid = get_input_value('_uid', RCUBE_INPUT_POST);
+    $mbox = get_input_value('_mbox', RCUBE_INPUT_POST);
+    $mime_id = get_input_value('_part', RCUBE_INPUT_POST);
+    
+    // establish imap connection
+    $this->rc->imap_connect();
+    $this->rc->imap->set_mailbox($mbox);
+
+    if ($uid && $mime_id) {
+      list($mime_id, $index) = explode(':', $mime_id);
+      $part = $this->rc->imap->get_message_part($uid, $mime_id);
+    }
+
+    $this->load_ical();
+    $events = $this->ical->import($part);
+    
+    $error_msg = $this->gettext('errorimportingevent');
+    $success = false;
+
+    // successfully parsed events?
+    if (!empty($events) && ($event = $events[$index])) {
+      // find writeable calendar to store event
+      $cal_id = $this->rc->config->get('calendar_default_calendar');
+      $calendars = $this->driver->list_calendars();
+      $calendar = $calendars[$cal_id] ? $calendars[$calname] : null;
+      if (!$calendar || $calendar['readonly']) {
+        foreach ($calendars as $cal) {
+          if (!$cal['readonly']) {
+            $calendar = $cal;
+            break;
+          }
+        }
+      }
+      
+      if ($calendar && !$calendar['readonly']) {
+        $event['id'] = $event['uid'];
+        $event['calendar'] = $calendar['id'];
+        
+        // check for existing event with the same UID
+        $existing = $this->driver->get_event($event);
+        
+        if ($existing) {
+          if ($event['changed'] >= $existing['changed'])
+            $success = $this->driver->edit_event($event);
+          else
+            $error_msg = $this->gettext('newerversionexists');
+        }
+        else if (!$existing) {
+          $success = $this->driver->new_event($event);
+        }
+      }
+      else
+        $error_msg = $this->gettext('nowritecalendarfound');
+    }
+
+    if ($success)
+      $this->rc->output->command('display_message', $this->gettext(array('name' => 'importedsuccessfully', 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
+    else
+      $this->rc->output->command('display_message', $error_msg, 'error');
+
+    $this->rc->output->send();
+  }
+
 
   /**
    * Checks if specified message part is a vcalendar data

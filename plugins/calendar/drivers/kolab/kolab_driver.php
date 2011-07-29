@@ -310,7 +310,7 @@ class kolab_driver extends calendar_driver
       $success = $storage->insert_event($event);
       
       if ($success)
-        $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
+        $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
       
       return $success;
     }
@@ -405,7 +405,7 @@ class kolab_driver extends calendar_driver
     }
 
     if ($success)
-      $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
+      $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
 
     return $success;
   }
@@ -558,7 +558,7 @@ class kolab_driver extends calendar_driver
     }
     
     if ($success)
-      $this->rc->output->command('plugin.ping_url', array('action' => 'push-freebusy', 'source' => $storage->id));
+      $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
     
     return $success;
   }

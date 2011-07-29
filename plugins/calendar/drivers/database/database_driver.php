@@ -686,6 +686,7 @@ class database_driver extends calendar_driver
     $event['start'] = strtotime($event['start']);
     $event['end'] = strtotime($event['end']);
     $event['allday'] = intval($event['all_day']);
+    $event['changed'] = strtotime($event['changed']);
     $event['free_busy'] = $free_busy_map[$event['free_busy']];
     $event['calendar'] = $event['calendar_id'];
     $event['recurrence_id'] = intval($event['recurrence_id']);

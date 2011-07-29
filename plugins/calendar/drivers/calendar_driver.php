@@ -33,6 +33,7 @@
  *         'start' => <unixtime>,  // Event start date/time as unix timestamp
  *           'end' => <unixtime>,  // Event end date/time as unix timestamp
  *        'allday' => true|false,  // Boolean flag if this is an all-day event
+ *       'changed' => <unixtime>, // Last modification date of event
  *         'title' => 'Event title/summary',
  *      'location' => 'Location string',
  *   'description' => 'Event description',
