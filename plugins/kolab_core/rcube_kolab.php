@@ -431,12 +431,27 @@ class rcube_kolab
         $names = array();
         $len   = strlen($current);
 
+        if ($len && ($rpos = strrpos($current, $delim))) {
+            $parent = substr($current, 0, $rpos-1);
+            $p_len  = strlen($parent);
+        }
+
         // Filter folders list
         foreach ($folders as $c_folder) {
             $name = $c_folder->name;
             // skip current folder and it's subfolders
             if ($len && ($name == $current || strpos($name, $current.$delim) === 0)) {
                 continue;
+            }
+
+            // always show the parent of current folder
+            if ($p_len && $name == $parent) { }
+            // skip folders where user have no rights to create subfolders
+            else if ($c_folder->getOwner() != $_SESSION['username']) {
+                $rights = $c_folder->getMyRights();
+                if (PEAR::IsError($rights) || !preg_match('/[ck]/', $rights)) {
+                    continue;
+                }
             }
 
             $names[$name] = rcube_charset_convert($name, 'UTF7-IMAP');
