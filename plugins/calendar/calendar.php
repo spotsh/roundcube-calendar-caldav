@@ -506,7 +506,7 @@ class calendar extends rcube_plugin
     $success = $reload = $got_msg = false;
     
     // read old event data in order to find changes
-    if ($event['_notify'])
+    if ($event['_notify'] && $action != 'new')
       $old = $this->driver->get_event($event);
 
     switch ($action) {
@@ -588,7 +588,7 @@ class calendar extends rcube_plugin
       $event = $this->driver->get_event($event);
       
       // only notify if data really changed (TODO: do diff check on client already)
-      if (self::event_diff($event, $old)) {
+      if (!$old || self::event_diff($event, $old)) {
         if ($this->notify_attendees($event, $old) < 0)
           $this->rc->output->show_message('calendar.errornotifying', 'error');
         }
@@ -1388,7 +1388,7 @@ class calendar extends rcube_plugin
       
       foreach ($fblist as $slot) {
         list($from, $to, $type) = $slot;
-        if ($from <= $end && $to > $start) {
+        if ($from < $end && $to > $start) {
           $status = isset($type) && $fbtypemap[$type] ? $fbtypemap[$type] : 'BUSY';
           break;
         }
@@ -1441,7 +1441,7 @@ class calendar extends rcube_plugin
       $t = $t_end;
     }
     
-    echo json_encode(array('email' => $email, 'start' => intval($start), 'interval' => $interval, 'slots' => $slots));
+    echo json_encode(array('email' => $email, 'start' => intval($start), 'end' => intval($t_end), 'interval' => $interval, 'slots' => $slots));
     exit;
   }
   

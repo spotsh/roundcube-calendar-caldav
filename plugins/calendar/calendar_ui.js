@@ -371,7 +371,7 @@ function rcube_calendar_ui(settings)
       var allday = $('#edit-allday').get(0);
       var notify = $('#edit-attendees-donotify').get(0);
       var invite = $('#edit-attendees-invite').get(0);
-      notify.checked = invite.checked = true;  // enable notification by default
+      notify.checked = false, invite.checked = true;
       
       if (event.allDay) {
         starttime.val("00:00").hide();
@@ -464,11 +464,13 @@ function rcube_calendar_ui(settings)
       if (calendar.attendees && event.attendees) {
         for (var j=0; j < event.attendees.length; j++)
           add_attendee(event.attendees[j], true);
-        $('#edit-attendees-notify').show();
+        
+        if (event.attendees.length > 1 || event.attendees[0].email != settings.event_owner.email) {
+          notify.checked = invite.checked = true;  // enable notification by default
+        }
       }
-      else
-        $('#edit-attendees-notify').hide();
-      
+
+      $('#edit-attendees-notify')[(notify.checked?'show':'hide')]();
       $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
 
       // attachments
@@ -763,7 +765,7 @@ function rcube_calendar_ui(settings)
         
         // set css class according to working hours
         css = is_weekend(curdate) || (freebusy_ui.interval <= 60 && !is_workinghour(curdate)) ? 'offhours' : 'workinghours';
-        times_row += '<td class="' + css + '">' + Q($.fullCalendar.formatDate(curdate, settings['time_format'])) + '</td>';
+        times_row += '<td class="' + css + '" id="t-' + Math.floor(t/1000) + '">' + Q($.fullCalendar.formatDate(curdate, settings['time_format'])) + '</td>';
         slots_row += '<td class="' + css + ' unknown">&nbsp;</td>';
         
         t += freebusy_ui.interval * 60000;
@@ -782,6 +784,24 @@ function rcube_calendar_ui(settings)
       var table = $('#schedule-freebusy-times');
       table.children('thead').html(dates_row + times_row);
       table.children('tbody').html(times_html);
+      
+      // initialize event handlers on grid
+      if (!freebusy_ui.grid_events) {
+        freebusy_ui.grid_events = true;
+        table.children('thead').click(function(e){
+          // move event to the clicked date/time
+          if (e.target.id && e.target.id.match(/t-(\d+)/)) {
+            var newstart = new Date(RegExp.$1 * 1000);
+            // set time to 00:00
+            if (me.selected_event.allDay) {
+              newstart.setMinutes(0);
+              newstart.setHours(0);
+            }
+            update_freebusy_dates(newstart, new Date(newstart.getTime() + freebusy_ui.startdate.data('duration') * 1000));
+            render_freebusy_overlay();
+          }
+        })
+      }
       
       // if we have loaded free-busy data, show it
       if (!freebusy_ui.loading) {
@@ -958,7 +978,7 @@ function rcube_calendar_ui(settings)
     var freebusy_find_slot = function(dir)
     {
       var event = me.selected_event,
-        eventstart = date2unixtime(event.start),  // calculate with unitimes
+        eventstart = date2unixtime(event.start),  // calculate with unixtimes
         eventend = date2unixtime(event.end),
         duration = eventend - eventstart,
         sinterval = freebusy_data.interval * 60,
@@ -992,7 +1012,7 @@ function rcube_calendar_ui(settings)
         
         // check freebusy data for all attendees
         for (var i=0; i < event_attendees.length; i++) {
-          if ((email = event_attendees[i].email) && freebusy_data[email][slot] > 1) {
+          if (event_attendees[i].role != 'OPT-PARTICIPANT' && (email = event_attendees[i].email) && freebusy_data[email] && freebusy_data[email][slot] > 1) {
             candidatestart = candidateend = false;
             break;
           }

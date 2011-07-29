@@ -727,6 +727,10 @@ td.topalign {
 	text-align: center;
 }
 
+#schedule-freebusy-times tr.times td {
+	cursor: pointer;
+}
+
 #schedule-event-time {
 	position: absolute;
 	border: 2px solid #333;
