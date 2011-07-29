@@ -127,12 +127,11 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $this->readonly = false;
             }
             else {
-                $acl = $this->storagefolder->getACL();
-                if (!PEAR::isError($acl) && is_array($acl)) {
-                    $acl = $acl[$_SESSION['username']];
-                    if (strpos($acl, 'i') !== false)
+                $rights = $this->storagefolder->getMyRights();
+                if (!PEAR::isError($rights)) {
+                    if (strpos($rights, 'i') !== false)
                         $this->readonly = false;
-                    if (strpos($acl, 'a') !== false || strpos($acl, 'x') !== false)
+                    if (strpos($rights, 'a') !== false || strpos($rights, 'x') !== false)
                         $this->editable = true;
                 }
             }
