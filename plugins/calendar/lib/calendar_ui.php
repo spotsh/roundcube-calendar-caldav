@@ -26,6 +26,7 @@ class calendar_ui
 {
   private $rc;
   private $calendar;
+  private $ready = false;
   public $screen;
 
   function __construct($calendar)
@@ -40,6 +41,9 @@ class calendar_ui
    */
   public function init()
   {
+    if ($this->ready)  // already done
+      return;
+      
     // add taskbar button
     $this->calendar->add_button(array(
       'name' => 'calendar',
@@ -54,6 +58,8 @@ class calendar_ui
     
     $skin = $this->rc->config->get('skin');
     $this->calendar->include_stylesheet('skins/' . $skin . '/calendar.css');
+    
+    $this->ready = true;
   }
   
   /**

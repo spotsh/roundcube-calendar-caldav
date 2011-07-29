@@ -19,36 +19,92 @@
  |                                                                         |
  +-------------------------------------------------------------------------+
  | Author: Lazlo Westerhof <hello@lazlo.me>                                |
- |         Bogomil "Bogo" Shopov <shopov@kolabsys.com>                     | 
+ |         Thomas Bruederli <roundcube@gmail.com>                          |
+ |         Bogomil "Bogo" Shopov <shopov@kolabsys.com>                     |
  +-------------------------------------------------------------------------+
 */
 
+
+/**
+ * Class to parse and build vCalendar (iCalendar) files
+ *
+ * Uses the Horde:iCalendar class for parsing. To install:
+ * > pear channel-discover pear.horde.org
+ * > pear install horde/Horde_Icalendar
+ *
+ */
 class calendar_ical
 {
   const EOL = "\r\n";
   
   private $rc;
-  private $driver;
+  private $cal;
 
-  function __construct($rc, $driver)
+
+  function __construct($cal)
   {
-    $this->rc = $rc;
-    $this->driver = $driver;
+    $this->cal = $cal;
+    $this->rc = $cal->rc;
   }
-    
+
   /**
    * Import events from iCalendar format
    *
-   * @param  array Associative events array
-   * @access public
+   * @param  string vCalendar input
+   * @return array List of events extracted from the input
    */
-  public function import($events)
+  public function import($vcal)
   {
-    //TODO
-    // for ($events as $event)
-    //   $this->backend->newEvent(...);
+    // use Horde:iCalendar to parse vcalendar file format
+    require_once 'Horde/iCalendar.php';
+    
+    $parser = new Horde_iCalendar;
+    $parser->parsevCalendar($vcal);
+    $events = array();
+    if ($data = $parser->getComponents()) {
+      foreach ($data as $comp) {
+        if ($comp->getType() == 'vEvent')
+          $events[] = $this->_to_rcube_format($comp);
+      }
+    }
+    
+    return $events;
   }
-  
+
+  /**
+   * Convert the given File_IMC_Parse_Vcalendar_Event object to the internal event format
+   */
+  private function _to_rcube_format($ve)
+  {
+    $event = array(
+      'uid' => $ve->getAttributeDefault('UID'),
+      'title' => $ve->getAttributeDefault('SUMMARY'),
+      'description' => $ve->getAttributeDefault('DESCRIPTION'),
+      'location' => $ve->getAttributeDefault('LOCATION'),
+      'start' => $ve->getAttribute('DTSTART'),
+      'end' => $ve->getAttribute('DTEND'),
+    );
+
+    // check for all-day dates
+    if (is_array($event['start'])) {
+      $event['start'] = gmmktime(0, 0, 0, $event['start']['month'], $event['start']['mday'], $event['start']['year']) + $this->cal->gmt_offset;
+      $event['allday'] = true;
+    }
+    if (is_array($event['end'])) {
+      $event['end'] = gmmktime(0, 0, 0, $event['end']['month'], $event['end']['mday'], $event['end']['year']) + $this->cal->gmt_offset - 60;
+    }
+
+    // TODO: complete this
+    
+    
+    // make sure event has an UID
+    if (!$event['uid'])
+      $event['uid'] = $this->cal->$this->generate_uid();
+    
+    return $event;
+  }
+
+
   /**
    * Export events to iCalendar format
    *
@@ -69,8 +125,15 @@ class calendar_ical
       foreach ($events as $event) {
         $ical .= "BEGIN:VEVENT" . self::EOL;
         $ical .= "UID:" . self::escpape($event['uid']) . self::EOL;
-        $ical .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . self::EOL;
-        $ical .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . self::EOL;
+        // correctly set all-day dates
+        if ($event['allday']) {
+          $ical .= "DTSTART;VALUE=DATE:" . gmdate('Ymd', $event['start'] + $this->cal->gmt_offset) . self::EOL;
+          $ical .= "DTEND;VALUE=DATE:" . gmdate('Ymd', $event['end'] + $this->cal->gmt_offset + 60) . self::EOL;  // ends the next day
+        }
+        else {
+          $ical .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . self::EOL;
+          $ical .= "DTEND:" . gmdate('Ymd\THis\Z', $event['end']) . self::EOL;
+        }
         $ical .= "SUMMARY:" . self::escpape($event['title']) . self::EOL;
         $ical .= "DESCRIPTION:" . self::escpape($event['description']) . self::EOL;
         

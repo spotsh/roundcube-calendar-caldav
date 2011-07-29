@@ -38,6 +38,7 @@ class calendar extends rcube_plugin
   public $home;  // declare public to be used in other classes
   public $urlbase;
   public $timezone;
+  public $gmt_offset;
 
   public $ical;
   public $ui;
@@ -62,6 +63,9 @@ class calendar extends rcube_plugin
     'Family'   => '00ff00',
     'Holiday'  => 'ff6600',
   );
+  
+  private $ics_parts = array();
+
 
   /**
    * Plugin initialization.
@@ -102,10 +106,6 @@ class calendar extends rcube_plugin
     if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
       if ($this->rc->action != 'upload') {
         $this->load_driver();
-
-        // load iCalendar functions
-        require($this->home . '/lib/calendar_ical.php');
-        $this->ical = new calendar_ical($this->rc, $this->driver);
       }
 
       // register calendar actions
@@ -137,6 +137,10 @@ class calendar extends rcube_plugin
       $this->add_hook('preferences_list', array($this, 'preferences_list'));
       $this->add_hook('preferences_save', array($this, 'preferences_save')); 
     }
+    else if ($this->rc->task == 'mail' && ($this->rc->action == 'show' || $this->rc->action == 'preview')) {
+        $this->add_hook('message_load', array($this, 'mail_message_load'));
+        $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
+    }
 
     // add hook to display alarms
     $this->add_hook('keep_alive', array($this, 'keep_alive'));
@@ -164,6 +168,20 @@ class calendar extends rcube_plugin
         break;
       }
   }
+
+  /**
+   * Load iCalendar functions
+   */
+  private function load_ical()
+  {
+    if (!$this->ical) {
+      require($this->home . '/lib/calendar_ical.php');
+      $this->ical = new calendar_ical($this);
+    }
+    
+    return $this->ical;
+  }
+
 
   /**
    * Render the main calendar view from skin template
@@ -641,6 +659,7 @@ class calendar extends rcube_plugin
     header("Content-Type: text/calendar");
     header("Content-Disposition: inline; filename=".$calendar_name);
     
+    $this->load_ical();
     echo $this->ical->export($events);
     exit;
   }
@@ -1250,7 +1269,7 @@ class calendar extends rcube_plugin
     $message->setParam('text_encoding', 'quoted-printable');
     $message->setParam('head_encoding', 'quoted-printable');
     $message->setParam('head_charset', RCMAIL_CHARSET);
-    $message->setParam('text_charset', RCMAIL_CHARSET);
+    $message->setParam('text_charset', RCMAIL_CHARSET . ";\r\n format=flowed");
     
     // compose common headers array
     $headers = array(
@@ -1264,6 +1283,7 @@ class calendar extends rcube_plugin
     
     
     // attach ics file for this event
+    $this->load_ical();
     $vcal = $this->ical->export(array($event), 'REQUEST');
     $message->addAttachment($vcal, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET);
     
@@ -1307,7 +1327,7 @@ class calendar extends rcube_plugin
       ));
       
       $message->headers($headers);
-      $message->setTXTBody(rc_wordwrap($body, 75, "\r\n"));
+      $message->setTXTBody(rcube_message::format_flowed($body, 79));
       
       // finally send the message
       if (rcmail_deliver_message($message, $from, $mailto, $smtp_error))
@@ -1326,14 +1346,15 @@ class calendar extends rcube_plugin
   {
     $fromto = '';
     $duration = $event['end'] - $event['start'];
-    $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format'));
-    $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format'));
+    
+    $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
+    $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
     
     if ($event['allday']) {
       $fromto = format_date($event['start'], $date_format) .
-        ($duration > 86400 || date('d', $event['start']) != date('d', $event['end']) ? ' - ' . format_date($event['end'], $date_format) : '');
+        ($duration > 86400 || gmdate('d', $event['start']) != gmdate('d', $event['end']) ? ' - ' . format_date($event['end'], $date_format) : '');
     }
-    else if ($duration < 86400 && date('d', $event['start']) == date('d', $event['end'])) {
+    else if ($duration < 86400 && gmdate('d', $event['start']) == gmdate('d', $event['end'])) {
       $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
         ' - ' . format_date($event['end'], $time_format);
     }
@@ -1481,6 +1502,84 @@ class calendar extends rcube_plugin
       $diff[] = 'attachments';
     
     return $diff;
+  }
+
+
+  /****  Event invitation plugin hooks ****/
+
+  /**
+   * Check mail message structure of there are .ics files attached
+   */
+  public function mail_message_load($p)
+  {
+    $this->message = $p['object'];
+
+    // check all message parts for .ics files
+    foreach ((array)$this->message->mime_parts as $idx => $part) {
+      if ($this->is_vcalendar($part)) {
+        $this->ics_parts[] = $part->mime_id;
+      }
+    }
+  }
+
+  /**
+   * Add UI elements to copy event invitations or updates to the calendar
+   */
+  public function mail_messagebody_html($p)
+  {
+    // load iCalendar functions (if necessary)
+    if (!empty($this->ics_parts)) {
+      require($this->home . '/lib/calendar_ical.php');
+      $this->ical = new calendar_ical($this->rc);
+    }
+
+    $html = '';
+    foreach ($this->ics_parts as $part) {
+      $this->load_ical();
+      $events = $this->ical->import($this->message->get_part_content($part));
+
+      // successfully parsed events?
+      if (empty($events))
+          continue;
+
+      foreach ($events as $idx => $event) {
+        // add box below messsage body
+        $html .= html::p('calendar-invitebox',
+          html::span('eventtitle', Q($event['title'])) . ' ' .
+          html::span('eventdate', Q('(' . $this->event_date_text($event) . ')')) . ' ' .
+          html::tag('input', array(
+            'type' => 'button',
+            'class' => 'button',
+          #  'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($part.':'.$idx) . "', '" . JQ($event['title']) . "')",
+            'value' => $this->gettext('importtocalendar'),
+          ))
+        );
+      }
+    }
+
+    // prepend event boxes to message body
+    if ($html) {
+      $this->ui->init();
+      $p['content'] = $html . $p['content'];
+    }
+
+    return $p;
+  }
+
+  /**
+   * Checks if specified message part is a vcalendar data
+   *
+   * @param rcube_message_part Part object
+   * @return boolean True if part is of type vcard
+   */
+  private function is_vcalendar($part)
+  {
+      return (
+          $part->mimetype == 'text/calendar' ||
+          $part->mimetype == 'text/x-vcalendar' ||
+          // Apple sends files as application/x-any (!?)
+          ($part->mimetype == 'application/x-any' && $part->filename && preg_match('/\.ics$/i', $part->filename))
+      );
   }
 
 }

@@ -993,3 +993,19 @@ div.fc-event-location {
 fieldset #calendarcategories div {
 	margin-bottom: 0.3em;
 }
+
+
+/* Invitation UI in mail */
+
+p.calendar-invitebox {
+	min-height: 20px;
+	margin: 5px 8px;
+	padding: 6px 6px 6px 34px;
+	border: 1px solid #C2D071;
+	background: url('images/calendar.png') 6px 3px no-repeat #F7FDCB;
+}
+
+p.calendar-invitebox input.button {
+	margin-left: 1em;
+	font-size: 11px;
+}
