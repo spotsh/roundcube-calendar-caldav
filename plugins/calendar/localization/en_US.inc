@@ -106,6 +106,7 @@ $labels['scheduletime'] = 'Find availability';
 $labels['sendinvitations'] = 'Send invitations';
 $labels['sendnotifications'] = 'Notify attendees about modifications';
 $labels['onlyworkinghours'] = 'Find availability within my working hours';
+$labels['reqallattendees'] = 'Required/all participants';
 $labels['prevslot'] = 'Previous Slot';
 $labels['nextslot'] = 'Next Slot';
 $labels['noslotfound'] = 'Unable to find a free time slot';

@@ -52,3 +52,9 @@ html #calendartoolbar a.buttonPas {
 #edit-attendees-form #edit-attendee-schedule {
 	right: 0.6em;
 }
+
+#schedule-freebusy-times td.all-busy,
+#schedule-freebusy-times td.all-tentative,
+#schedule-freebusy-times td.all-out-of-office {
+	background-image: url('images/freebusy-colors.gif');
+}

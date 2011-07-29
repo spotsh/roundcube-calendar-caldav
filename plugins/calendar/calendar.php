@@ -1395,8 +1395,8 @@ class calendar extends rcube_plugin
       }
     }
     
-    // let this information be cached for 15min
-    send_future_expire_header(900);
+    // let this information be cached for 5min
+    send_future_expire_header(300);
     
     echo $status;
     exit;
@@ -1440,6 +1440,9 @@ class calendar extends rcube_plugin
       $slots[$s] = $status;
       $t = $t_end;
     }
+    
+    // let this information be cached for 5min
+    send_future_expire_header(300);
     
     echo json_encode(array('email' => $email, 'start' => intval($start), 'end' => intval($t_end), 'interval' => $interval, 'slots' => $slots));
     exit;

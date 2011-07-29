@@ -602,6 +602,22 @@ td.topalign {
 	background: #f0b400;
 }
 
+#schedule-freebusy-times td.all-busy,
+#schedule-freebusy-times td.all-tentative,
+#schedule-freebusy-times td.all-out-of-office {
+	background-image: url('images/freebusy-colors.png');
+	background-position: top right;
+	background-repeat: no-repeat;
+}
+
+#schedule-freebusy-times td.all-tentative {
+	background-position: right -40px;
+}
+
+#schedule-freebusy-times td.all-out-of-office {
+	background-position: right -80px;
+}
+
 #edit-attendees-legend {
 	margin-top: 3em;
 	margin-bottom: 0.5em;
@@ -702,6 +718,18 @@ td.topalign {
 
 .attendees-list .loading {
 	background: url('images/loading-small.gif') 1px 50% no-repeat;
+}
+
+.attendees-list .total {
+	background: none;
+	padding-left: 4px;
+	font-weight: bold;
+}
+
+.attendees-list .spacer,
+#schedule-freebusy-times tr.spacer td {
+	background: 0;
+	font-size: 50%;
 }
 
 #schedule-freebusy-times {

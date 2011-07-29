@@ -806,6 +806,10 @@ class kolab_driver extends calendar_driver
         if (($fbstart = $fb->getStart()) && $start < $fbstart) {
           array_unshift($result, array($start, $fbstart, calendar::FREEBUSY_UNKNOWN));
         }
+        // pad period till $end with status 'unknown'
+        if (($fbend = $fb->getEnd()) && $fbend < $end) {
+          $result[] = array($fbend, $end, calendar::FREEBUSY_UNKNOWN);
+        }
         return $result;
       }
     }
