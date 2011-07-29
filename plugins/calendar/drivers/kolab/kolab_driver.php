@@ -858,10 +858,10 @@ class kolab_driver extends calendar_driver
   {
     // Remove any scripts/css/js
     $this->rc->output->reset();
-    
+
     // Produce form content
     $content = $this->calendar_form_content($calendar, $formfields);
-    
+
     // Parse form template for skin-dependent stuff
     // TODO: copy scripts and styles added by other plugins (e.g. acl) from $this->rc->output
     $html = $this->rc->output->parse('calendar.calendarform-kolab', false, false);
@@ -920,7 +920,7 @@ class kolab_driver extends calendar_driver
       $hidden_fields[] = array('name' => 'parent', 'value' => $path_imap);
     }
     else {
-      $select = rcube_kolab::folder_selector('event', array('name' => 'parent'));
+      $select = rcube_kolab::folder_selector('event', array('name' => 'parent'), $folder);
       $form['props']['fieldsets']['location']['content']['path'] = array(
         'label' => $this->cal->gettext('parentcalendar'),
         'value' => $select->show($path_imap),

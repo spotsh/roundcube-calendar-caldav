@@ -416,19 +416,48 @@ class rcube_kolab
     /**
      * Creates a SELECT field with folders list
      *
-     * @param string $type  Folder type
-     * @param array  $attrs SELECT field attributes (e.g. name)
+     * @param string $type    Folder type
+     * @param array  $attrs   SELECT field attributes (e.g. name)
+     * @param string $current The name of current folder (to skip it)
      *
      * @return html_select SELECT object
      */
-    public static function folder_selector($type, $attrs)
+    public static function folder_selector($type, $attrs, $current = '')
     {
         // get all folders of specified type
         $folders = self::get_folders($type);
 
+        $delim = $_SESSION['delimiter'];
         $names = array();
-        foreach ($folders as $c_folder)
-            $names[$c_folder->name] = rcube_charset_convert($c_folder->name, 'UTF7-IMAP');
+        $len   = strlen($current);
+
+        if ($len && ($rpos = strrpos($current, $delim))) {
+            $parent = substr($current, 0, $rpos-1);
+            $p_len  = strlen($parent);
+        }
+
+        // Filter folders list
+        foreach ($folders as $c_folder) {
+            $name = $c_folder->name;
+            // skip current folder and it's subfolders
+            if ($len && ($name == $current || strpos($name, $current.$delim) === 0)) {
+                continue;
+            }
+
+            // always show the parent of current folder
+            if ($p_len && $name == $parent) { }
+            // skip folders where user have no rights to create subfolders
+            else if ($c_folder->getOwner() != $_SESSION['username']) {
+                $rights = $c_folder->getMyRights();
+                if (PEAR::IsError($rights) || !preg_match('/[ck]/', $rights)) {
+                    continue;
+                }
+            }
+
+            $names[$name] = rcube_charset_convert($name, 'UTF7-IMAP');
+        }
+
+        // Sort folders list
         asort($names, SORT_LOCALE_STRING);
 
         $folders = array_keys($names);

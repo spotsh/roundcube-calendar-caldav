@@ -66,10 +66,9 @@ class kolab_calendar
         $this->alarms = true;
       }
       else {
-        $acl = $this->storage->_folder->getACL();
-        if (is_array($acl)) {
-          $acl = $acl[$_SESSION['username']];
-          if (strpos($acl, 'i') !== false)
+        $rights = $this->storage->_folder->getMyRights();
+        if (!PEAR::isError($rights)) {
+          if (strpos($rights, 'i') !== false)
             $this->readonly = false;
         }
       }

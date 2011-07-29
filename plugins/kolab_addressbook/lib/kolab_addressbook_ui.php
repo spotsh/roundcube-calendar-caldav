@@ -162,7 +162,7 @@ class kolab_addressbook_ui
             $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
         }
         else {
-            $select = rcube_kolab::folder_selector('contact', array('name' => '_parent'));
+            $select = rcube_kolab::folder_selector('contact', array('name' => '_parent'), $folder);
 
             $form['props']['fieldsets']['location']['content']['path'] = array(
                 'label' => $this->plugin->gettext('parentbook'),
