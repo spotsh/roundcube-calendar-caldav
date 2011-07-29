@@ -106,6 +106,7 @@ $labels['availoutofoffice'] = 'Out of Office';
 $labels['scheduletime'] = 'Find availability';
 $labels['sendinvitations'] = 'Send invitations';
 $labels['sendnotifications'] = 'Notify participants about modifications';
+$labels['sendcancellation'] = 'Notify participants about event cancellation';
 $labels['onlyworkinghours'] = 'Find availability within my working hours';
 $labels['reqallattendees'] = 'Required/all participants';
 $labels['prevslot'] = 'Previous Slot';
@@ -115,6 +116,8 @@ $labels['invitationsubject'] = 'You\'ve been invited to "$title"';
 $labels['invitationmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with all the event details which you can import to your calendar application.";
 $labels['eventupdatesubject'] = '"$title" has been updated';
 $labels['eventupdatemailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with the updated event details which you can import to your calendar application.";
+$labels['eventcancelsubject'] = '"$title" has been canceled';
+$labels['eventcancelmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nThe event has been cancelled by \$organizer.\n\nPlease find attached an iCalendar file with the updated event details.";
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';

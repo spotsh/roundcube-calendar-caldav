@@ -509,8 +509,12 @@ class calendar extends rcube_plugin
     $event  = get_input_value('e', RCUBE_INPUT_POST);
     $success = $reload = $got_msg = false;
     
+    // don't notify if modifying a recurring instance (really?)
+    if ($event['savemode'] && $event['savemode'] != 'all' && $event['notify'])
+      unset($event['notify']);
+    
     // read old event data in order to find changes
-    if ($event['_notify'] && $action != 'new')
+    if ($event['notify'] && $action != 'new')
       $old = $this->driver->get_event($event);
 
     switch ($action) {
@@ -587,13 +591,13 @@ class calendar extends rcube_plugin
     }
     
     // send out notifications
-    if ($success && $event['_notify'] && ($event['attendees'] || $old['attendees'])) {
+    if ($success && $event['notify'] && ($event['attendees'] || $old['attendees'])) {
       // make sure we have the complete record
-      $event = $this->driver->get_event($event);
+      $event = $action == 'remove' ? $old : $this->driver->get_event($event);
       
       // only notify if data really changed (TODO: do diff check on client already)
-      if (!$old || self::event_diff($event, $old)) {
-        if ($this->notify_attendees($event, $old) < 0)
+      if (!$old || $action == 'remove' || self::event_diff($event, $old)) {
+        if ($this->notify_attendees($event, $old, $action) < 0)
           $this->rc->output->show_message('calendar.errornotifying', 'error');
         }
     }
@@ -1261,7 +1265,7 @@ class calendar extends rcube_plugin
   /**
    * Send out an invitation/notification to all event attendees
    */
-  private function notify_attendees($event, $old)
+  private function notify_attendees($event, $old, $action = 'edit')
   {
     $sent = 0;
     $myself = $this->rc->user->get_identity();
@@ -1285,6 +1289,10 @@ class calendar extends rcube_plugin
     if ($agent = $this->rc->config->get('useragent'))
       $headers['User-Agent'] = $agent;
     
+    if ($action == 'remove') {
+      $event['cancelled'] = true;
+      $is_cancelled = true;
+    }
     
     // attach ics file for this event
     $this->load_ical();
@@ -1316,23 +1324,24 @@ class calendar extends rcube_plugin
       $headers['To'] = format_email_recipient($mailto, $attendee['name']);
       
       $headers['Subject'] = $this->gettext(array(
-        'name' => $is_new ? 'invitationsubject' : 'eventupdatesubject',
+        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : 'eventupdatesubject'),
         'vars' => array('title' => $event['title']),
       ));
       
       // compose message body
       $body = $this->gettext(array(
-        'name' => $is_new ? 'invitationmailbody' : 'eventupdatemailbody',
+        'name' => $is_cancelled ? 'eventcancelmailbody' : ($is_new ? 'invitationmailbody' : 'eventupdatemailbody'),
         'vars' => array(
           'title' => $event['title'],
           'date' => $this->event_date_text($event),
           'attendees' => join(', ', $attendees_list),
+          'organizer' => $myself['name'],
         )
       ));
       
       $message->headers($headers);
       $message->setTXTBody(rcube_message::format_flowed($body, 79));
-
+      
       // finally send the message
       if (rcmail_deliver_message($message, $from, $mailto, $smtp_error))
         $sent++;

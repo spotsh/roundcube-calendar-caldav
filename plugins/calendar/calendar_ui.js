@@ -553,7 +553,7 @@ function rcube_calendar_ui(settings)
         
         // tell server to send notifications
         if (data.attendees.length && ((event.id && notify.checked) || (!event.id && invite.checked))) {
-          data._notify = 1;
+          data.notify = 1;
         }
 
         // gather recurrence settings
@@ -1307,8 +1307,8 @@ function rcube_calendar_ui(settings)
       // event has attendees, ask whether to notify them
       if (has_attendees(event)) {
         html += '<div class="message">' +
-          '<label><input class="confirm-attendees-donotify" type="checkbox" checked="checked" value="1" name="notify" />&nbsp;' +
-          rcmail.gettext('sendnotifications', 'calendar') + 
+          '<label><input class="confirm-attendees-donotify" type="checkbox" ' + (action != 'remove' ? ' checked="checked"' : '') + ' value="1" name="notify" />&nbsp;' +
+          rcmail.gettext((action == 'remove' ? 'sendcancellation' : 'sendnotifications'), 'calendar') + 
           '</label></div>';
       }
       
@@ -1331,7 +1331,7 @@ function rcube_calendar_ui(settings)
         $dialog.find('a.button').button().click(function(e){
           data.savemode = String(this.href).replace(/.+#/, '');
           if ($dialog.find('input.confirm-attendees-donotify').get(0))
-            data._notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+            data.notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
           update_event(action, data);
           $dialog.dialog("destroy").hide();
           return false;
@@ -1348,7 +1348,7 @@ function rcube_calendar_ui(settings)
           buttons.push({
             text: rcmail.gettext((action == 'remove' ? 'remove' : 'save'), 'calendar'),
             click: function() {
-              data._notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+              data.notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
               update_event(action, data);
               $(this).dialog("close");
             }

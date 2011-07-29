@@ -259,7 +259,13 @@ class calendar_ical
           if ($action) $vevent .= "ACTION:" . self::escpape(strtoupper($action)) . self::EOL;
           $vevent .= "END:VALARM\n";
         }
+        
         $vevent .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . self::EOL;
+        
+        if ($event['cancelled'])
+          $vevent .= "STATUS:CANCELLED" . self::EOL;
+        else if ($event['free_busy'] == 'tentative')
+          $vevent .= "STATUS:TENTATIVE" . self::EOL;
         
         // TODO: export attachments
         
