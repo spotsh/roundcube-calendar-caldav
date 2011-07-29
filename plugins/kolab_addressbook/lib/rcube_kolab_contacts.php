@@ -279,9 +279,19 @@ class rcube_kolab_contacts extends rcube_addressbook
         else
             $ids = is_array($this->filter['ids']) ? $this->filter['ids'] : array_keys($this->contacts);
 
+        // sort data arrays according to desired list sorting
+        if ($count = count($ids)) {
+            uasort($this->contacts, array($this, '_sort_contacts_comp'));
+            // get sorted IDs
+            if ($count != count($this->contacts))
+                $ids = array_intersect(array_keys($this->contacts), $ids);
+            else
+                $ids = array_keys($this->contacts);
+        }
+
         // fill contact data into the current result set
         $start_row = $subset < 0 ? $this->result->first + $this->page_size + $subset : $this->result->first;
-        $last_row = min($subset != 0 ? $start_row + abs($subset) : $this->result->first + $this->page_size, count($ids));
+        $last_row = min($subset != 0 ? $start_row + abs($subset) : $this->result->first + $this->page_size, $count);
 
         for ($i = $start_row; $i < $last_row; $i++) {
             if ($id = $ids[$i])
@@ -964,9 +974,6 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $this->contacts[$id] = $contact;
                 $this->id2uid[$id] = $record['uid'];
             }
-
-            // sort data arrays according to desired list sorting
-            uasort($this->contacts, array($this, '_sort_contacts_comp'));
         }
     }
 
@@ -975,7 +982,32 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     private function _sort_contacts_comp($a, $b)
     {
-      return strcasecmp($a['name'], $b['name']);
+        $a_name = $a['name'];
+        $b_name = $b['name'];
+
+        if (!$a_name) {
+            $a_name = join(' ', array_filter(array($a['prefix'], $a['firstname'],
+                $a['middlename'], $a['surname'], $a['suffix'])));
+            if (!$a_name) {
+                $a_name = is_array($a['email']) ? $a['email'][0] : $a['email'];
+            }
+        }
+        if (!$b_name) {
+            $b_name = join(' ', array_filter(array($b['prefix'], $b['firstname'],
+                $b['middlename'], $b['surname'], $b['suffix'])));
+            if (!$b_name) {
+                $b_name = is_array($b['email']) ? $b['email'][0] : $b['email'];
+            }
+        }
+
+        // return strcasecmp($a_name, $b_name);
+        // make sorting unicode-safe and locale-dependent
+        if ($a_name == $b_name)
+            return 0;
+
+        $arr = array($a_name, $b_name);
+        sort($arr, SORT_LOCALE_STRING);
+        return $a_name == $arr[0] ? -1 : 1;
     }
 
     /**

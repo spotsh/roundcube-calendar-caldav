@@ -1430,7 +1430,7 @@ class calendar extends rcube_plugin
         $status = self::FREEBUSY_FREE;
         foreach ($fblist as $slot) {
           list($from, $to, $type) = $slot;
-          if ($from <= $t_end && $to > $t) {
+          if ($from < $t_end && $to > $t) {
             $status = isset($type) ? $type : self::FREEBUSY_BUSY;
             break;
           }

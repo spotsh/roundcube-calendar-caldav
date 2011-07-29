@@ -135,10 +135,17 @@ class kolab_addressbook extends rcube_plugin
 
         // Add personal address sources to the list
         if ($abook_prio == self::PERSONAL_FIRST) {
-            $p['sources'] = array_merge($sources, $p['sources']);
+            // $p['sources'] = array_merge($sources, $p['sources']);
+            // Don't use array_merge(), because if you have folders name
+            // that resolve to numeric identifier it will break output array keys
+            foreach ($p['sources'] as $idx => $value)
+                $sources[$idx] = $value;
+            $p['sources'] = $sources;
         }
         else {
-            $p['sources'] = array_merge($p['sources'], $sources);
+            // $p['sources'] = array_merge($p['sources'], $sources);
+            foreach ($sources as $idx => $value)
+                $p['sources'][$idx] = $value;
         }
 
         return $p;
