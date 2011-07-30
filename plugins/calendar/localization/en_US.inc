@@ -61,6 +61,8 @@ $labels['selectdate'] = 'Select date';
 $labels['printdescriptions'] = 'Print descriptions';
 $labels['parentcalendar'] = 'Superior calendar';
 $labels['importtocalendar'] = 'Save to my calendar';
+$labels['searchearlierdates'] = '« Search for earlier events';
+$labels['searchlaterdates'] = 'Search for later events »';
 
 // alarm/reminder settings
 $labels['alarmemail'] = 'Send Email';

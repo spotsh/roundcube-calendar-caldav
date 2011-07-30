@@ -1390,7 +1390,8 @@ function rcube_calendar_ui(settings)
     {
       if (!view) view = fc.fullCalendar('getView').name;
       var date = fc.fullCalendar('getDate') || new Date();
-      var printwin = window.open(rcmail.url('print', { view: view, date: date2unixtime(date), search: this.search_query }), "rc_print_calendars", "toolbar=no,location=yes,menubar=yes,resizable=yes,scrollbars=yes,width=800");
+      var range = fc.fullCalendar('option', 'listRange');
+      var printwin = window.open(rcmail.url('print', { view: view, date: date2unixtime(date), range: range, search: this.search_query }), "rc_print_calendars", "toolbar=no,location=yes,menubar=yes,resizable=yes,scrollbars=yes,width=800");
       window.setTimeout(function(){ printwin.focus() }, 50);
     };
 
@@ -1543,6 +1544,7 @@ function rcube_calendar_ui(settings)
           
           // change to list view
           fc.fullCalendar('option', 'listSections', 'month');
+          fc.fullCalendar('option', 'listRange', settings['agenda_range']);
           fc.fullCalendar('changeView', 'table');
           
           // refetch events with new url (if not already triggered by changeView)
@@ -1563,8 +1565,13 @@ function rcube_calendar_ui(settings)
         rcmail.hide_message(this._search_message);
       
       if (this.search_request) {
+        // hide bottom links of agenda view
+        fc.find('.fc-list-content > .fc-listappend').hide();
+        
         // restore original event sources and view mode from fullcalendar
         fc.fullCalendar('option', 'listSections', 'smart');
+        fc.fullCalendar('option', 'listRange', settings['agenda_range']);
+        
         for (var sid in this.calendars) {
           if (this.calendars[sid])
             this.calendars[sid].url = this.calendars[sid].url.replace(/&q=.+/, '');
@@ -1582,8 +1589,49 @@ function rcube_calendar_ui(settings)
     // callback if all sources have been fetched from server
     this.events_loaded = function(count)
     {
-      if (this.search_request && !count)
-        this._search_message = rcmail.display_message(rcmail.gettext('searchnoresults', 'calendar'), 'notice');
+      var addlinks, append = '';
+      
+      // enhance list view when searching
+      if (this.search_request) {
+        if (!count) {
+          this._search_message = rcmail.display_message(rcmail.gettext('searchnoresults', 'calendar'), 'notice');
+          append = '<div class="message">' + rcmail.gettext('searchnoresults', 'calendar') + '</div>';
+        }
+        append += '<div class="fc-bottomlinks formlinks"></div>';
+        addlinks = true;
+      }
+      
+      if (fc.fullCalendar('getView').name == 'table') {
+        var container = fc.find('.fc-list-content > .fc-listappend');
+        if (append) {
+          if (!container.length)
+            container = $('<div class="fc-listappend"></div>').appendTo(fc.find('.fc-list-content'));
+          container.html(append).show();
+        }
+        else if (container.length)
+          container.hide();
+        
+        // add links to adjust search date range
+        if (addlinks) {
+          var lc = container.find('.fc-bottomlinks');
+          $('<a>').attr('href', '#').html(rcmail.gettext('searchearlierdates', 'calendar')).appendTo(lc).click(function(){
+            fc.fullCalendar('incrementDate', 0, -1, 0);
+            fullcalendar_update();
+          });
+          lc.append(" ");
+          $('<a>').attr('href', '#').html(rcmail.gettext('searchlaterdates', 'calendar')).appendTo(lc).click(function(){
+            var range = fc.fullCalendar('option', 'listRange');
+            if (range < 60) {
+              fc.fullCalendar('getView').start = null; // force re-render
+              fc.fullCalendar('option', 'listRange', 60).fullCalendar('render');
+            }
+            else
+              fc.fullCalendar('incrementDate', 0, 1, 0);
+            
+            fullcalendar_update();
+          });
+        }
+      }
     };
 
     // resize and reposition (center) the dialog window
@@ -1688,18 +1736,17 @@ function rcube_calendar_ui(settings)
         month: 'ddd', // Mon
         week: 'ddd ' + settings['date_short'], // Mon 9/7
         day: 'dddd ' + settings['date_short'],  // Monday 9/7
-        list: settings['date_agenda'],
         table: settings['date_agenda']
       },
       titleFormat: {
         month: 'MMMM yyyy',
-        week: settings['date_long'].replace(/ yyyy/, '[ yyyy]') + "{ '&mdash;' " + settings['date_long'] + "}",
+        week: settings['dates_long'],
         day: 'dddd ' + settings['date_long'],
-        list: settings['date_long'],
-        table: settings['date_long']
+        table: settings['dates_long']
       },
       listSections: 'smart',
-      listRange: 60,  // show 60 days in list view
+      listPage: 1,  // advance one day in agenda view
+      listRange: settings['agenda_range'],
       tableCols: ['handle', 'date', 'time', 'title', 'location'],
       defaultView: settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
@@ -1718,7 +1765,7 @@ function rcube_calendar_ui(settings)
         me.is_loading = isLoading;
         this._rc_loading = rcmail.set_busy(isLoading, 'loading', this._rc_loading);
         // trigger callback
-        if (!isLoading && me.search_request)
+        if (!isLoading)
           me.events_loaded($(this).fullCalendar('clientEvents').length);
       },
       // event rendering

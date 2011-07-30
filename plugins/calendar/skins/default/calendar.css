@@ -1032,6 +1032,23 @@ div.fc-event-location {
 	width: 20%;
 }
 
+.fc-listappend {
+	text-align: center;
+	margin-top: 1em;
+}
+
+.fc-listappend .message {
+	padding: 0.5em;
+	margin-bottom: 0.5em;
+	font-size: 150%;
+	color: #999;
+}
+
+.fc-listappend .formlinks a {
+	font-size: 12px;
+	padding: 0 0.3em;
+}
+
 /* Settings section */
 
 fieldset #calendarcategories div {

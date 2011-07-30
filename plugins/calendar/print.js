@@ -80,13 +80,13 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     },
     titleFormat: {
       month: 'MMMM yyyy',
-      week: settings['date_long'].replace(/ yyyy/, '[ yyyy]') + "{ '&mdash;' " + settings['date_long'] + "}",
+      week: settings['dates_long'],
       day: 'dddd ' + settings['date_long'],
-      list: settings['date_long'],
-      table: settings['date_long']
+      list: settings['dates_long'],
+      table: settings['dates_long']
     },
     listSections: 'smart',
-    listRange: 60,  // show 60 days in list view
+    listRange: rcmail.env.listRange || settings['agenda_range'],
     tableCols: ['handle', 'date', 'time', 'title', 'location'],
     allDayText: rcmail.gettext('all-day', 'calendar'),
     buttonText: {

@@ -2,7 +2,8 @@
 
 body {
 	margin: 0;
-	color: #000000;
+	color: #000;
+	background: #fff;
 }
 
 body, td, th, div, p, h3, select, input, textarea {

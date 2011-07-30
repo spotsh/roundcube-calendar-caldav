@@ -82,7 +82,6 @@ var defaults = {
 		table: 'table'
 	},
 	listTexts: {
-		from: 'from',
 		until: 'until',
 		past: 'Past events',
 		today: 'Today',
@@ -5530,10 +5529,10 @@ function ListView(element, calendar) {
 		if (delta) {
 			addDays(date, opt('listPage') * delta);
 		}
-		t.title = opt('listTexts', 'from') + ' ' + formatDate(date, opt('titleFormat'));
 		t.start = t.visStart = cloneDate(date, true);
 		t.end = addDays(cloneDate(t.start), opt('listPage'));
 		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
+		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 		
 		updateOptions();
 
@@ -5751,10 +5750,10 @@ function TableView(element, calendar) {
 		if (delta) {
 			addDays(date, opt('listPage') * delta);
 		}
-		t.title = opt('listTexts', 'from') + ' ' + formatDate(date, opt('titleFormat'));
 		t.start = t.visStart = cloneDate(date, true);
 		t.end = addDays(cloneDate(t.start), opt('listPage'));
 		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
+		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 		
 		updateOptions();
 

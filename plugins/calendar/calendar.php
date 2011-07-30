@@ -55,6 +55,7 @@ class calendar extends rcube_plugin
     'calendar_first_hour'   => 6,
     'calendar_work_start'   => 6,
     'calendar_work_end'     => 18,
+    'calendar_agenda_range' => 30,
   );
 
   private $default_categories = array(
@@ -685,6 +686,7 @@ class calendar extends rcube_plugin
     $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']);
     $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', $this->defaults['calendar_date_short']);
     $settings['date_long'] = (string)$this->rc->config->get('calendar_date_long', $this->defaults['calendar_date_long']);
+    $settings['dates_long'] = str_replace(' yyyy', '[ yyyy]', $settings['date_long']) . "{ '&mdash;' " . $settings['date_long'] . '}';
     $settings['date_agenda'] = (string)$this->rc->config->get('calendar_date_agenda', $this->defaults['calendar_date_agenda']);
     $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']);
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
@@ -692,6 +694,7 @@ class calendar extends rcube_plugin
     $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']);
     $settings['work_start'] = (int)$this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']);
     $settings['work_end'] = (int)$this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']);
+    $settings['agenda_range'] = (int)$this->rc->config->get('calendar_agenda_range', $this->defaults['calendar_agenda_range']);
     $settings['timezone'] = $this->timezone;
 
     // localization
@@ -1476,6 +1479,9 @@ class calendar extends rcube_plugin
     
     if ($date = get_input_value('date', RCUBE_INPUT_GPC))
       $this->rc->output->set_env('date', $date);
+
+    if ($range = get_input_value('range', RCUBE_INPUT_GPC))
+      $this->rc->output->set_env('listRange', intval($range));
     
     if ($search = get_input_value('search', RCUBE_INPUT_GPC)) {
       $this->rc->output->set_env('search', $search);
