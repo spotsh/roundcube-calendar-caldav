@@ -81,6 +81,7 @@ class database_driver extends calendar_driver
          $this->rc->user->ID
       );
       while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
+        $arr['showalarms'] = intval($arr['showalarms']);
         $this->calendars[$arr['calendar_id']] = $arr;
         $calendar_ids[] = $this->rc->db->quote($arr['calendar_id']);
       }
@@ -114,11 +115,12 @@ class database_driver extends calendar_driver
   {
     $result = $this->rc->db->query(
       "INSERT INTO " . $this->db_calendars . "
-       (user_id, name, color)
+       (user_id, name, color, showalarms)
        VALUES (?, ?, ?)",
        $this->rc->user->ID,
        $prop['name'],
-       $prop['color']
+       $prop['color'],
+       $prop['showalarms']?1:0
     );
     
     if ($result)
@@ -136,11 +138,12 @@ class database_driver extends calendar_driver
   {
     $query = $this->rc->db->query(
       "UPDATE " . $this->db_calendars . "
-       SET   name=?, color=?
+       SET   name=?, color=?, showalarms=?
        WHERE calendar_id=?
        AND   user_id=?",
       $prop['name'],
       $prop['color'],
+      $prop['showalarms']?1:0,
       $prop['id'],
       $this->rc->user->ID
     );
@@ -187,7 +190,7 @@ class database_driver extends calendar_driver
       $query = $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
          (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, attendees, alarms, notifyat)
-         VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         VALUES (?, %s, %s, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           $this->rc->db->now(),
           $this->rc->db->now(),
           $this->rc->db->fromunixtime($event['start']),
@@ -738,8 +741,13 @@ class database_driver extends calendar_driver
     else if (is_string($calendars))
       $calendars = explode(',', $calendars);
     
-    // only allow to select from calendars of this use
-    $calendar_ids = array_map(array($this->rc->db, 'quote'), array_intersect($calendars, array_keys($this->calendars)));
+    // only allow to select from calendars with activated alarms
+    $calendar_ids = array();
+    foreach ($calendars as $cid) {
+      if ($this->calendars[$cid] && $this->calendars[$cid]['showalarms'])
+        $calendar_ids[] = $cid;
+    }
+    $calendar_ids = array_map(array($this->rc->db, 'quote'), $calendar_ids);
     
     $alarms = array();
     if (!empty($calendar_ids)) {

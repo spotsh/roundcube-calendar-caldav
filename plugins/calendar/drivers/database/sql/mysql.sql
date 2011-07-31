@@ -17,6 +17,7 @@ CREATE TABLE `calendars` (
   `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `name` varchar(255) NOT NULL,
   `color` varchar(8) NOT NULL,
+  `showalarms` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY(`calendar_id`),
   CONSTRAINT `fk_calendars_user_id` FOREIGN KEY (`user_id`)
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE

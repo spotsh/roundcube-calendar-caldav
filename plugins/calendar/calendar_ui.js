@@ -1422,9 +1422,9 @@ function rcube_calendar_ui(settings)
       var $dialog = $("#calendarform").dialog('close');
       
       if (!calendar)
-        calendar = { name:'', color:'cc0000', editable:true };
+        calendar = { name:'', color:'cc0000', editable:true, showalarms:true };
       
-      var form, name, color;
+      var form, name, color, alarms;
       
       $dialog.html(rcmail.get_label('loading'));
       $.ajax({
@@ -1439,6 +1439,7 @@ function rcube_calendar_ui(settings)
           me.dialog_resize('#calendarform', form.height(), form.width());
           name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color });
+          alarms = $('#calendar-showalarms').prop('checked', calendar.showalarms).get(0);
           name.select();
         }
       });

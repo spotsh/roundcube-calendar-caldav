@@ -122,6 +122,7 @@ class kolab_driver extends calendar_driver
           'editname' => $cal->get_foldername(),
           'color'    => $cal->get_color(),
           'readonly' => $cal->readonly,
+          'showalarms' => $cal->alarms,
           'class_name' => $cal->get_namespace(),
         );
       }
@@ -178,10 +179,11 @@ class kolab_driver extends calendar_driver
       // create ID
       $id = rcube_kolab::folder_id($newfolder);
 
-      // save color in user prefs (temp. solution)
+      // save color and alarms in user prefs (temp. solution)
       $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
       unset($prefs['kolab_calendars'][$prop['id']]);
       $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+      $prefs['kolab_calendars'][$id]['showalarms'] = $prop['showalarms'] ? true : false;
 
       $this->rc->user->save_prefs($prefs);
       return true;
@@ -932,6 +934,7 @@ class kolab_driver extends calendar_driver
       'name'  => $this->rc->gettext('settings'),
       'content' => array(
         'color' => $formfields['color'],
+        'showalarms' => $formfields['showalarms'],
       ),
     );
 

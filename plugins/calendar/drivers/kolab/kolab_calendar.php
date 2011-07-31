@@ -72,6 +72,11 @@ class kolab_calendar
             $this->readonly = false;
         }
       }
+      
+      // user-specific alarms settings win
+      $prefs = $this->cal->rc->config->get('kolab_calendars', array());
+      if (isset($prefs[$this->id]['showalarms']))
+        $this->alarms = $prefs[$this->id]['showalarms'];
     }
   }
 
@@ -149,7 +154,6 @@ class kolab_calendar
 
     return 'cc0000';
   }
-
 
   /**
    * Return the corresponding Kolab_Folder instance
@@ -559,6 +563,7 @@ class kolab_calendar
       'allday' => $allday,
       'recurrence' => $rrule,
       'alarms' => $alarm_value . $alarm_unit,
+      '_alarm' => intval($rec['alarm']),
       'categories' => $rec['categories'],
       'attachments' => $attachments,
       'attendees' => $attendees,

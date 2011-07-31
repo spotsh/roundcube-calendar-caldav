@@ -65,6 +65,7 @@ $labels['searchearlierdates'] = '« Search for earlier events';
 $labels['searchlaterdates'] = 'Search for later events »';
 
 // alarm/reminder settings
+$labels['showalarms'] = 'Show alarms';
 $labels['alarmemail'] = 'Send Email';
 $labels['alarmdisplay'] = 'Show message';
 $labels['alarmdisplayoption'] = 'Message';

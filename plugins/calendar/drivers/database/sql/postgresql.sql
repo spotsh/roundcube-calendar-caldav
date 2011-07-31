@@ -26,6 +26,7 @@ CREATE TABLE calendars (
         REFERENCES users (user_id) ON UPDATE CASCADE ON DELETE CASCADE,
     name varchar(255) NOT NULL,
     color varchar(8) NOT NULL,
+    showalarms smallint NOT NULL DEFAULT 1,
     PRIMARY KEY (calendar_id)
 );
 

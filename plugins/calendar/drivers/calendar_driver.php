@@ -91,8 +91,9 @@ abstract class calendar_driver
    * Create a new calendar assigned to the current user
    *
    * @param array Hash array with calendar properties
-   *    name: Calendar name
-   *   color: The color of the calendar
+   *        name: Calendar name
+   *       color: The color of the calendar
+   *  showalarms: True if alarms are enabled
    * @return mixed ID of the calendar on success, False on error
    */
   abstract function create_calendar($prop);
@@ -101,9 +102,10 @@ abstract class calendar_driver
    * Update properties of an existing calendar
    *
    * @param array Hash array with calendar properties
-   *      id: Calendar Identifier
-   *    name: Calendar name
-   *   color: The color of the calendar
+   *          id: Calendar Identifier
+   *        name: Calendar name
+   *       color: The color of the calendar
+   *  showalarms: True if alarms are enabled (if supported)
    * @return boolean True on success, Fales on failure
    */
   abstract function edit_calendar($prop);

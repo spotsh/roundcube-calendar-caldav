@@ -569,6 +569,15 @@ class calendar_ui
       ),
     );
 
+    if ($this->calendar->driver->alarms) {
+      $checkbox = new html_checkbox(array('name' => 'showalarms', 'id' => 'calendar-showalarms', 'value' => 1));
+      $formfields['showalarms'] = array(
+        'label' => $this->calendar->gettext('showalarms'),
+        'value' => $checkbox->show($calendar['showalarms']?1:0),
+        'id' => 'calendar-showalarms',
+      );
+    }
+
     // allow driver to extend or replace the form content
     return html::tag('form', array('action' => "#", 'method' => "get", 'id' => 'calendarpropform'),
       $this->calendar->driver->calendar_form($action, $calendar, $formfields)
