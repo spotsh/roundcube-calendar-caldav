@@ -32,7 +32,7 @@ class kolab_calendar
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
   private $namespace;
-  private $search_fields = array('title', 'description', 'location');
+  private $search_fields = array('title', 'description', 'location', '_attendees');
   private $sensitivity_map = array('public', 'private', 'confidential');
   private $priority_map = array('low', 'normal', 'high');
   private $role_map = array('REQ-PARTICIPANT' => 'required', 'OPT-PARTICIPANT' => 'optional', 'CHAIR' => 'resource');
@@ -208,11 +208,12 @@ class kolab_calendar
       if (!empty($search)) {
         $hit = false;
         foreach ($this->search_fields as $col) {
-          if (empty($event[$col]))
+          $sval = is_array($col) ? $event[$col[0]][$col[1]] : $event[$col];
+          if (empty($sval))
             continue;
           
           // do a simple substring matching (to be improved)
-          $val = mb_strtolower($event[$col]);
+          $val = mb_strtolower($sval);
           if (strpos($val, $search) !== false) {
             $hit = true;
             break;
@@ -225,11 +226,13 @@ class kolab_calendar
       
       // list events in requested time window
       if ($event['start'] <= $end && $event['end'] >= $start) {
+        unset($event['_attendees']);
         $events[] = $event;
       }
       
       // resolve recurring events
       if ($event['recurrence'] && $virtual == 1) {
+        unset($event['_attendees']);
         $events = array_merge($events, $this->_get_recurring_events($event, $start, $end));
       }
     }
@@ -532,6 +535,7 @@ class kolab_calendar
         'email' => $rec['organizer']['smtp-address'],
         'status' => 'ACCEPTED',
       );
+      $_attendees .= $rec['organizer']['display-name'] . ' ' . $rec['organizer']['smtp-address'] . ' ';
     }
     
     foreach ((array)$rec['attendee'] as $attendee) {
@@ -541,6 +545,7 @@ class kolab_calendar
         'email' => $attendee['smtp-address'],
         'status' => $status_map[$attendee['status']],
       );
+      $_attendees .= $rec['organizer']['display-name'] . ' ' . $rec['organizer']['smtp-address'] . ' ';
     }
     
     return array(
@@ -557,6 +562,7 @@ class kolab_calendar
       'categories' => $rec['categories'],
       'attachments' => $attachments,
       'attendees' => $attendees,
+      '_attendees' => $_attendees,
       'free_busy' => $rec['show-time-as'],
       'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
