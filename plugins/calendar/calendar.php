@@ -55,7 +55,7 @@ class calendar extends rcube_plugin
     'calendar_first_hour'   => 6,
     'calendar_work_start'   => 6,
     'calendar_work_end'     => 18,
-    'calendar_agenda_range' => 30,
+    'calendar_agenda_range' => 60,
   );
 
   private $default_categories = array(

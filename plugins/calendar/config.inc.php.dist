@@ -47,7 +47,7 @@ $rcmail_config['calendar_date_agenda'] = 'ddd MM-dd';
 $rcmail_config['calendar_timeslots'] = 2;
 
 // show this number of days in agenda view
-$rcmail_config['calendar_agenda_range'] = 30;
+$rcmail_config['calendar_agenda_range'] = 60;
 
 // first day of the week (0-6)
 $rcmail_config['calendar_first_day'] = 1;

@@ -1544,7 +1544,7 @@ function rcube_calendar_ui(settings)
           
           // change to list view
           fc.fullCalendar('option', 'listSections', 'month');
-          fc.fullCalendar('option', 'listRange', settings['agenda_range']);
+          fc.fullCalendar('option', 'listRange', Math.max(60, settings['agenda_range']));
           fc.fullCalendar('changeView', 'table');
           
           // refetch events with new url (if not already triggered by changeView)
@@ -1621,9 +1621,9 @@ function rcube_calendar_ui(settings)
           lc.append(" ");
           $('<a>').attr('href', '#').html(rcmail.gettext('searchlaterdates', 'calendar')).appendTo(lc).click(function(){
             var range = fc.fullCalendar('option', 'listRange');
-            if (range < 60) {
+            if (range < 90) {
               fc.fullCalendar('getView').start = null; // force re-render
-              fc.fullCalendar('option', 'listRange', 60).fullCalendar('render');
+              fc.fullCalendar('option', 'listRange', fc.fullCalendar('option', 'listRange') + 30).fullCalendar('render');
             }
             else
               fc.fullCalendar('incrementDate', 0, 1, 0);
