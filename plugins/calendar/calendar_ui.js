@@ -1856,6 +1856,10 @@ function rcube_calendar_ui(settings)
         me.eventcount = [];
         if (!bw.ie)
           window.setTimeout(function(){ $('div.fc-content').css('overflow', view.name == 'month' ? 'auto' : 'hidden') }, 10);
+        if (minical) {
+          minical.datepicker('refresh');
+          window.setTimeout(init_week_events, 10);
+        }
       },
       windowResize: function(view) {
         me.eventcount = [];
@@ -1899,6 +1903,11 @@ function rcube_calendar_ui(settings)
         d.setMonth(month - 1);
         minical.data('year', year).data('month', month);
         //fc.fullCalendar('gotoDate', d).fullCalendar('setDate', d);
+      },
+      beforeShowDay: function(date) {
+        var view = fc.fullCalendar('getView');
+        var active = date.getTime() >= view.visStart.getTime() && date.getTime() < view.visEnd.getTime();
+        return [ true, (active ? 'ui-datepicker-activerange ui-datepicker-active-' + view.name : ''), ''];
       }
     }));
     window.setTimeout(init_week_events, 10);

@@ -5531,7 +5531,8 @@ function ListView(element, calendar) {
 		}
 		t.start = t.visStart = cloneDate(date, true);
 		t.end = addDays(cloneDate(t.start), opt('listPage'));
-		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
+		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
+		addMinutes(t.visEnd, -1);  // set end to 23:59
 		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 		
 		updateOptions();
@@ -5752,7 +5753,8 @@ function TableView(element, calendar) {
 		}
 		t.start = t.visStart = cloneDate(date, true);
 		t.end = addDays(cloneDate(t.start), opt('listPage'));
-		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
+		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
+		addMinutes(t.visEnd, -1);  // set end to 23:59
 		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 		
 		updateOptions();

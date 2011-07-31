@@ -41,6 +41,17 @@ body.calendarmain {
 	-webkit-box-shadow: none;
 }
 
+#datepicker .ui-datepicker-activerange a {
+	border-color: #c33;
+}
+
+#datepicker .ui-datepicker-active-agendaDay a,
+#datepicker .ui-datepicker-active-agendaWeek a {
+	border-color: #a22;
+	background: #c33;
+	color: #fff;
+}
+
 #datepicker .ui-priority-secondary {
 	opacity: 0.4;
 }

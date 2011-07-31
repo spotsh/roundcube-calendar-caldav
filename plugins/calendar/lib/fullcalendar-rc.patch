@@ -1,5 +1,5 @@
 --- js/fullcalendar.js.orig	2011-04-09 14:13:16.000000000 +0200
-+++ js/fullcalendar.js	2011-07-30 15:25:57.000000000 +0200
++++ js/fullcalendar.js	2011-07-31 13:19:40.000000000 +0200
 @@ -47,12 +47,16 @@
  	titleFormat: {
  		month: 'MMMM yyyy',
@@ -157,7 +157,7 @@
  			return smartProperty(v, viewNameOverride || viewName);
  		}
  		return v;
-@@ -5204,5 +5248,558 @@
+@@ -5204,5 +5248,560 @@
  	};
  	
  }
@@ -445,7 +445,8 @@
 +		}
 +		t.start = t.visStart = cloneDate(date, true);
 +		t.end = addDays(cloneDate(t.start), opt('listPage'));
-+		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
++		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
++		addMinutes(t.visEnd, -1);  // set end to 23:59
 +		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 +		
 +		updateOptions();
@@ -666,7 +667,8 @@
 +		}
 +		t.start = t.visStart = cloneDate(date, true);
 +		t.end = addDays(cloneDate(t.start), opt('listPage'));
-+		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
++		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
++		addMinutes(t.visEnd, -1);  // set end to 23:59
 +		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 +		
 +		updateOptions();
