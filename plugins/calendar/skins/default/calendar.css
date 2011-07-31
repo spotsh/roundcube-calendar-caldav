@@ -56,6 +56,10 @@ body.calendarmain {
 	opacity: 0.4;
 }
 
+#datepicker td.ui-datepicker-week-col {
+	cursor: pointer;
+}
+
 #sidebartoggle {
 	position: absolute;
 	left: 244px;

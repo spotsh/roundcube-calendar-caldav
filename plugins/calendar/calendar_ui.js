@@ -1859,7 +1859,6 @@ function rcube_calendar_ui(settings)
           window.setTimeout(function(){ $('div.fc-content').css('overflow', view.name == 'month' ? 'auto' : 'hidden') }, 10);
         if (minical) {
           minical.datepicker('refresh');
-          window.setTimeout(init_week_events, 10);
         }
       },
       windowResize: function(view) {
@@ -1868,21 +1867,23 @@ function rcube_calendar_ui(settings)
     });
 
 
-    // event handler for clicks on calendar week cell of the datepicker widget
+    // set event handler for clicks on calendar week cell of the datepicker widget
     var init_week_events = function(){
-      $('#datepicker table.ui-datepicker-calendar td.ui-datepicker-week-col').click(function(e){
-        var base_date = minical.datepicker('getDate');
-        var day_off = base_date.getDay() - 1;
-        if (day_off < 0) day_off = 6;
-        var base_kw = $.datepicker.iso8601Week(base_date);
-        var kw = parseInt($(this).html());
-        var diff = (kw - base_kw) * 7 * DAY_MS;
-        // select monday of the chosen calendar week
-        var date = new Date(base_date.getTime() - day_off * DAY_MS + diff);
-        fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
-        minical.datepicker('setDate', date);
-        window.setTimeout(init_week_events, 10);
-      }).css('cursor', 'pointer');
+      $('#datepicker').click(function(e){
+        var cell = $(e.target);
+        if (e.target.tagName == 'TD' && cell.hasClass('ui-datepicker-week-col')) {
+          var base_date = minical.datepicker('getDate');
+          var day_off = base_date.getDay() - 1;
+          if (day_off < 0) day_off = 6;
+          var base_kw = $.datepicker.iso8601Week(base_date);
+          var kw = parseInt(cell.html());
+          var diff = (kw - base_kw) * 7 * DAY_MS;
+          // select monday of the chosen calendar week
+          var date = new Date(base_date.getTime() - day_off * DAY_MS + diff);
+          fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
+          minical.datepicker('setDate', date);
+        }
+      });
     };
 
     // initialize small calendar widget using jQuery UI datepicker
@@ -1895,10 +1896,8 @@ function rcube_calendar_ui(settings)
         ignore_click = true;
         var d = minical.datepicker('getDate'); //parse_datetime('0:0', dateText);
         fc.fullCalendar('gotoDate', d).fullCalendar('select', d, d, true);
-        window.setTimeout(init_week_events, 10);
       },
       onChangeMonthYear: function(year, month, inst) {
-        window.setTimeout(init_week_events, 10);
         var d = minical.datepicker('getDate');
         d.setYear(year);
         d.setMonth(month - 1);
@@ -1917,7 +1916,6 @@ function rcube_calendar_ui(settings)
     var fullcalendar_update = function() {
       var d = fc.fullCalendar('getDate');
       minical.datepicker('setDate', d);
-      window.setTimeout(init_week_events, 10);
     };
     $("#calendar .fc-button-prev").click(fullcalendar_update);
     $("#calendar .fc-button-next").click(fullcalendar_update);
@@ -2071,7 +2069,7 @@ function rcube_calendar_ui(settings)
     if (rcmail.env.autocomplete_threads > 0) {
       ac_props = {
         threads: rcmail.env.autocomplete_threads,
-        sources: rcmail.env.autocomplete_sources,
+        sources: rcmail.env.autocomplete_sources
       };
     }
     rcmail.init_address_input_events($('#edit-attendee-name'), ac_props);
