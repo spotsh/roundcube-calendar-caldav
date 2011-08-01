@@ -43,12 +43,10 @@ body.calendarmain {
 
 #datepicker .ui-datepicker-activerange a {
 	border-color: #c33;
+	color: #a22;
 }
 
-#datepicker .ui-datepicker-active-agendaDay a,
-#datepicker .ui-datepicker-active-agendaWeek a {
-	border-color: #a22;
-	background: #c33;
+#datepicker .ui-datepicker-activerange a.ui-state-active {
 	color: #fff;
 }
 
