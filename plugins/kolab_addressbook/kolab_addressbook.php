@@ -420,8 +420,15 @@ class kolab_addressbook extends rcube_plugin
         $path      = trim(get_input_value('_parent', RCUBE_INPUT_POST, true)); // UTF7-IMAP
         $delimiter = $_SESSION['imap_delimiter'];
 
+        if (strlen($oldfolder)) {
+            $this->rc->imap_connect();
+            $options = $this->rc->imap->mailbox_info($oldfolder);
+        }
+
+        if (!empty($options) && ($options['norename'] || $options['protected'])) {
+        }
         // sanity checks (from steps/settings/save_folder.inc)
-        if (!strlen($folder)) {
+        else if (!strlen($folder)) {
             $error = rcube_label('cannotbeempty');
         }
         else if (strlen($folder) > 128) {
@@ -438,9 +445,7 @@ class kolab_addressbook extends rcube_plugin
         }
 
         if (!$error) {
-            // @TODO: $options
-            $options = array();
-            if ($options['protected'] || $options['norename']) {
+            if (!empty($options) && ($options['protected'] || $options['norename'])) {
                 $folder = $oldfolder;
             }
             else if (strlen($path)) {

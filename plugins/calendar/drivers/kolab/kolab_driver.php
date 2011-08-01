@@ -207,8 +207,15 @@ class kolab_driver extends calendar_driver
     $parent    = $prop['parent']; // UTF7
     $delimiter = $_SESSION['imap_delimiter'];
 
+    if (strlen($oldfolder)) {
+        $this->rc->imap_connect();
+        $options = $this->rc->imap->mailbox_info($oldfolder);
+    }
+
+    if (!empty($options) && ($options['norename'] || $options['protected'])) {
+    }
     // sanity checks (from steps/settings/save_folder.inc)
-    if (!strlen($folder)) {
+    else if (!strlen($folder)) {
       return false;
     }
     else if (strlen($folder) > 128) {
@@ -223,9 +230,7 @@ class kolab_driver extends calendar_driver
       }
     }
 
-    // @TODO: $options
-    $options = array();
-    if ($options['protected'] || $options['norename']) {
+    if (!empty($options) && ($options['protected'] || $options['norename'])) {
       $folder = $oldfolder;
     }
     else if (strlen($parent)) {
@@ -909,6 +914,13 @@ class kolab_driver extends calendar_driver
       'name' => $this->rc->gettext('properties'),
     );
 
+    // Disable folder name input
+    if (!empty($options) && ($options['norename'] || $options['protected'])) {
+      $input_name = new html_hiddenfield(array('name' => 'name', 'id' => 'calendar-name'));
+      $formfields['name']['value'] = Q(str_replace($delimiter, ' &raquo; ', rcube_kolab::object_name($folder)))
+        . $input_name->show($folder);
+    }
+
     // calendar name (default field)
     $form['props']['fieldsets']['location'] = array(
       'name'  => $this->rc->gettext('location'),
@@ -917,7 +929,7 @@ class kolab_driver extends calendar_driver
       ),
     );
 
-    if (!empty($options) && ($options['norename'] || $options['namespace'] != 'personal')) {
+    if (!empty($options) && ($options['norename'] || $options['protected'])) {
       // prevent user from moving folder
       $hidden_fields[] = array('name' => 'parent', 'value' => $path_imap);
     }

@@ -144,8 +144,13 @@ class kolab_addressbook_ui
             'name' => $this->rc->gettext('properties'),
         );
 
-        $foldername = new html_inputfield(array('name' => '_name', 'id' => '_name', 'size' => 30));
-        $foldername = $foldername->show($name);
+        if (!empty($options) && ($options['norename'] || $options['protected'])) {
+            $foldername = Q(str_replace($delimiter, ' &raquo; ', rcube_kolab::object_name($folder)));
+        }
+        else {
+            $foldername = new html_inputfield(array('name' => '_name', 'id' => '_name', 'size' => 30));
+            $foldername = $foldername->show($name);
+        }
 
         $form['props']['fieldsets']['location'] = array(
             'name'  => $this->rc->gettext('location'),
@@ -157,7 +162,7 @@ class kolab_addressbook_ui
             ),
         );
 
-        if (!empty($options) && ($options['norename'] || $options['namespace'] != 'personal')) {
+        if (!empty($options) && ($options['norename'] || $options['protected'])) {
             // prevent user from moving folder
             $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
         }
