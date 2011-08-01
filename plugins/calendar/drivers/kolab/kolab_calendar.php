@@ -289,6 +289,7 @@ class kolab_calendar
     $old = $this->storage->getObject($event['id']);
     $object = array_merge($old, $this->_from_rcube_event($event));
     $saved = $this->storage->save($object, $event['id']);
+
     if (PEAR::isError($saved)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
@@ -702,7 +703,7 @@ class kolab_calendar
         // Roundcube ID has nothing to do with Horde ID, remove it
         if ($attachment['content'])
           unset($attachment['id']);
-        
+
         // Horde code assumes that there will be no more than
         // one file with the same name: make filenames unique
         $filename = $attachment['name'];
@@ -710,12 +711,16 @@ class kolab_calendar
           $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
           $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
         }
-        
+
+        // set type parameter
+        if ($attachment['mimetype'])
+          $attachment['type'] = $attachment['mimetype'];
+
         $object['_attachments'][$attachment['name']] = $attachment;
         unset($event['attachments'][$idx]);
       }
     }
-    
+
     // process event attendees
     foreach ((array)$event['attendees'] as $attendee) {
       $role = $attendee['role'];
