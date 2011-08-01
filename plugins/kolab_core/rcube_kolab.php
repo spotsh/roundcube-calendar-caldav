@@ -348,8 +348,14 @@ class rcube_kolab
                     $delim  = $ns[1];
                     // get username
                     $pos    = strpos($folder, $delim);
-                    $prefix = '('.substr($folder, 0, $pos).') ';
-                    $folder = substr($folder, $pos+1);
+                    if ($pos) {
+                        $prefix = '('.substr($folder, 0, $pos).') ';
+                        $folder = substr($folder, $pos+1);
+                    }
+                    else {
+                        $prefix = '('.$folder.')';
+                        $folder = '';
+                    }
                     $found  = true;
                     $folder_ns = 'other';
                     break;
@@ -427,12 +433,12 @@ class rcube_kolab
         // get all folders of specified type
         $folders = self::get_folders($type);
 
-        $delim = $_SESSION['delimiter'];
+        $delim = $_SESSION['imap_delimiter'];
         $names = array();
         $len   = strlen($current);
 
         if ($len && ($rpos = strrpos($current, $delim))) {
-            $parent = substr($current, 0, $rpos-1);
+            $parent = substr($current, 0, $rpos);
             $p_len  = strlen($parent);
         }
 
@@ -455,6 +461,11 @@ class rcube_kolab
             }
 
             $names[$name] = rcube_charset_convert($name, 'UTF7-IMAP');
+        }
+
+        // Make sure parent folder is listed (might be skipped e.g. if it's namespace root)
+        if ($p_len && !isset($names[$parent])) {
+            $names[$parent] = rcube_charset_convert($parent, 'UTF7-IMAP');
         }
 
         // Sort folders list
