@@ -261,7 +261,6 @@ class rcube_kolab_contacts extends rcube_addressbook
     public function list_records($cols=null, $subset=0)
     {
         $this->result = $this->count();
-
         // list member of the selected group
         if ($this->gid) {
             $seen = array();
@@ -270,6 +269,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 // skip member that don't match the search filter
                 if (is_array($this->filter['ids']) && array_search($member['ID'], $this->filter['ids']) === false)
                     continue;
+
                 if ($this->contacts[$member['ID']] && !$seen[$member['ID']]++)
                     $this->result->count++;
             }
@@ -283,7 +283,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             uasort($this->contacts, array($this, '_sort_contacts_comp'));
             // get sorted IDs
             if ($count != count($this->contacts))
-                $ids = array_intersect(array_keys($this->contacts), $ids);
+                $ids = array_values(array_intersect(array_keys($this->contacts), $ids));
             else
                 $ids = array_keys($this->contacts);
         }
@@ -1022,6 +1022,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 // FIXME: folders without any distribution-list objects return contacts instead ?!
                 if ($record['__type'] != 'Group')
                     continue;
+
                 $record['ID'] = md5($record['uid']);
                 foreach ((array)$record['member'] as $i => $member) {
                     $mid = md5($member['uid']);
