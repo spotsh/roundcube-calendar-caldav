@@ -56,6 +56,18 @@ class rcube_kolab_contacts extends rcube_addressbook
       // TODO: define more Kolab-specific fields such as: language, latitude, longitude
     );
 
+    /**
+     * vCard additional fields mapping
+     */
+    public $vcard_map = array(
+      'profession'     => 'X-PROFESSION',
+      'officelocation' => 'X-OFFICE-LOCATION',
+      'initials'       => 'X-INITIALS',
+      'children'       => 'X-CHILDREN',
+      'freebusyurl'    => 'X-FREEBUSY-URL',
+      'pgppublickey'   => 'KEY',
+    );
+
     private $gid;
     private $storagefolder;
     private $contactstorage;
@@ -97,6 +109,7 @@ class rcube_kolab_contacts extends rcube_addressbook
       'body'         => 'notes',
       'pgp-publickey' => 'pgppublickey',
       'free-busy-url' => 'freebusyurl',
+      'gender'       => 'gender',
     );
 
 
@@ -1105,8 +1118,8 @@ class rcube_kolab_contacts extends rcube_addressbook
             $object['anniversary'] = date('Y-m-d', $date);
 
         $gendermap = array_flip($this->gender_map);
-        if (isset($contact['gender']))
-            $object['gender'] = $gendermap[$contact['gender']];
+        if (isset($object['gender']))
+            $object['gender'] = $gendermap[$object['gender']];
 
         $emails = $this->get_col_values('email', $contact, true);
         $object['emails'] = join(', ', array_filter($emails));
