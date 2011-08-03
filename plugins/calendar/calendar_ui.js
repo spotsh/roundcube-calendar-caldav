@@ -48,6 +48,8 @@ function rcube_calendar_ui(settings)
     var attendees_list;
     var freebusy_ui = { workinhoursonly:false, needsupdate:false };
     var freebusy_data = {};
+    var exec_deferred = bw.ie6 ? 5 : 1;
+    var ui_loading = rcmail.set_busy(true, 'loading');
 
     // general datepicker settings
     var datepicker_settings = {
@@ -73,7 +75,7 @@ function rcube_calendar_ui(settings)
       return String(str).replace(/\n/g, "<br/>");
     };
     
-    // 
+    // same as str.split(delimiter) but it ignores delimiters within quoted strings
     var explode_quoted_string = function(str, delimiter)
     {
       var result = [],
@@ -302,7 +304,7 @@ function rcube_calendar_ui(settings)
             .find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
         }
       }
-
+      
       var buttons = {};
       if (calendar.editable && event.editable !== false) {
         buttons[rcmail.gettext('edit', 'calendar')] = function() {
@@ -341,7 +343,6 @@ function rcube_calendar_ui(settings)
         .insertBefore($dialog.parent().find('.ui-dialog-buttonset').children().first());
 */
     };
-
 
     // bring up the event dialog (jquery-ui popup)
     var event_edit_dialog = function(action, event)
@@ -416,45 +417,49 @@ function rcube_calendar_ui(settings)
       
       // enable/disable alarm property according to backend support
       $('#edit-alarms')[(calendar.alarms ? 'show' : 'hide')]();
-      
+
       // set recurrence form
-      var recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();
-      var interval = $('select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
-      var rrtimes = $('#edit-recurrence-repeat-times').val(event.recurrence ? event.recurrence.COUNT : 1);
-      var rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate(new Date(event.recurrence.UNTIL*1000), settings['date_format']) : '');
-      $('input.edit-recurrence-until:checked').prop('checked', false);
+      var recurrence, interval, rrtimes, rrenddate;
+      var load_recurrence_tab = function()
+      {
+        recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();
+        interval = $('select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
+        rrtimes = $('#edit-recurrence-repeat-times').val(event.recurrence ? event.recurrence.COUNT : 1);
+        rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate(new Date(event.recurrence.UNTIL*1000), settings['date_format']) : '');
+        $('input.edit-recurrence-until:checked').prop('checked', false);
       
-      var weekdays = ['SU','MO','TU','WE','TH','FR','SA'];
-      var rrepeat_id = '#edit-recurrence-repeat-forever';
-      if (event.recurrence && event.recurrence.COUNT)      rrepeat_id = '#edit-recurrence-repeat-count';
-      else if (event.recurrence && event.recurrence.UNTIL) rrepeat_id = '#edit-recurrence-repeat-until';
-      $(rrepeat_id).prop('checked', true);
+        var weekdays = ['SU','MO','TU','WE','TH','FR','SA'];
+        var rrepeat_id = '#edit-recurrence-repeat-forever';
+        if (event.recurrence && event.recurrence.COUNT)      rrepeat_id = '#edit-recurrence-repeat-count';
+        else if (event.recurrence && event.recurrence.UNTIL) rrepeat_id = '#edit-recurrence-repeat-until';
+        $(rrepeat_id).prop('checked', true);
       
-      if (event.recurrence && event.recurrence.BYDAY && event.recurrence.FREQ == 'WEEKLY') {
-        var wdays = event.recurrence.BYDAY.split(',');
-        $('input.edit-recurrence-weekly-byday').val(wdays);
-      }
-      if (event.recurrence && event.recurrence.BYMONTHDAY) {
-        $('input.edit-recurrence-monthly-bymonthday').val(String(event.recurrence.BYMONTHDAY).split(','));
-        $('input.edit-recurrence-monthly-mode').val(['BYMONTHDAY']);
-      }
-      if (event.recurrence && event.recurrence.BYDAY && (event.recurrence.FREQ == 'MONTHLY' || event.recurrence.FREQ == 'YEARLY')) {
-        var byday, section = event.recurrence.FREQ.toLowerCase();
-        if ((byday = String(event.recurrence.BYDAY).match(/(-?[1-4])([A-Z]+)/))) {
-          $('#edit-recurrence-'+section+'-prefix').val(byday[1]);
-          $('#edit-recurrence-'+section+'-byday').val(byday[2]);
+        if (event.recurrence && event.recurrence.BYDAY && event.recurrence.FREQ == 'WEEKLY') {
+          var wdays = event.recurrence.BYDAY.split(',');
+          $('input.edit-recurrence-weekly-byday').val(wdays);
         }
-        $('input.edit-recurrence-'+section+'-mode').val(['BYDAY']);
-      }
-      else if (event.start) {
-        $('#edit-recurrence-monthly-byday').val(weekdays[event.start.getDay()]);
-      }
-      if (event.recurrence && event.recurrence.BYMONTH) {
-        $('input.edit-recurrence-yearly-bymonth').val(String(event.recurrence.BYMONTH).split(','));
-      }
-      else if (event.start) {
-        $('input.edit-recurrence-yearly-bymonth').val([String(event.start.getMonth()+1)]);
-      }
+        if (event.recurrence && event.recurrence.BYMONTHDAY) {
+          $('input.edit-recurrence-monthly-bymonthday').val(String(event.recurrence.BYMONTHDAY).split(','));
+          $('input.edit-recurrence-monthly-mode').val(['BYMONTHDAY']);
+        }
+        if (event.recurrence && event.recurrence.BYDAY && (event.recurrence.FREQ == 'MONTHLY' || event.recurrence.FREQ == 'YEARLY')) {
+          var byday, section = event.recurrence.FREQ.toLowerCase();
+          if ((byday = String(event.recurrence.BYDAY).match(/(-?[1-4])([A-Z]+)/))) {
+            $('#edit-recurrence-'+section+'-prefix').val(byday[1]);
+            $('#edit-recurrence-'+section+'-byday').val(byday[2]);
+          }
+          $('input.edit-recurrence-'+section+'-mode').val(['BYDAY']);
+        }
+        else if (event.start) {
+          $('#edit-recurrence-monthly-byday').val(weekdays[event.start.getDay()]);
+        }
+        if (event.recurrence && event.recurrence.BYMONTH) {
+          $('input.edit-recurrence-yearly-bymonth').val(String(event.recurrence.BYMONTH).split(','));
+        }
+        else if (event.start) {
+          $('input.edit-recurrence-yearly-bymonth').val([String(event.start.getMonth()+1)]);
+        }
+      };
       
       // show warning if editing a recurring event
       if (event.id && event.recurrence) {
@@ -463,24 +468,28 @@ function rcube_calendar_ui(settings)
       }
       else
         $('#edit-recurring-warning').hide();
-        
-      // attendees
+
+      // init attendees tab
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
-      if (calendar.attendees && event.attendees) {
-        for (var j=0; j < event.attendees.length; j++)
-          add_attendee(event.attendees[j], true);
+      var load_attendees_tab = function()
+      {
+        if (event.attendees) {
+          for (var j=0; j < event.attendees.length; j++)
+            add_attendee(event.attendees[j], true);
         
-        if (has_attendees(event)) {
-          notify.checked = invite.checked = true;  // enable notification by default
+          if (has_attendees(event)) {
+            notify.checked = invite.checked = true;  // enable notification by default
+          }
         }
-      }
 
-      $('#edit-attendees-notify')[(notify.checked?'show':'hide')]();
-      $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
+        $('#edit-attendees-notify')[(notify.checked?'show':'hide')]();
+        $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
+      };
 
       // attachments
-      if (calendar.attachments) {
+      var load_attachments_tab = function()
+      {
         rcmail.enable_command('remove-attachment', !calendar.readonly);
         rcmail.env.deleted_attachments = [];
         // we're sharing some code for uploads handling with app.js
@@ -494,9 +503,10 @@ function rcube_calendar_ui(settings)
           $('#edit-attachments > ul').empty();
           // fetch attachments, some drivers doesn't set 'attachments' array for event?
         }
-      }
-
-      // buttons
+      };
+      
+      
+      // init dialog buttons
       var buttons = {};
       
       buttons[rcmail.gettext('save', 'calendar')] = function() {
@@ -634,6 +644,8 @@ function rcube_calendar_ui(settings)
         title: rcmail.gettext((action == 'edit' ? 'edit_event' : 'new_event'), 'calendar'),
         close: function() {
           $dialog.dialog("destroy").hide();
+          rcmail.ksearch_blur();
+          rcmail.ksearch_destroy();
           freebusy_data = {};
         },
         buttons: buttons,
@@ -642,6 +654,13 @@ function rcube_calendar_ui(settings)
       }).show();
 
       title.select();
+
+      // init other tabs asynchronously
+      window.setTimeout(load_recurrence_tab, exec_deferred);
+      if (calendar.attendees)
+        window.setTimeout(load_attendees_tab, exec_deferred);
+      if (calendar.attachments)
+        window.setTimeout(load_attachments_tab, exec_deferred);
     };
 
     // open a dialog to display detailed free-busy information and to find free slots
@@ -1395,7 +1414,6 @@ function rcube_calendar_ui(settings)
       window.setTimeout(function(){ printwin.focus() }, 50);
     };
 
-
     // public method to bring up the new event dialog
     this.add_event = function() {
       if (this.selected_calendar) {
@@ -1617,7 +1635,6 @@ function rcube_calendar_ui(settings)
           var lc = container.find('.fc-bottomlinks');
           $('<a>').attr('href', '#').html(rcmail.gettext('searchearlierdates', 'calendar')).appendTo(lc).click(function(){
             fc.fullCalendar('incrementDate', 0, -1, 0);
-            fullcalendar_update();
           });
           lc.append(" ");
           $('<a>').attr('href', '#').html(rcmail.gettext('searchlaterdates', 'calendar')).appendTo(lc).click(function(){
@@ -1628,8 +1645,6 @@ function rcube_calendar_ui(settings)
             }
             else
               fc.fullCalendar('incrementDate', 0, 1, 0);
-            
-            fullcalendar_update();
           });
         }
       }
@@ -1816,7 +1831,6 @@ function rcube_calendar_ui(settings)
         
         if (!ignore_click) {
           view.calendar.gotoDate(date);
-          fullcalendar_update();
           if (day_clicked && new Date(day_clicked).getMonth() != date.getMonth())
             view.calendar.select(date, date, allDay);
         }
@@ -1857,69 +1871,14 @@ function rcube_calendar_ui(settings)
         me.eventcount = [];
         if (!bw.ie)
           window.setTimeout(function(){ $('div.fc-content').css('overflow', view.name == 'month' ? 'auto' : 'hidden') }, 10);
-        if (minical) {
-          minical.datepicker('refresh');
-        }
+        if (minical)
+          window.setTimeout(function(){ minical.datepicker('setDate', fc.fullCalendar('getDate')); }, exec_deferred);
       },
       windowResize: function(view) {
         me.eventcount = [];
       }
     });
 
-
-    // set event handler for clicks on calendar week cell of the datepicker widget
-    var init_week_events = function(){
-      $('#datepicker').click(function(e){
-        var cell = $(e.target);
-        if (e.target.tagName == 'TD' && cell.hasClass('ui-datepicker-week-col')) {
-          var base_date = minical.datepicker('getDate');
-          var day_off = base_date.getDay() - 1;
-          if (day_off < 0) day_off = 6;
-          var base_kw = $.datepicker.iso8601Week(base_date);
-          var kw = parseInt(cell.html());
-          var diff = (kw - base_kw) * 7 * DAY_MS;
-          // select monday of the chosen calendar week
-          var date = new Date(base_date.getTime() - day_off * DAY_MS + diff);
-          fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
-          minical.datepicker('setDate', date);
-        }
-      });
-    };
-
-    // initialize small calendar widget using jQuery UI datepicker
-    var minical = $('#datepicker').datepicker($.extend(datepicker_settings, {
-      inline: true,
-      showWeek: true,
-      changeMonth: false, // maybe enable?
-      changeYear: false,  // maybe enable?
-      onSelect: function(dateText, inst) {
-        ignore_click = true;
-        var d = minical.datepicker('getDate'); //parse_datetime('0:0', dateText);
-        fc.fullCalendar('gotoDate', d).fullCalendar('select', d, d, true);
-      },
-      onChangeMonthYear: function(year, month, inst) {
-        var d = minical.datepicker('getDate');
-        d.setYear(year);
-        d.setMonth(month - 1);
-        minical.data('year', year).data('month', month);
-        //fc.fullCalendar('gotoDate', d).fullCalendar('setDate', d);
-      },
-      beforeShowDay: function(date) {
-        var view = fc.fullCalendar('getView');
-        var active = date.getTime() >= view.visStart.getTime() && date.getTime() < view.visEnd.getTime();
-        return [ true, (active ? 'ui-datepicker-activerange ui-datepicker-active-' + view.name : ''), ''];
-      }
-    }));
-    window.setTimeout(init_week_events, 10);
-
-    // react on fullcalendar buttons
-    var fullcalendar_update = function() {
-      var d = fc.fullCalendar('getDate');
-      minical.datepicker('setDate', d);
-    };
-    $("#calendar .fc-button-prev").click(fullcalendar_update);
-    $("#calendar .fc-button-next").click(fullcalendar_update);
-    $("#calendar .fc-button-today").click(fullcalendar_update);
 
     // format time string
     var formattime = function(hour, minutes, start) {
@@ -1940,7 +1899,7 @@ function rcube_calendar_ui(settings)
       }
       return [time, duration];
     };
-    
+
     var autocomplete_times = function(p, callback) {
       /* Time completions */
       var result = [];
@@ -1973,7 +1932,7 @@ function rcube_calendar_ui(settings)
       
       return callback(result);
     };
-    
+
     var autocomplete_open = function(event, ui) {
       // scroll to current time
       var $this = $(this);
@@ -2000,115 +1959,165 @@ function rcube_calendar_ui(settings)
       event_times_changed();
     };
 
-    // init event dialog
-    $('#eventtabs').tabs({
-      show: function(event, ui) {
-        if (ui.panel.id == 'event-tab-3') {
-          $('#edit-attendee-name').select();
-          // update free-busy status if needed
-          if (freebusy_ui.needsupdate && me.selected_event)
-            update_freebusy_status(me.selected_event);
-          // add current user as organizer if non added yet
-          if (!event_attendees.length && !me.selected_event.id)
-            add_attendee($.extend({ role:'ORGANIZER' }, settings.event_owner));
-        }
-      }
-    });
-    $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
-    $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
-    $('#edit-enddate').datepicker('option', 'onSelect', event_times_changed).change(event_times_changed);
-    $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); event_times_changed(); });
 
-    // configure drop-down menu on time input fields based on jquery UI autocomplete
-    $('#edit-starttime, #edit-endtime, input.edit-alarm-time')
-      .attr('autocomplete', "off")
-      .autocomplete({
-        delay: 100,
-        minLength: 1,
-        source: autocomplete_times,
-        open: autocomplete_open,
-        change: event_times_changed,
-        select: function(event, ui) {
-          $(this).val(ui.item[0]);
-          return false;
+    var minical;
+    var init_calendar_ui = function()
+    {
+      // initialize small calendar widget using jQuery UI datepicker
+      minical = $('#datepicker').datepicker($.extend(datepicker_settings, {
+        inline: true,
+        showWeek: true,
+        changeMonth: false, // maybe enable?
+        changeYear: false,  // maybe enable?
+        onSelect: function(dateText, inst) {
+          ignore_click = true;
+          var d = minical.datepicker('getDate'); //parse_datetime('0:0', dateText);
+          fc.fullCalendar('gotoDate', d).fullCalendar('select', d, d, true);
+        },
+        onChangeMonthYear: function(year, month, inst) {
+          var d = minical.datepicker('getDate');
+          d.setYear(year);
+          d.setMonth(month - 1);
+          minical.data('year', year).data('month', month);
+          //fc.fullCalendar('gotoDate', d).fullCalendar('setDate', d);
+        },
+        beforeShowDay: function(date) {
+          var view = fc.fullCalendar('getView');
+          var active = date.getTime() >= view.visStart.getTime() && date.getTime() < view.visEnd.getTime();
+          return [ true, (active ? 'ui-datepicker-activerange ui-datepicker-active-' + view.name : ''), ''];
         }
-      })
-      .click(function() {  // show drop-down upon clicks
-        $(this).autocomplete('search', $(this).val() ? $(this).val().replace(/\D.*/, "") : " ");
-      }).each(function(){
-        $(this).data('autocomplete')._renderItem = function(ul, item) {
-          return $('<li>')
-            .data('item.autocomplete', item)
-            .append('<a>' + item[0] + item[1] + '</a>')
-            .appendTo(ul);
-          };
+      })) // set event handler for clicks on calendar week cell of the datepicker widget
+        .click(function(e) {
+          var cell = $(e.target);
+          if (e.target.tagName == 'TD' && cell.hasClass('ui-datepicker-week-col')) {
+            var base_date = minical.datepicker('getDate');
+            var day_off = base_date.getDay() - 1;
+            if (day_off < 0) day_off = 6;
+            var base_kw = $.datepicker.iso8601Week(base_date);
+            var kw = parseInt(cell.html());
+            var diff = (kw - base_kw) * 7 * DAY_MS;
+            // select monday of the chosen calendar week
+            var date = new Date(base_date.getTime() - day_off * DAY_MS + diff);
+            fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
+            minical.datepicker('setDate', date);
+          }
       });
 
-    // register events on alarm fields
-    $('select.edit-alarm-type').change(function(){
-      $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
-    });
-    $('select.edit-alarm-offset').change(function(){
-      var mode = $(this).val() == '@' ? 'show' : 'hide';
-      $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
-      $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
-    });
+      // init event dialog
+      $('#eventtabs').tabs({
+        show: function(event, ui) {
+          if (ui.panel.id == 'event-tab-3') {
+            $('#edit-attendee-name').select();
+            // update free-busy status if needed
+            if (freebusy_ui.needsupdate && me.selected_event)
+              update_freebusy_status(me.selected_event);
+            // add current user as organizer if non added yet
+            if (!event_attendees.length && !me.selected_event.id)
+              add_attendee($.extend({ role:'ORGANIZER' }, settings.event_owner));
+          }
+        }
+      });
+      $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
+      $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
+      $('#edit-enddate').datepicker('option', 'onSelect', event_times_changed).change(event_times_changed);
+      $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); event_times_changed(); });
 
-    // toggle recurrence frequency forms
-    $('#edit-recurrence-frequency').change(function(e){
-      var freq = $(this).val().toLowerCase();
-      $('.recurrence-form').hide();
-      if (freq)
-        $('#recurrence-form-'+freq+', #recurrence-form-until').show();
-    });
-    $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
+      // configure drop-down menu on time input fields based on jquery UI autocomplete
+      $('#edit-starttime, #edit-endtime, input.edit-alarm-time')
+        .attr('autocomplete', "off")
+        .autocomplete({
+          delay: 100,
+          minLength: 1,
+          source: autocomplete_times,
+          open: autocomplete_open,
+          change: event_times_changed,
+          select: function(event, ui) {
+            $(this).val(ui.item[0]);
+            return false;
+          }
+        })
+        .click(function() {  // show drop-down upon clicks
+          $(this).autocomplete('search', $(this).val() ? $(this).val().replace(/\D.*/, "") : " ");
+        }).each(function(){
+          $(this).data('autocomplete')._renderItem = function(ul, item) {
+            return $('<li>')
+              .data('item.autocomplete', item)
+              .append('<a>' + item[0] + item[1] + '</a>')
+              .appendTo(ul);
+            };
+        });
 
-    // init attendees autocompletion
-    var ac_props;
-    // parallel autocompletion
-    if (rcmail.env.autocomplete_threads > 0) {
-      ac_props = {
-        threads: rcmail.env.autocomplete_threads,
-        sources: rcmail.env.autocomplete_sources
-      };
+      // register events on alarm fields
+      $('select.edit-alarm-type').change(function(){
+        $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
+      });
+      $('select.edit-alarm-offset').change(function(){
+        var mode = $(this).val() == '@' ? 'show' : 'hide';
+        $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
+        $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
+      });
+
+      // toggle recurrence frequency forms
+      $('#edit-recurrence-frequency').change(function(e){
+        var freq = $(this).val().toLowerCase();
+        $('.recurrence-form').hide();
+        if (freq)
+          $('#recurrence-form-'+freq+', #recurrence-form-until').show();
+      });
+      $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
+
+      // init attendees autocompletion
+      var ac_props;
+      // parallel autocompletion
+      if (rcmail.env.autocomplete_threads > 0) {
+        ac_props = {
+          threads: rcmail.env.autocomplete_threads,
+          sources: rcmail.env.autocomplete_sources
+        };
+      }
+      rcmail.init_address_input_events($('#edit-attendee-name'), ac_props);
+      rcmail.addEventListener('autocomplete_insert', function(e){ $('#edit-attendee-add').click(); });
+
+      $('#edit-attendee-add').click(function(){
+        var input = $('#edit-attendee-name');
+        if (add_attendees(input.val()))
+          input.val('');
+      });
+
+      // keep these two checkboxes in sync
+      $('#edit-attendees-donotify, #edit-attendees-invite').click(function(){
+        $('#edit-attendees-donotify, #edit-attendees-invite').prop('checked', this.checked);
+      });
+
+      $('#edit-attendee-schedule').click(function(){
+        event_freebusy_dialog();
+      });
+
+      $('#shedule-freebusy-prev').html(bw.ie6 ? '&lt;&lt;' : '&#9668;').button().click(function(){ render_freebusy_grid(-1); });
+      $('#shedule-freebusy-next').html(bw.ie6 ? '&gt;&gt;' : '&#9658;').button().click(function(){ render_freebusy_grid(1); }).parent().buttonset();
+
+      $('#shedule-find-prev').button().click(function(){ freebusy_find_slot(-1); });
+      $('#shedule-find-next').button().click(function(){ freebusy_find_slot(1); });
+
+      $('#schedule-freebusy-wokinghours').click(function(){
+        freebusy_ui.workinhoursonly = this.checked;
+        $('#workinghourscss').remove();
+        if (this.checked)
+          $('<style type="text/css" id="workinghourscss"> td.offhours { opacity:0.3; filter:alpha(opacity=30) } </style>').appendTo('head');
+      });
+
+      // hide event dialog when clicking somewhere into document
+      $(document).bind('mousedown', dialog_check);
+
+      rcmail.set_busy(false, 'loading', ui_loading);
     }
-    rcmail.init_address_input_events($('#edit-attendee-name'), ac_props);
-    rcmail.addEventListener('autocomplete_insert', function(e){ $('#edit-attendee-add').click(); });
 
-    $('#edit-attendee-add').click(function(){
-      var input = $('#edit-attendee-name');
-      if (add_attendees(input.val()))
-        input.val('');
-    });
-    
-    // keep these two checkboxes in sync
-    $('#edit-attendees-donotify, #edit-attendees-invite').click(function(){
-      $('#edit-attendees-donotify, #edit-attendees-invite').prop('checked', this.checked);
-    });
-    
-    $('#edit-attendee-schedule').click(function(){
-      event_freebusy_dialog();
-    });
-    
-    $('#shedule-freebusy-prev').html(bw.ie6 ? '&lt;&lt;' : '&#9668;').button().click(function(){ render_freebusy_grid(-1); });
-    $('#shedule-freebusy-next').html(bw.ie6 ? '&gt;&gt;' : '&#9658;').button().click(function(){ render_freebusy_grid(1); }).parent().buttonset();
-    
-    $('#shedule-find-prev').button().click(function(){ freebusy_find_slot(-1); });
-    $('#shedule-find-next').button().click(function(){ freebusy_find_slot(1); });
-    
-    $('#schedule-freebusy-wokinghours').click(function(){
-      freebusy_ui.workinhoursonly = this.checked;
-      $('#workinghourscss').remove();
-      if (this.checked)
-        $('<style type="text/css" id="workinghourscss"> td.offhours { opacity:0.3; filter:alpha(opacity=30) } </style>').appendTo('head');
-    });
+    // initialize more UI elements (deferred)
+    window.setTimeout(init_calendar_ui, exec_deferred);
 
     // add proprietary css styles if not IE
     if (!bw.ie)
       $('div.fc-content').addClass('rcube-fc-content');
-
-    // hide event dialog when clicking somewhere into document
-    $(document).bind('mousedown', dialog_check);
 
 } // end rcube_calendar class
 
@@ -2142,6 +2151,9 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   $(window).resize(function() {
     $('#calendar').fullCalendar('option', 'height', $('#main').height());
   }).resize();
+
+  // show calendars list when ready
+  $('#calendars').css('visibility', 'inherit');
 
   // show toolbar
   $('#toolbar').show();
