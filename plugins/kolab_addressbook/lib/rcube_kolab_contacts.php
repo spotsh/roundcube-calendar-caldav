@@ -1124,7 +1124,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         $emails = $this->get_col_values('email', $contact, true);
         $object['emails'] = join(', ', array_filter($emails));
         // overwrite 'email' field
-        $object['email'] = '';
+        unset($object['email']);
 
         foreach ($this->get_col_values('phone', $contact) as $type => $values) {
             if ($this->phonetypemap[$type])
@@ -1146,6 +1146,11 @@ class rcube_kolab_contacts extends rcube_addressbook
             $updated = false;
             $basekey = 'addr-' . $type . '-';
             foreach ((array)$values as $adr) {
+                // skip empty address
+                $adr = array_filter($adr);
+                if (empty($adr))
+                    continue;
+
                 // switch type if slot is already taken
                 if (isset($object[$basekey . 'type'])) {
                     $type = $type == 'home' ? 'business' : 'home';
