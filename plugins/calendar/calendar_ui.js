@@ -361,9 +361,9 @@ function rcube_calendar_ui(settings)
       $('#calendar-select')[(action == 'new' ? 'show' : 'hide')]();
 
       // event details
-      var title = $('#edit-title').val(event.title);
-      var location = $('#edit-location').val(event.location);
-      var description = $('#edit-description').val(event.description);
+      var title = $('#edit-title').val(event.title || '');
+      var location = $('#edit-location').val(event.location || '');
+      var description = $('#edit-description').html(event.description || '');
       var categories = $('#edit-categories').val(event.categories);
       var calendars = $('#edit-calendar').val(event.calendar);
       var freebusy = $('#edit-free-busy').val(event.free_busy);
