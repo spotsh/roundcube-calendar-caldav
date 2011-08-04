@@ -34,6 +34,7 @@ class database_driver extends calendar_driver
 
   private $rc;
   private $cal;
+  private $cache = array();
   private $calendars = array();
   private $calendar_ids = '';
   private $free_busy_map = array('free' => 0, 'busy' => 1, 'out-of-office' => 2, 'outofoffice' => 2, 'tentative' => 3);
@@ -215,6 +216,8 @@ class database_driver extends calendar_driver
       $event_id = $this->rc->db->insert_id($this->sequence_events);
 
       if ($event_id) {
+        $this->cache[$eventid] = $event;
+
         // add attachments
         if (!empty($event['attachments'])) {
           foreach ($event['attachments'] as $attachment) {
@@ -440,8 +443,11 @@ class database_driver extends calendar_driver
       }
     }
 
-    if ($success && $update_recurring)
-      $this->_update_recurring($event);
+    if ($success) {
+      unset($this->cache[$event['id']]);
+      if ($update_recurring)
+        $this->_update_recurring($event);
+    }
 
     return $success;
   }
@@ -609,12 +615,10 @@ class database_driver extends calendar_driver
    */
   public function get_event($event)
   {
-    static $cache = array();
-    
     $id = is_array($event) ? $event['id'] : $event;
     
-    if ($cache[$id])
-      return $cache[$id];
+    if ($this->cache[$id])
+      return $this->cache[$id];
     
     $result = $this->rc->db->query(sprintf(
       "SELECT * FROM " . $this->db_events . "
@@ -625,8 +629,8 @@ class database_driver extends calendar_driver
       $id);
 
     if ($result && ($event = $this->rc->db->fetch_assoc($result))) {
-      $cache[$id] = $this->_read_postprocess($event);
-      return $cache[$id];
+      $this->cache[$id] = $this->_read_postprocess($event);
+      return $this->cache[$id];
     }
 
     return false;
