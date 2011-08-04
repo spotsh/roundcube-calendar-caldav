@@ -5359,7 +5359,8 @@ function ListEventRenderer() {
 	}
 
 	function sortCmp(a, b) {
-		return (a.start.getTime() - b.start.getTime()) + (a.end.getTime() - b.end.getTime());
+		var sd = a.start.getTime() - b.start.getTime();
+		return sd + (sd ? 0 : a.end.getTime() - b.end.getTime());
 	}
 	
 	function renderSegs(segs, modifiedEventId) {
