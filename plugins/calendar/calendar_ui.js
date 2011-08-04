@@ -379,7 +379,7 @@ function rcube_calendar_ui(settings)
       var allday = $('#edit-allday').get(0);
       var notify = $('#edit-attendees-donotify').get(0);
       var invite = $('#edit-attendees-invite').get(0);
-      notify.checked = false, invite.checked = true;
+      notify.checked = has_attendees(event), invite.checked = true;
       
       if (event.allDay) {
         starttime.val("00:00").hide();
@@ -473,18 +473,15 @@ function rcube_calendar_ui(settings)
       // init attendees tab
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
+      $('#edit-attendees-notify')[(notify.checked?'show':'hide')]();
+
       var load_attendees_tab = function()
       {
         if (event.attendees) {
           for (var j=0; j < event.attendees.length; j++)
             add_attendee(event.attendees[j], true);
-        
-          if (has_attendees(event)) {
-            notify.checked = invite.checked = true;  // enable notification by default
-          }
         }
 
-        $('#edit-attendees-notify')[(notify.checked?'show':'hide')]();
         $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
       };
 
