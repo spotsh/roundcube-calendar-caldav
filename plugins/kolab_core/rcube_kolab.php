@@ -83,13 +83,28 @@ class rcube_kolab
 
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
-        if (self::$horde_auth->authenticate($_SESSION['username'], array('password' => $pwd), false)) {
+
+        if (self::$horde_auth->isAuthenticated() ||
+            self::$horde_auth->authenticate($_SESSION['username'], array('password' => $pwd), false)
+        ) {
+            // we could use self::$horde_auth->setAuth() here, but it requires
+            // the whole bunch of includes and global objects, do it as simple as possible
+            if (empty($_SESSION['__auth']['credentials'])) {
+                require_once 'Horde/Secret.php';
+                $credentials = Secret::write(Secret::getKey('auth'), serialize(array('password' => $pwd)));
+            }
+            else {
+                $credentials = $_SESSION['__auth']['credentials'];
+            }
+
             $_SESSION['__auth'] = array(
+                'credentials' => $credentials,
                 'authenticated' => true,
                 'userId' => $_SESSION['username'],
                 'timestamp' => time(),
                 'remote_addr' => $_SERVER['REMOTE_ADDR'],
             );
+
             Auth::setCredential('password', $pwd);
             self::$ready = true;
         }
@@ -204,13 +219,18 @@ class rcube_kolab
     }
 
     /**
-     * Cleanup session data when done
+     * Handle session data when done
      */
     public static function shutdown()
     {
-        // unset auth data from session. no need to store it persistantly
-        if (isset($_SESSION['__auth']))
-            unset($_SESSION['__auth']);
+        if (self::$ready) {
+            // Horde's shutdown function doesn't work with Roundcube session
+            // save Horde_Kolab_Session object in session here
+            require_once 'Horde/SessionObjects.php';
+            $session = Horde_SessionObjects::singleton();
+            $kolab   = Horde_Kolab_Session::singleton();
+            $session->overwrite('kolab_session', $kolab, false);
+        }
     }
 
     /**
