@@ -211,10 +211,11 @@ class kolab_addressbook extends rcube_plugin
      */
     public function get_address_book($p)
     {
-        $this->_list_sources();
-
-        if ($this->sources[$p['id']]) {
-            $p['instance'] = $this->sources[$p['id']];
+        if ($p['id']) {
+            $this->_list_sources();
+            if ($this->sources[$p['id']]) {
+                $p['instance'] = $this->sources[$p['id']];
+            }
         }
 
         return $p;
@@ -441,6 +442,17 @@ class kolab_addressbook extends rcube_plugin
                     $error = rcube_label('forbiddencharacter') . " ($char)";
                     break;
                 }
+            }
+        }
+
+        // Check access rights to the parent folder
+        if (!$error && strlen($path)) {
+            $this->rc->imap_connect();
+            $parent_opts = $this->rc->imap->mailbox_info($path);
+            if ($parent_opts['namespace'] != 'personal'
+                && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+            ) {
+                $error = rcube_label('parentnotwritable');
             }
         }
 

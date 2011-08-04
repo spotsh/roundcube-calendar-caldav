@@ -230,6 +230,17 @@ class kolab_driver extends calendar_driver
       }
     }
 
+    // Check access rights to the parent folder
+    if (strlen($parent)) {
+      $this->rc->imap_connect();
+      $parent_opts = $this->rc->imap->mailbox_info($parent);
+      if ($parent_opts['namespace'] != 'personal'
+        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+      ) {
+        return false;
+      }
+    }
+
     if (!empty($options) && ($options['protected'] || $options['norename'])) {
       $folder = $oldfolder;
     }
@@ -761,17 +772,17 @@ class kolab_driver extends calendar_driver
   public function get_freebusy_list($email, $start, $end)
   {
     require_once('Horde/iCalendar.php');
-    
+
     if (empty($email)/* || $end < time()*/)
       return false;
-    
+
     // map vcalendar fbtypes to internal values
     $fbtypemap = array(
       'FREE' => calendar::FREEBUSY_FREE,
       'BUSY-TENTATIVE' => calendar::FREEBUSY_TENTATIVE,
       'X-OUT-OF-OFFICE' => calendar::FREEBUSY_OOF,
       'OOF' => calendar::FREEBUSY_OOF);
-    
+
     // ask kolab server first
     $fbdata = @file_get_contents(rcube_kolab::get_freebusy_url($email));
 
@@ -780,7 +791,7 @@ class kolab_driver extends calendar_driver
       $fburl = null;
       foreach ((array)$this->rc->config->get('autocomplete_addressbooks', 'sql') as $book) {
         $abook = $this->rc->get_address_book($book);
-        
+
         if ($result = $abook->search(array('email'), $email, true, true, true/*, 'freebusyurl'*/)) {
           while ($contact = $result->iterate()) {
             if ($fburl = $contact['freebusyurl']) {
@@ -789,12 +800,12 @@ class kolab_driver extends calendar_driver
             }
           }
         }
-        
+
         if ($fbdata)
           break;
       }
     }
-    
+
     // parse free-busy information using Horde classes
     if ($fbdata) {
       $fbcal = new Horde_iCalendar;
@@ -820,10 +831,10 @@ class kolab_driver extends calendar_driver
         return $result;
       }
     }
-    
+
     return false;
   }
-  
+
   /**
    * Handler to push folder triggers when sent from client.
    * Used to push free-busy changes asynchronously after updating an event
@@ -837,7 +848,7 @@ class kolab_driver extends calendar_driver
     $cal = get_input_value('source', RCUBE_INPUT_GPC);
     if (!($storage = $this->calendars[$cal]))
       return false;
-    
+
     // trigger updates on folder
     $folder = $storage->get_folder();
     $trigger = $folder->trigger();
