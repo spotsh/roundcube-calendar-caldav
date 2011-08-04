@@ -324,7 +324,8 @@ function rcube_calendar_ui(settings)
       // open jquery UI dialog
       $dialog.dialog({
         modal: false,
-        resizable: true,
+        resizable: !bw.ie6,
+        closeOnEscape: !bw.ie6,
         title: null,
         close: function() {
           $dialog.dialog('destroy').hide();
@@ -350,7 +351,7 @@ function rcube_calendar_ui(settings)
       // close show dialog first
       $("#eventshow").dialog('close');
       
-      var $dialog = $("#eventedit");
+      var $dialog = $('<div>');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
       me.selected_event = $.extend($.extend({}, event_defaults), event);  // clone event object (with defaults)
       event = me.selected_event; // change reference to clone
@@ -636,14 +637,17 @@ function rcube_calendar_ui(settings)
       // activate the first tab
       $('#eventtabs').tabs('select', 0);
 
+      var editform = $("#eventedit");
+
       // open jquery UI dialog
       $dialog.dialog({
         modal: true,
-        resizable: true,
+        resizable: !bw.ie6,
         closeOnEscape: false,
         title: rcmail.gettext((action == 'edit' ? 'edit_event' : 'new_event'), 'calendar'),
         close: function() {
-          $dialog.dialog("destroy").hide();
+          editform.hide().appendTo(document.body);
+          $dialog.dialog("destroy").remove();
           rcmail.ksearch_blur();
           rcmail.ksearch_destroy();
           freebusy_data = {};
@@ -651,7 +655,10 @@ function rcube_calendar_ui(settings)
         buttons: buttons,
         minWidth: 500,
         width: 580
-      }).show();
+      }).append(editform.show());  // adding form content AFTERWARDS massively speeds up opening on IE6
+
+      // set dialog size according to form content
+      me.dialog_resize($dialog.get(0), editform.height() + (bw.ie ? 20 : 0), 530);
 
       title.select();
 
