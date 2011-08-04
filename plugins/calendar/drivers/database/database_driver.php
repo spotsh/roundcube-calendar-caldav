@@ -344,6 +344,10 @@ class database_driver extends calendar_driver
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     
     if (isset($event['allday'])) {
+      // set times to 00::00 and 23:59 (assuming the PHP and DB timezones are in sync)
+      $numdays = max(1, round(($event['end'] - $event['start']) / 86400));
+      $event['start'] = mktime(0, 0, 0, date('n', $event['start']), date('j', $event['start']), date('Y', $event['start']));
+      $event['end'] = $event['start'] + $numdays * 86400 - 60;
       $event['all_day'] = $event['allday'] ? 1 : 0;
     }
     
