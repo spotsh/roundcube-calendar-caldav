@@ -51,15 +51,19 @@ class calendar_ical
    * Import events from iCalendar format
    *
    * @param  string vCalendar input
+   * @param  string Input charset (from envelope)
    * @return array List of events extracted from the input
    */
-  public function import($vcal)
+  public function import($vcal, $charset = RCMAIL_CHARSET)
   {
     // use Horde:iCalendar to parse vcalendar file format
     require_once 'Horde/iCalendar.php';
     
+    // set target charset for parsed events
+    $GLOBALS['_HORDE_STRING_CHARSET'] = RCMAIL_CHARSET;
+    
     $parser = new Horde_iCalendar;
-    $parser->parsevCalendar($vcal);
+    $parser->parsevCalendar($vcal, 'VCALENDAR', $charset);
     $events = array();
     if ($data = $parser->getComponents()) {
       foreach ($data as $comp) {
@@ -261,6 +265,10 @@ class calendar_ical
         }
         
         $vevent .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . self::EOL;
+        
+        if ($event['priority'] != 1) {
+          $vevent .= "PRIORITY:" . ($event['priority'] == 2 ? '1' : '9') . self::EOL;
+        }
         
         if ($event['cancelled'])
           $vevent .= "STATUS:CANCELLED" . self::EOL;
