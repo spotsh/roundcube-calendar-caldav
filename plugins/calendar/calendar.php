@@ -1513,7 +1513,7 @@ class calendar extends rcube_plugin
   public static function event_diff($a, $b)
   {
     $diff = array();
-    $ignore = array('attachments' => 1);
+    $ignore = array('changed' => 1, 'attachments' => 1);
     foreach (array_unique(array_merge(array_keys($a), array_keys($b))) as $key) {
       if (!$ignore[$key] && $a[$key] != $b[$key])
         $diff[] = $key;
@@ -1556,10 +1556,12 @@ class calendar extends rcube_plugin
     }
 
     $html = '';
-    foreach ($this->ics_parts as $part) {
+    foreach ($this->ics_parts as $mime_id) {
       $this->load_ical();
-      $events = $this->ical->import($this->message->get_part_content($part));
-
+      $part = $this->message->mime_parts[$mime_id];
+      $charset = $part->ctype_parameters['charset'] ? $part->ctype_parameters['charset'] : RCMAIL_CHARSET;
+      $events = $this->ical->import($this->message->get_part_content($mime_id), $charset);
+      
       // successfully parsed events?
       if (empty($events))
           continue;
@@ -1573,7 +1575,7 @@ class calendar extends rcube_plugin
           html::tag('input', array(
             'type' => 'button',
             'class' => 'button',
-            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($part.':'.$idx) . "', '" . JQ($event['title']) . "')",
+            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '" . JQ($event['title']) . "')",
             'value' => $this->gettext('importtocalendar'),
           ))
         );
@@ -1597,6 +1599,7 @@ class calendar extends rcube_plugin
     $uid = get_input_value('_uid', RCUBE_INPUT_POST);
     $mbox = get_input_value('_mbox', RCUBE_INPUT_POST);
     $mime_id = get_input_value('_part', RCUBE_INPUT_POST);
+    $charset = RCMAIL_CHARSET;
     
     // establish imap connection
     $this->rc->imap_connect();
@@ -1605,10 +1608,12 @@ class calendar extends rcube_plugin
     if ($uid && $mime_id) {
       list($mime_id, $index) = explode(':', $mime_id);
       $part = $this->rc->imap->get_message_part($uid, $mime_id);
+      if ($part->ctype_parameters['charset'])
+        $charset = $part->ctype_parameters['charset'];
     }
 
     $this->load_ical();
-    $events = $this->ical->import($part);
+    $events = $this->ical->import($part, $charset);
     
     $error_msg = $this->gettext('errorimportingevent');
     $success = false;
