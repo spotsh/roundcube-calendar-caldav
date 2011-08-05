@@ -58,3 +58,7 @@ html #calendartoolbar a.buttonPas {
 #schedule-freebusy-times td.all-out-of-office {
 	background-image: url('images/freebusy-colors.gif');
 }
+
+.ui-dialog .ui-dialog-titlebar {
+	width: expression((parseInt(this.parentNode.offsetWidth)-26)+'px');
+}
