@@ -1448,7 +1448,8 @@ class calendar extends rcube_plugin
           list($from, $to, $type) = $slot;
           if ($from < $t_end && $to > $t) {
             $status = isset($type) ? $type : self::FREEBUSY_BUSY;
-            break;
+            if ($status == self::FREEBUSY_BUSY)  // can't get any worse :-)
+              break;
           }
         }
       }
