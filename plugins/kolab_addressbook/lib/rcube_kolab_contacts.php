@@ -721,7 +721,6 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function close()
     {
-        rcube_kolab::shutdown();
     }
 
 
