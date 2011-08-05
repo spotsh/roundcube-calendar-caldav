@@ -1327,7 +1327,7 @@ class calendar extends rcube_plugin
       $headers['To'] = format_email_recipient($mailto, $attendee['name']);
       
       $headers['Subject'] = $this->gettext(array(
-        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : 'eventupdatesubject'),
+        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : ($event['title'] ? 'eventupdatesubject':'eventupdatesubjectempty')),
         'vars' => array('title' => $event['title']),
       ));
       
@@ -1680,3 +1680,4 @@ class calendar extends rcube_plugin
   }
 
 }
+

@@ -118,6 +118,7 @@ $labels['noslotfound'] = 'Unable to find a free time slot';
 $labels['invitationsubject'] = 'You\'ve been invited to "$title"';
 $labels['invitationmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with all the event details which you can import to your calendar application.";
 $labels['eventupdatesubject'] = '"$title" has been updated';
+$labels['eventupdatesubjectempty'] = 'An event that concerns you has been updated';
 $labels['eventupdatemailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with the updated event details which you can import to your calendar application.";
 $labels['eventcancelsubject'] = '"$title" has been canceled';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nThe event has been cancelled by \$organizer.\n\nPlease find attached an iCalendar file with the updated event details.";
