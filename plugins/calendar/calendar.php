@@ -523,8 +523,10 @@ class calendar extends rcube_plugin
         // create UID for new event
         $event['uid'] = $this->generate_uid();
         $this->prepare_event($event, $action);
-        if ($success = $this->driver->new_event($event))
+        if ($success = $this->driver->new_event($event)) {
+            $event['id'] = $event['uid'];
             $this->cleanup_event($event);
+          }
         $reload = true;
         break;
       
