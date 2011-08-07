@@ -34,6 +34,7 @@ class kolab_driver extends calendar_driver
   private $rc;
   private $cal;
   private $calendars;
+  private $has_writeable = false;
 
   /**
    * Default constructor
@@ -79,6 +80,8 @@ class kolab_driver extends calendar_driver
       foreach ($names as $utf7name => $name) {
         $calendar = new kolab_calendar($utf7name, $this->cal);
         $this->calendars[$calendar->id] = $calendar;
+        if (!$calendar->readonly)
+          $this->has_writeable = true;
       }
     }
 
@@ -92,9 +95,11 @@ class kolab_driver extends calendar_driver
   public function list_calendars()
   {
     // attempt to create a default calendar for this user
-    if (empty($this->calendars)) {
-      if ($this->create_calendar(array('name' => 'Calendar', 'color' => 'cc0000')))
+    if (!$this->has_writeable) {
+      if ($this->create_calendar(array('name' => 'Calendar', 'color' => 'cc0000'))) {
+         unset($this->calendars);
         $this->_read_calendars();
+      }
     }
 
     $calendars = $names = array();

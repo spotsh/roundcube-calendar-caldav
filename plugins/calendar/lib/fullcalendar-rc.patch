@@ -1,5 +1,5 @@
 --- js/fullcalendar.js.orig	2011-04-09 14:13:16.000000000 +0200
-+++ js/fullcalendar.js	2011-07-31 13:19:40.000000000 +0200
++++ js/fullcalendar.js	2011-08-07 18:43:34.000000000 +0200
 @@ -47,12 +47,16 @@
  	titleFormat: {
  		month: 'MMMM yyyy',
@@ -115,6 +115,19 @@
  
  fc.applyAll = applyAll;
  
+@@ -3534,10 +3574,10 @@
+ 	function slotSelectionMousedown(ev) {
+ 		if (ev.which == 1 && opt('selectable')) { // ev.which==1 means left mouse button
+ 			unselect(ev);
+-			var dates;
++			var dates, helperOption = opt('selectHelper');
+ 			hoverListener.start(function(cell, origCell) {
+ 				clearSelection();
+-				if (cell && cell.col == origCell.col && !cellIsAllDay(cell)) {
++				if (cell && (cell.col == origCell.col || !helperOption) && !cellIsAllDay(cell)) {
+ 					var d1 = cellDate(origCell);
+ 					var d2 = cellDate(cell);
+ 					dates = [
 @@ -3762,7 +3802,8 @@
  			height,
  			slotSegmentContainer = getSlotSegmentContainer(),
@@ -157,7 +170,7 @@
  			return smartProperty(v, viewNameOverride || viewName);
  		}
  		return v;
-@@ -5204,5 +5248,560 @@
+@@ -5204,5 +5248,561 @@
  	};
  	
  }
@@ -273,7 +286,8 @@
 +	}
 +
 +	function sortCmp(a, b) {
-+		return (a.start.getTime() - b.start.getTime()) + (a.end.getTime() - b.end.getTime());
++		var sd = a.start.getTime() - b.start.getTime();
++		return sd + (sd ? 0 : a.end.getTime() - b.end.getTime());
 +	}
 +	
 +	function renderSegs(segs, modifiedEventId) {

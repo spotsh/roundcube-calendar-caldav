@@ -39,12 +39,18 @@ class calendar_ical
   
   private $rc;
   private $cal;
-
+  private $timezone = 'Z';
 
   function __construct($cal)
   {
     $this->cal = $cal;
     $this->rc = $cal->rc;
+    
+    // compose timezone string
+    if ($cal->timezone) {
+      $hours = floor($cal->timezone);
+      $this->timezone = sprintf('%s%02d:%02d', ($hours >= 0 ? '+' : ''), $hours, ($cal->timezone - $hours) * 60);
+    }
   }
 
   /**
@@ -93,13 +99,14 @@ class calendar_ical
     
     // check for all-day dates
     if (is_array($event['start'])) {
-      $event['start'] = gmmktime(0, 0, 0, $event['start']['month'], $event['start']['mday'], $event['start']['year']) + $this->cal->gmt_offset;
+      // create timestamp at 00:00 in user's timezone
+      $event['start'] = strtotime(sprintf('%04d%02d%02dT000000%s', $event['start']['year'], $event['start']['month'], $event['start']['mday'], $this->timezone));
       $event['allday'] = true;
     }
     if (is_array($event['end'])) {
-      $event['end'] = gmmktime(0, 0, 0, $event['end']['month'], $event['end']['mday'], $event['end']['year']) + $this->cal->gmt_offset - 60;
+      $event['end'] = strtotime(sprintf('%04d%02d%02dT000000%s', $event['end']['year'], $event['end']['month'], $event['end']['mday'], $this->timezone)) - 60;
     }
-    
+
     // map other attributes to internal fields
     $_attendees = array();
     foreach ($ve->getAllAttributes() as $attr) {

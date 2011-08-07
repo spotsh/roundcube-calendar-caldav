@@ -523,8 +523,10 @@ class calendar extends rcube_plugin
         // create UID for new event
         $event['uid'] = $this->generate_uid();
         $this->prepare_event($event, $action);
-        if ($success = $this->driver->new_event($event))
+        if ($success = $this->driver->new_event($event)) {
+            $event['id'] = $event['uid'];
             $this->cleanup_event($event);
+          }
         $reload = true;
         break;
       
@@ -1327,7 +1329,7 @@ class calendar extends rcube_plugin
       $headers['To'] = format_email_recipient($mailto, $attendee['name']);
       
       $headers['Subject'] = $this->gettext(array(
-        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : 'eventupdatesubject'),
+        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : ($event['title'] ? 'eventupdatesubject':'eventupdatesubjectempty')),
         'vars' => array('title' => $event['title']),
       ));
       
@@ -1367,8 +1369,9 @@ class calendar extends rcube_plugin
     $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
     
     if ($event['allday']) {
-      $fromto = format_date($event['start'], $date_format) .
-        ($duration > 86400 || gmdate('d', $event['start']) != gmdate('d', $event['end']) ? ' - ' . format_date($event['end'], $date_format) : '');
+      $fromto = format_date($event['start'], $date_format);
+      if (($todate = format_date($event['end'], $date_format)) != $fromto)
+        $fromto .= ' - ' . $todate;
     }
     else if ($duration < 86400 && gmdate('d', $event['start']) == gmdate('d', $event['end'])) {
       $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
@@ -1448,7 +1451,8 @@ class calendar extends rcube_plugin
           list($from, $to, $type) = $slot;
           if ($from < $t_end && $to > $t) {
             $status = isset($type) ? $type : self::FREEBUSY_BUSY;
-            break;
+            if ($status == self::FREEBUSY_BUSY)  // can't get any worse :-)
+              break;
           }
         }
       }
@@ -1551,8 +1555,7 @@ class calendar extends rcube_plugin
   {
     // load iCalendar functions (if necessary)
     if (!empty($this->ics_parts)) {
-      require($this->home . '/lib/calendar_ical.php');
-      $this->ical = new calendar_ical($this->rc);
+      $this->load_ical();
     }
 
     $html = '';
@@ -1614,7 +1617,7 @@ class calendar extends rcube_plugin
 
     $this->load_ical();
     $events = $this->ical->import($part, $charset);
-    
+
     $error_msg = $this->gettext('errorimportingevent');
     $success = false;
 
@@ -1680,3 +1683,4 @@ class calendar extends rcube_plugin
   }
 
 }
+

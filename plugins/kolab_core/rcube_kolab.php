@@ -84,30 +84,24 @@ class rcube_kolab
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
 
-        if (self::$horde_auth->isAuthenticated() ||
-            self::$horde_auth->authenticate($_SESSION['username'], array('password' => $pwd), false)
-        ) {
-            // we could use self::$horde_auth->setAuth() here, but it requires
-            // the whole bunch of includes and global objects, do it as simple as possible
-            if (empty($_SESSION['__auth']['credentials'])) {
-                require_once 'Horde/Secret.php';
-                $credentials = Secret::write(Secret::getKey('auth'), serialize(array('password' => $pwd)));
-            }
-            else {
-                $credentials = $_SESSION['__auth']['credentials'];
-            }
-
+        if (self::$horde_auth->isAuthenticated()) {
+            self::$ready = true;
+        }
+        else if (self::$horde_auth->authenticate($_SESSION['username'], array('password' => $pwd), false)) {
+            // we could use Auth::setAuth() here, but it requires the whole bunch
+            // of includes and global objects, do it as simple as possible
             $_SESSION['__auth'] = array(
-                'credentials' => $credentials,
                 'authenticated' => true,
                 'userId' => $_SESSION['username'],
                 'timestamp' => time(),
                 'remote_addr' => $_SERVER['REMOTE_ADDR'],
             );
-
             Auth::setCredential('password', $pwd);
             self::$ready = true;
         }
+
+        // Register shutdown function for saving cache/session objects
+        $rcmail->add_shutdown_function(array('rcube_kolab', 'shutdown'));
 
         NLS::setCharset('UTF-8');
         String::setDefaultCharset('UTF-8');
@@ -137,8 +131,6 @@ class rcube_kolab
 
             // Disable Horde folders caching, we're using our own cache
             self::$config['kolab']['imap']['cache_folders'] = false;
-            // Register shutdown function for saving folders list cache
-            $rcmail->add_shutdown_function(array('rcube_kolab', 'save_folders_list'));
         }
 
         if (empty(self::$list)) {
@@ -146,16 +138,6 @@ class rcube_kolab
         }
 
         return self::$list;
-    }
-
-    /**
-     * Store Kolab_List instance in Roundcube cache
-     */
-    public static function save_folders_list()
-    {
-        if (self::$cache && self::$list) {
-            self::$cache->set('mailboxes.kolab', self::$list);
-        }
     }
 
     /**
@@ -219,7 +201,7 @@ class rcube_kolab
     }
 
     /**
-     * Handle session data when done
+     * Do session/cache operations on shutdown
      */
     public static function shutdown()
     {
@@ -230,6 +212,11 @@ class rcube_kolab
             $session = Horde_SessionObjects::singleton();
             $kolab   = Horde_Kolab_Session::singleton();
             $session->overwrite('kolab_session', $kolab, false);
+
+            // Write Kolab_List object to cache
+            if (self::$cache && self::$list) {
+                self::$cache->set('mailboxes.kolab', self::$list);
+            }
         }
     }
 

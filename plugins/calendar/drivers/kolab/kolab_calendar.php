@@ -270,6 +270,7 @@ class kolab_calendar
       $saved = false;
     }
     else {
+      $event['id'] = $event['uid'];
       $this->events[$event['uid']] = $event;
     }
     
