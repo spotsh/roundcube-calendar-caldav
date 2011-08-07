@@ -1792,7 +1792,7 @@ function rcube_calendar_ui(settings)
         table: rcmail.gettext('agenda', 'calendar')
       },
       selectable: true,
-      selectHelper: true,
+      selectHelper: false,
       loading: function(isLoading) {
         me.is_loading = isLoading;
         this._rc_loading = rcmail.set_busy(isLoading, 'loading', this._rc_loading);
