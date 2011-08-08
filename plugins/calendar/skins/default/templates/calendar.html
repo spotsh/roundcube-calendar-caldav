@@ -33,8 +33,9 @@
   <ul>
     <li><roundcube:button command="calendar-edit" label="calendar.edit" classAct="active" /></li>
     <li><roundcube:button command="calendar-remove" label="calendar.remove" classAct="active" /></li>
-    <li class="separator_below"></li>
-    <li><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
+    <roundcube:if condition="env:calendar.driver == 'kolab'" />
+    <li class="separator_above"><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
+    <roundcube:endif />
   </ul>
 </div>
 

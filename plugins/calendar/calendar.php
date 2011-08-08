@@ -225,6 +225,8 @@ class calendar extends rcube_plugin
     // initialize attendees autocompletion
     rcube_autocomplete_init();
 
+    $this->rc->output->set_env('calendar.driver', $this->rc->config->get('calendar_driver'), false);
+
     $this->rc->output->send("calendar.calendar");
   }
 
