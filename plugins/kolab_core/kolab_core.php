@@ -28,6 +28,19 @@ class kolab_core extends rcube_plugin
         // extend include path to load bundled Horde classes
         $include_path = $this->home . PATH_SEPARATOR . ini_get('include_path');
         set_include_path($include_path);
+
+	// Register password reset hook
+	$this->add_hook('password_change', array($this, 'password_change'));
+    }
+
+    /**
+     * Resets auth session data after password change
+     */
+    public function password_change($args)
+    {
+	rcmail::get_instance()->session->remove('__auth');
+
+	return $args;
     }
 }
 
