@@ -65,10 +65,21 @@ class kolab_addressbook_ui
                         'domain'   => $this->ID,
                         'classact' => 'active',
                         'command'  => $command
-                    )));
+                )));
                 $this->plugin->api->add_content($content, 'groupoptions');
                 $idx++;
             }
+
+            // Link to Settings/Folders
+            $content = html::tag('li', array('class' => 'separator_above'),
+                $this->plugin->api->output->button(array(
+                    'label'    => 'managefolders',
+                    'type'     => 'link',
+                    'classact' => 'active',
+                    'command'  => 'folders',
+                    'task'     => 'settings',
+            )));
+            $this->plugin->api->add_content($content, 'groupoptions');
 
             $this->rc->output->add_label('kolab_addressbook.bookdeleteconfirm',
                 'kolab_addressbook.bookdeleting');
