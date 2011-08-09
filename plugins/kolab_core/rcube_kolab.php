@@ -99,6 +99,13 @@ class rcube_kolab
             Auth::setCredential('password', $pwd);
             self::$ready = true;
         }
+        else {
+    	    raise_error(array(
+                'code' => 600, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => sprintf("Unable to authenticate user %s!", $_SESSION['username'])),
+                true, true);
+        }
 
         // Register shutdown function for saving cache/session objects
         $rcmail->add_shutdown_function(array('rcube_kolab', 'shutdown'));
