@@ -11,8 +11,6 @@ $labels['first_hour'] = 'First hour to show';
 $labels['workinghours'] = 'Working hours';
 $labels['add_category'] = 'Add category';
 $labels['remove_category'] = 'Remove category';
-$labels['add_calendar'] = 'Add calendar';
-$labels['remove_calendar'] = 'Remove calendar';
 $labels['defaultcalendar'] = 'Create new events in';
 
 // calendar
@@ -44,7 +42,7 @@ $labels['location'] = 'Location';
 $labels['date'] = 'Date';
 $labels['start'] = 'Start';
 $labels['end'] = 'End';
-$labels['choose_date'] = 'Choose date';
+$labels['selectdate'] = 'Choose date';
 $labels['freebusy'] = 'Show me as';
 $labels['free'] = 'Free';
 $labels['busy'] = 'Busy';
@@ -57,7 +55,6 @@ $labels['private'] = 'private';
 $labels['confidential'] = 'confidential';
 $labels['alarms'] = 'Reminder';
 $labels['generated'] = 'generated at';
-$labels['selectdate'] = 'Select date';
 $labels['printdescriptions'] = 'Print descriptions';
 $labels['parentcalendar'] = 'Superior calendar';
 $labels['importtocalendar'] = 'Save to my calendar';
