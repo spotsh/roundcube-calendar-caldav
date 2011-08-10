@@ -445,17 +445,6 @@ class kolab_addressbook extends rcube_plugin
             }
         }
 
-        // Check access rights to the parent folder
-        if (!$error && strlen($path)) {
-            $this->rc->imap_connect();
-            $parent_opts = $this->rc->imap->mailbox_info($path);
-            if ($parent_opts['namespace'] != 'personal'
-                && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
-            ) {
-                $error = rcube_label('parentnotwritable');
-            }
-        }
-
         if (!$error) {
             if (!empty($options) && ($options['protected'] || $options['norename'])) {
                 $folder = $oldfolder;
@@ -469,6 +458,19 @@ class kolab_addressbook extends rcube_plugin
                 $folder = $this->rc->imap->mod_mailbox($folder, 'in');
             }
 
+            // Check access rights to the parent folder
+            if (strlen($path) && (!strlen($oldfolder) || $oldfolder != $folder)) {
+                $this->rc->imap_connect();
+                $parent_opts = $this->rc->imap->mailbox_info($path);
+                if ($parent_opts['namespace'] != 'personal'
+                    && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+                ) {
+                    $error = rcube_label('parentnotwritable');
+                }
+            }
+        }
+
+        if (!$error) {
             // update the folder name
             if (strlen($oldfolder)) {
                 $type = 'update';
