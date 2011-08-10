@@ -1123,7 +1123,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         $emails = $this->get_col_values('email', $contact, true);
         $object['emails'] = join(', ', array_filter($emails));
         // overwrite 'email' field
-        unset($object['email']);
+        $object['email'] = null;
 
         foreach ($this->get_col_values('phone', $contact) as $type => $values) {
             if ($this->phonetypemap[$type])
