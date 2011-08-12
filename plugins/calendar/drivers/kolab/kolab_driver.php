@@ -443,7 +443,10 @@ class kolab_driver extends calendar_driver
   public function restore_event($event)
   {
     if ($storage = $this->calendars[$event['calendar']]) {
-      return $storage->restore_event($event);
+      if ($success = $storage->restore_event($event))
+        $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
+      
+      return $success;
     }
 
     return false;
