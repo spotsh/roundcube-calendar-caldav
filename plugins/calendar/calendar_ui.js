@@ -1988,11 +1988,7 @@ function rcube_calendar_ui(settings)
           fc.fullCalendar('gotoDate', d).fullCalendar('select', d, d, true);
         },
         onChangeMonthYear: function(year, month, inst) {
-          var d = minical.datepicker('getDate');
-          d.setYear(year);
-          d.setMonth(month - 1);
           minical.data('year', year).data('month', month);
-          //fc.fullCalendar('gotoDate', d).fullCalendar('setDate', d);
         },
         beforeShowDay: function(date) {
           var view = fc.fullCalendar('getView');
@@ -2004,6 +2000,8 @@ function rcube_calendar_ui(settings)
           var cell = $(e.target);
           if (e.target.tagName == 'TD' && cell.hasClass('ui-datepicker-week-col')) {
             var base_date = minical.datepicker('getDate');
+            base_date.setMonth(minical.data('month')-1);
+            base_date.setYear(minical.data('year'));
             var day_off = base_date.getDay() - 1;
             if (day_off < 0) day_off = 6;
             var base_kw = $.datepicker.iso8601Week(base_date);
