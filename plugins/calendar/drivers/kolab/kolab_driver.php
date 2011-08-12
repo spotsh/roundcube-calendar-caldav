@@ -235,17 +235,6 @@ class kolab_driver extends calendar_driver
       }
     }
 
-    // Check access rights to the parent folder
-    if (strlen($parent)) {
-      $this->rc->imap_connect();
-      $parent_opts = $this->rc->imap->mailbox_info($parent);
-      if ($parent_opts['namespace'] != 'personal'
-        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
-      ) {
-        return false;
-      }
-    }
-
     if (!empty($options) && ($options['protected'] || $options['norename'])) {
       $folder = $oldfolder;
     }
@@ -256,6 +245,17 @@ class kolab_driver extends calendar_driver
       // add namespace prefix (when needed)
       $this->rc->imap_init();
       $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+    }
+
+    // Check access rights to the parent folder
+    if (strlen($parent) && (!strlen($oldfolder) || $oldfolder != $folder)) {
+      $this->rc->imap_connect();
+      $parent_opts = $this->rc->imap->mailbox_info($parent);
+      if ($parent_opts['namespace'] != 'personal'
+        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+      ) {
+        return false;
+      }
     }
 
     // update the folder name
