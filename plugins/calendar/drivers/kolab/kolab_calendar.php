@@ -463,8 +463,8 @@ class kolab_calendar
     $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
     if ($allday) {  // in Roundcube all-day events only go until 23:59:59 of the last day
       $rec['end-date']--;
-      $rec['end-date'] -= $this->cal->timezone * 3600 - date('Z');   // shift 00 times from server's timezone to user's timezone
-      $rec['start-date'] -= $this->cal->timezone * 3600 - date('Z');  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
+      $rec['end-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['end-date']);   // shift 00 times from server's timezone to user's timezone
+      $rec['start-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['start-date']);  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
     }
     
     // convert alarm time into internal format
