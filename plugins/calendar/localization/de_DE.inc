@@ -60,6 +60,7 @@ $labels['parentcalendar'] = 'Übergeordneter Kalender';
 $labels['importtocalendar'] = 'In Kalender übernehmen';
 $labels['searchearlierdates'] = '« Frühere Termine suchen';
 $labels['searchlaterdates'] = 'Spätere Termine suchen »';
+$labels['andnmore'] = 'und $nr weitere';
 
 // alarm/reminder settings
 $labels['showalarms'] = 'Erinnerungen anzeigen';

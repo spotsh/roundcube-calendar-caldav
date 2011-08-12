@@ -296,6 +296,11 @@ function rcube_calendar_ui(settings)
           html += '<span class="attendee ' + String(data.role == 'ORGANIZER' ? 'organizer' : data.status).toLowerCase() + '">' + dispname + '</span> ';
           if (data.role == 'ORGANIZER')
             organizer = true;
+          // stop listing attendees
+          if (j == 7 && event.attendees.length >= 7) {
+            html += ' <em>' + rcmail.gettext('andnmore', 'calendar').replace('$nr', event.attendees.length - j - 1) + '</em>';
+            break;
+          }
         }
         if (html && event.attendees.length > 1 || !organizer) {
           $('#event-attendees').show()
@@ -559,6 +564,10 @@ function rcube_calendar_ui(settings)
             data.attendees[i].role = $(elem).val();
         });
         
+        // don't submit attendees if only myself is added as organizer
+        if (data.attendees.length == 1 && data.attendees[0].role == 'ORGANIZER' && data.attendees[0].email == settings.event_owner.email)
+          data.attendees = [];
+        
         // tell server to send notifications
         if (data.attendees.length && ((event.id && notify.checked) || (!event.id && invite.checked))) {
           data.notify = 1;
@@ -768,10 +777,7 @@ function rcube_calendar_ui(settings)
       // adjust dialog size to fit grid without scrolling
       var gridw = $('#schedule-freebusy-times').width();
       var overflow = gridw - $('#attendees-freebusy-table td.times').width() + 1;
-      if (overflow > 0) {
-        $dialog.dialog('option', 'width', Math.min((window.innerWidth || document.documentElement.clientWidth) - 40, 850 + overflow));
-        $dialog.dialog('option', 'position', ['center', 'center']);
-      }
+      me.dialog_resize($dialog.get(0), $dialog.height() + (bw.ie ? 20 : 0), 800 + Math.max(0, overflow));
       
       // fetch data from server
       freebusy_ui.loading = 0;
@@ -1233,8 +1239,6 @@ function rcube_calendar_ui(settings)
       
       // availability
       var avail = data.email ? 'loading' : 'unknown';
-      if (edit && data.role == 'ORGANIZER' && data.status == 'ACCEPTED')
-        avail = 'free';
 
       // delete icon
       var icon = rcmail.env.deleteicon ? '<img src="' + rcmail.env.deleteicon + '" alt="" />' : rcmail.gettext('delete');
@@ -1267,7 +1271,7 @@ function rcube_calendar_ui(settings)
     {
       var icons = attendees_list.find('img.availabilityicon');
       for (var i=0; i < event_attendees.length; i++) {
-        if (icons.get(i) && event_attendees[i].email && event_attendees[i].status != 'ACCEPTED')
+        if (icons.get(i) && event_attendees[i].email)
           check_freebusy_status(icons.get(i), event_attendees[i].email, event);
       }
       
@@ -2023,7 +2027,7 @@ function rcube_calendar_ui(settings)
             if (freebusy_ui.needsupdate && me.selected_event)
               update_freebusy_status(me.selected_event);
             // add current user as organizer if non added yet
-            if (!event_attendees.length && !me.selected_event.id)
+            if (!event_attendees.length)
               add_attendee($.extend({ role:'ORGANIZER' }, settings.event_owner));
           }
         }
@@ -2091,8 +2095,10 @@ function rcube_calendar_ui(settings)
 
       $('#edit-attendee-add').click(function(){
         var input = $('#edit-attendee-name');
-        if (add_attendees(input.val()))
+        if (add_attendees(input.val())) {
           input.val('');
+          rcmail.ksearch_blur();
+        }
       });
 
       // keep these two checkboxes in sync

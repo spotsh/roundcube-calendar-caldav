@@ -60,6 +60,7 @@ $labels['parentcalendar'] = 'Superior calendar';
 $labels['importtocalendar'] = 'Save to my calendar';
 $labels['searchearlierdates'] = '« Search for earlier events';
 $labels['searchlaterdates'] = 'Search for later events »';
+$labels['andnmore'] = 'and $nr more';
 
 // alarm/reminder settings
 $labels['showalarms'] = 'Show alarms';
