@@ -550,6 +550,7 @@ class kolab_calendar
         'name' => $attendee['display-name'],
         'email' => $attendee['smtp-address'],
         'status' => $status_map[$attendee['status']],
+        'rsvp' => $attendee['request-response'],
       );
       $_attendees .= $rec['organizer']['display-name'] . ' ' . $rec['organizer']['smtp-address'] . ' ';
     }
@@ -737,6 +738,7 @@ class kolab_calendar
           'smtp-address' => $attendee['email'],
           'status' => $this->status_map[$attendee['status']],
           'role' => $this->role_map[$role],
+          'request-response' => $attendee['rsvp'],
         );
       }
     }

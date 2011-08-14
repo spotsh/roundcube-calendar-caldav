@@ -40,6 +40,9 @@ class calendar_ical
   private $rc;
   private $cal;
   private $timezone = 'Z';
+  
+  public $method;
+  public $events = array();
 
   function __construct($cal)
   {
@@ -70,15 +73,16 @@ class calendar_ical
     
     $parser = new Horde_iCalendar;
     $parser->parsevCalendar($vcal, 'VCALENDAR', $charset);
-    $events = array();
+    $this->method = $parser->getAttributeDefault('METHOD', '');
+    $this->events = array();
     if ($data = $parser->getComponents()) {
       foreach ($data as $comp) {
         if ($comp->getType() == 'vEvent')
-          $events[] = $this->_to_rcube_format($comp);
+          $this->events[] = $this->_to_rcube_format($comp);
       }
     }
     
-    return $events;
+    return $this->events;
   }
 
   /**
@@ -100,11 +104,11 @@ class calendar_ical
     // check for all-day dates
     if (is_array($event['start'])) {
       // create timestamp at 00:00 in user's timezone
-      $event['start'] = strtotime(sprintf('%04d%02d%02dT000000%s', $event['start']['year'], $event['start']['month'], $event['start']['mday'], $this->timezone));
+      $event['start'] = $this->_date2time($event['start']);
       $event['allday'] = true;
     }
     if (is_array($event['end'])) {
-      $event['end'] = strtotime(sprintf('%04d%02d%02dT000000%s', $event['end']['year'], $event['end']['month'], $event['end']['mday'], $this->timezone)) - 60;
+      $event['end'] = $this->_date2time($event['end']) - 60;
     }
 
     // map other attributes to internal fields
@@ -171,6 +175,10 @@ class calendar_ical
         
         case 'EXDATE':
           break;
+          
+        case 'RECURRENCE-ID':
+          $event['recurrence_id'] = $this->_date2time($attr['value']);
+          break;
         
         case 'DESCRIPTION':
         case 'LOCATION':
@@ -202,7 +210,25 @@ class calendar_ical
     
     return $event;
   }
+  
+  /**
+   * Helper method to correctly interpret an all-day date value
+   */
+  private function _date2time($prop)
+  {
+    // create timestamp at 00:00 in user's timezone
+    return is_array($prop) ? strtotime(sprintf('%04d%02d%02dT000000%s', $prop['year'], $prop['month'], $prop['mday'], $this->timezone)) : $prop;
+  }
 
+
+  /**
+   * Free resources by clearing member vars
+   */
+  public function reset()
+  {
+    $this->method = '';
+    $this->events = array();
+  }
 
   /**
    * Export events to iCalendar format
@@ -329,6 +355,8 @@ class calendar_ical
       else {
         //I am an attendee 
         $attendees .= "ATTENDEE;ROLE=" . $at['role'] . ";PARTSTAT=" . $at['status'];
+        if ($at['rsvp'])
+          $attendees .= ";RSVP=TRUE";
         if (!empty($at['name']))
           $attendees .= ';CN="' . $at['name'] . '"';
         $attendees .= ":mailto:" . $at['email'] . self::EOL;

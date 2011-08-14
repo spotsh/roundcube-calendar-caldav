@@ -64,6 +64,7 @@
  *           'email' => 'Participant e-mail address',  // used as identifier
  *            'role' => 'ORGANIZER|REQ-PARTICIPANT|OPT-PARTICIPANT|CHAIR',
  *          'status' => 'NEEDS-ACTION|UNKNOWN|ACCEPTED|TENTATIVE|DECLINED'
+ *            'rsvp' => true|false,
  *    ),
  *  );
  */

@@ -1245,11 +1245,14 @@ class calendar extends rcube_plugin
           $organizer = true;
         if ($attendee['email'] == $identity['email'])
           $owner = $i;
+        else if (!isset($attendee['rsvp']))
+          $event['attendees'][$i]['rsvp'] = true;
       }
       
       // set owner as organizer if yet missing
       if (!$organizer && $owner !== false) {
         $event['attendees'][$i]['role'] = 'ORGANIZER';
+        unset($event['attendees'][$i]['rsvp']);
       }
       else if (!$organizer && $identity['email'] && $action == 'new') {
         array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
