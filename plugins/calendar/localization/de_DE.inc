@@ -57,7 +57,6 @@ $labels['alarms'] = 'Erinnerung';
 $labels['generated'] = 'erstellt am';
 $labels['printdescriptions'] = 'Beschrieb drucken';
 $labels['parentcalendar'] = 'Übergeordneter Kalender';
-$labels['importtocalendar'] = 'In Kalender übernehmen';
 $labels['searchearlierdates'] = '« Frühere Termine suchen';
 $labels['searchlaterdates'] = 'Spätere Termine suchen »';
 $labels['andnmore'] = 'und $nr weitere';
@@ -120,6 +119,11 @@ $labels['eventupdatesubjectempty'] = 'An event that concerns you has been update
 $labels['eventupdatemailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nIm Anhang finden Sie eine iCalendar-Datei mit den aktualisiereten Termindaten. Diese können Sie in Ihre Kalenderanwendung importieren";
 $labels['eventcancelsubject'] = '"$title" wurde abgesagt';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nDer Termin wurde von \$organizer abgesagt.\n\nIm Anhang finden Sie eine iCalendar-Datei mit den Termindaten.";
+
+// invitation handling
+$labels['itipreply'] = 'Antwort zu ';
+$labels['importtocalendar'] = 'In Kalender übernehmen';
+$labels['updateattendeestatus'] = 'Teilnehmerstatus aktualisieren';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Übersicht';

@@ -57,7 +57,6 @@ $labels['alarms'] = 'Erinnerung';
 $labels['generated'] = 'erstellt am';
 $labels['printdescriptions'] = 'Beschrieb drucken';
 $labels['parentcalendar'] = 'Übergeordneter Kalender';
-$labels['importtocalendar'] = 'In Kalender übernehmen';
 $labels['searchearlierdates'] = '« Frühere Termine suchen';
 $labels['searchlaterdates'] = 'Spätere Termine suchen »';
 $labels['andnmore'] = 'und $nr weitere';
@@ -122,6 +121,11 @@ $labels['eventupdatemailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$att
 $labels['eventcancelsubject'] = '"$title" wurde abgesagt';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nDer Termin wurde von \$organizer abgesagt.\n\nIm Anhang finden Sie eine iCalendar-Datei mit den Termindaten.";
 
+// invitation handling
+$labels['itipreply'] = 'Antwort zu ';
+$labels['importtocalendar'] = 'In Kalender übernehmen';
+$labels['updateattendeestatus'] = 'Teilnehmerstatus aktualisieren';
+
 // event dialog tabs
 $labels['tabsummary'] = 'Übersicht';
 $labels['tabrecurrence'] = 'Wiederholung';
@@ -144,6 +148,7 @@ $labels['errorimportingevent'] = 'Fehler beim Importieren';
 $labels['newerversionexists'] = 'Eine neuere Version dieses Termins exisitert bereits! Import abgebrochen.';
 $labels['nowritecalendarfound'] = 'Kein Kalender zum Speichern gefunden';
 $labels['importedsuccessfully'] = 'Der Termin wurde erfolgreich in \'$calendar\' gespeichert';
+$labels['attendeupdateesuccess'] = 'Teilnehmerstatus erfolgreich aktualisiert';
 
 // recurrence form
 $labels['repeat'] = 'Wiederholung';

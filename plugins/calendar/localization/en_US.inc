@@ -57,7 +57,6 @@ $labels['alarms'] = 'Reminder';
 $labels['generated'] = 'generated at';
 $labels['printdescriptions'] = 'Print descriptions';
 $labels['parentcalendar'] = 'Superior calendar';
-$labels['importtocalendar'] = 'Save to my calendar';
 $labels['searchearlierdates'] = '« Search for earlier events';
 $labels['searchlaterdates'] = 'Search for later events »';
 $labels['andnmore'] = 'and $nr more';
@@ -122,6 +121,11 @@ $labels['eventupdatemailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$atten
 $labels['eventcancelsubject'] = '"$title" has been canceled';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nThe event has been cancelled by \$organizer.\n\nPlease find attached an iCalendar file with the updated event details.";
 
+// invitation handling
+$labels['itipreply'] = 'Reply to ';
+$labels['importtocalendar'] = 'Save to my calendar';
+$labels['updateattendeestatus'] = 'Update the participant\'s status';
+
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
 $labels['tabrecurrence'] = 'Recurrence';
@@ -144,6 +148,7 @@ $labels['errorimportingevent'] = 'Failed to import the event';
 $labels['newerversionexists'] = 'A newer version of this event already exists! Aborted.';
 $labels['nowritecalendarfound'] = 'No calendar found to save the event';
 $labels['importedsuccessfully'] = 'The event was successfully added to \'$calendar\'';
+$labels['attendeupdateesuccess'] = 'Successfully updated the participant\'s status';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

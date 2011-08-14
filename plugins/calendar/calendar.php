@@ -1576,15 +1576,17 @@ class calendar extends rcube_plugin
 
       // TODO: show more iTip options like (accept, deny, etc.)
       foreach ($events as $idx => $event) {
+        $prefix = $this->ical->method == 'REPLY' ? $this->gettext('itipreply') : '';
+        
         // add box below messsage body
         $html .= html::p('calendar-invitebox',
-          html::span('eventtitle', Q($event['title'])) . ' ' .
+          html::span('eventtitle', Q($prefix . $event['title'])) . ' ' .
           html::span('eventdate', Q('(' . $this->event_date_text($event) . ')')) . ' ' .
           html::tag('input', array(
             'type' => 'button',
             'class' => 'button',
             'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '" . JQ($event['title']) . "')",
-            'value' => $this->gettext('importtocalendar'),
+            'value' => $this->ical->method == 'REPLY' ? $this->gettext('updateattendeestatus') : $this->gettext('importtocalendar'),
           ))
         );
       }
@@ -1618,6 +1620,7 @@ class calendar extends rcube_plugin
       $part = $this->rc->imap->get_message_part($uid, $mime_id);
       if ($part->ctype_parameters['charset'])
         $charset = $part->ctype_parameters['charset'];
+      $headers = $this->rc->imap->get_headers($uid);
     }
 
     $this->load_ical();
@@ -1649,7 +1652,44 @@ class calendar extends rcube_plugin
         $existing = $this->driver->get_event($event);
         
         if ($existing) {
-          if ($event['changed'] >= $existing['changed'])
+          // only update attendee status
+          if ($this->ical->method == 'REPLY') {
+            // try to identify the attendee using the email sender address
+            $sender = preg_match('/([a-z0-9][a-z0-9\-\.\+\_]*@[^&@"\'.][^@&"\']*\\.([^\\x00-\\x40\\x5b-\\x60\\x7b-\\x7f]{2,}|xn--[a-z0-9]{2,}))/', $headers->from, $m) ? $m[1] : '';
+            $sender_utf = rcube_idn_to_utf8($sender);
+            
+            $existing_attendee = -1;
+            foreach ($existing['attendees'] as $i => $attendee) {
+              if ($sender && ($attendee['email'] == $sender || $attendee['email'] == $sender_utf)) {
+                $existing_attendee = $i;
+                break;
+              }
+            }
+            $event_attendee = null;
+            foreach ($event['attendees'] as $attendee) {
+              if ($sender && ($attendee['email'] == $sender || $attendee['email'] == $sender_utf)) {
+                $event_attendee = $attendee;
+                break;
+              }
+            }
+            
+            // found matching attendee entry in both existing and new events
+            if ($existing_attendee >= 0 && $event_attendee) {
+              $existing['attendees'][$existing_attendee] = $event_attendee;
+              $success = $this->driver->edit_event($existing);
+            }
+            // update the entire attendees block
+            else if ($event['changed'] >= $existing['changed'] && $event['attendees']) {
+              $existing['attendees'] = $event['attendees'];
+              $success = $this->driver->edit_event($existing);
+            }
+            else {
+              $error_msg = $this->gettext('newerversionexists');
+            }
+          }
+          // import the (newer) event
+          // TODO: compare SEQUENCE numbers instead of changed dates
+          else if ($event['changed'] >= $existing['changed'])
             $success = $this->driver->edit_event($event);
           else
             $error_msg = $this->gettext('newerversionexists');
@@ -1662,8 +1702,10 @@ class calendar extends rcube_plugin
         $error_msg = $this->gettext('nowritecalendarfound');
     }
 
-    if ($success)
-      $this->rc->output->command('display_message', $this->gettext(array('name' => 'importedsuccessfully', 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
+    if ($success) {
+      $message = $this->ical->method == 'REPLY' ? 'attendeupdateesuccess' : 'importedsuccessfully';
+      $this->rc->output->command('display_message', $this->gettext(array('name' => $message, 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
+    }
     else
       $this->rc->output->command('display_message', $error_msg, 'error');
 
