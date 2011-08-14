@@ -59,6 +59,10 @@ html #calendartoolbar a.buttonPas {
 	background-image: url('images/freebusy-colors.gif');
 }
 
+#schedule-freebusy-times tr.times td.allday {
+	width: expression(Math.max(60, parseInt(this.offsetWidth))+'px');
+}
+
 .ui-dialog .ui-dialog-titlebar {
 	width: expression((parseInt(this.parentNode.offsetWidth)-26)+'px');
 }

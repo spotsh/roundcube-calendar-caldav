@@ -693,7 +693,7 @@ td.topalign {
 }
 
 #attendees-freebusy-table td.attendees {
-	width: 16em;
+	width: 18em;
 	border: 1px solid #ccc;
 	vertical-align: top;
 	overflow: hidden;
@@ -717,8 +717,16 @@ td.topalign {
 }
 
 .attendees-list .attendee {
-	padding: 3px 4px 3px 20px;
+	padding: 3px 4px 3px 1px;
 	background: url('images/attendee-status.gif') 2px -97px no-repeat;
+	white-space: nowrap;
+}
+
+.attendees-list a.attendee-role-toggle {
+	display: inline-block;
+	width: 16px;
+	margin-right: 3px;
+	cursor: pointer;
 }
 
 .attendees-list div.attendee {
@@ -726,6 +734,7 @@ td.topalign {
 }
 
 .attendees-list span.attendee {
+	padding-left: 20px;
 	margin-right: 2em;
 }
 
@@ -797,6 +806,7 @@ td.topalign {
 	opacity: 0.5;
 	border-radius: 4px;
 	cursor: move;
+	filter: alpha(opacity=40); /* IE8 */
 }
 
 #eventfreebusy .schedule-options {

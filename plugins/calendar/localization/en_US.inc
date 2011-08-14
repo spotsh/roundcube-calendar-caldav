@@ -61,6 +61,7 @@ $labels['importtocalendar'] = 'Save to my calendar';
 $labels['searchearlierdates'] = '« Search for earlier events';
 $labels['searchlaterdates'] = 'Search for later events »';
 $labels['andnmore'] = 'and $nr more';
+$labels['togglerole'] = 'Click to toggle role';
 
 // alarm/reminder settings
 $labels['showalarms'] = 'Show alarms';

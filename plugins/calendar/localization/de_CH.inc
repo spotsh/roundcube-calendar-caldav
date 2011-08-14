@@ -61,6 +61,7 @@ $labels['importtocalendar'] = 'In Kalender übernehmen';
 $labels['searchearlierdates'] = '« Frühere Termine suchen';
 $labels['searchlaterdates'] = 'Spätere Termine suchen »';
 $labels['andnmore'] = 'und $nr weitere';
+$labels['togglerole'] = 'Klick zum Ändern der Rolle';
 
 // alarm/reminder settings
 $labels['showalarms'] = 'Erinnerungen anzeigen';
@@ -92,7 +93,7 @@ $labels['alarmtitle'] = 'Anstehende Termine';
 // attendees
 $labels['attendee'] = 'Teilnehmer';
 $labels['role'] = 'Rolle';
-$labels['availability'] = 'Verfügbar';
+$labels['availability'] = 'Verfüg.';
 $labels['confirmstate'] = 'Status';
 $labels['addattendee'] = 'Hinzufügen';
 $labels['roleorganizer'] = 'Organisator';

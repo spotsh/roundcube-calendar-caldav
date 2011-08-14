@@ -92,7 +92,7 @@ $labels['alarmtitle'] = 'Anstehende Termine';
 // attendees
 $labels['attendee'] = 'Teilnehmer';
 $labels['role'] = 'Rolle';
-$labels['availability'] = 'Verfügbar';
+$labels['availability'] = 'Verfüg.';
 $labels['confirmstate'] = 'Status';
 $labels['addattendee'] = 'Hinzufügen';
 $labels['roleorganizer'] = 'Organisator';
