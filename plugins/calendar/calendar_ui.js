@@ -2165,9 +2165,9 @@ function rcube_calendar_ui(settings)
 
       $('#edit-attendee-add').click(function(){
         var input = $('#edit-attendee-name');
+        rcmail.ksearch_blur();
         if (add_attendees(input.val())) {
           input.val('');
-          rcmail.ksearch_blur();
         }
       });
 
