@@ -479,18 +479,8 @@ class calendar_ui
     if (!$attrib['id'])
       $attrib['id'] = 'rcmUploadForm';
 
-    // Enable upload progress bar
-    rcube_upload_progress_init();
-
-    // find max filesize value
-    $max_filesize = parse_bytes(ini_get('upload_max_filesize'));
-    $max_postsize = parse_bytes(ini_get('post_max_size'));
-    if ($max_postsize && $max_postsize < $max_filesize)
-      $max_filesize = $max_postsize;
-
-    $this->rc->output->set_env('max_filesize', $max_filesize);
-
-    $max_filesize = show_bytes($max_filesize);
+    // Get max filesize, enable upload progress bar
+    $max_filesize = rcube_upload_init();
 
     $button = new html_inputfield(array('type' => 'button'));
     $input = new html_inputfield(array(
