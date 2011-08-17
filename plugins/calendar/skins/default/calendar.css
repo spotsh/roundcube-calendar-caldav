@@ -1077,6 +1077,11 @@ div.fc-event-location {
 	padding: 0 0.3em;
 }
 
+.fc-event-temp {
+	opacity: 0.4;
+	filter: alpha(opacity=40); /* IE8 */
+}
+
 /* Settings section */
 
 fieldset #calendarcategories div {

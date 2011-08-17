@@ -526,9 +526,9 @@ class calendar extends rcube_plugin
         $event['uid'] = $this->generate_uid();
         $this->prepare_event($event, $action);
         if ($success = $this->driver->new_event($event)) {
-            $event['id'] = $event['uid'];
-            $this->cleanup_event($event);
-          }
+          $event['id'] = $event['uid'];
+          $this->cleanup_event($event);
+        }
         $reload = true;
         break;
       
@@ -619,8 +619,8 @@ class calendar extends rcube_plugin
     $this->rc->output->command('plugin.unlock_saving');
 
     // FIXME: update a single event object on the client instead of reloading the entire source
-    if ($success && $reload)
-      $this->rc->output->command('plugin.reload_calendar', array('source' => $event['calendar']));
+    if ($reload)
+      $this->rc->output->command('plugin.refresh_calendar', array('source' => $event['calendar'], 'refetch' => $success));
   }
 
   /**

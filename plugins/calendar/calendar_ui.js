@@ -1385,6 +1385,19 @@ function rcube_calendar_ui(settings)
     {
       me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
       rcmail.http_post('event', { action:action, e:data });
+      
+      // render event temporarily into the calendar
+      if (data.start && data.end) {
+        var event = data.id ? $.extend(fc.fullCalendar('clientEvents', data.id)[0], data) : data;
+        event.start = fromunixtime(data.start);
+        event.end = fromunixtime(data.end);
+        if (data.allday !== undefined)
+          event.allDay = data.allday;
+        event.editable = false;
+        event.temp = true;
+        event.className = 'fc-event-cal-'+data.calendar+' fc-event-temp';
+        fc.fullCalendar(data.id ? 'updateEvent' : 'renderEvent', event);
+      }
     };
 
     // mouse-click handler to check if the show dialog is still open and prevent default action
@@ -1926,7 +1939,8 @@ function rcube_calendar_ui(settings)
       },
       // callback when a specific event is clicked
       eventClick: function(event) {
-        event_show_dialog(event);
+        if (!event.temp)
+          event_show_dialog(event);
       },
       // callback when an event was dragged and finally dropped
       eventDrop: function(event, dayDelta, minuteDelta, allDay, revertFunc) {
@@ -2227,8 +2241,13 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('reset-search', function(){ cal.reset_quicksearch(); }, true);
 
   // register callback commands
+  rcmail.addEventListener('plugin.refresh_calendar', function(p){
+    if (p.refetch)
+      $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]);
+    // remove temp events
+    $('#calendar').fullCalendar('removeEvents', function(e){ return e.temp; });
+  });
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
-  rcmail.addEventListener('plugin.reload_calendar', function(p){ $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
   rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
 
