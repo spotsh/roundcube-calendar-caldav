@@ -40,6 +40,10 @@ html #calendartoolbar a.buttonPas {
 	width: 102%;
 }
 
+.fc-day-content {
+	cursor: default;
+}
+
 .fc-header-title h2 {
 	font-size: 16px;
 }

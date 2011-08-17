@@ -2219,7 +2219,17 @@ function rcube_calendar_ui(settings)
     // add proprietary css styles if not IE
     if (!bw.ie)
       $('div.fc-content').addClass('rcube-fc-content');
-
+    
+    // IE7 supresses 2nd click event when double-clicking
+    if (bw.ie7) {
+      $('div.fc-content').bind('dblclick', function(e){
+        if (!$(this).hasClass('fc-widget-header') && fc.fullCalendar('getView').name != 'table') {
+          var date = fc.fullCalendar('getDate');
+          var enddate = new Date(); enddate.setTime(date.getTime() + DAY_MS - 60000);
+          event_edit_dialog('new', { start:date, end:enddate, allDay:true, calendar:me.selected_calendar });
+        }
+      });
+    }
 } // end rcube_calendar class
 
 
