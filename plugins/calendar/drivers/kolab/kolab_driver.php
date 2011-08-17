@@ -221,15 +221,18 @@ class kolab_driver extends calendar_driver
     }
     // sanity checks (from steps/settings/save_folder.inc)
     else if (!strlen($folder)) {
+      $this->last_error = 'Invalid folder name';
       return false;
     }
     else if (strlen($folder) > 128) {
+      $this->last_error = 'Folder name too long';
       return false;
     }
     else {
       // these characters are problematic e.g. when used in LIST/LSUB
       foreach (array($delimiter, '%', '*') as $char) {
         if (strpos($folder, $delimiter) !== false) {
+          $this->last_error = 'Invalid folder name';
           return false;
         }
       }
@@ -254,20 +257,24 @@ class kolab_driver extends calendar_driver
       if ($parent_opts['namespace'] != 'personal'
         && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
       ) {
+        $this->last_error = 'No permission to create folder';
         return false;
       }
     }
 
     // update the folder name
     if (strlen($oldfolder)) {
-      if ($oldfolder != $folder)
-        $result = rcube_kolab::folder_rename($oldfolder, $folder);
+      if ($oldfolder != $folder) {
+        if (!($result = rcube_kolab::folder_rename($oldfolder, $folder)))
+          $this->last_error = rcube_kolab::$last_error;
+      }
       else
         $result = true;
     }
     // create new folder
     else {
-      $result = rcube_kolab::folder_create($folder, 'event', false);
+      if (!($result = rcube_kolab::folder_create($folder, 'event', false)))
+        $this->last_error = rcube_kolab::$last_error;
     }
 
     return $result ? $folder : false;
@@ -291,6 +298,8 @@ class kolab_driver extends calendar_driver
         $this->rc->user->save_prefs($prefs);
         return true;
       }
+      else
+        $this->last_error = rcube_kolab::$last_error;
     }
 
     return false;

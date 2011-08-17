@@ -82,6 +82,7 @@ abstract class calendar_driver
   public $undelete = false; // event undelete action
   public $categoriesimmutable = false;
   public $alarm_types = array('DISPLAY');
+  public $last_error;
 
   /**
    * Get a list of available calendars from this source

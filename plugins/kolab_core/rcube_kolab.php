@@ -26,6 +26,8 @@ require_once 'Horde/Perms.php';
  */
 class rcube_kolab
 {
+    public static $last_error;
+    
     private static $horde_auth;
     private static $config;
     private static $ready = false;
@@ -254,6 +256,7 @@ class rcube_kolab
         $result = $folder->delete();
 
         if (is_a($result, 'PEAR_Error')) {
+            self::$last_error = $result->getMessage();
             return false;
         }
 
@@ -283,6 +286,7 @@ class rcube_kolab
         ));
 
         if (is_a($result, 'PEAR_Error')) {
+            self::$last_error = $result->getMessage();
             return false;
         }
 
@@ -306,6 +310,7 @@ class rcube_kolab
 
         $result = $kolab->rename($folder);
         if (is_a($result, 'PEAR_Error')) {
+            self::$last_error = $result->getMessage();
             return false;
         }
 

@@ -494,8 +494,10 @@ class calendar extends rcube_plugin
     
     if ($success)
       $this->rc->output->show_message('successfullysaved', 'confirmation');
-    else
-      $this->rc->output->show_message('calendar.errorsaving', 'error');
+    else {
+      $error_msg = $this->gettext('errorsaving') . ($this->driver->last_error ? ': ' . $this->driver->last_error :'');
+      $this->rc->output->show_message($error_msg, 'error');
+    }
 
     // TODO: keep view and date selection
     if ($success && $reload)
