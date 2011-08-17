@@ -1387,7 +1387,7 @@ function rcube_calendar_ui(settings)
       rcmail.http_post('event', { action:action, e:data });
       
       // render event temporarily into the calendar
-      if (data.start && data.end) {
+      if (data.start && data.end && action != 'remove') {
         var event = data.id ? $.extend(fc.fullCalendar('clientEvents', data.id)[0], data) : data;
         event.start = fromunixtime(data.start);
         event.end = fromunixtime(data.end);
@@ -2242,8 +2242,17 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   // register callback commands
   rcmail.addEventListener('plugin.refresh_calendar', function(p){
-    if (p.refetch)
-      $('#calendar').fullCalendar('refetchEvents', cal.calendars[p.source]);
+    var source = cal.calendars[p.source];
+    if (p.refetch && source) {
+      // activate event source if new event was added to an invisible calendar
+      if (!source.active) {
+        source.active = true;
+        $('#calendar').fullCalendar('addEventSource', source);
+        $('#' + rcmail.get_folder_li(source.id, 'rcmlical').id + ' input').prop('checked', true);
+      }
+      else
+        $('#calendar').fullCalendar('refetchEvents', source);
+    }
     // remove temp events
     $('#calendar').fullCalendar('removeEvents', function(e){ return e.temp; });
   });
