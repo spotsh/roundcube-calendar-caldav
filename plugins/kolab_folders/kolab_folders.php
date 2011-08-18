@@ -386,19 +386,35 @@ class kolab_folders extends rcube_plugin
                 NULL, array('SUBSCRIBED'));
 
             // remove non-existent folders
-            if (is_array($a_folders)) {
+            if (is_array($a_folders) && $name = '*') {
                 foreach ($a_folders as $idx => $folder) {
                     if ($imap->conn->data['LIST'] && ($opts = $imap->conn->data['LIST'][$folder])
                         && in_array('\\NonExistent', $opts)
                     ) {
+                        $imap->conn->unsubscribe($folder);
                         unset($a_folders[$idx]);
-                    } 
+                    }
                 }
             }
         }
         // retrieve list of folders from IMAP server using LSUB
         else {
             $a_folders = $imap->conn->listSubscribed($root, $name);
+
+            // unsubscribe non-existent folders, remove from the list
+            if (is_array($a_folders) && $name == '*') {
+                foreach ($a_folders as $idx => $folder) {
+                    if ($imap->conn->data['LIST'] && ($opts = $imap->conn->data['LIST'][$folder])
+                        && in_array('\\Noselect', $opts)
+                    ) {
+                        // Some servers returns \Noselect for existing folders
+                        if (!$imap->mailbox_exists($folder)) {
+                            $imap->conn->unsubscribe($folder);
+                            unset($a_folders[$idx]);
+                        }
+                    }
+                }
+            }
         }
 
         return $a_folders;
