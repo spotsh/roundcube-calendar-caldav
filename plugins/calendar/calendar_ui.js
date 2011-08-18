@@ -2273,8 +2273,12 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   // let's go
   var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);
 
-  $(window).resize(function() {
-    $('#calendar').fullCalendar('option', 'height', $('#main').height());
+  $(window).resize(function(e) {
+    // check target due to bugs in jquery
+    // http://bugs.jqueryui.com/ticket/7514
+    // http://bugs.jquery.com/ticket/9841
+    if (e.target == window)
+      $('#calendar').fullCalendar('option', 'height', $('#main').height());
   }).resize();
 
   // show calendars list when ready
