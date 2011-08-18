@@ -103,7 +103,7 @@ rcube_webmail.prototype.book_delete_done = function(id)
 // action executed after book create/update
 rcube_webmail.prototype.book_update = function(data, old)
 {
-    var n, i, id, len, row, refrow, olddata, name = '', realname = '', sources, level,
+    var n, i, id, len, link, row, refrow, olddata, name = '', realname = '', sources, level,
         folders = [], class_name = 'addressbook',
         list = this.gui_objects.folderlist,
         groups = this.env.contactgroups;
@@ -116,30 +116,10 @@ rcube_webmail.prototype.book_update = function(data, old)
         olddata = this.env.address_sources[old];
         delete this.env.address_sources[old];
         delete this.env.contactfolders[old];
-
-        // update source ID in groups
-        for (n in groups)
-            if (groups[n].source == old)
-                this.env.contactgroups[n].source = data.id;
-
         refrow = $('#rcmli'+old);
     }
-    // create
-    else if (!old) {
-        refrow = $('li', list).get(0);
-
-        // this shouldn't happen
-        if (!refrow)
-            this.redirect(this.get_task_url('addressbook'));
-    }
-
-    if (!refrow)
-        return;
 
     sources = this.env.address_sources;
-
-    // clone a table row if there are existing rows
-    row = $(refrow).clone();
 
     // set row attributes
     if (data.readonly)
@@ -152,9 +132,10 @@ rcube_webmail.prototype.book_update = function(data, old)
         this.env.source = data.id;
     }
 
-    row.attr({id: 'rcmli'+data.id, 'class': class_name});
-    $('a', row).html(data.name).attr({onclick: '', rel: data.id, href: '#'})
-        .click({id: data.id}, function(e) { return rcmail.command('list', e.data.id, this); });
+    link = $('<a>').attr({'href': '#', 'rel': data.id}).html(data.name)
+        .click(function() { return rcmail.command('list', data.id, this); });
+    row = $('<li>').attr({id: 'rcmli'+data.id, 'class': class_name})
+        .append(link);
 
     // sort kolab folders, to put the new one in order
     for (n in sources)
@@ -187,6 +168,27 @@ rcube_webmail.prototype.book_update = function(data, old)
     if (olddata) {
         // remove old row (just after the new row has been inserted)
         refrow.remove();
+
+	// update groups
+        for (n in groups) {
+            if (groups[n].source == old) {
+                // update existing row
+                refrow = $('#rcmli'+n);
+                refrow.remove().attr({id: 'rcmliG'+data.id+groups[n].id});
+                $('a', refrow).removeAttr('onclick').unbind()
+            	    .click({source: data.id, id: groups[n].id}, function(e) {
+                	return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
+        	    });
+                refrow.insertAfter(row);
+                row = refrow;
+
+                // update group data
+                groups[n].source = data.id;
+                this.env.contactgroups['G'+data.id+groups[n].id] = groups[n];
+                delete this.env.contactgroups[n];
+            }
+        }
+
         old += '-';
         level = olddata.realname.split(this.env.delimiter).length - data.realname.split(this.env.delimiter).length;
         // update (realname and ID of) subfolders
@@ -210,7 +212,7 @@ rcube_webmail.prototype.book_update = function(data, old)
                 // update existing row
                 refrow = $('#rcmli'+n);
                 refrow.remove().attr({id: 'rcmli'+id});
-                $('a', refrow).html(name).attr({onclick: '', rel: id, href: '#'})
+                $('a', refrow).html(name).removeAttr('onclick').unbind().attr({rel: id, href: '#'})
                     .click({id: id}, function(e) { return rcmail.command('list', e.data.id, this); });
 
                 // move the row to the new place
@@ -231,9 +233,10 @@ rcube_webmail.prototype.book_update = function(data, old)
                         // update existing row
                         refrow = $('#rcmli'+i);
                         refrow.remove().attr({id: 'rcmliG'+id+groups[i].id});
-                        $('a', refrow).attr('onclick', '')
+                        $('a', refrow).removeAttr('onclick').unbind()
                             .click({source: id, id: groups[i].id}, function(e) {
-                                return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this); });
+                                return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
+                    	    });
                         refrow.insertAfter(row);
                         row = refrow;
 
