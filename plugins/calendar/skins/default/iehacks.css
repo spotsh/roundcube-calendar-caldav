@@ -48,6 +48,10 @@ html #calendartoolbar a.buttonPas {
 	font-size: 16px;
 }
 
+.fc-event-temp .fc-event-bg {
+	display: none; /* nested opacity filters while dragging don't work */
+}
+
 #schedule-event-time {
 	filter: alpha(opacity=40);
 }

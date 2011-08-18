@@ -330,7 +330,7 @@ function rcube_calendar_ui(settings)
       $dialog.dialog({
         modal: false,
         resizable: !bw.ie6,
-        closeOnEscape: !bw.ie6,
+        closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
         title: null,
         close: function() {
           $dialog.dialog('destroy').hide();
@@ -648,7 +648,7 @@ function rcube_calendar_ui(settings)
       // open jquery UI dialog
       $dialog.dialog({
         modal: true,
-        resizable: !bw.ie6,
+        resizable: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
         closeOnEscape: false,
         title: rcmail.gettext((action == 'edit' ? 'edit_event' : 'new_event'), 'calendar'),
         close: function() {
@@ -794,7 +794,7 @@ function rcube_calendar_ui(settings)
       $dialog.dialog({
         modal: true,
         resizable: true,
-        closeOnEscape: true,
+        closeOnEscape: (!bw.ie6 && !bw.ie7),
         title: rcmail.gettext('scheduletime', 'calendar'),
         close: function() {
           if (bw.ie6)
@@ -2219,9 +2219,9 @@ function rcube_calendar_ui(settings)
     // add proprietary css styles if not IE
     if (!bw.ie)
       $('div.fc-content').addClass('rcube-fc-content');
-    
-    // IE7 supresses 2nd click event when double-clicking
-    if (bw.ie7) {
+
+    // IE supresses 2nd click event when double-clicking
+    if (bw.ie && bw.vendver < 9) {
       $('div.fc-content').bind('dblclick', function(e){
         if (!$(this).hasClass('fc-widget-header') && fc.fullCalendar('getView').name != 'table') {
           var date = fc.fullCalendar('getDate');
