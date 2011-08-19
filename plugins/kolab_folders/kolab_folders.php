@@ -205,6 +205,26 @@ class kolab_folders extends rcube_plugin
             $ctype = 'mail';
         }
 
+        // Don't allow changing type of shared folder, according to ACL
+        if (strlen($mbox)) {
+            $options = $this->rc->imap->mailbox_info($mbox);
+            if ($options['namespace'] != 'personal' && !in_array('a', $options['rights'])) {
+                if (in_array($ctype, $this->types))
+                    $value = $this->gettext('foldertype'.$ctype);
+                else
+                    $value = $ctype;
+                if ($subtype)
+                    $value .= ' ('. ($subtype == 'default' ? $this->gettext('default') : $subtype) .')';
+
+                $args['form']['props']['fieldsets']['settings']['content']['foldertype'] = array(
+                    'label' => $this->gettext('folderctype'),
+                    'value' => $value,
+                );
+
+                return $args;
+            }
+        }
+
         // Add javascript script to the client
         $this->include_script('kolab_folders.js');
 
