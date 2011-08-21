@@ -1,22 +1,28 @@
 <?php
-/*
- +-------------------------------------------------------------------------+
- | Kolab calendar storage class                                            |
- |                                                                         |
- | Copyright (C) 2011, Kolab Systems AG                                    |
- |                                                                         |
- | This program is free software; you can redistribute it and/or modify    |
- | it under the terms of the GNU General Public License version 2          |
- | as published by the Free Software Foundation.                           |
- |                                                                         |
- | PURPOSE:                                                                |
- |   Storage object for a single calendar folder on Kolab                  |
- |                                                                         |
- +-------------------------------------------------------------------------+
- | Author: Thomas Bruederli <roundcube@gmail.com>                          |
- | Author: Aleksander Machniak <machniak@kolabsys.com>                     |
- +-------------------------------------------------------------------------+
-*/
+
+/**
+ * Kolab calendar storage class 
+ *
+ * @version 0.6-beta
+ * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Aleksander Machniak <machniak@kolabsys.com>
+ *
+ * Copyright (C) 2011, Kolab Systems AG
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 
 class kolab_calendar
 {

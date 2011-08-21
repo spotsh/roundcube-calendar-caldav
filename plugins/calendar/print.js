@@ -1,17 +1,16 @@
-/*
- +-------------------------------------------------------------------------+
- | Javascript for the Calendar Plugin                                      |
- | Version 0.3 beta                                                        |
- |                                                                         |
- | This program is free software; you can redistribute it and/or modify    |
- | it under the terms of the GNU General Public License version 2          |
- | as published by the Free Software Foundation.                           |
- |                                                                         |
- +-------------------------------------------------------------------------+
- | Author: Lazlo Westerhof <hello@lazlo.me>                                |
- |         Thomas Bruederli <roundcube@gmail.com>                          |
- +-------------------------------------------------------------------------+
-*/
+/**
+ * Print view for the Calendar plugin
+ *
+ * @version 0.6-beta
+ * @author Thomas Bruederli <roundcube@gmail.com>
+ *
+ * Copyright (C) 2011, Kolab Systems AG
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation.
+ */
+
 
 /* calendar plugin printing code */
 window.rcmail && rcmail.addEventListener('init', function(evt) {
