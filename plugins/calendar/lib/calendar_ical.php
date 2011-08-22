@@ -181,6 +181,10 @@ class calendar_ical
           $event['recurrence_id'] = $this->_date2time($attr['value']);
           break;
         
+        case 'SEQUENCE':
+          $event['sequence'] = intval($attr['value']);
+          break;
+        
         case 'DESCRIPTION':
         case 'LOCATION':
           $event[strtolower($attr['name'])] = $attr['value'];

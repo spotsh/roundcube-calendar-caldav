@@ -137,7 +137,17 @@ function rcube_calendar_ui(settings)
     // check if the event has 'real' attendees, excluding the current user
     var has_attendees = function(event)
     {
-      return (event.attendees && (event.attendees.length > 1 || event.attendees[0].email != settings.event_owner.email));
+      return (event.attendees && (event.attendees.length > 1 || event.attendees[0].email != settings.identity.email));
+    };
+    
+    // check if the current user is the organizer
+    var is_organizer = function(event)
+    {
+      for (var i=0; event.attendees && i < event.attendees.length; i++) {
+        if (event.attendees[i].role == 'ORGANIZER' && event.attendees[i].email && event.attendees[i].email == settings.identity.email)
+          return true;
+      }
+      return !event.id;
     };
 
     // create a nice human-readable string for the date/time range
@@ -233,6 +243,7 @@ function rcube_calendar_ui(settings)
     {
       var $dialog = $("#eventshow");
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
+      me.selected_event = event;
       
       $dialog.find('div.event-section, div.event-line').hide();
       $('#event-title').html(Q(event.title)).show();
@@ -279,27 +290,37 @@ function rcube_calendar_ui(settings)
       
       // list event attendees
       if (calendar.attendees && event.attendees) {
-        var data, dispname, organizer = false, html = '';
+        var dispname, html = '';
+        if (event.organizer) {
+          dispname = Q(data.name || data.email);
+          html += '<span class="attendee organizer">' + dispname + '</span> ';
+        }
+        
+        var data, rsvp = false;
         for (var j=0; j < event.attendees.length; j++) {
           data = event.attendees[j];
           dispname = Q(data.name || data.email);
-          if (data.email)
+          if (data.email) {
             dispname = '<a href="mailto:' + data.email + '" title="' + Q(data.email) + '" class="mailtolink">' + dispname + '</a>';
-          html += '<span class="attendee ' + String(data.role == 'ORGANIZER' ? 'organizer' : data.status).toLowerCase() + '">' + dispname + '</span> ';
-          if (data.role == 'ORGANIZER')
-            organizer = true;
+            if (data.status == 'NEEDS-ACTION' || data.status == 'TENTATIVE' && settings.identity.emails.indexOf(';'+data.email) >= 0)
+              rsvp = true;
+          }
+          html += '<span class="attendee ' + data.status.toLowerCase() + '">' + dispname + '</span> ';
+          
           // stop listing attendees
           if (j == 7 && event.attendees.length >= 7) {
             html += ' <em>' + rcmail.gettext('andnmore', 'calendar').replace('$nr', event.attendees.length - j - 1) + '</em>';
             break;
           }
         }
-        if (html && event.attendees.length > 1 || !organizer) {
+        if (html) {
           $('#event-attendees').show()
             .children('.event-text')
             .html(html)
             .find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
         }
+        
+        $('#event-rsvp')[(rsvp?'show':'hide')]();
       }
       
       var buttons = {};
@@ -468,9 +489,10 @@ function rcube_calendar_ui(settings)
         $('#edit-recurring-warning').hide();
 
       // init attendees tab
+      var organizer = is_organizer(event);
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
-      $('#edit-attendees-notify')[(notify.checked?'show':'hide')]();
+      $('#edit-attendees-notify')[(notify.checked && organizer ? 'show' : 'hide')]();
 
       var load_attendees_tab = function()
       {
@@ -479,6 +501,7 @@ function rcube_calendar_ui(settings)
             add_attendee(event.attendees[j], true);
         }
 
+        $('#edit-attendees-form .attendees-invitebox')[(organizer?'show':'hide')]();
         $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
       };
 
@@ -557,11 +580,11 @@ function rcube_calendar_ui(settings)
         });
         
         // don't submit attendees if only myself is added as organizer
-        if (data.attendees.length == 1 && data.attendees[0].role == 'ORGANIZER' && data.attendees[0].email == settings.event_owner.email)
+        if (data.attendees.length == 1 && data.attendees[0].role == 'ORGANIZER' && data.attendees[0].email == settings.identity.email)
           data.attendees = [];
         
         // tell server to send notifications
-        if (data.attendees.length && ((event.id && notify.checked) || (!event.id && invite.checked))) {
+        if (data.attendees.length && organizer && ((event.id && notify.checked) || (!event.id && invite.checked))) {
           data.notify = 1;
         }
 
@@ -734,8 +757,8 @@ function rcube_calendar_ui(settings)
         .bind('click.roleicons', function(e){
           // toggle attendee status upon click on icon
           if (e.target.id && e.target.id.match(/rcmlia(.+)/)) {
-            var attendee, domid = RegExp.$1, roles = [ 'ORGANIZER', 'REQ-PARTICIPANT', 'OPT-PARTICIPANT', 'CHAIR' ];
-            if ((attendee = freebusy_ui.attendees[domid])) {
+            var attendee, domid = RegExp.$1, roles = [ 'REQ-PARTICIPANT', 'OPT-PARTICIPANT', 'CHAIR' ];
+            if ((attendee = freebusy_ui.attendees[domid]) && attendee.role != 'ORGANIZER') {
               var req = attendee.role != 'OPT-PARTICIPANT';
               var j = $.inArray(attendee.role, roles);
               j = (j+1) % roles.length;
@@ -1288,13 +1311,15 @@ function rcube_calendar_ui(settings)
         dispname = '<a href="mailto:' + data.email + '" title="' + Q(data.email) + '" class="mailtolink">' + dispname + '</a>';
       
       // role selection
-      var opts = {
-        'ORGANIZER': rcmail.gettext('calendar.roleorganizer'),
-        'REQ-PARTICIPANT': rcmail.gettext('calendar.rolerequired'),
-        'OPT-PARTICIPANT': rcmail.gettext('calendar.roleoptional'),
-        'CHAIR': rcmail.gettext('calendar.roleresource')
-      };
-      var select = '<select class="edit-attendee-role">';
+      var organizer = data.role == 'ORGANIZER';
+      var opts = {};
+      if (organizer)
+        opts.ORGANIZER = rcmail.gettext('calendar.roleorganizer');
+      opts['REQ-PARTICIPANT'] = rcmail.gettext('calendar.rolerequired');
+      opts['OPT-PARTICIPANT'] = rcmail.gettext('calendar.roleoptional');
+      opts['CHAIR'] =  rcmail.gettext('calendar.roleresource');
+      
+      var select = '<select class="edit-attendee-role"' + (organizer ? ' disabled="true"' : '') + '>';
       for (var r in opts)
         select += '<option value="'+ r +'" class="' + r.toLowerCase() + '"' + (data.role == r ? ' selected="selected"' : '') +'>' + Q(opts[r]) + '</option>';
       select += '</select>';
@@ -1310,7 +1335,7 @@ function rcube_calendar_ui(settings)
         '<td class="name">' + dispname + '</td>' +
         '<td class="availability"><img src="./program/blank.gif" class="availabilityicon ' + avail + '" /></td>' +
         '<td class="confirmstate"><span class="' + String(data.status).toLowerCase() + '">' + Q(data.status) + '</span></td>' +
-        '<td class="options">' + dellink + '</td>';
+        '<td class="options">' + (organizer ? '' : dellink) + '</td>';
       
       var tr = $('<tr>')
         .addClass(String(data.role).toLowerCase())
@@ -1372,6 +1397,24 @@ function rcube_calendar_ui(settings)
       event_attendees = $.grep(event_attendees, function(data){ return (data.name != id && data.email != id) });
     };
     
+    // when the user accepts or declines an event invitation
+    var event_rsvp = function(response)
+    {
+      if (me.selected_event && me.selected_event.attendees && response) {
+        // update attendee status
+        for (var data, i=0; i < me.selected_event.attendees.length; i++) {
+          data = me.selected_event.attendees[i];
+          if (settings.identity.emails.indexOf(';'+data.email) >= 0)
+            data.status = response.toUpperCase();
+        }
+        event_show_dialog(me.selected_event);
+        
+        // submit status change to server
+        me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
+        rcmail.http_post('event', { action:'rsvp', e:me.selected_event, status:response });
+      }
+    }
+    
     // post the given event data to server
     var update_event = function(action, data)
     {
@@ -1413,14 +1456,20 @@ function rcube_calendar_ui(settings)
     var update_event_confirm = function(action, event, data)
     {
       if (!data) data = event;
-      var html = '';
+      var notify = false, html = '';
       
       // event has attendees, ask whether to notify them
       if (has_attendees(event)) {
-        html += '<div class="message">' +
-          '<label><input class="confirm-attendees-donotify" type="checkbox" ' + (action != 'remove' ? ' checked="checked"' : '') + ' value="1" name="notify" />&nbsp;' +
-          rcmail.gettext((action == 'remove' ? 'sendcancellation' : 'sendnotifications'), 'calendar') + 
-          '</label></div>';
+        if (is_organizer(event)) {
+          notify = true;
+          html += '<div class="message">' +
+            '<label><input class="confirm-attendees-donotify" type="checkbox" ' + (action != 'remove' ? ' checked="checked"' : '') + ' value="1" name="notify" />&nbsp;' +
+            rcmail.gettext((action == 'remove' ? 'sendcancellation' : 'sendnotifications'), 'calendar') + 
+            '</label></div>';
+        }
+        else {
+          html += '<div class="message">' + rcmail.gettext('localchangeswarning', 'calendar') + '</div>';
+        }
       }
       
       // recurring event: user needs to select the savemode
@@ -1442,7 +1491,7 @@ function rcube_calendar_ui(settings)
         $dialog.find('a.button').button().click(function(e){
           data.savemode = String(this.href).replace(/.+#/, '');
           if ($dialog.find('input.confirm-attendees-donotify').get(0))
-            data.notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+            data.notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
           update_event(action, data);
           $dialog.dialog("destroy").hide();
           return false;
@@ -1459,7 +1508,7 @@ function rcube_calendar_ui(settings)
           buttons.push({
             text: rcmail.gettext((action == 'remove' ? 'remove' : 'save'), 'calendar'),
             click: function() {
-              data.notify = $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+              data.notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
               update_event(action, data);
               $(this).dialog("close");
             }
@@ -1814,6 +1863,9 @@ function rcube_calendar_ui(settings)
     if (settings.default_calendar && this.calendars[settings.default_calendar] && !this.calendars[settings.default_calendar].readonly)
       this.selected_calendar = settings.default_calendar;
     
+    var viewdate = new Date();
+    if (rcmail.env.date)
+      viewdate.setTime(fromunixtime(rcmail.env.date));
     
     // initalize the fullCalendar plugin
     var fc = $('#calendar').fullCalendar({
@@ -1823,6 +1875,9 @@ function rcube_calendar_ui(settings)
         right: 'agendaDay,agendaWeek,month,table'
       },
       aspectRatio: 1,
+      date: viewdate.getDate(),
+      month: viewdate.getMonth(),
+      year: viewdate.getFullYear(),
       ignoreTimezone: true,  // will treat the given date strings as in local (browser's) timezone
       height: $('#main').height(),
       eventSources: event_sources,
@@ -1856,7 +1911,7 @@ function rcube_calendar_ui(settings)
       listPage: 1,  // advance one day in agenda view
       listRange: settings['agenda_range'],
       tableCols: ['handle', 'date', 'time', 'title', 'location'],
-      defaultView: settings['default_view'],
+      defaultView: rcmail.env.view || settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
       buttonText: {
         prev: (bw.ie6 ? '&nbsp;&lt;&lt;&nbsp;' : '&nbsp;&#9668;&nbsp;'),
@@ -2104,7 +2159,7 @@ function rcube_calendar_ui(settings)
               update_freebusy_status(me.selected_event);
             // add current user as organizer if non added yet
             if (!event_attendees.length)
-              add_attendee($.extend({ role:'ORGANIZER' }, settings.event_owner));
+              add_attendee($.extend({ role:'ORGANIZER' }, settings.identity));
           }
         }
       });
@@ -2198,6 +2253,10 @@ function rcube_calendar_ui(settings)
         if (this.checked)
           $('<style type="text/css" id="workinghourscss"> td.offhours { opacity:0.3; filter:alpha(opacity=30) } </style>').appendTo('head');
       });
+      
+      $('#event-rsvp input.button').click(function(){
+        event_rsvp($(this).attr('rel'))
+      })
 
       // hide event dialog when clicking somewhere into document
       $(document).bind('mousedown', dialog_check);

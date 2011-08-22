@@ -219,6 +219,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.attendees_freebusy_table', array($this->ui, 'attendees_freebusy_table'));
     $this->register_handler('plugin.edit_attendees_notify', array($this->ui, 'edit_attendees_notify'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
+    $this->register_handler('plugin.event_rsvp_buttons', array($this->ui, 'event_rsvp_buttons'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
 
     $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
@@ -227,6 +228,13 @@ class calendar extends rcube_plugin
     rcube_autocomplete_init();
 
     $this->rc->output->set_env('calendar_driver', $this->rc->config->get('calendar_driver'), false);
+
+    $view = get_input_value('view', RCUBE_INPUT_GPC);
+    if (in_array($view, array('agendaWeek', 'agendaDay', 'month', 'table')))
+      $this->rc->output->set_env('view', $view);
+    
+    if ($date = get_input_value('date', RCUBE_INPUT_GPC))
+      $this->rc->output->set_env('date', $date);
 
     $this->rc->output->send("calendar.calendar");
   }
@@ -534,7 +542,7 @@ class calendar extends rcube_plugin
         }
         $reload = true;
         break;
-      
+        
       case "edit":
         $this->prepare_event($event, $action);
         if ($success = $this->driver->edit_event($event))
@@ -590,6 +598,27 @@ class calendar extends rcube_plugin
           $got_msg = true;
         }
 
+        break;
+
+      case "rsvp":
+        $ev = $this->driver->get_event($event);
+        $ev['attendees'] = $event['attendees'];
+        $event = $ev;
+
+        if ($success = $this->driver->edit_event($event)) {
+          $status = get_input_value('status', RCUBE_INPUT_GPC);
+          $organizer = null;
+          foreach ($event['attendees'] as $i => $attendee) {
+            if ($attendee['role'] == 'ORGANIZER') {
+              $organizer = $attendee;
+              break;
+            }
+          }
+          if ($organizer && $this->send_itip_message($event, 'REPLY', $organizer, 'itipsubject' . $status, 'itipmailbody' . $status))
+            $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name']))), 'confirmation');
+          else
+            $this->rc->output->command('display_message', $this->gettext('itipresponseerror'), 'error');
+        }
         break;
 
       case "dismiss":
@@ -740,8 +769,12 @@ class calendar extends rcube_plugin
     
     // get user identity to create default attendee
     if ($this->ui->screen == 'calendar') {
-      $identity = $this->rc->user->get_identity();
-      $settings['event_owner'] = array('name' => $identity['name'], 'email' => $identity['email']);
+      foreach ($this->rc->user->list_identities() as $rec) {
+        if (!$identity)
+          $identity = $rec;
+        $identity['emails'][] = $rec['email'];
+      }
+      $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
     }
 
     return $settings;
@@ -1254,8 +1287,8 @@ class calendar extends rcube_plugin
       
       // set owner as organizer if yet missing
       if (!$organizer && $owner !== false) {
-        $event['attendees'][$i]['role'] = 'ORGANIZER';
-        unset($event['attendees'][$i]['rsvp']);
+        $event['attendees'][$owner]['role'] = 'ORGANIZER';
+        unset($event['attendees'][$owner]['rsvp']);
       }
       else if (!$organizer && $identity['email'] && $action == 'new') {
         array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
@@ -1280,83 +1313,35 @@ class calendar extends rcube_plugin
    */
   private function notify_attendees($event, $old, $action = 'edit')
   {
-    $sent = 0;
-    $myself = $this->rc->user->get_identity();
-    $from = rcube_idn_to_ascii($myself['email']);
-    $sender = format_email_recipient($from, $myself['name']);
-    
-    // compose multipart message using PEAR:Mail_Mime
-    $message = new Mail_mime("\r\n");
-    $message->setParam('text_encoding', 'quoted-printable');
-    $message->setParam('head_encoding', 'quoted-printable');
-    $message->setParam('head_charset', RCMAIL_CHARSET);
-    $message->setParam('text_charset', RCMAIL_CHARSET . ";\r\n format=flowed");
-    
-    // compose common headers array
-    $headers = array(
-      'From' => $sender,
-      'Date' => rcmail_user_date(),
-      'Message-ID' => rcmail_gen_message_id(),
-      'X-Sender' => $from,
-    );
-    if ($agent = $this->rc->config->get('useragent'))
-      $headers['User-Agent'] = $agent;
-    
     if ($action == 'remove') {
       $event['cancelled'] = true;
       $is_cancelled = true;
     }
-    
-    // attach ics file for this event
-    $this->load_ical();
-    $vcal = $this->ical->export(array($event), 'REQUEST');
-    $message->addAttachment($vcal, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET);
-    
+
+    // compose multipart message using PEAR:Mail_Mime
+    $method = $action == 'remove' ? 'CANCEL' : 'REQUEST';
+    $message = $this->compose_itip_message($event, $method);
+
     // list existing attendees from $old event
     $old_attendees = array();
     foreach ((array)$old['attendees'] as $attendee) {
       $old_attendees[] = $attendee['email'];
     }
-    
-    // compose a list of all event attendees
-    $attendees_list = array();
-    foreach ((array)$event['attendees'] as $attendee) {
-      $attendees_list[] = ($attendee['name'] && $attendee['email']) ?
-        $attendee['name'] . ' <' . $attendee['email'] . '>' :
-        ($attendee['name'] ? $attendee['name'] : $attendee['email']);
-    }
-    
+
     // send to every attendee
+    $sent = 0;
     foreach ((array)$event['attendees'] as $attendee) {
       // skip myself for obvious reasons
       if (!$attendee['email'] || $attendee['email'] == $myself['email'])
         continue;
       
+      // which template to use for mail text
       $is_new = !in_array($attendee['email'], $old_attendees);
-      $mailto = rcube_idn_to_ascii($attendee['email']);
-      $headers['To'] = format_email_recipient($mailto, $attendee['name']);
-      
-      $headers['Subject'] = $this->gettext(array(
-        'name' => $is_cancelled ? 'eventcancelsubject' : ($is_new ? 'invitationsubject' : ($event['title'] ? 'eventupdatesubject':'eventupdatesubjectempty')),
-        'vars' => array('title' => $event['title']),
-      ));
-      
-      // compose message body
-      $body = $this->gettext(array(
-        'name' => $is_cancelled ? 'eventcancelmailbody' : ($is_new ? 'invitationmailbody' : 'eventupdatemailbody'),
-        'vars' => array(
-          'title' => $event['title'],
-          'date' => $this->event_date_text($event),
-          'attendees' => join(', ', $attendees_list),
-          'organizer' => $myself['name'],
-        )
-      ));
-      
-      $message->headers($headers);
-      $message->setTXTBody(rcube_message::format_flowed($body, 79));
+      $bodytext = $is_cancelled ? 'eventcancelmailbody' : ($is_new ? 'invitationmailbody' : 'eventupdatemailbody');
+      $subject  = $is_cancelled ? 'eventcancelsubject'  : ($is_new ? 'invitationsubject' : ($event['title'] ? 'eventupdatesubject':'eventupdatesubjectempty'));
       
       // finally send the message
-      if (rcmail_deliver_message($message, $from, $mailto, $smtp_error))
+      if ($this->send_itip_message($event, $method, $attendee, $subject, $bodytext, $message))
         $sent++;
       else
         $sent = -100;
@@ -1577,21 +1562,76 @@ class calendar extends rcube_plugin
       if (empty($events))
           continue;
 
-      // TODO: show more iTip options like (accept, deny, etc.)
+      // show a box for every event in the file
       foreach ($events as $idx => $event) {
-        $prefix = $this->ical->method == 'REPLY' ? $this->gettext('itipreply') : '';
-        
-        // add box below messsage body
-        $html .= html::p('calendar-invitebox',
-          html::span('eventtitle', Q($prefix . $event['title'])) . ' ' .
-          html::span('eventdate', Q('(' . $this->event_date_text($event) . ')')) . ' ' .
-          html::tag('input', array(
+        // define buttons according to method
+        if ($this->ical->method == 'REPLY') {
+          $title = $this->gettext('itipreply');
+          $buttons = html::tag('input', array(
             'type' => 'button',
             'class' => 'button',
             'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '" . JQ($event['title']) . "')",
-            'value' => $this->ical->method == 'REPLY' ? $this->gettext('updateattendeestatus') : $this->gettext('importtocalendar'),
-          ))
-        );
+            'value' => $this->gettext('updateattendeestatus'),
+          ));
+        }
+        else if ($this->ical->method == 'REQUEST') {
+          $title = $event['SEQUENCE'] > 0 ? $this->gettext('itipupdate') : $this->gettext('itipinvitation');
+          
+          // TODO: check for a copy in my calendar in order to show the right options
+          if (!$event['SEQUENCE']) {
+            foreach (array('accepted','tentative','declined') as $method) {
+              $buttons .= html::tag('input', array(
+                'type' => 'button',
+                'class' => 'button',
+                'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '$method')",
+                'value' => $this->gettext('itip' . $method),
+              ));
+            }
+          }
+          else {
+            $buttons = html::tag('input', array(
+              'type' => 'button',
+              'class' => 'button',
+              'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "')",
+              'value' => $this->gettext('importtocalendar'),
+            ));
+          }
+        }
+        else if ($this->ical->method == 'CANCEL') {
+          $title = $this->gettext('itipcancellation');
+          $buttons = html::tag('input', array(
+            'type' => 'button',
+            'class' => 'button',
+            'onclick' => "rcube_calendar.remove_event_from_mail('" . JQ($event['uid']) . "', '" . JQ($event['title']) . "')",
+            'value' => $this->gettext('importtocalendar'),
+          ));
+        }
+        else {
+          $buttons = html::tag('input', array(
+            'type' => 'button',
+            'class' => 'button',
+            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "')",
+            'value' => $this->gettext('importtocalendar'),
+          ));
+        }
+        
+        // show event details in a table
+        $table = new html_table(array('cols' => 2, 'border' => 0, 'class' => 'calendar-eventdetails'));
+        $table->add('ititle', $title);
+        $table->add('title', Q($event['title']));
+        $table->add('label', $this->gettext('date'));
+        $table->add('location', Q($this->event_date_text($event)));
+        if ($event['location']) {
+          $table->add('label', $this->gettext('location'));
+          $table->add('location', Q($event['location']));
+        }
+        
+        // add box below messsage body
+        $html .= html::div('calendar-invitebox', $table->show() . html::div('rsvp-buttons', $buttons));
+        
+        // limit listing
+        if ($idx >= 3)
+          break;
       }
     }
 
@@ -1604,6 +1644,7 @@ class calendar extends rcube_plugin
     return $p;
   }
   
+  
   /**
    * Handler for POST request to import an event attached to a mail message
    */
@@ -1612,6 +1653,7 @@ class calendar extends rcube_plugin
     $uid = get_input_value('_uid', RCUBE_INPUT_POST);
     $mbox = get_input_value('_mbox', RCUBE_INPUT_POST);
     $mime_id = get_input_value('_part', RCUBE_INPUT_POST);
+    $status = get_input_value('_status', RCUBE_INPUT_POST);
     $charset = RCMAIL_CHARSET;
     
     // establish imap connection
@@ -1646,8 +1688,25 @@ class calendar extends rcube_plugin
           }
         }
       }
+
+      // update my attendee status according to submitted method
+      if (!empty($status)) {
+        $emails = array($this->rc->user->get_username());
+        foreach ($this->rc->user->list_identities() as $identity)
+          $emails[] = $identity['email'];
+        $organizer = null;
+        foreach ($event['attendees'] as $i => $attendee) {
+          if ($attendee['role'] == 'ORGANIZER') {
+            $organizer = $attendee;
+          }
+          else if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+            $event['attendees'][$i]['status'] = strtoupper($status);
+          }
+        }
+      }
       
-      if ($calendar && !$calendar['readonly']) {
+      // save to calendar
+      if ($calendar && !$calendar['readonly'] && $status != 'declined') {
         $event['id'] = $event['uid'];
         $event['calendar'] = $calendar['id'];
         
@@ -1701,6 +1760,8 @@ class calendar extends rcube_plugin
           $success = $this->driver->new_event($event);
         }
       }
+      else if ($status == 'declined')
+        $error_msg = null;
       else
         $error_msg = $this->gettext('nowritecalendarfound');
     }
@@ -1708,11 +1769,114 @@ class calendar extends rcube_plugin
     if ($success) {
       $message = $this->ical->method == 'REPLY' ? 'attendeupdateesuccess' : 'importedsuccessfully';
       $this->rc->output->command('display_message', $this->gettext(array('name' => $message, 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
+      $error_msg = null;
     }
-    else
+    else if ($error_msg)
       $this->rc->output->command('display_message', $error_msg, 'error');
 
+
+    // send iTip reply
+    if ($this->ical->method == 'REQUEST' && $organizer && !$error_msg) {
+      if ($this->send_itip_message($event, 'REPLY', $organizer, 'itipsubject' . $status, 'itipmailbody' . $status))
+        $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name']))), 'confirmation');
+      else
+        $this->rc->output->command('display_message', $this->gettext('itipresponseerror'), 'error');
+    }
+
     $this->rc->output->send();
+  }
+
+
+  /**
+   * Send an iTip mail message
+   *
+   * @param array   Event object to send
+   * @param string  iTip method (REQUEST|REPLY|CANCEL)
+   * @param array   Hash array with recipient data (name, email)
+   * @param string  Mail subject
+   * @param string  Mail body text label
+   * @param object  Mail_mime object with message data
+   * @return boolean True on success, false on failure
+   */
+  public function send_itip_message($event, $method, $recipient, $subject, $bodytext, $message = null)
+  {
+    if (!$message)
+      $message = $this->compose_itip_message($event, $method);
+    
+    $myself = $this->rc->user->get_identity();
+    $mailto = rcube_idn_to_ascii($recipient['email']);
+    
+    $headers = $message->headers();
+    $headers['To'] = format_email_recipient($mailto, $recipient['name']);
+    $headers['Subject'] = $this->gettext(array(
+      'name' => $subject,
+      'vars' => array('title' => $event['title'], 'name' => ($myself['name'] ? $myself['name'] : $myself['email']))
+    ));
+    
+    // compose a list of all event attendees
+    $attendees_list = array();
+    foreach ((array)$event['attendees'] as $attendee) {
+      $attendees_list[] = ($attendee['name'] && $attendee['email']) ?
+        $attendee['name'] . ' <' . $attendee['email'] . '>' :
+        ($attendee['name'] ? $attendee['name'] : $attendee['email']);
+    }
+    
+    $mailbody = $this->gettext(array(
+      'name' => $bodytext,
+      'vars' => array(
+        'title' => $event['title'],
+        'date' => $this->event_date_text($event),
+        'attendees' => join(', ', $attendees_list),
+        'sender' => $myself['name'] ? $myself['name'] : $myself['email'],
+        'organizer' => $myself['name'],
+      )
+    ));
+    
+    $message->headers($headers);
+    $message->setTXTBody(rcube_message::format_flowed($mailbody, 79));
+    
+    // finally send the message
+    return rcmail_deliver_message($message, $headers['X-Sender'], $mailto, $smtp_error);
+  }
+
+  /**
+   * Helper function to build a Mail_mime object to send an iTip message
+   *
+   * @param array   Event object to send
+   * @param string  iTip method (REQUEST|REPLY|CANCEL)
+   * @return object Mail_mime object with message data
+   */
+  private function compose_itip_message($event, $method)
+  {
+    $myself = $this->rc->user->get_identity();
+    $from = rcube_idn_to_ascii($myself['email']);
+    $sender = format_email_recipient($from, $myself['name']);
+    
+    // compose multipart message using PEAR:Mail_Mime
+    $message = new Mail_mime("\r\n");
+    $message->setParam('text_encoding', 'quoted-printable');
+    $message->setParam('head_encoding', 'quoted-printable');
+    $message->setParam('head_charset', RCMAIL_CHARSET);
+    $message->setParam('text_charset', RCMAIL_CHARSET . ";\r\n format=flowed");
+    
+    // compose common headers array
+    $headers = array(
+      'From' => $sender,
+      'Date' => rcmail_user_date(),
+      'Message-ID' => rcmail_gen_message_id(),
+      'X-Sender' => $from,
+    );
+    if ($agent = $this->rc->config->get('useragent'))
+      $headers['User-Agent'] = $agent;
+    
+    $message->headers($headers);
+    
+    // attach ics file for this event
+    $this->load_ical();
+    $vcal = $this->ical->export(array($event), $method);
+    $message->addAttachment($vcal, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET);
+    
+    return $message;
   }
 
 

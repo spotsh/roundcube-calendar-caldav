@@ -122,9 +122,22 @@ $labels['eventcancelsubject'] = '"$title" has been canceled';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nThe event has been cancelled by \$organizer.\n\nPlease find attached an iCalendar file with the updated event details.";
 
 // invitation handling
-$labels['itipreply'] = 'Reply to ';
+$labels['itipinvitation'] = 'Invitation to';
+$labels['itipupdate'] = 'Update of';
+$labels['itipcancellation'] = 'Cancelled:';
+$labels['itipreply'] = 'Reply to';
+$labels['itipaccepted'] = 'Accept';
+$labels['itiptentative'] = 'Maybe';
+$labels['itipdeclined'] = 'Decline';
+$labels['itipsubjectaccepted'] = '"$title" has been accepted by $name';
+$labels['itipsubjecttentative'] = '"$title" has been tentatively accepted by $name';
+$labels['itipsubjectdeclined'] = '"$title" has been declined by $name';
+$labels['itipmailbodyaccepted'] = "\$sender has accepted the invitation to the following event:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
+$labels['itipmailbodytentative'] = "\$sender has tentatively accepted the invitation to the following event:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
+$labels['itipmailbodydeclined'] = "\$sender has declined the invitation to the following event:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
 $labels['importtocalendar'] = 'Save to my calendar';
 $labels['updateattendeestatus'] = 'Update the participant\'s status';
+$labels['acceptinvitation'] = 'Do you accept this invitation?';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
@@ -149,6 +162,9 @@ $labels['newerversionexists'] = 'A newer version of this event already exists! A
 $labels['nowritecalendarfound'] = 'No calendar found to save the event';
 $labels['importedsuccessfully'] = 'The event was successfully added to \'$calendar\'';
 $labels['attendeupdateesuccess'] = 'Successfully updated the participant\'s status';
+$labels['itipresponseerror'] = 'Failed to send the response to this event invitation';
+$labels['sentresponseto'] = 'Successfully sent invitation response to $mailto';
+$labels['localchangeswarning'] = 'You are about to make changes that will only be reflected on your personal calendar';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

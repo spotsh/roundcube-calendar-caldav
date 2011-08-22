@@ -159,10 +159,15 @@ function rcube_calendar(settings)
 }
 
 // static methods
-rcube_calendar.add_event_from_mail = function(mime_id, title)
+rcube_calendar.add_event_from_mail = function(mime_id, status)
 {
   var lock = rcmail.set_busy(true, 'loading');
-  rcmail.http_post('calendar/mailimportevent', '_uid='+rcmail.env.uid+'&_mbox='+urlencode(rcmail.env.mailbox)+'&_part='+urlencode(mime_id), lock);
+  rcmail.http_post('calendar/mailimportevent', {
+      '_uid': rcmail.env.uid,
+      '_mbox': rcmail.env.mailbox,
+      '_part': mime_id,
+      '_status': status
+    }, lock);
   return false;
 };
 

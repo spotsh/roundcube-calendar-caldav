@@ -527,6 +527,7 @@ td.topalign {
 	min-width: 5em;
 }
 
+#event-rsvp,
 #edit-attendees-notify {
 	margin: 0.3em 0;
 	padding: 0.5em;
@@ -1091,15 +1092,31 @@ fieldset #calendarcategories div {
 
 /* Invitation UI in mail */
 
-p.calendar-invitebox {
+div.calendar-invitebox {
 	min-height: 20px;
 	margin: 5px 8px;
-	padding: 6px 6px 6px 34px;
+	padding: 3px 6px 6px 34px;
 	border: 1px solid #C2D071;
-	background: url('images/calendar.png') 6px 3px no-repeat #F7FDCB;
+	background: url('images/calendar.png') 6px 5px no-repeat #F7FDCB;
 }
 
-p.calendar-invitebox input.button {
-	margin-left: 1em;
+div.calendar-invitebox td.ititle {
+	font-weight: bold;
+	padding-right: 0.5em;
+}
+
+div.calendar-invitebox td.label {
+	color: #666;
+	padding-right: 1em;
+}
+
+#event-rsvp .rsvp-buttons,
+div.calendar-invitebox .rsvp-buttons {
+	margin-top: 0.5em;
+}
+
+#event-rsvp input.button,
+div.calendar-invitebox input.button {
 	font-size: 11px;
+	margin-right: 0.5em;
 }
