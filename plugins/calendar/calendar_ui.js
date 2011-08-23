@@ -2012,6 +2012,9 @@ function rcube_calendar_ui(settings)
           event.end = new Date(start + numdays * DAY_MS);
           event.end.setHours(settings['work_end'] || 18);
           event.end.setMinutes(0);
+          
+          if (event.end.getTime() < event.start.getTime())
+            event.end = new Date(event.start.getTime() + HOUR_MS);
         }
         
         // send move request to server
