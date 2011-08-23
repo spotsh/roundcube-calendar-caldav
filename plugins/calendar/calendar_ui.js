@@ -31,6 +31,7 @@ function rcube_calendar_ui(settings)
 
     /***  private vars  ***/
     var DAY_MS = 86400000;
+    var HOUR_MS = 3600000;
     var me = this;
     var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
     var day_clicked = day_clicked_ts = 0;
@@ -1990,9 +1991,29 @@ function rcube_calendar_ui(settings)
       },
       // callback when an event was dragged and finally dropped
       eventDrop: function(event, dayDelta, minuteDelta, allDay, revertFunc) {
-        if (event.end == null) {
-          event.end = event.start;
+        if (event.end == null || event.end.getTime() < event.start.getTime()) {
+          event.end = new Date(event.start.getTime() + (allDay ? DAY_MS : HOUR_MS));
         }
+        // moved to all-day section: set times to 00:00 - 23:59
+        if (allDay && !event.allday) {
+          event.start.setHours(0);
+          event.start.setMinutes(0);
+          event.start.setSeconds(0);
+          event.end.setHours(23);
+          event.end.setMinutes(59);
+          event.end.setSeconds(0);
+        }
+        // moved from all-day section: set times to working hours
+        else if (event.allday && !allDay && minuteDelta) {
+          var start = event.start.getTime();
+          revertFunc();
+          var numdays = Math.max(1, Math.round((event.end.getTime() - event.start.getTime()) / DAY_MS)) - 1;
+          event.start = new Date(start);
+          event.end = new Date(start + numdays * DAY_MS);
+          event.end.setHours(settings['work_end'] || 18);
+          event.end.setMinutes(0);
+        }
+        
         // send move request to server
         var data = {
           id: event.id,
