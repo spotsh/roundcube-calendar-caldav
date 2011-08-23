@@ -290,22 +290,18 @@ function rcube_calendar_ui(settings)
       
       // list event attendees
       if (calendar.attendees && event.attendees) {
-        var dispname, html = '';
-        if (event.organizer) {
-          dispname = Q(data.name || data.email);
-          html += '<span class="attendee organizer">' + dispname + '</span> ';
-        }
-        
-        var data, rsvp = false;
+        var data, dispname, organizer = false, rsvp = false, html = '';
         for (var j=0; j < event.attendees.length; j++) {
           data = event.attendees[j];
           dispname = Q(data.name || data.email);
           if (data.email) {
             dispname = '<a href="mailto:' + data.email + '" title="' + Q(data.email) + '" class="mailtolink">' + dispname + '</a>';
-            if (data.status == 'NEEDS-ACTION' || data.status == 'TENTATIVE' && settings.identity.emails.indexOf(';'+data.email) >= 0)
+            if (data.role == 'ORGANIZER')
+              organizer = true;
+            else if (data.status == 'NEEDS-ACTION' || data.status == 'TENTATIVE' && settings.identity.emails.indexOf(';'+data.email) >= 0)
               rsvp = true;
           }
-          html += '<span class="attendee ' + data.status.toLowerCase() + '">' + dispname + '</span> ';
+          html += '<span class="attendee ' + String(data.role == 'ORGANIZER' ? 'organizer' : data.status).toLowerCase() + '">' + dispname + '</span> ';
           
           // stop listing attendees
           if (j == 7 && event.attendees.length >= 7) {
@@ -313,7 +309,8 @@ function rcube_calendar_ui(settings)
             break;
           }
         }
-        if (html) {
+        
+        if (html && (event.attendees.length > 1 || !organizer)) {
           $('#event-attendees').show()
             .children('.event-text')
             .html(html)
