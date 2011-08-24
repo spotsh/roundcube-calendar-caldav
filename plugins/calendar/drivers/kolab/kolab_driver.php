@@ -311,15 +311,25 @@ class kolab_driver extends calendar_driver
 
 
   /**
-   * Move a single event
+   * Fetch a single event
    *
    * @see calendar_driver::get_event()
    * @return array Hash array with event properties, false if not found
    */
   public function get_event($event)
   {
-    if ($storage = $this->calendars[$event['calendar']])
-      return $storage->get_event($event['id']);
+    $id = $event['id'] ? $event['id'] : $event['uid'];
+    if ($event['calendar'] && ($storage = $this->calendars[$event['calendar']])) {
+      return $storage->get_event($id);
+    }
+    // iterate over all calendar folders and search for the event ID
+    else if (!$event['calendar']) {
+      foreach ($this->calendars as $storage) {
+        if ($result = $storage->get_event($id)) {
+          return $result;
+        }
+      }
+    }
 
     return false;
   }

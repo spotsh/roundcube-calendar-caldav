@@ -171,6 +171,19 @@ rcube_calendar.add_event_from_mail = function(mime_id, status)
   return false;
 };
 
+rcube_calendar.fetch_event_rsvp_status = function(event)
+{
+/*
+  var id = event.uid.replace(rcmail.identifier_expr, '');
+  $('#import-'+id+', #rsvp-'+id+', div.rsvp-status').hide();
+  $('#loading-'+id).show();
+*/
+  rcmail.http_post('calendar/event', {
+    e:event,
+    action:'rsvp-status'
+  });
+};
+
 
 // extend jQuery
 (function($){
@@ -187,8 +200,19 @@ rcube_calendar.add_event_from_mail = function(mime_id, status)
 window.rcmail && rcmail.addEventListener('init', function(evt) {
   if (rcmail.task != 'calendar') {
     var cal = new rcube_calendar(rcmail.env.calendar_settings);
+    
     rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
+    
+    rcmail.addEventListener('plugin.update_event_rsvp_status', function(p){
+      if (p.html)
+        $('#loading-'+p.id).hide().after(p.html);
+      else
+        $('#loading-'+p.id).hide();
+      
+      $('#'+p.action+'-'+p.id).show();
+    });
   }
+  
   rcmail.addEventListener('plugin.ping_url', function(p){
     var action = p.action;
     p.action = p.event = null;

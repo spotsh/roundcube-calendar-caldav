@@ -138,6 +138,9 @@ $labels['itipmailbodydeclined'] = "\$sender has declined the invitation to the f
 $labels['importtocalendar'] = 'Save to my calendar';
 $labels['updateattendeestatus'] = 'Update the participant\'s status';
 $labels['acceptinvitation'] = 'Do you accept this invitation?';
+$labels['youhaveaccepted'] = 'You have accepted this invitation';
+$labels['youhavetentative'] = 'You have tentatively accepted this invitation';
+$labels['youhavedeclined'] = 'You have declined this invitation';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';

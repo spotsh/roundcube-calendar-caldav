@@ -1111,6 +1111,7 @@ div.calendar-invitebox td.label {
 }
 
 #event-rsvp .rsvp-buttons,
+div.calendar-invitebox .rsvp-status,
 div.calendar-invitebox .rsvp-buttons {
 	margin-top: 0.5em;
 }
@@ -1120,3 +1121,25 @@ div.calendar-invitebox input.button {
 	font-size: 11px;
 	margin-right: 0.5em;
 }
+
+div.calendar-invitebox .rsvp-status.loading {
+	color: #666;
+	padding: 1px 0 2px 24px;
+	background: url('images/loading-small.gif') top left no-repeat;
+}
+
+div.calendar-invitebox .rsvp-status.declined,
+div.calendar-invitebox .rsvp-status.tentative,
+div.calendar-invitebox .rsvp-status.accepted {
+	padding: 0 0 1px 22px;
+	background: url('images/attendee-status.gif') 2px -20px no-repeat;
+}
+
+div.calendar-invitebox .rsvp-status.declined {
+	background-position: 2px -40px;
+}
+
+div.calendar-invitebox .rsvp-status.tentative {
+	background-position: 2px -60px;
+}
+

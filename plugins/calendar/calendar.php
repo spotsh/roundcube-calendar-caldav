@@ -600,6 +600,37 @@ class calendar extends rcube_plugin
 
         break;
 
+      case "rsvp-status":
+        $status = 'unknown';
+        $action = 'rsvp';
+        $html = html::div('rsvp-status', $this->gettext('acceptinvitation'));
+        $this->load_driver();
+        if ($existing = $this->driver->get_event($event)) {
+          $emails = $this->get_user_emails();
+          foreach ($existing['attendees'] as $i => $attendee) {
+            if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+              $status = $attendee['status'];
+              break;
+            }
+          }
+
+          if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
+            $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
+            if ($event['changed'] < $existing['changed']) {
+              $action = '';
+            }
+          }
+        }
+        
+        $this->rc->output->command('plugin.update_event_rsvp_status', array(
+          'uid' => $event['uid'],
+          'id' => asciiwords($event['uid'], true),
+          'status' => $status,
+          'action' => $action,
+          'html' => $html,
+        ));
+        return;
+
       case "rsvp":
         $ev = $this->driver->get_event($event);
         $ev['attendees'] = $event['attendees'];
@@ -774,6 +805,7 @@ class calendar extends rcube_plugin
           $identity = $rec;
         $identity['emails'][] = $rec['email'];
       }
+      $identity['emails'][] = $this->rc->user->get_username();
       $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
     }
 
@@ -1577,25 +1609,28 @@ class calendar extends rcube_plugin
         else if ($this->ical->method == 'REQUEST') {
           $title = $event['SEQUENCE'] > 0 ? $this->gettext('itipupdate') : $this->gettext('itipinvitation');
           
-          // TODO: check for a copy in my calendar in order to show the right options
-          if (!$event['SEQUENCE']) {
-            foreach (array('accepted','tentative','declined') as $method) {
-              $buttons .= html::tag('input', array(
-                'type' => 'button',
-                'class' => 'button',
-                'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '$method')",
-                'value' => $this->gettext('itip' . $method),
-              ));
-            }
-          }
-          else {
-            $buttons = html::tag('input', array(
+          // add (hidden) buttons and activate them from asyncronous request
+          foreach (array('accepted','tentative','declined') as $method) {
+            $rsvp_buttons .= html::tag('input', array(
               'type' => 'button',
               'class' => 'button',
-              'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "')",
-              'value' => $this->gettext('importtocalendar'),
+              'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '$method')",
+              'value' => $this->gettext('itip' . $method),
             ));
           }
+          $import_button = html::tag('input', array(
+            'type' => 'button',
+            'class' => 'button',
+            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "')",
+            'value' => $this->gettext('importtocalendar'),
+          ));
+          
+          $dom_id = asciiwords($event['uid'], true);
+          $buttons = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $rsvp_buttons);
+          $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $import_button);
+          $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
+          
+          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed'])) . ')', 'docready');
         }
         else if ($this->ical->method == 'CANCEL') {
           $title = $this->gettext('itipcancellation');
@@ -1627,7 +1662,7 @@ class calendar extends rcube_plugin
         }
         
         // add box below messsage body
-        $html .= html::div('calendar-invitebox', $table->show() . html::div('rsvp-buttons', $buttons));
+        $html .= html::div('calendar-invitebox', $table->show() . $buttons_pre . html::div('rsvp-buttons', $buttons));
         
         // limit listing
         if ($idx >= 3)
@@ -1643,8 +1678,8 @@ class calendar extends rcube_plugin
 
     return $p;
   }
-  
-  
+
+
   /**
    * Handler for POST request to import an event attached to a mail message
    */
@@ -1691,10 +1726,8 @@ class calendar extends rcube_plugin
 
       // update my attendee status according to submitted method
       if (!empty($status)) {
-        $emails = array($this->rc->user->get_username());
-        foreach ($this->rc->user->list_identities() as $identity)
-          $emails[] = $identity['email'];
         $organizer = null;
+        $emails = $this->get_user_emails();
         foreach ($event['attendees'] as $i => $attendee) {
           if ($attendee['role'] == 'ORGANIZER') {
             $organizer = $attendee;
@@ -1706,7 +1739,7 @@ class calendar extends rcube_plugin
       }
       
       // save to calendar
-      if ($calendar && !$calendar['readonly'] && $status != 'declined') {
+      if ($calendar && !$calendar['readonly']) {
         $event['id'] = $event['uid'];
         $event['calendar'] = $calendar['id'];
         
@@ -1751,14 +1784,21 @@ class calendar extends rcube_plugin
           }
           // import the (newer) event
           // TODO: compare SEQUENCE numbers instead of changed dates
-          else if ($event['changed'] >= $existing['changed'])
+          else if ($event['changed'] >= $existing['changed']) {
             $success = $this->driver->edit_event($event);
+          }
+          else if (!empty($status)) {
+            $existing['attendees'] = $event['attendees'];
+            $success = $this->driver->edit_event($existing);
+          }
           else
             $error_msg = $this->gettext('newerversionexists');
         }
-        else if (!$existing) {
+        else if (!$existing && $status != 'declined') {
           $success = $this->driver->new_event($event);
         }
+        else if ($status == 'declined')
+          $error_msg = null;
       }
       else if ($status == 'declined')
         $error_msg = null;
@@ -1894,6 +1934,19 @@ class calendar extends rcube_plugin
           // Apple sends files as application/x-any (!?)
           ($part->mimetype == 'application/x-any' && $part->filename && preg_match('/\.ics$/i', $part->filename))
       );
+  }
+
+
+  /**
+   * Get a list of email addresses of the current user (from login and identities)
+   */
+  private function get_user_emails()
+  {
+    $emails = array($this->rc->user->get_username());
+    foreach ($this->rc->user->list_identities() as $identity)
+      $emails[] = $identity['email'];
+    
+    return array_unique($emails);
   }
 
 }
