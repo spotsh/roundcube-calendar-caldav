@@ -2004,17 +2004,17 @@ function rcube_calendar_ui(settings)
           event.end.setSeconds(0);
         }
         // moved from all-day section: set times to working hours
-        else if (event.allday && !allDay && minuteDelta) {
-          var start = event.start.getTime();
-          revertFunc();
+        else if (event.allday && !allDay) {
+          var newstart = event.start.getTime();
+          revertFunc();  // revert to get original duration
           var numdays = Math.max(1, Math.round((event.end.getTime() - event.start.getTime()) / DAY_MS)) - 1;
-          event.start = new Date(start);
-          event.end = new Date(start + numdays * DAY_MS);
+          event.start = new Date(newstart);
+          event.end = new Date(newstart + numdays * DAY_MS);
           event.end.setHours(settings['work_end'] || 18);
           event.end.setMinutes(0);
           
           if (event.end.getTime() < event.start.getTime())
-            event.end = new Date(event.start.getTime() + HOUR_MS);
+            event.end = new Date(newstart + HOUR_MS);
         }
         
         // send move request to server
