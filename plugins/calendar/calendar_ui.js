@@ -1625,6 +1625,7 @@ function rcube_calendar_ui(settings)
         if (calendar.id)
           data.id = calendar.id;
 
+        me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
         rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });
         $dialog.dialog("close");
       };

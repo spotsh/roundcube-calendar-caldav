@@ -508,6 +508,8 @@ class calendar extends rcube_plugin
       $this->rc->output->show_message($error_msg, 'error');
     }
 
+    $this->rc->output->command('plugin.unlock_saving');
+
     // TODO: keep view and date selection
     if ($success && $reload)
       $this->rc->output->redirect('');
