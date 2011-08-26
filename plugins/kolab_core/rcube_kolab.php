@@ -188,6 +188,32 @@ class rcube_kolab
     }
 
     /**
+     * Checks if the given folder is subscribed.
+     * Much nicer would be if the Kolab_Folder object could tell this information
+     *
+     * @param string Full IMAP folder name
+     * @return boolean True if in the list of subscribed folders, False if not
+     */
+    public static function is_subscribed($folder)
+    {
+      static $subscribed;  // local cache
+      
+      if (!$subscribed) {
+        $rcmail = rcmail::get_instance();
+        // try without connection first (list could be served from cache)
+        $subscribed = $rcmail->imap->list_mailboxes();
+        
+        // now really get the list from the IMAP server
+        if (empty($subscribed) || $subscribed == array('INBOX')) {
+          $rcmail->imap_connect();
+          $subscribed = $rcmail->imap->list_mailboxes();
+        }
+      }
+      
+      return in_array($folder, $subscribed);
+    }
+
+    /**
      * Get storage object for read/write access to the Kolab backend
      *
      * @param string IMAP folder to access (UTF7-IMAP)
