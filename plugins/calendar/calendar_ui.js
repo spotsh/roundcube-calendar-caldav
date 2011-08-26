@@ -2156,8 +2156,10 @@ function rcube_calendar_ui(settings)
           var cell = $(e.target);
           if (e.target.tagName == 'TD' && cell.hasClass('ui-datepicker-week-col')) {
             var base_date = minical.datepicker('getDate');
-            base_date.setMonth(minical.data('month')-1);
-            base_date.setYear(minical.data('year'));
+            if (minical.data('month'))
+              base_date.setMonth(minical.data('month')-1);
+            if (minical.data('year'))
+              base_date.setYear(minical.data('year'));
             var day_off = base_date.getDay() - 1;
             if (day_off < 0) day_off = 6;
             var base_kw = $.datepicker.iso8601Week(base_date);
