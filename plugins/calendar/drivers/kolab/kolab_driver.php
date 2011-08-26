@@ -133,6 +133,7 @@ class kolab_driver extends calendar_driver
           'readonly' => $cal->readonly,
           'showalarms' => $cal->alarms,
           'class_name' => $cal->get_namespace(),
+          'active'   => rcube_kolab::is_subscribed($cal->get_realname()),
         );
       }
     }
@@ -156,15 +157,24 @@ class kolab_driver extends calendar_driver
     if ($folder === false) {
       return false;
     }
+    
+    // subscribe to new calendar by default
+    $this->rc->imap_connect();
+    $this->rc->imap->subscribe($folder);
 
     // create ID
     $id = rcube_kolab::folder_id($folder);
 
     // save color in user prefs (temp. solution)
     $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
-    $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
 
-    $this->rc->user->save_prefs($prefs);
+    if (isset($prop['color']))
+      $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+    if (isset($prop['showalarms']))
+      $prefs['kolab_calendars'][$id]['showalarms'] = $prop['showalarms'] ? true : false;
+
+    if ($prefs['kolab_calendars'][$id])
+      $this->rc->user->save_prefs($prefs);
 
     return $id;
   }
@@ -188,17 +198,41 @@ class kolab_driver extends calendar_driver
       // create ID
       $id = rcube_kolab::folder_id($newfolder);
 
-      // save color and alarms in user prefs (temp. solution)
+      // fallback to local prefs
       $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
       unset($prefs['kolab_calendars'][$prop['id']]);
-      $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
-      $prefs['kolab_calendars'][$id]['showalarms'] = $prop['showalarms'] ? true : false;
 
-      $this->rc->user->save_prefs($prefs);
+      if (isset($prop['color']))
+        $prefs['kolab_calendars'][$id]['color'] = $prop['color'];
+      if (isset($prop['showalarms']))
+        $prefs['kolab_calendars'][$id]['showalarms'] = $prop['showalarms'] ? true : false;
+
+      if ($prefs['kolab_calendars'][$id])
+        $this->rc->user->save_prefs($prefs);
+
       return true;
     }
 
-  	 return false;
+    return false;
+  }
+
+
+  /**
+   * Set active/subscribed state of a calendar
+   *
+   * @see calendar_driver::subscribe_calendar()
+   */
+  public function subscribe_calendar($prop)
+  {
+    if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
+      $this->rc->imap_connect();
+      if ($prop['active'])
+        return $this->rc->imap->subscribe($cal->get_realname());
+      else
+        return $this->rc->imap->unsubscribe($cal->get_realname());
+    }
+    
+    return false;
   }
 
 
@@ -209,7 +243,7 @@ class kolab_driver extends calendar_driver
    *
    * @return mixed New folder name or False on failure
    */
-  private function folder_update($prop)
+  private function folder_update(&$prop)
   {
     $folder    = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
     $oldfolder = $prop['oldname']; // UTF7
@@ -280,7 +314,16 @@ class kolab_driver extends calendar_driver
       if (!($result = rcube_kolab::folder_create($folder, 'event', false)))
         $this->last_error = rcube_kolab::$last_error;
     }
-
+/*
+    // save color in METADATA
+    // TODO: also save 'showalarams' and other properties here
+    if ($result && $prop['color']) {
+      if (!($meta_saved = $this->rc->imap->set_metadata($folder, array('/shared/vendor/kolab/color' => $prop['color']))))  // try in shared namespace
+        $meta_saved = $this->rc->imap->set_metadata($folder, array('/private/vendor/kolab/color' => $prop['color']));    // try in private namespace
+      if ($meta_saved)
+        unset($prop['color']);  // unsetting will prevent fallback to local user prefs
+    }
+*/
     return $result ? $folder : false;
   }
 

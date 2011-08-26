@@ -113,6 +113,16 @@ abstract class calendar_driver
    * @return boolean True on success, Fales on failure
    */
   abstract function edit_calendar($prop);
+  
+  /**
+   * Set active/subscribed state of a calendar
+   *
+   * @param array Hash array with calendar properties
+   *          id: Calendar Identifier
+   *      active: True if calendar is active, false if not
+   * @return boolean True on success, Fales on failure
+   */
+  abstract function subscribe_calendar($prop);
 
   /**
    * Delete the given calendar with all its contents

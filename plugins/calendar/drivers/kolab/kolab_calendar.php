@@ -152,6 +152,11 @@ class kolab_calendar
    */
   public function get_color()
   {
+    // color is defined in folder METADATA
+    if ($color = $this->storage->_folder->getKolabAttribute('color')) {
+      return $color;
+    }
+    
     // Store temporarily calendar color in user prefs (will be changed)
     $prefs = $this->cal->rc->config->get('kolab_calendars', array());
 

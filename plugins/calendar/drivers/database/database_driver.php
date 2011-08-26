@@ -76,6 +76,8 @@ class database_driver extends calendar_driver
    */
   private function _read_calendars()
   {
+    $hidden = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
+    
     if (!empty($this->rc->user->ID)) {
       $calendar_ids = array();
       $result = $this->rc->db->query(
@@ -85,6 +87,7 @@ class database_driver extends calendar_driver
       );
       while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
         $arr['showalarms'] = intval($arr['showalarms']);
+        $arr['active'] = !in_array($arr['id'], $hidden);
         $this->calendars[$arr['calendar_id']] = $arr;
         $calendar_ids[] = $this->rc->db->quote($arr['calendar_id']);
       }
@@ -131,7 +134,7 @@ class database_driver extends calendar_driver
     
     return false;
   }
-  
+
   /**
    * Update properties of an existing calendar
    *
@@ -152,6 +155,24 @@ class database_driver extends calendar_driver
     );
     
     return $this->rc->db->affected_rows($query);
+  }
+
+  /**
+   * Set active/subscribed state of a calendar
+   * Save a list of hidden calendars in user prefs
+   *
+   * @see calendar_driver::subscribe_calendar()
+   */
+  public function subscribe_calendar($prop)
+  {
+    $hidden = array_flip(explode(',', $this->rc->config->get('hidden_calendars', '')));
+    
+    if ($prop['active'])
+      unset($hidden[$prop['id']]);
+    else
+      $hidden[$prop['id']] = 1;
+    
+    return $this->rc->user->save_prefs(array('hidden_calendars' => join(',', array_keys($hidden))));
   }
 
   /**

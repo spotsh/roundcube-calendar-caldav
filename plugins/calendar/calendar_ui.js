@@ -1815,8 +1815,7 @@ function rcube_calendar_ui(settings)
         id: id
       }, cal);
       
-      if ((active = ($.inArray(String(id), settings.hidden_calendars) < 0))) {
-        this.calendars[id].active = true;
+      if ((active = cal.active || false)) {
         event_sources.push(this.calendars[id]);
       }
       
@@ -1829,17 +1828,15 @@ function rcube_calendar_ui(settings)
             if (this.checked) {
               action = 'addEventSource';
               me.calendars[id].active = true;
-              settings.hidden_calendars = $.map(settings.hidden_calendars, function(v){ return v == id ? null : v; });
             }
             else {
               action = 'removeEventSource';
               me.calendars[id].active = false;
-              settings.hidden_calendars.push(id);
             }
             
             // add/remove event source
             fc.fullCalendar(action, me.calendars[id]);
-            rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
+            rcmail.http_post('calendar', { action:'subscribe', c:{ id:id, active:me.calendars[id].active?1:0 } });
           }
         }).data('id', id).get(0).checked = active;
         
