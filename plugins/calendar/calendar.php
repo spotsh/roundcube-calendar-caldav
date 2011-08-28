@@ -495,6 +495,10 @@ class calendar extends rcube_plugin
         if ($success = $this->driver->remove_calendar($cal))
           $this->rc->output->command('plugin.destroy_source', array('id' => $cal['id']));
         break;
+      case "subscribe":
+        if (!$this->driver->subscribe_calendar($cal))
+          $this->rc->output->show_message($this->gettext('errorsaving'), 'error');
+        return;
     }
     
     if ($success)
@@ -503,6 +507,8 @@ class calendar extends rcube_plugin
       $error_msg = $this->gettext('errorsaving') . ($this->driver->last_error ? ': ' . $this->driver->last_error :'');
       $this->rc->output->show_message($error_msg, 'error');
     }
+
+    $this->rc->output->command('plugin.unlock_saving');
 
     // TODO: keep view and date selection
     if ($success && $reload)
@@ -791,9 +797,6 @@ class calendar extends rcube_plugin
     );
     $settings['today'] = rcube_label('today');
 
-    // user prefs
-    $settings['hidden_calendars'] = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
-    
     // get user identity to create default attendee
     if ($this->ui->screen == 'calendar') {
       foreach ($this->rc->user->list_identities() as $rec) {

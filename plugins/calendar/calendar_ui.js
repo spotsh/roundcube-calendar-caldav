@@ -1625,6 +1625,7 @@ function rcube_calendar_ui(settings)
         if (calendar.id)
           data.id = calendar.id;
 
+        me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
         rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });
         $dialog.dialog("close");
       };
@@ -1814,8 +1815,7 @@ function rcube_calendar_ui(settings)
         id: id
       }, cal);
       
-      if ((active = ($.inArray(String(id), settings.hidden_calendars) < 0))) {
-        this.calendars[id].active = true;
+      if ((active = cal.active || false)) {
         event_sources.push(this.calendars[id]);
       }
       
@@ -1828,17 +1828,15 @@ function rcube_calendar_ui(settings)
             if (this.checked) {
               action = 'addEventSource';
               me.calendars[id].active = true;
-              settings.hidden_calendars = $.map(settings.hidden_calendars, function(v){ return v == id ? null : v; });
             }
             else {
               action = 'removeEventSource';
               me.calendars[id].active = false;
-              settings.hidden_calendars.push(id);
             }
             
             // add/remove event source
             fc.fullCalendar(action, me.calendars[id]);
-            rcmail.save_pref({ name:'hidden_calendars', value:settings.hidden_calendars.join(',') });
+            rcmail.http_post('calendar', { action:'subscribe', c:{ id:id, active:me.calendars[id].active?1:0 } });
           }
         }).data('id', id).get(0).checked = active;
         
@@ -2158,8 +2156,10 @@ function rcube_calendar_ui(settings)
           var cell = $(e.target);
           if (e.target.tagName == 'TD' && cell.hasClass('ui-datepicker-week-col')) {
             var base_date = minical.datepicker('getDate');
-            base_date.setMonth(minical.data('month')-1);
-            base_date.setYear(minical.data('year'));
+            if (minical.data('month'))
+              base_date.setMonth(minical.data('month')-1);
+            if (minical.data('year'))
+              base_date.setYear(minical.data('year'));
             var day_off = base_date.getDay() - 1;
             if (day_off < 0) day_off = 6;
             var base_kw = $.datepicker.iso8601Week(base_date);
