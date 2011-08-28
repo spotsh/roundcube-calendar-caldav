@@ -640,8 +640,8 @@ class database_driver extends calendar_driver
    */
   public function get_event($event)
   {
-    $id = is_array($event) ? $event['id'] : $event;
-    $col = is_numeric($event['id']) ? 'event_id' : 'uid';
+    $id = is_array($event) ? ($event['id'] ? $event['id'] : $event['uid']) : $event;
+    $col = $event['id'] && is_numeric($event['id']) ? 'event_id' : 'uid';
     
     if ($this->cache[$id])
       return $this->cache[$id];

@@ -530,7 +530,7 @@ class calendar extends rcube_plugin
       unset($event['notify']);
     
     // read old event data in order to find changes
-    if ($event['notify'] && $action != 'new')
+    if (($event['notify'] || $event['decline']) && $action != 'new')
       $old = $this->driver->get_event($event);
 
     switch ($action) {
@@ -584,6 +584,22 @@ class calendar extends rcube_plugin
           $got_msg = true;
         }
 
+        // send iTIP reply that participant has declined the event
+        if ($success && $event['decline']) {
+          $emails = $this->get_user_emails();
+          foreach ($old['attendees'] as $i => $attendee) {
+            if ($attendee['role'] == 'ORGANIZER')
+              $organizer = $attendee;
+            else if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+              $old['attendees'][$i]['status'] = 'DECLINED';
+            }
+          }
+          
+          if ($organizer && $this->send_itip_message($old, 'REPLY', $organizer, 'itipsubjectdeclined', 'itipmailbodydeclined'))
+            $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name']))), 'confirmation');
+          else
+            $this->rc->output->command('display_message', $this->gettext('itipresponseerror'), 'error');
+        }
         break;
 
       case "undo":
@@ -603,8 +619,8 @@ class calendar extends rcube_plugin
         break;
 
       case "rsvp-status":
-        $status = 'unknown';
         $action = 'rsvp';
+        $status = $event['fallback'];
         $html = html::div('rsvp-status', $this->gettext('acceptinvitation'));
         $this->load_driver();
         if ($existing = $this->driver->get_event($event)) {
@@ -615,12 +631,14 @@ class calendar extends rcube_plugin
               break;
             }
           }
-
-          if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
-            $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
-            if ($event['changed'] < $existing['changed']) {
-              $action = '';
-            }
+        }
+        else
+          $action = 'import';
+        
+        if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
+          $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
+          if ($existing['changed'] && $event['changed'] < $existing['changed']) {
+            $action = '';
           }
         }
         
@@ -1305,12 +1323,12 @@ class calendar extends rcube_plugin
     
     // check for organizer in attendees
     if ($event['attendees']) {
-      $identity = $this->rc->user->get_identity();
+      $emails = $this->get_user_emails();
       $organizer = $owner = false;
       foreach ($event['attendees'] as $i => $attendee) {
         if ($attendee['role'] == 'ORGANIZER')
           $organizer = true;
-        if ($attendee['email'] == $identity['email'])
+        if ($attendee['email'] == in_array($attendee['email'], $emails))
           $owner = $i;
         else if (!isset($attendee['rsvp']))
           $event['attendees'][$i]['rsvp'] = true;
@@ -1321,7 +1339,7 @@ class calendar extends rcube_plugin
         $event['attendees'][$owner]['role'] = 'ORGANIZER';
         unset($event['attendees'][$owner]['rsvp']);
       }
-      else if (!$organizer && $identity['email'] && $action == 'new') {
+      else if (!$organizer && $action == 'new' && ($identity = $this->rc->user->get_identity()) && $identity['email']) {
         array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
       }
     }
@@ -1348,6 +1366,8 @@ class calendar extends rcube_plugin
       $event['cancelled'] = true;
       $is_cancelled = true;
     }
+    
+    $emails = $this->get_user_emails();
 
     // compose multipart message using PEAR:Mail_Mime
     $method = $action == 'remove' ? 'CANCEL' : 'REQUEST';
@@ -1363,7 +1383,7 @@ class calendar extends rcube_plugin
     $sent = 0;
     foreach ((array)$event['attendees'] as $attendee) {
       // skip myself for obvious reasons
-      if (!$attendee['email'] || $attendee['email'] == $myself['email'])
+      if (!$attendee['email'] || in_array($attendee['email'], $emails))
         continue;
       
       // which template to use for mail text
@@ -1606,6 +1626,7 @@ class calendar extends rcube_plugin
           ));
         }
         else if ($this->ical->method == 'REQUEST') {
+          $emails = $this->get_user_emails();
           $title = $event['SEQUENCE'] > 0 ? $this->gettext('itipupdate') : $this->gettext('itipinvitation');
           
           // add (hidden) buttons and activate them from asyncronous request
@@ -1624,12 +1645,21 @@ class calendar extends rcube_plugin
             'value' => $this->gettext('importtocalendar'),
           ));
           
+          // check my status
+          $status = 'NEEDS-ACTION';
+          foreach ($event['attendees'] as $i => $attendee) {
+            if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+              $status = strtoupper($attendee['status']);
+              break;
+            }
+          }
+          
           $dom_id = asciiwords($event['uid'], true);
           $buttons = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $rsvp_buttons);
           $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $import_button);
           $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
           
-          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed'])) . ')', 'docready');
+          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed'], 'fallback' => $status)) . ')', 'docready');
         }
         else if ($this->ical->method == 'CANCEL') {
           $title = $this->gettext('itipcancellation');

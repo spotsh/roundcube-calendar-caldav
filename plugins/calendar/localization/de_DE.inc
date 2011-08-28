@@ -121,9 +121,26 @@ $labels['eventcancelsubject'] = '"$title" wurde abgesagt';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nDer Termin wurde von \$organizer abgesagt.\n\nIm Anhang finden Sie eine iCalendar-Datei mit den Termindaten.";
 
 // invitation handling
-$labels['itipreply'] = 'Antwort zu ';
+$labels['itipinvitation'] = 'Einladung zu';
+$labels['itipreply'] = 'Antwort zu';
+$labels['itipupdate'] = 'Aktialisiert:';
+$labels['itipcancellation'] = 'Abgesagt:';
+$labels['itipaccepted'] = 'Akzeptieren';
+$labels['itiptentative'] = 'Mit Vorbehalt';
+$labels['itipdeclined'] = 'Ablehnen';
+$labels['itipsubjectaccepted'] = 'Einladung zu "$title" wurde von $name angenommen';
+$labels['itipsubjecttentative'] = 'Einladung zu "$title" wurde von $name mit Vorbehalt angenommen';
+$labels['itipsubjectdeclined'] = 'Einladung zu "$title" wurde von $name abgelehnt';
+$labels['itipmailbodyaccepted'] = "\$sender hat die Einladung zum folgenden Termin angenommen:\n\n*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees";
+$labels['itipmailbodytentative'] = "\$sender hat die Einladung mit Vorbehalt zum folgenden Termin angenommen:\n\n*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees";
+$labels['itipmailbodydeclined'] = "\$sender hat die Einladung zum folgenden Termin abgelehnt:\n\n*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees";
+$labels['itipdeclineevent'] = 'Möchten Sie die Einladung zu diesem Termin ablehnen?';
 $labels['importtocalendar'] = 'In Kalender übernehmen';
 $labels['updateattendeestatus'] = 'Teilnehmerstatus aktualisieren';
+$labels['acceptinvitation'] = 'Möchten Sie die Einladung zu diesem Termin annehmen?';
+$labels['youhaveaccepted'] = 'Sie haben die Einladung angenommen';
+$labels['youhavetentative'] = 'Sie haben die Einladung mit Vorbehalt angenommen';
+$labels['youhavedeclined'] = 'Sie haben die Einladung abgelehnt';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Übersicht';
@@ -147,6 +164,10 @@ $labels['errorimportingevent'] = 'Fehler beim Importieren';
 $labels['newerversionexists'] = 'Eine neuere Version dieses Termins exisitert bereits! Import abgebrochen.';
 $labels['nowritecalendarfound'] = 'Kein Kalender zum Speichern gefunden';
 $labels['importedsuccessfully'] = 'Der Termin wurde erfolgreich in \'$calendar\' gespeichert';
+$labels['attendeupdateesuccess'] = 'Teilnehmerstatus erfolgreich aktualisiert';
+$labels['itipresponseerror'] = 'Die Antwort auf diese Einladung konnte nicht versendet werden';
+$labels['sentresponseto'] = 'Antwort auf diese Einladung erfolgreich an $mailto gesendet';
+$labels['localchangeswarning'] = 'Die Änderungen an diesem Termin können nur in Ihrem persönlichen Kalender gespeichert werden.';
 
 // recurrence form
 $labels['repeat'] = 'Wiederholung';

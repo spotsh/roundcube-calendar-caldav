@@ -45,7 +45,8 @@ CREATE TABLE `events` (
   `attendees` text DEFAULT NULL,
   `notifyat` datetime DEFAULT NULL,
   PRIMARY KEY(`event_id`),
-  INDEX `recurrence_idx` (`recurrence_id`),
+  INDEX `uid_idx` (`uid`,`calendar_id`),
+	INDEX `recurrence_idx` (`recurrence_id`),
   CONSTRAINT `fk_events_calendar_id` FOREIGN KEY (`calendar_id`)
     REFERENCES `calendars`(`calendar_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
