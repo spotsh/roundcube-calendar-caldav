@@ -85,11 +85,7 @@ class calendar extends rcube_plugin
     $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
 
     // set user's timezone
-    if ($this->rc->config->get('timezone') === 'auto')
-      $this->timezone = isset($_SESSION['timezone']) ? $_SESSION['timezone'] : date('Z');
-    else
-      $this->timezone = ($this->rc->config->get('timezone') + intval($this->rc->config->get('dst_active')));
-
+    $this->timezone = $this->rc->config->get_timezone();
     $this->gmt_offset = $this->timezone * 3600;
 
     require($this->home . '/lib/calendar_ui.php');
