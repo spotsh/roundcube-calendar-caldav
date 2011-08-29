@@ -927,6 +927,8 @@ a.alarm-action-snooze:after {
 	position: relative;
 	padding-top: 22px;
 	margin: 0 -8px;
+	min-width: 660px;
+	min-height: 400px;
 }
 
 #calendar-kolabform div.tabsbar {

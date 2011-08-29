@@ -307,7 +307,7 @@ function rcube_calendar_ui(settings)
             dispname = '<a href="mailto:' + data.email + '" title="' + Q(data.email) + '" class="mailtolink">' + dispname + '</a>';
             if (data.role == 'ORGANIZER')
               organizer = true;
-            else if ((data.status == 'NEEDS-ACTION' || data.status == 'TENTATIVE') && data.email && settings.identity.emails.indexOf(';'+data.email) >= 0)
+            else if ((data.status == 'NEEDS-ACTION' || data.status == 'TENTATIVE') && settings.identity.emails.indexOf(';'+data.email) >= 0)
               rsvp = data.status.toLowerCase();
           }
           html += '<span class="attendee ' + String(data.role == 'ORGANIZER' ? 'organizer' : data.status).toLowerCase() + '">' + dispname + '</span> ';
@@ -1655,6 +1655,7 @@ function rcube_calendar_ui(settings)
       $dialog.dialog({
         modal: true,
         resizable: true,
+        closeOnEscape: false,
         title: rcmail.gettext((calendar.id ? 'editcalendar' : 'createcalendar'), 'calendar'),
         close: function() {
           $dialog.dialog("destroy").hide();

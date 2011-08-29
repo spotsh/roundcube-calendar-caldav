@@ -147,6 +147,7 @@ $labels['tabsummary'] = 'Übersicht';
 $labels['tabrecurrence'] = 'Wiederholung';
 $labels['tabattendees'] = 'Teilnehmer';
 $labels['tabattachments'] = 'Anhänge';
+$labels['tabsharing'] = 'Freigabe';
 
 // messages
 $labels['deleteventconfirm'] = 'Möchten Sie diesen Termin wirklich löschen?';

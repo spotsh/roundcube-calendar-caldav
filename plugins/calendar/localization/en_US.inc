@@ -148,6 +148,7 @@ $labels['tabsummary'] = 'Summary';
 $labels['tabrecurrence'] = 'Recurrence';
 $labels['tabattendees'] = 'Participants';
 $labels['tabattachments'] = 'Attachments';
+$labels['tabsharing'] = 'Sharing';
 
 // messages
 $labels['deleteventconfirm'] = 'Do you really want to delete this event?';

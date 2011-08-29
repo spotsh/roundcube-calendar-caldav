@@ -50,6 +50,7 @@ class kolab_driver extends calendar_driver
     $this->_read_calendars();
     
     $this->cal->register_action('push-freebusy', array($this, 'push_freebusy'));
+    $this->cal->register_action('calendar-acl', array($this, 'calendar_acl'));
   }
 
 
@@ -948,26 +949,6 @@ class kolab_driver extends calendar_driver
    */
   public function calendar_form($action, $calendar, $formfields)
   {
-    // Remove any scripts/css/js
-    $this->rc->output->reset();
-
-    // Produce form content
-    $content = $this->calendar_form_content($calendar, $formfields);
-
-    // Parse form template for skin-dependent stuff
-    // TODO: copy scripts and styles added by other plugins (e.g. acl) from $this->rc->output
-    $html = $this->rc->output->parse('calendar.calendarform-kolab', false, false);
-
-    return str_replace('%FORM_CONTENT%', $content, $html);
-  }
-
-  /**
-   * Produces calendar edit/create form content
-   *
-   * @return string HTML content of the form
-   */
-  private function calendar_form_content($calendar, $formfields)
-  {
     if ($calendar['id'] && ($cal = $this->calendars[$calendar['id']])) {
       $folder = $cal->get_realname(); // UTF7
       $color  = $cal->get_color();
@@ -1034,18 +1015,26 @@ class kolab_driver extends calendar_driver
         'showalarms' => $formfields['showalarms'],
       ),
     );
+    
+    
+    if ($action != 'form-new') {
+      $form['sharing'] = array(
+          'name'    => Q($this->cal->gettext('tabsharing')),
+          'content' => html::tag('iframe', array(
+            'src' => $this->cal->rc->url(array('_action' => 'calendar-acl', 'id' => $calendar['id'], 'framed' => 1)),
+            'width' => '100%',
+            'height' => 350,
+            'border' => 0,
+            'style' => 'border:0'),
+        ''),
+      );
+    }
 
-    // Allow plugins to modify the form content (e.g. with ACL form)
-    $plugin = $this->rc->plugins->exec_hook('calendar_form_kolab',
-      array('form' => $form, 'options' => $options, 'name' => $folder));
-
-    $form = $plugin['form'];
-    $out = '';
-
+    $this->form_html = '';
     if (is_array($hidden_fields)) {
         foreach ($hidden_fields as $field) {
             $hiddenfield = new html_hiddenfield($field);
-            $out .= $hiddenfield->show() . "\n";
+            $this->form_html .= $hiddenfield->show() . "\n";
         }
     }
 
@@ -1065,11 +1054,21 @@ class kolab_driver extends calendar_driver
       }
 
       if ($content) {
-        $out .= html::tag('fieldset', null, html::tag('legend', null, Q($tab['name'])) . $content) ."\n";
+        $this->form_html .= html::tag('fieldset', null, html::tag('legend', null, Q($tab['name'])) . $content) ."\n";
       }
     }
 
-    return $out;
+    // Parse form template for skin-dependent stuff
+    $this->rc->output->add_handler('calendarform', array($this, 'calendar_form_html'));
+    return $this->rc->output->parse('calendar.kolabform', false, false);
+  }
+
+  /**
+   * Handler for template object
+   */
+  public function calendar_form_html()
+  {
+    return $this->form_html;
   }
 
   /**
@@ -1095,6 +1094,52 @@ class kolab_driver extends calendar_driver
     }
 
     return $content;
+  }
+
+
+  /**
+   * Handler to render ACL form for a calendar folder
+   */
+  public function calendar_acl()
+  {
+    $this->rc->output->add_handler('folderacl', array($this, 'calendar_acl_form'));
+    $this->rc->output->send('calendar.kolabacl');
+  }
+
+  /**
+   * Handler for ACL form template object
+   */
+  public function calendar_acl_form()
+  {
+    $calid = get_input_value('_id', RCUBE_INPUT_GPC);
+    if ($calid && ($cal = $this->calendars[$calid])) {
+      $folder = $cal->get_realname(); // UTF7
+      $color  = $cal->get_color();
+    }
+    else {
+      $folder = '';
+      $color  = '';
+    }
+
+    $hidden_fields[] = array('name' => 'oldname', 'value' => $folder);
+
+    $delim  = $_SESSION['imap_delimiter'];
+    $form   = array();
+
+    if (strlen($folder)) {
+      $path_imap = explode($delim, $folder);
+      array_pop($path_imap);  // pop off name part
+      $path_imap = implode($path_imap, $delim);
+
+      $this->rc->imap_connect();
+      $options = $this->rc->imap->mailbox_info($folder);
+    
+      // Allow plugins to modify the form content (e.g. with ACL form)
+      $plugin = $this->rc->plugins->exec_hook('calendar_form_kolab',
+        array('form' => $form, 'options' => $options, 'name' => $folder));
+    }
+
+    return $plugin['form']['sharing']['content'];
   }
 
 }
