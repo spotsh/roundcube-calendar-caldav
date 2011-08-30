@@ -5,12 +5,12 @@ body.calendarmain {
 }
 
 #taskbar a.button-calendar {
-	background: url('images/calendar.png') 0px 1px no-repeat;
+	background: url(images/calendar.png) 0px 1px no-repeat;
 }
 
 /* hack for IE 6/7 */
 * html #taskbar a.button-calendar {
-	background-image: url('images/calendar.gif');
+	background-image: url(images/calendar.gif);
 }
 
 #main {
@@ -64,7 +64,7 @@ body.calendarmain {
 	width: 8px;
 	top: 37px;
 	bottom: 0;
-	background: url('images/toggle.gif') 0 48% no-repeat transparent;
+	background: url(images/toggle.gif) 0 48% no-repeat transparent;
 	cursor: pointer;
 }
 
@@ -125,7 +125,7 @@ pre {
 
 #calendarslist li span {
 	cursor: default;
-	background: url('images/calendars.png') 0 -2px no-repeat;
+	background: url(images/calendars.png) 0 -2px no-repeat;
 	padding-left: 18px;
 }
 
@@ -210,7 +210,7 @@ pre {
 	padding: 0;
 	margin-right: 10px;
 	overflow: hidden;
-	background: url('images/toolbar.png') 0 0 no-repeat transparent;
+	background: url(images/toolbar.png) 0 0 no-repeat transparent;
 	opacity: 0.99; /* this is needed to make buttons appear correctly in Chrome */
 }
 
@@ -352,7 +352,7 @@ a.miniColors-trigger {
 #event-attendees span.attendee {
 	padding-right: 18px;
 	margin-right: 0.5em;
-	background: url('images/attendee-status.gif') right 0 no-repeat;
+	background: url(images/attendee-status.gif) right 0 no-repeat;
 }
 
 #event-attendees span.attendee a.mailtolink {
@@ -571,7 +571,7 @@ td.topalign {
 }
 
 #edit-attendees-table thead td {
-	background: url('images/listheader.gif') top left repeat-x #CCC;
+	background: url(images/listheader.gif) top left repeat-x #CCC;
 }
 
 #edit-attendees-form {
@@ -600,7 +600,7 @@ td.topalign {
 }
 
 .availability img.availabilityicon.loading {
-	background: url('images/loading-small.gif') middle middle no-repeat;
+	background: url(images/loading-small.gif) center no-repeat;
 }
 
 #schedule-freebusy-times td.unknown,
@@ -631,7 +631,7 @@ td.topalign {
 #schedule-freebusy-times td.all-busy,
 #schedule-freebusy-times td.all-tentative,
 #schedule-freebusy-times td.all-out-of-office {
-	background-image: url('images/freebusy-colors.png');
+	background-image: url(images/freebusy-colors.png);
 	background-position: top right;
 	background-repeat: no-repeat;
 }
@@ -667,11 +667,10 @@ td.topalign {
 #edit-attendees-table td.confirmstate span {
 	display: block;
 	width: 20px;
-	background: url('images/attendee-status.gif') 5px 0 no-repeat;
+	background: url(images/attendee-status.gif) 5px 0 no-repeat;
 }
 
 #edit-attendees-table td.confirmstate span.needs-action {
-	
 }
 
 #edit-attendees-table td.confirmstate span.accepted {
@@ -719,7 +718,7 @@ td.topalign {
 
 .attendees-list .attendee {
 	padding: 3px 4px 3px 1px;
-	background: url('images/attendee-status.gif') 2px -97px no-repeat;
+	background: url(images/attendee-status.gif) 2px -97px no-repeat;
 	white-space: nowrap;
 }
 
@@ -752,7 +751,7 @@ td.topalign {
 }
 
 .attendees-list .loading {
-	background: url('images/loading-small.gif') 1px 50% no-repeat;
+	background: url(images/loading-small.gif) 1px 50% no-repeat;
 }
 
 .attendees-list .total {
@@ -1024,7 +1023,7 @@ div.fc-event-location {
 	display: inline-block;
 	width: 11px;
 	height: 11px;
-	background: url('images/eventicons.gif') 0 0 no-repeat;
+	background: url(images/eventicons.gif) 0 0 no-repeat;
 	margin-left: 3px;
 	line-height: 10px;
 }
@@ -1099,7 +1098,7 @@ div.calendar-invitebox {
 	margin: 5px 8px;
 	padding: 3px 6px 6px 34px;
 	border: 1px solid #C2D071;
-	background: url('images/calendar.png') 6px 5px no-repeat #F7FDCB;
+	background: url(images/calendar.png) 6px 5px no-repeat #F7FDCB;
 }
 
 div.calendar-invitebox td.ititle {
@@ -1127,14 +1126,14 @@ div.calendar-invitebox input.button {
 div.calendar-invitebox .rsvp-status.loading {
 	color: #666;
 	padding: 1px 0 2px 24px;
-	background: url('images/loading-small.gif') top left no-repeat;
+	background: url(images/loading-small.gif) top left no-repeat;
 }
 
 div.calendar-invitebox .rsvp-status.declined,
 div.calendar-invitebox .rsvp-status.tentative,
 div.calendar-invitebox .rsvp-status.accepted {
 	padding: 0 0 1px 22px;
-	background: url('images/attendee-status.gif') 2px -20px no-repeat;
+	background: url(images/attendee-status.gif) 2px -20px no-repeat;
 }
 
 div.calendar-invitebox .rsvp-status.declined {
