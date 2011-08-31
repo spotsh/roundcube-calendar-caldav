@@ -153,6 +153,7 @@ class kolab_calendar
   public function get_color()
   {
     // color is defined in folder METADATA
+    // FIXME: Kolab_Folder::getKolabAttribute() only reads value.shared; value.priv should be considered first
     if ($color = $this->storage->_folder->getKolabAttribute('color')) {
       return $color;
     }

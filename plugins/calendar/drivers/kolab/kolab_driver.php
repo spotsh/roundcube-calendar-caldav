@@ -315,7 +315,7 @@ class kolab_driver extends calendar_driver
       if (!($result = rcube_kolab::folder_create($folder, 'event', false)))
         $this->last_error = rcube_kolab::$last_error;
     }
-/*
+
     // save color in METADATA
     // TODO: also save 'showalarams' and other properties here
     if ($result && $prop['color']) {
@@ -324,7 +324,7 @@ class kolab_driver extends calendar_driver
       if ($meta_saved)
         unset($prop['color']);  // unsetting will prevent fallback to local user prefs
     }
-*/
+
     return $result ? $folder : false;
   }
 
