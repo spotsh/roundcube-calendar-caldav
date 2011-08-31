@@ -1845,7 +1845,7 @@ class calendar extends rcube_plugin
 
 
     // send iTip reply
-    if ($this->ical->method == 'REQUEST' && $organizer && !$error_msg) {
+    if ($this->ical->method == 'REQUEST' && $organizer && !in_array($organizer['email'], $emails) && !$error_msg) {
       if ($this->send_itip_message($event, 'REPLY', $organizer, 'itipsubject' . $status, 'itipmailbody' . $status))
         $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name']))), 'confirmation');
       else
@@ -1943,7 +1943,7 @@ class calendar extends rcube_plugin
     // attach ics file for this event
     $this->load_ical();
     $vcal = $this->ical->export(array($event), $method);
-    $message->addAttachment($vcal, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET);
+    $message->addAttachment($vcal, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET . "; method=" . $metod);
     
     return $message;
   }
