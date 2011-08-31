@@ -632,7 +632,7 @@ class calendar extends rcube_plugin
             }
           }
         }
-        else
+        else if ($status != 'NEEDS-ACTION')
           $action = 'import';
         
         if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
@@ -1646,7 +1646,7 @@ class calendar extends rcube_plugin
           ));
           
           // check my status
-          $status = 'NEEDS-ACTION';
+          $status = 'unknown';
           foreach ($event['attendees'] as $i => $attendee) {
             if ($attendee['email'] && in_array($attendee['email'], $emails)) {
               $status = strtoupper($attendee['status']);
