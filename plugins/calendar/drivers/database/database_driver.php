@@ -239,6 +239,7 @@ class database_driver extends calendar_driver
       $event_id = $this->rc->db->insert_id($this->sequence_events);
 
       if ($event_id) {
+        $event['id'] = $event_id;
         $this->cache[$eventid] = $event;
 
         // add attachments
@@ -269,11 +270,11 @@ class database_driver extends calendar_driver
     if (!empty($this->calendars)) {
       $update_master = false;
       $update_recurring = true;
-      $old = $this->get_event($event['id']);
+      $old = $this->get_event($event);
       
       // modify a recurring event, check submitted savemode to do the right things
       if ($old['recurrence'] || $old['recurrence_id']) {
-        $master = $old['recurrence_id'] ? $this->get_event($old['recurrence_id']) : $old;
+        $master = $old['recurrence_id'] ? $this->get_event(array('id' => $old['recurrence_id'])) : $old;
         
         // keep saved exceptions (not submitted by the client)
         if ($old['recurrence']['EXDATE'])
@@ -541,7 +542,7 @@ class database_driver extends calendar_driver
   public function move_event($event)
   {
     // let edit_event() do all the magic
-    return $this->edit_event($event + (array)$this->get_event($event['id']));
+    return $this->edit_event($event + (array)$this->get_event($event));
   }
 
   /**
@@ -553,7 +554,7 @@ class database_driver extends calendar_driver
   public function resize_event($event)
   {
     // let edit_event() do all the magic
-    return $this->edit_event($event + (array)$this->get_event($event['id']));
+    return $this->edit_event($event + (array)$this->get_event($event));
   }
 
   /**
@@ -567,14 +568,14 @@ class database_driver extends calendar_driver
   public function remove_event($event, $force = true)
   {
     if (!empty($this->calendars)) {
-      $event += (array)$this->get_event($event['id']);
+      $event += (array)$this->get_event($event);
       $master = $event;
       $update_master = false;
       $savemode = 'all';
 
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
-        $master = $event['recurrence_id'] ? $this->get_event($old['recurrence_id']) : $event;
+        $master = $event['recurrence_id'] ? $this->get_event(array('id' => $old['recurrence_id'])) : $event;
         $savemode = $event['savemode'];
       }
 
@@ -635,7 +636,7 @@ class database_driver extends calendar_driver
 
   /**
    * Return data of a specific event
-   * @param mixed  Hash array with event properties or event ID
+   * @param mixed  Hash array with event properties or event UID
    * @return array Hash array with event properties
    */
   public function get_event($event)

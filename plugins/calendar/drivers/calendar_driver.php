@@ -200,7 +200,7 @@ abstract class calendar_driver
   /**
    * Return data of a single event
    *
-   * @param array  Hash array with event properties:
+   * @param mixed  UID string or hash array with event properties:
    *        id: Event identifier
    *  calendar: Calendar identifier
    * @return array Event object as hash array
