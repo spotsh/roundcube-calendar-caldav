@@ -557,24 +557,24 @@ class calendar extends rcube_plugin
           $event['id'] = $event['uid'];
           $this->cleanup_event($event);
         }
-        $reload = true;
+        $reload = $success && $event['recurrence'] ? 2 : 1;
         break;
         
       case "edit":
         $this->prepare_event($event, $action);
         if ($success = $this->driver->edit_event($event))
             $this->cleanup_event($event);
-        $reload = true;
+        $reload =  $success && $event['recurrence'] ? 2 : 1;
         break;
       
       case "resize":
         $success = $this->driver->resize_event($event);
-        $reload = true;
+        $reload = ($event['savemode'] == 'all' || $event['savemode'] == 'future') ? 2 : 1;
         break;
       
       case "move":
         $success = $this->driver->move_event($event);
-        $reload = true;
+        $reload =  $success && ($event['savemode'] == 'all' || $event['savemode'] == 'future') ? 2 : 1;
         break;
       
       case "remove":
@@ -591,7 +591,7 @@ class calendar extends rcube_plugin
         }
 
         $success = $this->driver->remove_event($event, $undo_time < 1);
-        $reload  = true;
+        $reload = (!$success || $event['savemode'] == 'all' || $event['savemode'] == 'future') ? 2 : 1;
 
         if ($undo_time > 0 && $success) {
           $_SESSION['calendar_event_undo'] = array('ts' => time(), 'data' => $event);
@@ -628,7 +628,6 @@ class calendar extends rcube_plugin
       case "undo":
         // Restore deleted event
         $event  = $_SESSION['calendar_event_undo']['data'];
-        $reload = true;
 
         if ($event)
           $success = $this->driver->restore_event($event);
@@ -637,6 +636,7 @@ class calendar extends rcube_plugin
           $this->rc->session->remove('calendar_event_undo');
           $this->rc->output->show_message('calendar.successrestore', 'confirmation');
           $got_msg = true;
+          $reload = 2;
         }
 
         break;
@@ -724,9 +724,15 @@ class calendar extends rcube_plugin
     // unlock client
     $this->rc->output->command('plugin.unlock_saving');
 
-    // FIXME: update a single event object on the client instead of reloading the entire source
-    if ($reload)
-      $this->rc->output->command('plugin.refresh_calendar', array('source' => $event['calendar'], 'refetch' => $success));
+    // update event object on the client or trigger a complete refretch if too complicated
+    if ($reload) {
+      $args = array('source' => $event['calendar']);
+      if ($reload > 1)
+        $args['refetch'] = true;
+      else if ($success && $action != 'remove')
+        $args['update'] = $this->_client_event($this->driver->get_event($event));
+      $this->rc->output->command('plugin.refresh_calendar', $args);
+    }
   }
 
   /**
@@ -873,22 +879,30 @@ class calendar extends rcube_plugin
   {
     $json = array();
     foreach ($events as $event) {
-      // compose a human readable strings for alarms_text and recurrence_text
-      if ($event['alarms'])
-        $event['alarms_text'] = $this->_alarms_text($event['alarms']);
-      if ($event['recurrence'])
-        $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
-
-      $json[] = array(
-        'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
-        'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
-        'description' => strval($event['description']),
-        'location'    => strval($event['location']),
-        'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'fc-event-cat-' . asciiwords($event['categories'], true),
-        'allDay'      => ($event['allday'] == 1),
-      ) + $event;
+      $json[] = $this->_client_event($event);
     }
     return json_encode($json);
+  }
+
+  /**
+   * Convert an event object to be used on the client
+   */
+  private function _client_event($event)
+  {
+    // compose a human readable strings for alarms_text and recurrence_text
+    if ($event['alarms'])
+      $event['alarms_text'] = $this->_alarms_text($event['alarms']);
+    if ($event['recurrence'])
+      $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
+
+    return array(
+      'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
+      'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
+      'description' => strval($event['description']),
+      'location'    => strval($event['location']),
+      'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'fc-event-cat-' . asciiwords($event['categories'], true),
+      'allDay'      => ($event['allday'] == 1),
+    ) + $event;
   }
 
 
