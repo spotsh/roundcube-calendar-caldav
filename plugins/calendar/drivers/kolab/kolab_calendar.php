@@ -300,6 +300,7 @@ class kolab_calendar
   {
     $updated = false;
     $old = $this->storage->getObject($event['id']);
+    $old['recurrence'] = '';  # clear old field, could have been removed in new, too
     $object = array_merge($old, $this->_from_rcube_event($event));
     $saved = $this->storage->save($object, $event['id']);
 

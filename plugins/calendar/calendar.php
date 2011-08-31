@@ -564,17 +564,17 @@ class calendar extends rcube_plugin
         $this->prepare_event($event, $action);
         if ($success = $this->driver->edit_event($event))
             $this->cleanup_event($event);
-        $reload =  $success && $event['recurrence'] ? 2 : 1;
+        $reload =  $success && ($event['recurrence'] || $event['savemode']) ? 2 : 1;
         break;
       
       case "resize":
         $success = $this->driver->resize_event($event);
-        $reload = ($event['savemode'] == 'all' || $event['savemode'] == 'future') ? 2 : 1;
+        $reload = $event['savemode'] ? 2 : 1;
         break;
       
       case "move":
         $success = $this->driver->move_event($event);
-        $reload =  $success && ($event['savemode'] == 'all' || $event['savemode'] == 'future') ? 2 : 1;
+        $reload =  $success && $event['savemode'] ? 2 : 1;
         break;
       
       case "remove":
@@ -591,7 +591,7 @@ class calendar extends rcube_plugin
         }
 
         $success = $this->driver->remove_event($event, $undo_time < 1);
-        $reload = (!$success || $event['savemode'] == 'all' || $event['savemode'] == 'future') ? 2 : 1;
+        $reload = (!$success || $event['savemode']) ? 2 : 1;
 
         if ($undo_time > 0 && $success) {
           $_SESSION['calendar_event_undo'] = array('ts' => time(), 'data' => $event);
