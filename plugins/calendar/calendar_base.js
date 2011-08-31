@@ -161,7 +161,7 @@ function rcube_calendar(settings)
 // static methods
 rcube_calendar.add_event_from_mail = function(mime_id, status)
 {
-  var lock = rcmail.set_busy(true, 'loading');
+  var lock = rcmail.set_busy(true, 'calendar.savingdata');
   rcmail.http_post('calendar/mailimportevent', {
       '_uid': rcmail.env.uid,
       '_mbox': rcmail.env.mailbox,
@@ -169,6 +169,17 @@ rcube_calendar.add_event_from_mail = function(mime_id, status)
       '_status': status
     }, lock);
   return false;
+};
+
+rcube_calendar.remove_event_from_mail = function(uid, title)
+{
+  if (confirm(rcmail.gettext('calendar.deleteventconfirm'))) {
+    var lock = rcmail.set_busy(true, 'calendar.savingdata');
+    rcmail.http_post('calendar/event', {
+        e:{ uid:uid },
+        action: 'remove'
+      }, lock);
+  }
 };
 
 rcube_calendar.fetch_event_rsvp_status = function(event)

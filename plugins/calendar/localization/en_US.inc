@@ -137,6 +137,7 @@ $labels['itipmailbodytentative'] = "\$sender has tentatively accepted the invita
 $labels['itipmailbodydeclined'] = "\$sender has declined the invitation to the following event:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
 $labels['itipdeclineevent'] = 'Do you want to decline your invitation to this event?';
 $labels['importtocalendar'] = 'Save to my calendar';
+$labels['removefromcalendar'] = 'Remove from my calendar';
 $labels['updateattendeestatus'] = 'Update the participant\'s status';
 $labels['acceptinvitation'] = 'Do you accept this invitation?';
 $labels['youhaveaccepted'] = 'You have accepted this invitation';

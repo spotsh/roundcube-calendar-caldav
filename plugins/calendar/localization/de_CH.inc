@@ -137,6 +137,7 @@ $labels['itipmailbodytentative'] = "\$sender hat die Einladung mit Vorbehalt zum
 $labels['itipmailbodydeclined'] = "\$sender hat die Einladung zum folgenden Termin abgelehnt:\n\n*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees";
 $labels['itipdeclineevent'] = 'Möchten Sie die Einladung zu diesem Termin ablehnen?';
 $labels['importtocalendar'] = 'In Kalender übernehmen';
+$labels['removefromcalendar'] = 'Aus meinem Kalender löschen';
 $labels['updateattendeestatus'] = 'Teilnehmerstatus aktualisieren';
 $labels['acceptinvitation'] = 'Möchten Sie die Einladung zu diesem Termin annehmen?';
 $labels['youhaveaccepted'] = 'Sie haben die Einladung angenommen';

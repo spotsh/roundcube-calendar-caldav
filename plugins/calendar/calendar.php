@@ -566,6 +566,14 @@ class calendar extends rcube_plugin
         // remove previous deletes
         $undo_time = $this->driver->undelete ? $this->rc->config->get('undo_timeout', 0) : 0;
         $this->rc->session->remove('calendar_event_undo');
+        
+        // search for event if only UID is given
+        if (!isset($event['calendar']) && $event['uid']) {
+          if (!($event = $this->driver->get_event($event))) {
+            break;
+          }
+          $undo_time = 0;
+        }
 
         $success = $this->driver->remove_event($event, $undo_time < 1);
         $reload  = true;
@@ -621,7 +629,7 @@ class calendar extends rcube_plugin
       case "rsvp-status":
         $action = 'rsvp';
         $status = $event['fallback'];
-        $html = html::div('rsvp-status', $this->gettext('acceptinvitation'));
+        $html = html::div('rsvp-status', $status != 'CANCELLED' ? $this->gettext('acceptinvitation') : '');
         $this->load_driver();
         if ($existing = $this->driver->get_event($event)) {
           $emails = $this->get_user_emails();
@@ -1621,7 +1629,7 @@ class calendar extends rcube_plugin
           $buttons = html::tag('input', array(
             'type' => 'button',
             'class' => 'button',
-            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "', '" . JQ($event['title']) . "')",
+            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "')",
             'value' => $this->gettext('updateattendeestatus'),
           ));
         }
@@ -1663,12 +1671,27 @@ class calendar extends rcube_plugin
         }
         else if ($this->ical->method == 'CANCEL') {
           $title = $this->gettext('itipcancellation');
-          $buttons = html::tag('input', array(
+          
+          // create buttons to be activated from async request checking existence of this event in local calendars
+          $button_import = html::tag('input', array(
+            'type' => 'button',
+            'class' => 'button',
+            'onclick' => "rcube_calendar.add_event_from_mail('" . JQ($mime_id.':'.$idx) . "')",
+            'value' => $this->gettext('importtocalendar'),
+          ));
+          $button_remove = html::tag('input', array(
             'type' => 'button',
             'class' => 'button',
             'onclick' => "rcube_calendar.remove_event_from_mail('" . JQ($event['uid']) . "', '" . JQ($event['title']) . "')",
-            'value' => $this->gettext('importtocalendar'),
+            'value' => $this->gettext('removefromcalendar'),
           ));
+          
+          $dom_id = asciiwords($event['uid'], true);
+          $buttons = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $button_remove);
+          $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $button_import);
+          $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
+          
+          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed'], 'fallback' => 'CANCELLED')) . ')', 'docready');
         }
         else {
           $buttons = html::tag('input', array(
@@ -1703,6 +1726,7 @@ class calendar extends rcube_plugin
     if ($html) {
       $this->ui->init();
       $p['content'] = $html . $p['content'];
+      $this->rc->output->add_label('calendar.savingdata','calendar.deleteventconfirm');
     }
 
     return $p;
