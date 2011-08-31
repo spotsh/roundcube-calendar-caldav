@@ -12,6 +12,11 @@ $labels['workinghours'] = 'Working hours';
 $labels['add_category'] = 'Add category';
 $labels['remove_category'] = 'Remove category';
 $labels['defaultcalendar'] = 'Create new events in';
+$labels['eventcoloring'] = 'Event coloring';
+$labels['coloringmode0'] = 'According to calendar';
+$labels['coloringmode1'] = 'According to category';
+$labels['coloringmode2'] = 'Calendar for outline, category for content';
+$labels['coloringmode3'] = 'Category for outline, calendar for content';
 
 // calendar
 $labels['calendar'] = 'Calendar';

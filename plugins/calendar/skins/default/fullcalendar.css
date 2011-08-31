@@ -682,6 +682,11 @@ table.fc-border-separate {
 	width: 18px;
 }
 
+.fc-event-handle .fc-event-inner {
+	border-color: inherit;
+	background-color: inherit;
+}
+
 .fc-view-table col.fc-event-date {
 	width: 7em;
 }

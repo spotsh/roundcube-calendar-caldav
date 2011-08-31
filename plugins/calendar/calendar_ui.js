@@ -274,7 +274,7 @@ function rcube_calendar_ui(settings)
       if (calendar.name)
         $('#event-calendar').show().children('.event-text').html(Q(calendar.name)).removeClass().addClass('event-text').addClass('cal-'+calendar.id);
       if (event.categories)
-        $('#event-category').show().children('.event-text').html(Q(event.categories)).removeClass().addClass('event-text '+event.className);
+        $('#event-category').show().children('.event-text').html(Q(event.categories)).removeClass().addClass('event-text cat-'+String(event.categories).replace(rcmail.identifier_expr, ''));
       if (event.free_busy)
         $('#event-free-busy').show().children('.event-text').html(Q(rcmail.gettext(event.free_busy, 'calendar')));
       if (event.priority != 1) {
@@ -1832,6 +1832,8 @@ function rcube_calendar_ui(settings)
         className: 'fc-event-cal-'+id,
         id: id
       }, cal);
+      
+      this.calendars[id].color = settings.event_coloring % 2  ? '' : '#' + cal.color;
       
       if ((active = cal.active || false)) {
         event_sources.push(this.calendars[id]);

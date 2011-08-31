@@ -57,6 +57,7 @@ class calendar extends rcube_plugin
     'calendar_work_start'   => 6,
     'calendar_work_end'     => 18,
     'calendar_agenda_range' => 60,
+    'calendar_event_coloring' => 0,
   );
 
   private $default_categories = array(
@@ -308,7 +309,7 @@ class calendar extends rcube_plugin
         'content' => $select->show($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day'])),
       );
       
-      $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format'));
+      $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
       $select_hours = new html_select();
       for ($h = 0; $h < 24; $h++)
         $select_hours->add(date($time_format, mktime($h, 0, 0)), $h);
@@ -324,6 +325,18 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('workinghours'))),
         'content' => $select_hours->show($this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']), array('name' => '_work_start', 'id' => $field_id)) .
         ' &mdash; ' . $select_hours->show($this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']), array('name' => '_work_end', 'id' => $field_id)),
+      );
+
+      $field_id = 'rcmfd_coloing';
+      $select_colors = new html_select(array('name' => '_event_coloring', 'id' => $field_id));
+      $select_colors->add($this->gettext('coloringmode0'), 0);
+      $select_colors->add($this->gettext('coloringmode1'), 1);
+      $select_colors->add($this->gettext('coloringmode2'), 2);
+      $select_colors->add($this->gettext('coloringmode3'), 3);
+
+      $p['blocks']['view']['options']['eventcolors'] = array(
+        'title' => html::label($field_id . 'value', Q($this->gettext('eventcoloring'))),
+        'content' => $select_colors->show($this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring'])),
       );
 
       $field_id = 'rcmfd_alarm';
@@ -359,11 +372,12 @@ class calendar extends rcube_plugin
         'content' => $select_cal->show($this->rc->config->get('calendar_default_calendar', '')),
       );
       
+      
       // category definitions
       if (!$this->driver->categoriesimmutable) {
         $p['blocks']['categories']['name'] = $this->gettext('categories');
 
-        $categories = (array) $this->rc->config->get('calendar_categories', $this->default_categories);
+        $categories = (array) $this->driver->list_categories();
         $categories_list = '';
         foreach ($categories as $name => $color) {
           $key = md5($name);
@@ -430,6 +444,7 @@ class calendar extends rcube_plugin
         'calendar_first_hour'   => intval(get_input_value('_first_hour', RCUBE_INPUT_POST)),
         'calendar_work_start'   => intval(get_input_value('_work_start', RCUBE_INPUT_POST)),
         'calendar_work_end'     => intval(get_input_value('_work_end', RCUBE_INPUT_POST)),
+        'calendar_event_coloring'       => intval(get_input_value('_event_coloring', RCUBE_INPUT_POST)),
         'calendar_default_alarm_type'   => get_input_value('_alarm_type', RCUBE_INPUT_POST),
         'calendar_default_alarm_offset' => $default_alam,
         'calendar_default_calendar'     => get_input_value('_default_calendar', RCUBE_INPUT_POST),
@@ -790,6 +805,7 @@ class calendar extends rcube_plugin
     $settings['work_start'] = (int)$this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']);
     $settings['work_end'] = (int)$this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']);
     $settings['agenda_range'] = (int)$this->rc->config->get('calendar_agenda_range', $this->defaults['calendar_agenda_range']);
+    $settings['event_coloring'] = (int)$this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring']);
     $settings['timezone'] = $this->timezone;
 
     // localization
@@ -868,7 +884,7 @@ class calendar extends rcube_plugin
         'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
         'description' => strval($event['description']),
         'location'    => strval($event['location']),
-        'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'cat-' . asciiwords($event['categories'], true),
+        'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'fc-event-cat-' . asciiwords($event['categories'], true),
         'allDay'      => ($event['allday'] == 1),
       ) + $event;
     }

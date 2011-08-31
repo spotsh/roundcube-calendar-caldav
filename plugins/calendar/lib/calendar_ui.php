@@ -88,18 +88,29 @@ class calendar_ui
    */
   function calendar_css($attrib = array())
   {
-    $categories = $this->rc->config->get('calendar_categories', array());
-
+    $mode = $this->rc->config->get('calendar_event_coloring', $this->calendar->defaults['calendar_event_coloring']);
+    $categories = $this->calendar->driver->list_categories();
     $css = "\n";
     
     foreach ((array)$categories as $class => $color) {
-        $class = 'cat-' . asciiwords($class, true);
-        $css .= "." . $class . ",\n";
-        $css .= ".fc-event-" . $class . ",\n";
-        $css .= "." . $class . " a {\n";
-        $css .= "color: #" . $color . ";\n";
-        $css .= "border-color: #" . $color . ";\n";
+      $class = 'cat-' . asciiwords($class, true);
+      $css  .= ".$class { color: #$color }\n";
+      if ($mode > 0) {
+        if ($mode == 2) {
+          $css .= ".fc-event-$class .fc-event-bg {";
+          $css .= " opacity: 0.9;";
+          $css .= " filter: alpha(opacity=90);";
+        }
+        else {
+          $css .= ".fc-event-$class.fc-event-skin, ";
+          $css .= ".fc-event-$class .fc-event-skin, ";
+          $css .= ".fc-event-$class .fc-event-inner {";
+        }
+        $css .= " background-color: #" . $color . ";";
+        if ($mode % 2)
+          $css .= " border-color: #$color;";
         $css .= "}\n";
+      }
     }
     
     $calendars = $this->calendar->driver->list_calendars();
@@ -108,16 +119,23 @@ class calendar_ui
         continue;
       $color = $prop['color'];
       $class = 'cal-' . asciiwords($id, true);
-      $css .= "li." . $class . ", ";
-      $css .= "#eventshow ." . $class . " { ";
-      $css .= "color: #" . $color . " }\n";
-      $css .= ".fc-event-" . $class . ", ";
-      $css .= ".fc-event-" . $class . " .fc-event-inner, ";
-      $css .= ".fc-event-" . $class . " .fc-event-time {\n";
-      if (!$attrib['printmode'])
-        $css .= "background-color: #" . $color . ";\n";
-      $css .= "border-color: #" . $color . ";\n";
-      $css .= "}\n";
+      $css .= "li.$class, #eventshow .$class { color: #$color }\n";
+      if ($mode != 1) {
+        if ($mode == 3) {
+          $css .= ".fc-event-$class .fc-event-bg {";
+          $css .= " opacity: 0.9;";
+          $css .= " filter: alpha(opacity=90);";
+        }
+        else {
+          $css .= ".fc-event-$class, ";
+          $css .= ".fc-event-$class .fc-event-inner {";
+        }
+        if (!$attrib['printmode'])
+          $css .= " background-color: #$color;";
+        if ($mode % 2 == 0)
+        $css .= " border-color: #$color;";
+        $css .= "}\n";
+      }
     }
     
     return html::tag('style', array('type' => 'text/css'), $css);

@@ -61,6 +61,13 @@ $rcmail_config['calendar_work_start'] = 6;
 // working hours end
 $rcmail_config['calendar_work_end'] = 18;
 
+// how to colorize events:
+// 0: according to calendar color
+// 1: according to category color
+// 2: calendar for outer, category for inner color
+// 3: category for outer, calendar for inner color
+$rcmail_config['calendar_event_coloring'] = 0;
+
 // event categories
 $rcmail_config['calendar_categories'] = array(
   'Personal' => 'c0c0c0',

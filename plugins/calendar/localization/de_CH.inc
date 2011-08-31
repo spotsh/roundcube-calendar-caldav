@@ -12,6 +12,11 @@ $labels['workinghours'] = 'Arbeitszeiten';
 $labels['add_category'] = 'Katgorie hinzufügen';
 $labels['remove_category'] = 'Katgorie entfernen';
 $labels['defaultcalendar'] = 'Neue Termine erstellen in';
+$labels['eventcoloring'] = 'Färbung der Termine';
+$labels['coloringmode0'] = 'Farbe des Kalenders';
+$labels['coloringmode1'] = 'Farbe der Kategorie';
+$labels['coloringmode2'] = 'Kalenderfarbe aussen, Kategoriefarbe innen';
+$labels['coloringmode3'] = 'Kategoriefarbe aussen, Kalenderfarbe innen';
 
 // calendar
 $labels['calendar'] = 'Kalender';
