@@ -150,7 +150,7 @@ class calendar_ui
 
     $li = '';
     foreach ((array)$calendars as $id => $prop) {
-      if ($attrib['activeonly'] && in_array($id, $hidden))
+      if ($attrib['activeonly'] && !$prop['active'])
         continue;
       
       unset($prop['user_id']);
