@@ -496,7 +496,7 @@ function rcube_calendar_ui(settings)
         $('#edit-recurring-warning').hide();
 
       // init attendees tab
-      var organizer = is_organizer(event);
+      var organizer = !event.attendees || is_organizer(event);
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
       $('#edit-attendees-notify')[(notify.checked && organizer ? 'show' : 'hide')]();
@@ -505,10 +505,10 @@ function rcube_calendar_ui(settings)
       {
         if (event.attendees) {
           for (var j=0; j < event.attendees.length; j++)
-            add_attendee(event.attendees[j], true);
+            add_attendee(event.attendees[j], !organizer);
         }
 
-        $('#edit-attendees-form .attendees-invitebox')[(organizer?'show':'hide')]();
+        $('#edit-attendees-form')[(organizer?'show':'hide')]();
         $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
       };
 
@@ -1305,7 +1305,7 @@ function rcube_calendar_ui(settings)
     };
     
     // add the given attendee to the list
-    var add_attendee = function(data, edit)
+    var add_attendee = function(data, readonly)
     {
       // check for dupes...
       var exists = false;
@@ -1326,7 +1326,7 @@ function rcube_calendar_ui(settings)
       opts['OPT-PARTICIPANT'] = rcmail.gettext('calendar.roleoptional');
       opts['CHAIR'] =  rcmail.gettext('calendar.roleresource');
       
-      var select = '<select class="edit-attendee-role"' + (organizer ? ' disabled="true"' : '') + '>';
+      var select = '<select class="edit-attendee-role"' + (organizer || readonly ? ' disabled="true"' : '') + '>';
       for (var r in opts)
         select += '<option value="'+ r +'" class="' + r.toLowerCase() + '"' + (data.role == r ? ' selected="selected"' : '') +'>' + Q(opts[r]) + '</option>';
       select += '</select>';
@@ -1342,7 +1342,7 @@ function rcube_calendar_ui(settings)
         '<td class="name">' + dispname + '</td>' +
         '<td class="availability"><img src="./program/blank.gif" class="availabilityicon ' + avail + '" /></td>' +
         '<td class="confirmstate"><span class="' + String(data.status).toLowerCase() + '">' + Q(data.status) + '</span></td>' +
-        '<td class="options">' + (organizer ? '' : dellink) + '</td>';
+        '<td class="options">' + (organizer || readonly ? '' : dellink) + '</td>';
       
       var tr = $('<tr>')
         .addClass(String(data.role).toLowerCase())
