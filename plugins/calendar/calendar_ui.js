@@ -250,7 +250,7 @@ function rcube_calendar_ui(settings)
     // event details dialog (show only)
     var event_show_dialog = function(event)
     {
-      var $dialog = $("#eventshow");
+      var $dialog = $("#eventshow").removeClass().addClass('uidialog');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       me.selected_event = event;
       
@@ -282,8 +282,10 @@ function rcube_calendar_ui(settings)
         $('#event-priority').show().children('.event-text').html(Q(priolabels[event.priority]));
       }
       if (event.sensitivity != 0) {
-        var sensitivitylabels = { 0:rcmail.gettext('public'), 1:rcmail.gettext('private'), 2:rcmail.gettext('confidential') };
+        var sensitivityclasses = { 0:'public', 1:'private', 2:'confidential' };
+        var sensitivitylabels = { 0:rcmail.gettext('public','calendar'), 1:rcmail.gettext('private','calendar'), 2:rcmail.gettext('confidential','calendar') };
         $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
+        $dialog.addClass('sensitivity-'+sensitivityclasses[event.sensitivity]);
       }
 
       // create attachments list
@@ -1974,6 +1976,8 @@ function rcube_calendar_ui(settings)
           if (event.location) {
             element.find('div.fc-event-title').after('<div class="fc-event-location">@&nbsp;' + Q(event.location) + '</div>');
           }
+          if (event.sensitivity != 0)
+            element.find('div.fc-event-time').append('<i class="fc-icon-sensitive"></i>');
           if (event.recurrence)
             element.find('div.fc-event-time').append('<i class="fc-icon-recurring"></i>');
           if (event.alarms)

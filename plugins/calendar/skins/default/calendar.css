@@ -395,6 +395,26 @@ a.miniColors-trigger {
 	margin: 0 0 0.2em 0;
 }
 
+#eventshow {
+	margin: 0 -0.2em;
+}
+
+#eventshow.sensitivity-private {
+	background: url(images/badge_private.png) top right no-repeat;
+}
+
+#eventshow.sensitivity-confidential {
+	background: url(images/badge_confidential.png) top right no-repeat;
+}
+
+.sensitivity-private #event-title {
+	margin-right: 50px;
+}
+
+.sensitivity-confidential #event-title {
+	margin-right: 60px;
+}
+
 #eventshow div.event-line {
 	margin-top: 0.1em;
 	margin-bottom: 0.3em;
@@ -1019,6 +1039,7 @@ div.fc-event-location {
 }
 
 .fc-icon-alarms,
+.fc-icon-sensitive,
 .fc-icon-recurring {
 	display: inline-block;
 	width: 11px;
@@ -1030,6 +1051,10 @@ div.fc-event-location {
 
 .fc-icon-alarms {
 	background-position: 0 -13px;
+}
+
+.fc-icon-sensitive {
+	background-position: 0 -25px;
 }
 
 .fc-list-section .fc-event {
