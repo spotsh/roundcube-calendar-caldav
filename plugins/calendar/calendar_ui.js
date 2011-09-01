@@ -42,6 +42,7 @@ function rcube_calendar_ui(settings)
     var freebusy_ui = { workinhoursonly:false, needsupdate:false };
     var freebusy_data = {};
     var exec_deferred = bw.ie6 ? 5 : 1;
+    var sensitivitylabels = { 0:rcmail.gettext('public','calendar'), 1:rcmail.gettext('private','calendar'), 2:rcmail.gettext('confidential','calendar') };
     var ui_loading = rcmail.set_busy(true, 'loading');
 
     // general datepicker settings
@@ -283,7 +284,6 @@ function rcube_calendar_ui(settings)
       }
       if (event.sensitivity != 0) {
         var sensitivityclasses = { 0:'public', 1:'private', 2:'confidential' };
-        var sensitivitylabels = { 0:rcmail.gettext('public','calendar'), 1:rcmail.gettext('private','calendar'), 2:rcmail.gettext('confidential','calendar') };
         $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
         $dialog.addClass('sensitivity-'+sensitivityclasses[event.sensitivity]);
       }
@@ -1955,8 +1955,10 @@ function rcube_calendar_ui(settings)
       },
       // event rendering
       eventRender: function(event, element, view) {
-        if (view.name != 'list' && view.name != 'table')
-          element.attr('title', event.title);
+        if (view.name != 'list' && view.name != 'table') {
+          var prefix = event.sensitivity != 0 ? String(sensitivitylabels[event.sensitivity]).toUpperCase()+': ' : '';
+          element.attr('title', prefix + event.title);
+        }
         if (view.name == 'month') {
 /* attempt to limit the number of events displayed
    (could also be used to init fish-eye-view)
