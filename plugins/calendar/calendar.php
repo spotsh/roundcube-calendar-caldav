@@ -2011,12 +2011,11 @@ class calendar extends rcube_plugin
    */
   private function is_vcalendar($part)
   {
-      return (
-          $part->mimetype == 'text/calendar' ||
-          $part->mimetype == 'text/x-vcalendar' ||
-          // Apple sends files as application/x-any (!?)
-          ($part->mimetype == 'application/x-any' && $part->filename && preg_match('/\.ics$/i', $part->filename))
-      );
+    return (
+      in_array($part->mimetype, array('text/calendar', 'text/x-vcalendar', 'application/ics')) ||
+      // Apple sends files as application/x-any (!?)
+      ($part->mimetype == 'application/x-any' && $part->filename && preg_match('/\.ics$/i', $part->filename))
+    );
   }
 
 
