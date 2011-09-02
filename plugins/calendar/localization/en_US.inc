@@ -120,6 +120,7 @@ $labels['nextslot'] = 'Next Slot';
 $labels['noslotfound'] = 'Unable to find a free time slot';
 $labels['invitationsubject'] = 'You\'ve been invited to "$title"';
 $labels['invitationmailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with all the event details which you can import to your calendar application.";
+$labels['invitationattendlinks'] = "In case your email client doesn't support iTip requests you can use the following link to either accept or decline this invitation:\n\$url";
 $labels['eventupdatesubject'] = '"$title" has been updated';
 $labels['eventupdatesubjectempty'] = 'An event that concerns you has been updated';
 $labels['eventupdatemailbody'] = "*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees\n\nPlease find attached an iCalendar file with the updated event details which you can import to your calendar application.";
@@ -148,6 +149,7 @@ $labels['acceptinvitation'] = 'Do you accept this invitation?';
 $labels['youhaveaccepted'] = 'You have accepted this invitation';
 $labels['youhavetentative'] = 'You have tentatively accepted this invitation';
 $labels['youhavedeclined'] = 'You have declined this invitation';
+$labels['eventcancelled'] = 'The event has been cancelled';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Summary';
@@ -174,6 +176,7 @@ $labels['nowritecalendarfound'] = 'No calendar found to save the event';
 $labels['importedsuccessfully'] = 'The event was successfully added to \'$calendar\'';
 $labels['attendeupdateesuccess'] = 'Successfully updated the participant\'s status';
 $labels['itipresponseerror'] = 'Failed to send the response to this event invitation';
+$labels['itipinvalidrequest'] = 'This invitation is no longer valid';
 $labels['sentresponseto'] = 'Successfully sent invitation response to $mailto';
 $labels['localchangeswarning'] = 'You are about to make changes that will only be reflected on your personal calendar';
 

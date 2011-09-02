@@ -1169,3 +1169,34 @@ div.calendar-invitebox .rsvp-status.tentative {
 	background-position: 2px -60px;
 }
 
+/* iTIP attend reply page */
+
+.calendaritipattend .centerbox {
+	width: 40em;
+	margin: 80px auto;
+	padding: 10px 10px 10px 90px;
+	border: 1px solid #ccc;
+	box-shadow: 1px 1px 24px #ccc;
+	-moz-box-shadow: 1px 1px 18px #ccc;
+	-webkit-box-shadow: #ccc 1px 1px 18px;
+	background: url(images/invitation.png) 10px 10px no-repeat #fbfbfb;
+}
+
+.calendaritipattend .calendar-invitebox {
+	background: none;
+	padding-left: 0;
+	border: 0;
+	margin: 0 0 2em 0;
+}
+
+.calendaritipattend .calendar-invitebox .rsvp-status {
+	margin-top: 2.5em;
+	font-size: 110%;
+	font-weight: bold;
+}
+
+.calendaritipattend .calendar-invitebox td.title,
+.calendaritipattend .calendar-invitebox td.ititle {
+	font-size: 120%;
+}
+

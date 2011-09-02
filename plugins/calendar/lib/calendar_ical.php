@@ -245,7 +245,6 @@ class calendar_ical
    */
   public function export($events, $method = null, $write = false)
   {
-    if (!empty($this->rc->user->ID)) {
       $ical = "BEGIN:VCALENDAR" . self::EOL;
       $ical .= "VERSION:2.0" . self::EOL;
       $ical .= "PRODID:-//Roundcube Webmail " . RCMAIL_VERSION . "//NONSGML Calendar//EN" . self::EOL;
@@ -332,7 +331,6 @@ class calendar_ical
 
       // fold lines to 75 chars
       return rcube_vcard::rfc2425_fold($ical);
-    }
   }
   
   private function escpape($str)

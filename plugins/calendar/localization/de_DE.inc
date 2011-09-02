@@ -119,6 +119,7 @@ $labels['nextslot'] = 'Nächster Vorschlag';
 $labels['noslotfound'] = 'Es konnten keine freien Zeiten gefunden werden';
 $labels['invitationsubject'] = 'Sie wurden zu "$title" eingeladen';
 $labels['invitationmailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nIm Anhang finden Sie eine iCalendar-Datei mit allen Details des Termins. Diese können Sie in Ihre Kalenderanwendung importieren.";
+$labels['invitationattendlinks'] = "Falls Ihr E-Mail-Programm keine iTip-Anfragen unterstützt, können Sie den folgenden Link verwenden, um den Termin zu bestätigen oder abzulehnen:\n\$url";
 $labels['eventupdatesubject'] = '"$title" wurde aktualisiert';
 $labels['eventupdatesubjectempty'] = 'An event that concerns you has been updated';
 $labels['eventupdatemailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nIm Anhang finden Sie eine iCalendar-Datei mit den aktualisiereten Termindaten. Diese können Sie in Ihre Kalenderanwendung importieren";
@@ -147,6 +148,7 @@ $labels['acceptinvitation'] = 'Möchten Sie die Einladung zu diesem Termin anneh
 $labels['youhaveaccepted'] = 'Sie haben die Einladung angenommen';
 $labels['youhavetentative'] = 'Sie haben die Einladung mit Vorbehalt angenommen';
 $labels['youhavedeclined'] = 'Sie haben die Einladung abgelehnt';
+$labels['eventcancelled'] = 'Der Termin wurde vom Organisator abgesagt';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Übersicht';
