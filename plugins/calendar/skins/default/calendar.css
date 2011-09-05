@@ -509,7 +509,7 @@ td.topalign {
 	padding: 0 0.5em 0.5em 0.5em;
 }
 
-.edit-recurring-warning,
+.event-dialog-message,
 .event-update-confirm .message {
 	margin-top: 0.5em;
 	padding: 0.8em;
@@ -517,7 +517,7 @@ td.topalign {
 	border: 1px solid #C2D071;
 }
 
-.edit-recurring-warning .message,
+.event-dialog-message .message,
 .event-update-confirm .message {
 	margin-bottom: 0.5em;
 }
@@ -530,13 +530,13 @@ td.topalign {
 	padding-left: 30px;
 }
 
-.edit-recurring-warning span.ui-icon,
+.event-dialog-message span.ui-icon,
 .event-update-confirm span.ui-icon {
 	float: left;
 	margin: 0 7px 20px 0;
 }
 
-.edit-recurring-warning label,
+.event-dialog-message label,
 .event-update-confirm label {
 	min-width: 3em;
 	padding-right: 1em;

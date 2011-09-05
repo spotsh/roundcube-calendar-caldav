@@ -502,6 +502,7 @@ function rcube_calendar_ui(settings)
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
       $('#edit-attendees-notify')[(notify.checked && organizer ? 'show' : 'hide')]();
+      $('#edit-localchanges-warning')[(has_attendees(event) && !organizer ? 'show' : 'hide')]();
 
       var load_attendees_tab = function()
       {
