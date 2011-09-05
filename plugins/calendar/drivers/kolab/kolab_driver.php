@@ -376,7 +376,7 @@ class kolab_driver extends calendar_driver
     // iterate over all calendar folders and search for the event ID
     else if (!$cal) {
       foreach ($this->calendars as $storage) {
-        if ($writeable && !rcube_kolab::is_subscribed($storage->get_realname()))
+        if ($writeable && $storage->readonly)
           continue;
         if ($result = $storage->get_event($id)) {
           return $result;
