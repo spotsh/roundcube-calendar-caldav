@@ -201,7 +201,7 @@ class rcube_kolab
       if (!$subscribed) {
         $rcmail = rcmail::get_instance();
         // try without connection first (list could be served from cache)
-        $subscribed = $rcmail->imap->list_mailboxes();
+        $subscribed = $rcmail->imap ? $rcmail->imap->list_mailboxes() : array();
         
         // now really get the list from the IMAP server
         if (empty($subscribed) || $subscribed == array('INBOX')) {
