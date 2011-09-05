@@ -478,6 +478,9 @@ class kolab_calendar
       $rec['end-date']--;
       $rec['end-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['end-date']);   // shift 00 times from server's timezone to user's timezone
       $rec['start-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['start-date']);  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
+      // sanity check
+      if ($rec['end-date'] <= $rec['start-date'])
+        $rec['end-date'] += 86400;
     }
     
     // convert alarm time into internal format
