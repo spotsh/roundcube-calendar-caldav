@@ -202,10 +202,11 @@ abstract class calendar_driver
    *
    * @param mixed  UID string or hash array with event properties:
    *        id: Event identifier
-   *  calendar: Calendar identifier
+   *  calendar: Calendar identifier (optional)
+   * @param boolean If true, only writeable calendars shall be searched
    * @return array Event object as hash array
    */
-  abstract function get_event($event);
+  abstract function get_event($event, $writeable = null);
 
   /**
    * Get events from source.

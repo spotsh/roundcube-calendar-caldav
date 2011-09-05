@@ -602,7 +602,7 @@ class calendar extends rcube_plugin
         
         // search for event if only UID is given
         if (!isset($event['calendar']) && $event['uid']) {
-          if (!($event = $this->driver->get_event($event))) {
+          if (!($event = $this->driver->get_event($event, true))) {
             break;
           }
           $undo_time = 0;
@@ -665,7 +665,7 @@ class calendar extends rcube_plugin
         $status = $event['fallback'];
         $html = html::div('rsvp-status', $status != 'CANCELLED' ? $this->gettext('acceptinvitation') : '');
         $this->load_driver();
-        if ($existing = $this->driver->get_event($event)) {
+        if ($existing = $this->driver->get_event($event, true)) {
           $emails = $this->get_user_emails();
           foreach ($existing['attendees'] as $i => $attendee) {
             if ($attendee['email'] && in_array($attendee['email'], $emails)) {
@@ -674,7 +674,7 @@ class calendar extends rcube_plugin
             }
           }
         }
-        else if ($status != 'NEEDS-ACTION')
+        if ($status == 'unknown')
           $action = 'import';
         
         if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
@@ -1094,9 +1094,13 @@ class calendar extends rcube_plugin
    */
   public function generate_randomdata()
   {
-    $cats = array_keys($this->driver->list_categories());
-    $cals = $this->driver->list_calendars();
     $num = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
+    $cats = array_keys($this->driver->list_categories());
+    $cals = array();
+    foreach ($this->driver->list_calendars() as $cid => $cal) {
+      if ($cal['active'])
+        $cals[$cid] = $cal;
+    }
     
     while ($count++ < $num) {
       $start = round((time() + rand(-2600, 2600) * 1000) / 300) * 300;
@@ -1705,13 +1709,21 @@ class calendar extends rcube_plugin
   public function mail_message_load($p)
   {
     $this->message = $p['object'];
+    $itip_part = null;
 
     // check all message parts for .ics files
     foreach ((array)$this->message->mime_parts as $idx => $part) {
       if ($this->is_vcalendar($part)) {
-        $this->ics_parts[] = $part->mime_id;
+        if ($part->ctype_parameters['method'])
+          $itip_part = $part->mime_id;
+        else
+          $this->ics_parts[] = $part->mime_id;
       }
     }
+    
+    // priorize part with method parameter
+    if ($itip_part)
+      $this->ics_parts = array($itip_part);
   }
 
   /**
@@ -1898,7 +1910,7 @@ class calendar extends rcube_plugin
         $event['calendar'] = $calendar['id'];
         
         // check for existing event with the same UID
-        $existing = $this->driver->get_event($event);
+        $existing = $this->driver->get_event($event['uid'], true);
         
         if ($existing) {
           // only update attendee status

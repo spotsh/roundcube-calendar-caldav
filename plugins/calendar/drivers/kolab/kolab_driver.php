@@ -360,15 +360,24 @@ class kolab_driver extends calendar_driver
    * @see calendar_driver::get_event()
    * @return array Hash array with event properties, false if not found
    */
-  public function get_event($event)
+  public function get_event($event, $writeable = null)
   {
-    $id = $event['id'] ? $event['id'] : $event['uid'];
-    if ($event['calendar'] && ($storage = $this->calendars[$event['calendar']])) {
+    if (is_array($event)) {
+      $id = $event['id'] ? $event['id'] : $event['uid'];
+      $cal = $event['calendar'];
+    }
+    else {
+      $id = $event;
+    }
+    
+    if ($cal && ($storage = $this->calendars[$cal])) {
       return $storage->get_event($id);
     }
     // iterate over all calendar folders and search for the event ID
-    else if (!$event['calendar']) {
+    else if (!$cal) {
       foreach ($this->calendars as $storage) {
+        if ($writeable && !rcube_kolab::is_subscribed($storage->get_realname()))
+          continue;
         if ($result = $storage->get_event($id)) {
           return $result;
         }

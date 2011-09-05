@@ -637,9 +637,10 @@ class database_driver extends calendar_driver
   /**
    * Return data of a specific event
    * @param mixed  Hash array with event properties or event UID
+   * @param boolean Only search in writeable calendars (currently ignored)
    * @return array Hash array with event properties
    */
-  public function get_event($event)
+  public function get_event($event, $writeable = null)
   {
     $id = is_array($event) ? ($event['id'] ? $event['id'] : $event['uid']) : $event;
     $col = $event['id'] && is_numeric($event['id']) ? 'event_id' : 'uid';
