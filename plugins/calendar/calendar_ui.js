@@ -1662,7 +1662,7 @@ function rcube_calendar_ui(settings)
         closeOnEscape: false,
         title: rcmail.gettext((calendar.id ? 'editcalendar' : 'createcalendar'), 'calendar'),
         close: function() {
-          $dialog.dialog("destroy").hide();
+          $dialog.html('').dialog("destroy").hide();
         },
         buttons: buttons,
         minWidth: 400,
