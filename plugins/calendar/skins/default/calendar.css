@@ -944,7 +944,7 @@ a.alarm-action-snooze:after {
 
 #calendar-kolabform {
 	position: relative;
-	padding-top: 22px;
+	padding-top: 24px;
 	margin: 0 -8px;
 	min-width: 660px;
 	min-height: 400px;
@@ -954,6 +954,7 @@ a.alarm-action-snooze:after {
 	top: 0;
 	right: 2px;
 	left: 2px;
+	height: 24px;
 }
 
 #calendar-kolabform fieldset.tabbed {
@@ -962,11 +963,16 @@ a.alarm-action-snooze:after {
 }
 
 #calendar-kolabform span.tablink {
-	background: #E6E6E7;
+	background-color: #e8e8e9;
+	background-image: -moz-linear-gradient(center top, #f4f4f4, #e6e6e6);
+	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0.0, #f4f4f4), color-stop(1.0, #e6e6e6));
+	filter: progid:DXImageTransform.Microsoft.gradient(enabled='true', startColorstr=#f4f4f4, endColorstr=#e6e6e6, GradientType=0);
+	height: 24px !important;
 }
 
 #calendar-kolabform span.tablink-selected {
 	background: #fff;
+	height: 25px !important;
 }
 
 #calendar-kolabform span.tablink a,
@@ -975,6 +981,7 @@ a.alarm-action-snooze:after {
 	border: 1px solid #AAAAAA;
 	border-top-left-radius: 2px;
 	border-top-right-radius: 2px;
+	padding: 4px 10px 0 10px;
 	margin-left: 0;
 }
 
