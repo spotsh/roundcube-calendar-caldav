@@ -82,7 +82,8 @@ class database_driver extends calendar_driver
       $calendar_ids = array();
       $result = $this->rc->db->query(
         "SELECT *, calendar_id AS id FROM " . $this->db_calendars . "
-         WHERE user_id=?",
+         WHERE user_id=?
+         ORDER BY name",
          $this->rc->user->ID
       );
       while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
@@ -122,7 +123,7 @@ class database_driver extends calendar_driver
     $result = $this->rc->db->query(
       "INSERT INTO " . $this->db_calendars . "
        (user_id, name, color, showalarms)
-       VALUES (?, ?, ?)",
+       VALUES (?, ?, ?, ?)",
        $this->rc->user->ID,
        $prop['name'],
        $prop['color'],
