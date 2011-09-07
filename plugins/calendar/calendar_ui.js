@@ -1572,27 +1572,29 @@ function rcube_calendar_ui(settings)
       }
       if (view.name == 'month') {
         // limit the number of events displayed
-        var sday = event.start.getMonth()*120 + event.start.getDate();
-        var eday = event.end ? event.end.getMonth()*120   + event.end.getDate() : sday;
-        if (!view._eventcount[sday]) view._eventcount[sday] = 1;
-        else                         view._eventcount[sday]++;
-        if (!view._eventcount[eday]) view._eventcount[eday] = 1;
-        else if (eday != sday)       view._eventcount[eday]++;
+        var sday = event.start.getMonth()*100 + event.start.getDate();
+        var eday = event.end ? event.end.getMonth()*100   + event.end.getDate() : sday;
+        
+        // increase counter for every day
+        for (var d = sday; d <= eday; d++) {
+          if (!view._eventcount[d]) view._eventcount[d] = 1;
+          else                      view._eventcount[d]++;
+        }
         
         if (view._eventcount[sday] >= view._maxevents) {
+          view._suppressed[event.id] = true;
+          
+          // register this event to be the last of this day segment
           if (!view._morelink[sday]) {
-            view._morelink[sday] = view._morelink[event.id] = $('<div>')
-              .addClass('fc-event-more')
-              .css({ position:'absolute', left:element.css('left'), width:element.css('width') })
-              .appendTo(element.parent())
-              .data('overflow', 1);
+            view._morelink[sday] = 1;
+            view._morelink['e'+event.id] = sday;
           }
           else {
-            view._morelink[sday].data('overflow', view._eventcount[sday] - view._maxevents + 1);
-            return false;
+            view._morelink[sday]++;
+            return false;  // suppress event
           }
         }
-        else if (view._eventcount[eday] >= view._maxevents || view._morelink[event.id]) {
+        else if (view._suppressed[event.id]) {
           return false;
         }
       }
@@ -2076,17 +2078,17 @@ function rcube_calendar_ui(settings)
       // event rendering
       eventRender: fc_event_render,
       eventAfterRender: function(event, element, view) {
-        // adjust position of the more... element
-        var link;
-        if (view.name == 'month' && (link = view._morelink[event.id]) && !link.data('date') && link.data('overflow') > 1) {
-          link.html(rcmail.gettext('andnmore', 'calendar').replace('$nr', link.data('overflow')))
-            .css({ left:element.css('left'), top:element.css('top') })
+        // replace event element with more... link
+        var sday, overflow, link;
+        if (view.name == 'month' && (sday = view._morelink['e'+event.id]) && (overflow = view._morelink[sday]) > 1) {
+          link = $('<div>')
+            .addClass('fc-event-more')
+            .html(rcmail.gettext('andnmore', 'calendar').replace('$nr', overflow))
+            .css({ position:'absolute', left:element.css('left'), top:element.css('top'), width:element.css('width') })
             .data('date', new Date(event.start.getTime()))
             .click(function(e){ me.fisheye_view($(this).data('date')); });
-          element.remove();
+          element.replaceWith(link);
         }
-        else if (link)
-          link.remove();
       },
       // callback for date range selection
       select: function(start, end, allDay, e, view) {
@@ -2173,6 +2175,7 @@ function rcube_calendar_ui(settings)
       viewRender: function(view) {
         view._maxevents = Math.floor((view.element.parent().height()-18) / 108) - 1;
         view._eventcount = [];
+        view._suppressed = [];
         view._morelink = [];
       }
     });
