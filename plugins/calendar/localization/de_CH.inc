@@ -64,7 +64,7 @@ $labels['printdescriptions'] = 'Beschrieb drucken';
 $labels['parentcalendar'] = 'Übergeordneter Kalender';
 $labels['searchearlierdates'] = '« Frühere Termine suchen';
 $labels['searchlaterdates'] = 'Spätere Termine suchen »';
-$labels['andnmore'] = 'und $nr weitere';
+$labels['andnmore'] = '$nr weitere...';
 $labels['togglerole'] = 'Klick zum Ändern der Rolle';
 
 // alarm/reminder settings

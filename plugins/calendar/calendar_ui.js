@@ -25,7 +25,6 @@ function rcube_calendar_ui(settings)
     this.selected_event = null;
     this.selected_calendar = null;
     this.search_request = null;
-    this.eventcount = [];
     this.saving_lock = null;
 
 
@@ -251,7 +250,7 @@ function rcube_calendar_ui(settings)
     // event details dialog (show only)
     var event_show_dialog = function(event)
     {
-      var $dialog = $("#eventshow").removeClass().addClass('uidialog');
+      var $dialog = $("#eventshow").dialog('close').removeClass().addClass('uidialog');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       me.selected_event = event;
       
@@ -1564,9 +1563,126 @@ function rcube_calendar_ui(settings)
       return true;
     };
 
+    /*** fullcalendar event handlers ***/
+
+    var fc_event_render = function(event, element, view) {
+      if (view.name != 'list' && view.name != 'table') {
+        var prefix = event.sensitivity != 0 ? String(sensitivitylabels[event.sensitivity]).toUpperCase()+': ' : '';
+        element.attr('title', prefix + event.title);
+      }
+      if (view.name == 'month') {
+        // limit the number of events displayed
+        var sday = event.start.getMonth()*120 + event.start.getDate();
+        var eday = event.end.getMonth()*120   + event.end.getDate();
+        if (!view._eventcount[sday]) view._eventcount[sday] = 1;
+        else                         view._eventcount[sday]++;
+        if (!view._eventcount[eday]) view._eventcount[eday] = 1;
+        else if (eday != sday)       view._eventcount[eday]++;
+        
+        if (view._eventcount[sday] >= view._maxevents) {
+          if (!view._morelink[sday]) {
+            view._morelink[sday] = view._morelink[event.id] = $('<div>')
+              .addClass('fc-event-more')
+              .css({ position:'absolute', left:element.css('left'), width:element.css('width') })
+              .appendTo(element.parent())
+              .data('overflow', 1);
+          }
+          else {
+            view._morelink[sday].data('overflow', view._eventcount[sday] - view._maxevents);
+            return false;
+          }
+        }
+        else if (view._eventcount[eday] >= view._maxevents || view._morelink[event.id]) {
+          return false;
+        }
+      }
+      else {
+        if (event.location) {
+          element.find('div.fc-event-title').after('<div class="fc-event-location">@&nbsp;' + Q(event.location) + '</div>');
+        }
+        if (event.sensitivity != 0)
+          element.find('div.fc-event-time').append('<i class="fc-icon-sensitive"></i>');
+        if (event.recurrence)
+          element.find('div.fc-event-time').append('<i class="fc-icon-recurring"></i>');
+        if (event.alarms)
+          element.find('div.fc-event-time').append('<i class="fc-icon-alarms"></i>');
+      }
+    };
+
 
     /*** public methods ***/
-    
+
+    // opens calendar day-view in a popup
+    this.fisheye_view = function(date)
+    {
+      $('#fish-eye-view').dialog('close');
+      
+      // create list of active event sources
+      var src, cals = {}, sources = [];
+      for (var id in this.calendars) {
+        src = $.extend({}, this.calendars[id]);
+        src.editable = false;
+        src.url = null;
+        src.events = [];
+
+        if (cal.active) {
+          cals[id] = src;
+          sources.push(src);
+        }
+      }
+      
+      // copy events already loaded
+      var events = fc.fullCalendar('clientEvents');
+      for (var event, i=0; i< events.length; i++) {
+        event = events[i];
+        if (event.source && (src = cals[event.source.id])) {
+          src.events.push(event);
+        }
+      }
+      
+      var h = $(window).height() - 50;
+      var dialog = $('<div>')
+        .attr('id', 'fish-eye-view')
+        .dialog({
+          modal: true,
+          width: 680,
+          height: h,
+          title: $.fullCalendar.formatDate(date, 'dddd ' + settings['date_long']),
+          close: function(){
+            dialog.dialog("destroy");
+            me.fisheye_date = null;
+          }
+        })
+        .fullCalendar({
+          header: { left: '', center: '', right: '' },
+          height: h - 50,
+          defaultView: 'agendaDay',
+          date: date.getDate(),
+          month: date.getMonth(),
+          year: date.getFullYear(),
+          ignoreTimezone: true,  // will treat the given date strings as in local (browser's) timezone
+          eventSources: sources,
+          monthNames : settings['months'],
+          monthNamesShort : settings['months_short'],
+          dayNames : settings['days'],
+          dayNamesShort : settings['days_short'],
+          firstDay : settings['first_day'],
+          firstHour : settings['first_hour'],
+          slotMinutes : 60/settings['timeslots'],
+          timeFormat: { '': settings['time_format'] },
+          axisFormat : settings['time_format'],
+          columnFormat: { day: 'dddd ' + settings['date_short'] },
+          titleFormat: { day: 'dddd ' + settings['date_long'] },
+          allDayText: rcmail.gettext('all-day', 'calendar'),
+          eventRender: fc_event_render,
+          eventClick: function(event) {
+            event_show_dialog(event);
+          }
+        });
+        
+        this.fisheye_date = date;
+    };
+
     //public method to show the print dialog.
     this.print_calendars = function(view)
     {
@@ -1813,6 +1929,9 @@ function rcube_calendar_ui(settings)
           });
         }
       }
+      
+      if (this.fisheye_date)
+        this.fisheye_view(this.fisheye_date);
     };
 
     // resize and reposition (center) the dialog window
@@ -1955,37 +2074,19 @@ function rcube_calendar_ui(settings)
           me.events_loaded($(this).fullCalendar('clientEvents').length);
       },
       // event rendering
-      eventRender: function(event, element, view) {
-        if (view.name != 'list' && view.name != 'table') {
-          var prefix = event.sensitivity != 0 ? String(sensitivitylabels[event.sensitivity]).toUpperCase()+': ' : '';
-          element.attr('title', prefix + event.title);
+      eventRender: fc_event_render,
+      eventAfterRender: function(event, element, view) {
+        // adjust position of the more... element
+        var link;
+        if (view.name == 'month' && (link = view._morelink[event.id]) && !link.data('date') && link.data('overflow') > 1) {
+          link.html(rcmail.gettext('andnmore', 'calendar').replace('$nr', link.data('overflow')))
+            .css({ left:element.css('left'), top:element.css('top') })
+            .data('date', new Date(event.start.getTime()))
+            .click(function(e){ me.fisheye_view($(this).data('date')); });
+          element.remove();
         }
-        if (view.name == 'month') {
-/* attempt to limit the number of events displayed
-   (could also be used to init fish-eye-view)
-          var max = 4;  // to be derrived from window size
-          var sday = event.start.getMonth()*12 + event.start.getDate();
-          var eday = event.end.getMonth()*12   + event.end.getDate();
-          if (!me.eventcount[sday]) me.eventcount[sday] = 1;
-          else                      me.eventcount[sday]++;
-          if (!me.eventcount[eday]) me.eventcount[eday] = 1;
-          else if (eday != sday)    me.eventcount[eday]++;
-          
-          if (me.eventcount[sday] > max || me.eventcount[eday] > max)
-            return false;
-*/
-        }
-        else {
-          if (event.location) {
-            element.find('div.fc-event-title').after('<div class="fc-event-location">@&nbsp;' + Q(event.location) + '</div>');
-          }
-          if (event.sensitivity != 0)
-            element.find('div.fc-event-time').append('<i class="fc-icon-sensitive"></i>');
-          if (event.recurrence)
-            element.find('div.fc-event-time').append('<i class="fc-icon-recurring"></i>');
-          if (event.alarms)
-            element.find('div.fc-event-time').append('<i class="fc-icon-alarms"></i>');
-        }
+        else if (link)
+          link.remove();
       },
       // callback for date range selection
       select: function(start, end, allDay, e, view) {
@@ -2066,14 +2167,13 @@ function rcube_calendar_ui(settings)
         update_event_confirm('resize', event, data);
       },
       viewDisplay: function(view) {
-        me.eventcount = [];
-        if (!bw.ie)
-          window.setTimeout(function(){ $('div.fc-content').css('overflow', view.name == 'month' ? 'auto' : 'hidden') }, 10);
         if (minical)
           window.setTimeout(function(){ minical.datepicker('setDate', fc.fullCalendar('getDate')); }, exec_deferred);
       },
-      windowResize: function(view) {
-        me.eventcount = [];
+      viewRender: function(view) {
+        view._maxevents = Math.floor((view.element.parent().height()-18) / 108) - 1;
+        view._eventcount = [];
+        view._morelink = [];
       }
     });
 
@@ -2387,6 +2487,10 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         event.source = source;  // link with source
         fc.fullCalendar('renderEvent', event);
       }
+      
+      // refresh fish-eye view
+      if (cal.fisheye_date)
+        cal.fisheye_view(cal.fisheye_date);
     }
 
     // remove temp events
