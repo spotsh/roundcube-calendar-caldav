@@ -1573,7 +1573,7 @@ function rcube_calendar_ui(settings)
       if (view.name == 'month') {
         // limit the number of events displayed
         var sday = event.start.getMonth()*120 + event.start.getDate();
-        var eday = event.end.getMonth()*120   + event.end.getDate();
+        var eday = event.end ? event.end.getMonth()*120   + event.end.getDate() : sday;
         if (!view._eventcount[sday]) view._eventcount[sday] = 1;
         else                         view._eventcount[sday]++;
         if (!view._eventcount[eday]) view._eventcount[eday] = 1;
@@ -1588,7 +1588,7 @@ function rcube_calendar_ui(settings)
               .data('overflow', 1);
           }
           else {
-            view._morelink[sday].data('overflow', view._eventcount[sday] - view._maxevents);
+            view._morelink[sday].data('overflow', view._eventcount[sday] - view._maxevents + 1);
             return false;
           }
         }
