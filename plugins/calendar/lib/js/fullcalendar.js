@@ -4850,6 +4850,8 @@ function DayEventRenderer() {
 				}
 				seg.outerHeight = element[0].offsetHeight + val;
 			}
+			else
+				seg.outerHeight = 0;
 		}
 	}
 	

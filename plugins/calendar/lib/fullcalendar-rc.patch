@@ -1,5 +1,5 @@
 --- js/fullcalendar.js.orig	2011-04-09 14:13:16.000000000 +0200
-+++ js/fullcalendar.js	2011-09-07 11:53:03.000000000 +0200
++++ js/fullcalendar.js	2011-09-08 18:52:12.000000000 +0200
 @@ -47,12 +47,16 @@
  	titleFormat: {
  		month: 'MMMM yyyy',
@@ -186,7 +186,16 @@
  			return smartProperty(v, viewNameOverride || viewName);
  		}
  		return v;
-@@ -5204,5 +5250,561 @@
+@@ -4804,6 +4850,8 @@
+ 				}
+ 				seg.outerHeight = element[0].offsetHeight + val;
+ 			}
++			else
++				seg.outerHeight = 0;
+ 		}
+ 	}
+ 	
+@@ -5204,5 +5252,561 @@
  	};
  	
  }
