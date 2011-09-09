@@ -1581,6 +1581,8 @@ function rcube_calendar_ui(settings)
       if (view.name == 'month') {
         if (event_resizing)
           return true;
+        else if (view._suppressed[event.id])
+          return false;
         
         // limit the number of events displayed
         var sday = event.start.getMonth()*100 + event.start.getDate();
@@ -1604,9 +1606,6 @@ function rcube_calendar_ui(settings)
             view._morelink[sday]++;
             return false;  // suppress event
           }
-        }
-        else if (view._suppressed[event.id]) {
-          return false;
         }
       }
       else {
