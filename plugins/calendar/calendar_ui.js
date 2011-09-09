@@ -1637,7 +1637,7 @@ function rcube_calendar_ui(settings)
         src.url = null;
         src.events = [];
 
-        if (cal.active) {
+        if (src.active) {
           cals[id] = src;
           sources.push(src);
         }
