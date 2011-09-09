@@ -40,6 +40,7 @@ function rcube_calendar_ui(settings)
     var attendees_list;
     var freebusy_ui = { workinhoursonly:false, needsupdate:false };
     var freebusy_data = {};
+    var event_resizing = false;
     var current_view = null;
     var exec_deferred = bw.ie6 ? 5 : 1;
     var sensitivitylabels = { 0:rcmail.gettext('public','calendar'), 1:rcmail.gettext('private','calendar'), 2:rcmail.gettext('confidential','calendar') };
@@ -1578,6 +1579,9 @@ function rcube_calendar_ui(settings)
         element.attr('title', prefix + event.title);
       }
       if (view.name == 'month') {
+        if (event_resizing)
+          return true;
+        
         // limit the number of events displayed
         var sday = event.start.getMonth()*100 + event.start.getDate();
         var eday = event.end ? event.end.getMonth()*100   + event.end.getDate() : sday;
@@ -2120,6 +2124,12 @@ function rcube_calendar_ui(settings)
             .click(function(e){ me.fisheye_view($(this).data('date')); });
           element.replaceWith(link);
         }
+      },
+      eventResizeStart: function(event, jsEvent, ui, view) {
+        event_resizing = event.id;
+      },
+      eventResizeStop: function(event, jsEvent, ui, view) {
+        event_resizing = false;
       },
       // callback for date range selection
       select: function(start, end, allDay, e, view) {
