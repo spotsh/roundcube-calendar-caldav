@@ -84,7 +84,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       list: settings['dates_long'],
       table: settings['dates_long']
     },
-    listSections: 'smart',
+    listSections: rcmail.env.listSections !== undefined ? rcmail.env.listSections : settings['agenda_sections'],
     listRange: rcmail.env.listRange || settings['agenda_range'],
     tableCols: ['handle', 'date', 'time', 'title', 'location'],
     allDayText: rcmail.gettext('all-day', 'calendar'),
@@ -93,6 +93,18 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       week: rcmail.gettext('week', 'calendar'),
       month: rcmail.gettext('month', 'calendar'),
       table: rcmail.gettext('agenda', 'calendar')
+    },
+    listTexts: {
+      until: rcmail.gettext('until', 'calendar'),
+      past: rcmail.gettext('pastevents', 'calendar'),
+      today: rcmail.gettext('today', 'calendar'),
+      tomorrow: rcmail.gettext('tomorrow', 'calendar'),
+      thisWeek: rcmail.gettext('thisweek', 'calendar'),
+      nextWeek: rcmail.gettext('nextweek', 'calendar'),
+      thisMonth: rcmail.gettext('thismonth', 'calendar'),
+      nextMonth: rcmail.gettext('nextmonth', 'calendar'),
+      future: rcmail.gettext('futureevents', 'calendar'),
+      week: rcmail.gettext('weekofyear', 'calendar')
     },
     loading: function(isLoading) {
       rc_loading = rcmail.set_busy(isLoading, 'loading', rc_loading);

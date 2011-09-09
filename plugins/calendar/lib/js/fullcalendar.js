@@ -660,6 +660,7 @@ function Calendar(element, options, eventSources) {
 			updateSize();
 		} else if (name.indexOf('list') == 0 || name == 'tableCols') {
 			options[name] = value;
+			currentView.start = null; // force re-render
 		}
 	}
 	
@@ -5310,8 +5311,8 @@ function ListEventRenderer() {
 		for (i=0; i < events.length; i++) {
 			event = events[i];
 			
-			// skip events < t.start
-			if (event.end < t.start)
+			// skip events out of range
+			if (event.end < t.start || event.start > t.visEnd)
 				continue;
 			
 			// define sections of this event
@@ -5536,7 +5537,7 @@ function ListView(element, calendar) {
 		}
 		t.start = t.visStart = cloneDate(date, true);
 		t.end = addDays(cloneDate(t.start), opt('listPage'));
-		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
+		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
 		addMinutes(t.visEnd, -1);  // set end to 23:59
 		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 		
@@ -5758,9 +5759,9 @@ function TableView(element, calendar) {
 		}
 		t.start = t.visStart = cloneDate(date, true);
 		t.end = addDays(cloneDate(t.start), opt('listPage'));
-		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
+		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
 		addMinutes(t.visEnd, -1);  // set end to 23:59
-		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
+		t.title = (t.visEnd.getTime() - t.visStart.getTime() < DAY_MS) ? formatDate(date, opt('titleFormat')) : formatDates(date, t.visEnd, opt('titleFormat'));
 		
 		updateOptions();
 

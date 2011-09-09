@@ -942,6 +942,28 @@ a.alarm-action-snooze:after {
 	height: 160px;
 }
 
+span.spacer {
+	padding-left: 3em;
+}
+
+#agendaoptions {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: auto;
+	z-index: 200;
+	border: 1px solid #ccc;
+	padding: 2px 5px 1px;
+	font-size: 90%;
+}
+
+#agendaoptions label {
+	color: #444;
+	text-shadow: 1px 1px #eee;
+	padding-right: 0.5em;
+}
+
 #calendar-kolabform {
 	position: relative;
 	padding-top: 24px;

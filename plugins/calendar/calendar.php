@@ -57,7 +57,8 @@ class calendar extends rcube_plugin
     'calendar_work_start'   => 6,
     'calendar_work_end'     => 18,
     'calendar_agenda_range' => 60,
-    'calendar_event_coloring' => 0,
+    'calendar_agenda_sections' => 'smart',
+    'calendar_event_coloring'  => 0,
   );
 
   private $default_categories = array(
@@ -235,6 +236,7 @@ class calendar extends rcube_plugin
     $this->register_handler('plugin.edit_attendees_notify', array($this->ui, 'edit_attendees_notify'));
     $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
     $this->register_handler('plugin.event_rsvp_buttons', array($this->ui, 'event_rsvp_buttons'));
+    $this->register_handler('plugin.angenda_options', array($this->ui, 'angenda_options'));
     $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
 
     $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
@@ -830,6 +832,7 @@ class calendar extends rcube_plugin
     $settings['work_start'] = (int)$this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']);
     $settings['work_end'] = (int)$this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']);
     $settings['agenda_range'] = (int)$this->rc->config->get('calendar_agenda_range', $this->defaults['calendar_agenda_range']);
+    $settings['agenda_sections'] = $this->rc->config->get('calendar_agenda_sections', $this->defaults['calendar_agenda_sections']);
     $settings['event_coloring'] = (int)$this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring']);
     $settings['timezone'] = $this->timezone;
 
@@ -862,7 +865,7 @@ class calendar extends rcube_plugin
       $this->rc->gettext('sep'), $this->rc->gettext('oct'),
       $this->rc->gettext('nov'), $this->rc->gettext('dec')
     );
-    $settings['today'] = rcube_label('today');
+    $settings['today'] = $this->rc->gettext('today');
 
     // get user identity to create default attendee
     if ($this->ui->screen == 'calendar') {
@@ -1592,6 +1595,9 @@ class calendar extends rcube_plugin
 
     if ($range = get_input_value('range', RCUBE_INPUT_GPC))
       $this->rc->output->set_env('listRange', intval($range));
+
+    if (isset($_REQUEST['sections']))
+      $this->rc->output->set_env('listSections', get_input_value('sections', RCUBE_INPUT_GPC));
     
     if ($search = get_input_value('search', RCUBE_INPUT_GPC)) {
       $this->rc->output->set_env('search', $search);

@@ -40,6 +40,7 @@ function rcube_calendar_ui(settings)
     var attendees_list;
     var freebusy_ui = { workinhoursonly:false, needsupdate:false };
     var freebusy_data = {};
+    var current_view = null;
     var exec_deferred = bw.ie6 ? 5 : 1;
     var sensitivitylabels = { 0:rcmail.gettext('public','calendar'), 1:rcmail.gettext('private','calendar'), 2:rcmail.gettext('confidential','calendar') };
     var ui_loading = rcmail.set_busy(true, 'loading');
@@ -1563,6 +1564,12 @@ function rcube_calendar_ui(settings)
       return true;
     };
 
+    var update_agenda_toolbar = function()
+    {
+      $('#agenda-listrange').val(fc.fullCalendar('option', 'listRange'));
+      $('#agenda-listsections').val(fc.fullCalendar('option', 'listSections'));
+    }
+
     /*** fullcalendar event handlers ***/
 
     var fc_event_render = function(event, element, view) {
@@ -1691,7 +1698,8 @@ function rcube_calendar_ui(settings)
       if (!view) view = fc.fullCalendar('getView').name;
       var date = fc.fullCalendar('getDate') || new Date();
       var range = fc.fullCalendar('option', 'listRange');
-      var printwin = window.open(rcmail.url('print', { view: view, date: date2unixtime(date), range: range, search: this.search_query }), "rc_print_calendars", "toolbar=no,location=yes,menubar=yes,resizable=yes,scrollbars=yes,width=800");
+      var sections = fc.fullCalendar('option', 'listSections');
+      var printwin = window.open(rcmail.url('print', { view: view, date: date2unixtime(date), range: range, sections: sections, search: this.search_query }), "rc_print_calendars", "toolbar=no,location=yes,menubar=yes,resizable=yes,scrollbars=yes,width=800");
       window.setTimeout(function(){ printwin.focus() }, 50);
     };
 
@@ -1845,9 +1853,11 @@ function rcube_calendar_ui(settings)
           this.search_query = q;
           
           // change to list view
-          fc.fullCalendar('option', 'listSections', 'month');
-          fc.fullCalendar('option', 'listRange', Math.max(60, settings['agenda_range']));
-          fc.fullCalendar('changeView', 'table');
+          fc.fullCalendar('option', 'listSections', 'month')
+            .fullCalendar('option', 'listRange', Math.max(60, settings['agenda_range']))
+            .fullCalendar('changeView', 'table');
+          
+          update_agenda_toolbar();
           
           // refetch events with new url (if not already triggered by changeView)
           if (!this.is_loading)
@@ -1871,8 +1881,10 @@ function rcube_calendar_ui(settings)
         fc.find('.fc-list-content > .fc-listappend').hide();
         
         // restore original event sources and view mode from fullcalendar
-        fc.fullCalendar('option', 'listSections', 'smart');
-        fc.fullCalendar('option', 'listRange', settings['agenda_range']);
+        fc.fullCalendar('option', 'listSections', settings['agenda_sections'])
+          .fullCalendar('option', 'listRange', settings['agenda_range']);
+        
+        update_agenda_toolbar();
         
         for (var sid in this.calendars) {
           if (this.calendars[sid])
@@ -1923,8 +1935,8 @@ function rcube_calendar_ui(settings)
           $('<a>').attr('href', '#').html(rcmail.gettext('searchlaterdates', 'calendar')).appendTo(lc).click(function(){
             var range = fc.fullCalendar('option', 'listRange');
             if (range < 90) {
-              fc.fullCalendar('getView').start = null; // force re-render
               fc.fullCalendar('option', 'listRange', fc.fullCalendar('option', 'listRange') + 30).fullCalendar('render');
+              update_agenda_toolbar();
             }
             else
               fc.fullCalendar('incrementDate', 0, 1, 0);
@@ -1942,6 +1954,13 @@ function rcube_calendar_ui(settings)
       var win = $(window), w = win.width(), h = win.height();
       $(id).dialog('option', { height: Math.min(h-20, height+110), width: Math.min(w-20, width+50) })
         .dialog('option', 'position', ['center', 'center']);  // only works in a separate call (!?)
+    };
+
+    // adjust calendar view size
+    this.view_resize = function()
+    {
+      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').height() + 2 : 0;
+      fc.fullCalendar('option', 'height', $('#main').height() - footer);
     };
 
 
@@ -2051,9 +2070,9 @@ function rcube_calendar_ui(settings)
         day: 'dddd ' + settings['date_long'],
         table: settings['dates_long']
       },
-      listSections: 'smart',
       listPage: 1,  // advance one day in agenda view
       listRange: settings['agenda_range'],
+      listSections: settings['agenda_sections'],
       tableCols: ['handle', 'date', 'time', 'title', 'location'],
       defaultView: rcmail.env.view || settings['default_view'],
       allDayText: rcmail.gettext('all-day', 'calendar'),
@@ -2065,6 +2084,18 @@ function rcube_calendar_ui(settings)
         week: rcmail.gettext('week', 'calendar'),
         month: rcmail.gettext('month', 'calendar'),
         table: rcmail.gettext('agenda', 'calendar')
+      },
+      listTexts: {
+        until: rcmail.gettext('until', 'calendar'),
+        past: rcmail.gettext('pastevents', 'calendar'),
+        today: rcmail.gettext('today', 'calendar'),
+        tomorrow: rcmail.gettext('tomorrow', 'calendar'),
+        thisWeek: rcmail.gettext('thisweek', 'calendar'),
+        nextWeek: rcmail.gettext('nextweek', 'calendar'),
+        thisMonth: rcmail.gettext('thismonth', 'calendar'),
+        nextMonth: rcmail.gettext('nextmonth', 'calendar'),
+        future: rcmail.gettext('futureevents', 'calendar'),
+        week: rcmail.gettext('weekofyear', 'calendar')
       },
       selectable: true,
       selectHelper: false,
@@ -2169,8 +2200,13 @@ function rcube_calendar_ui(settings)
         update_event_confirm('resize', event, data);
       },
       viewDisplay: function(view) {
-        if (minical)
+        $('#agendaoptions')[view.name == 'table' ? 'show' : 'hide']();
+        if (minical) {
           window.setTimeout(function(){ minical.datepicker('setDate', fc.fullCalendar('getDate')); }, exec_deferred);
+          if (view.name != current_view)
+            me.view_resize();
+          current_view = view.name;
+        }
       },
       viewRender: function(view) {
         view._maxevents = Math.floor((view.element.parent().height()-18) / 108) - 1;
@@ -2410,10 +2446,22 @@ function rcube_calendar_ui(settings)
         if (this.checked)
           $('<style type="text/css" id="workinghourscss"> td.offhours { opacity:0.3; filter:alpha(opacity=30) } </style>').appendTo('head');
       });
-      
+
       $('#event-rsvp input.button').click(function(){
         event_rsvp($(this).attr('rel'))
       })
+
+      $('#agenda-listrange').change(function(e){
+        settings['agenda_range'] = parseInt($(this).val());
+        fc.fullCalendar('option', 'listRange', settings['agenda_range']).fullCalendar('render');
+        // TODO: save new settings in prefs
+      }).val(settings['agenda_range']);
+      
+      $('#agenda-listsections').change(function(e){
+        settings['agenda_sections'] = $(this).val();
+        fc.fullCalendar('option', 'listSections', settings['agenda_sections']).fullCalendar('render');
+        // TODO: save new settings in prefs
+      }).val(fc.fullCalendar('option', 'listSections'));
 
       // hide event dialog when clicking somewhere into document
       $(document).bind('mousedown', dialog_check);
@@ -2507,8 +2555,9 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     // check target due to bugs in jquery
     // http://bugs.jqueryui.com/ticket/7514
     // http://bugs.jquery.com/ticket/9841
-    if (e.target == window)
-      $('#calendar').fullCalendar('option', 'height', $('#main').height());
+    if (e.target == window) {
+      cal.view_resize();
+    }
   }).resize();
 
   // show calendars list when ready

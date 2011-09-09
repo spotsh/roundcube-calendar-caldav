@@ -19,6 +19,10 @@
 	height: expression((parseInt(this.parentNode.offsetHeight)-220)+'px');
 }
 
+#agendaoptions {
+	width: expression((parseInt(this.parentNode.offsetWidth)-12)+'px');
+}
+
 #calendartoolbar a.buttonPas {
 	filter: alpha(opacity=35);
 }

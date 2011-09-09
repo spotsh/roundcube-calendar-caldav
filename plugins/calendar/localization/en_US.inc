@@ -67,6 +67,21 @@ $labels['searchlaterdates'] = 'Search for later events »';
 $labels['andnmore'] = '$nr more...';
 $labels['togglerole'] = 'Click to toggle role';
 
+// agenda view
+$labels['listrange'] = 'Range to display:';
+$labels['listsections'] = 'Divide into:';
+$labels['smartsections'] = 'Smart sections';
+$labels['until'] = 'until';
+$labels['today'] = 'Today';
+$labels['tomorrow'] = 'Tomorrow';
+$labels['thisweek'] = 'This week';
+$labels['nextweek'] = 'Next week';
+$labels['thismonth'] = 'This month';
+$labels['nextmonth'] = 'Next month';
+$labels['weekofyear'] = 'Week';
+$labels['pastevents'] = 'Past';
+$labels['futureevents'] = 'Future';
+
 // alarm/reminder settings
 $labels['showalarms'] = 'Show alarms';
 $labels['alarmemail'] = 'Send Email';

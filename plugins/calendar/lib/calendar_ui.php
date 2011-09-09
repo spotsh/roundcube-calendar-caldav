@@ -179,6 +179,34 @@ class calendar_ui
   }
 
   /**
+   *
+   */
+  function angenda_options($attrib = array())
+  {
+    $attrib += array('id' => 'agendaoptions');
+    $attrib['style'] .= 'display:none';
+    
+    $select_range = new html_select(array('name' => 'listrange', 'id' => 'agenda-listrange'));
+    $select_range->add(1 . ' ' . preg_replace('/\(.+\)/', '', $this->cal->gettext('days')), $days);
+    foreach (array(2,5,7,14,30,60,90) as $days)
+      $select_range->add($days . ' ' . preg_replace('/\(|\)/', '', $this->cal->gettext('days')), $days);
+    
+    $html .= html::label('agenda-listrange', $this->cal->gettext('listrange'));
+    $html .= $select_range->show($this->rc->config->get('calendar_agenda_range', $this->cal->defaults['calendar_agenda_range']));
+    
+    $select_sections = new html_select(array('name' => 'listsections', 'id' => 'agenda-listsections'));
+    $select_sections->add('---', '');
+    foreach (array('day' => 'days', 'week' => 'weeks', 'month' => 'months', 'smart' => 'smartsections') as $val => $label)
+      $select_sections->add(preg_replace('/\(|\)/', '', ucfirst($this->cal->gettext($label))), $val);
+    
+    $html .= html::span('spacer', '&nbsp');
+    $html .= html::label('agenda-listsections', $this->cal->gettext('listsections'));
+    $html .= $select_sections->show($this->rc->config->get('calendar_agenda_sections', $this->cal->defaults['calendar_agenda_sections']));
+    
+    return html::div($attrib, $html);
+  }
+
+  /**
    * Render a HTML select box for calendar selection
    */
   function calendar_select($attrib = array())

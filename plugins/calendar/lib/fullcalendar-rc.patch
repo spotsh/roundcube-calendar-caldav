@@ -1,5 +1,5 @@
 --- js/fullcalendar.js.orig	2011-04-09 14:13:16.000000000 +0200
-+++ js/fullcalendar.js	2011-09-08 18:52:12.000000000 +0200
++++ js/fullcalendar.js	2011-09-09 14:13:07.000000000 +0200
 @@ -47,12 +47,16 @@
  	titleFormat: {
  		month: 'MMMM yyyy',
@@ -76,16 +76,17 @@
  			currentView.renderEvents(events, modifiedEventID);
  			currentView.eventsDirty = false;
  		}
-@@ -632,6 +658,8 @@
+@@ -632,6 +658,9 @@
  		if (name == 'height' || name == 'contentHeight' || name == 'aspectRatio') {
  			options[name] = value;
  			updateSize();
 +		} else if (name.indexOf('list') == 0 || name == 'tableCols') {
 +			options[name] = value;
++			currentView.start = null; // force re-render
  		}
  	}
  	
-@@ -897,15 +925,16 @@
+@@ -897,15 +926,16 @@
  	}
  	
  	
@@ -106,7 +107,7 @@
  		}
  	}
  	
-@@ -1579,10 +1608,23 @@
+@@ -1579,10 +1609,23 @@
  			return 'th';
  		}
  		return ['st', 'nd', 'rd'][date%10-1] || 'th';
@@ -131,7 +132,7 @@
  
  fc.applyAll = applyAll;
  
-@@ -3534,10 +3576,10 @@
+@@ -3534,10 +3577,10 @@
  	function slotSelectionMousedown(ev) {
  		if (ev.which == 1 && opt('selectable')) { // ev.which==1 means left mouse button
  			unselect(ev);
@@ -144,7 +145,7 @@
  					var d1 = cellDate(origCell);
  					var d2 = cellDate(cell);
  					dates = [
-@@ -3762,7 +3804,8 @@
+@@ -3762,7 +3805,8 @@
  			height,
  			slotSegmentContainer = getSlotSegmentContainer(),
  			rtl, dis, dit,
@@ -154,7 +155,7 @@
  			
  		if (rtl = opt('isRTL')) {
  			dis = -1;
-@@ -3789,8 +3832,11 @@
+@@ -3789,8 +3833,11 @@
  				outerWidth = availWidth / (levelI + forward + 1);
  			}else{
  				if (forward) {
@@ -168,7 +169,7 @@
  				}else{
  					// can be entire width, aligned left
  					outerWidth = availWidth;
-@@ -3801,7 +3847,7 @@
+@@ -3801,7 +3848,7 @@
  				* dis + (rtl ? availWidth - outerWidth : 0);   // rtl
  			seg.top = top;
  			seg.left = left;
@@ -177,7 +178,7 @@
  			seg.outerHeight = bottom - top;
  			html += slotSegHtml(event, seg);
  		}
-@@ -4260,7 +4306,7 @@
+@@ -4260,7 +4307,7 @@
  	
  	function opt(name, viewNameOverride) {
  		var v = options[name];
@@ -186,7 +187,7 @@
  			return smartProperty(v, viewNameOverride || viewName);
  		}
  		return v;
-@@ -4804,6 +4850,8 @@
+@@ -4804,6 +4851,8 @@
  				}
  				seg.outerHeight = element[0].offsetHeight + val;
  			}
@@ -195,7 +196,7 @@
  		}
  	}
  	
-@@ -5204,5 +5252,561 @@
+@@ -5204,5 +5253,561 @@
  	};
  	
  }
@@ -258,8 +259,8 @@
 +		for (i=0; i < events.length; i++) {
 +			event = events[i];
 +			
-+			// skip events < t.start
-+			if (event.end < t.start)
++			// skip events out of range
++			if (event.end < t.start || event.start > t.visEnd)
 +				continue;
 +			
 +			// define sections of this event
@@ -484,7 +485,7 @@
 +		}
 +		t.start = t.visStart = cloneDate(date, true);
 +		t.end = addDays(cloneDate(t.start), opt('listPage'));
-+		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
++		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
 +		addMinutes(t.visEnd, -1);  // set end to 23:59
 +		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
 +		
@@ -706,9 +707,9 @@
 +		}
 +		t.start = t.visStart = cloneDate(date, true);
 +		t.end = addDays(cloneDate(t.start), opt('listPage'));
-+		t.visEnd = addDays(cloneDate(t.start), opt('listRange') + 1);
++		t.visEnd = addDays(cloneDate(t.start), opt('listRange'));
 +		addMinutes(t.visEnd, -1);  // set end to 23:59
-+		t.title = formatDates(date, t.visEnd, opt('titleFormat'));
++		t.title = (t.visEnd.getTime() - t.visStart.getTime() < DAY_MS) ? formatDate(date, opt('titleFormat')) : formatDates(date, t.visEnd, opt('titleFormat'));
 +		
 +		updateOptions();
 +

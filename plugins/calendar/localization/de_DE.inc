@@ -65,6 +65,22 @@ $labels['parentcalendar'] = 'Übergeordneter Kalender';
 $labels['searchearlierdates'] = '« Frühere Termine suchen';
 $labels['searchlaterdates'] = 'Spätere Termine suchen »';
 $labels['andnmore'] = '$nr weitere...';
+$labels['togglerole'] = 'Klick zum Ändern der Rolle';
+
+// agenda view
+$labels['listrange'] = 'Angezeigter Bereich:';
+$labels['listsections'] = 'Unterteilung:';
+$labels['smartsections'] = 'Intelligent';
+$labels['until'] = 'bis';
+$labels['today'] = 'Heute';
+$labels['tomorrow'] = 'Morgen';
+$labels['thisweek'] = 'Diese Woche';
+$labels['nextweek'] = 'Nächste Woche';
+$labels['thismonth'] = 'Diesen Monat';
+$labels['nextmonth'] = 'Nächsten Monat';
+$labels['weekofyear'] = 'Woche';
+$labels['pastevents'] = 'Vergangene';
+$labels['futureevents'] = 'Zukünftige';
 
 // alarm/reminder settings
 $labels['showalarms'] = 'Erinnerungen anzeigen';
