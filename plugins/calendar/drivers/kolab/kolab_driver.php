@@ -936,7 +936,7 @@ class kolab_driver extends calendar_driver
     // trigger updates on folder
     $folder = $storage->get_folder();
     $trigger = $folder->trigger();
-    if (is_a($trigger, 'PEAR_Error')) {
+    if (is_object($trigger) && is_a($trigger, 'PEAR_Error')) {
       raise_error(array(
         'code' => 900, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,

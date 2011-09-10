@@ -407,7 +407,7 @@ class Horde_Date {
      */
     function compareDate($date)
     {
-        if (!is_a($date, 'Horde_Date')) {
+        if (!is_object($date) || !is_a($date, 'Horde_Date')) {
             $date = new Horde_Date($date);
         }
 
@@ -434,7 +434,7 @@ class Horde_Date {
      */
     function compareTime($date)
     {
-        if (!is_a($date, 'Horde_Date')) {
+        if (!is_object($date) || !is_a($date, 'Horde_Date')) {
             $date = new Horde_Date($date);
         }
 
@@ -461,7 +461,7 @@ class Horde_Date {
      */
     function compareDateTime($date)
     {
-        if (!is_a($date, 'Horde_Date')) {
+        if (!is_object($date) || !is_a($date, 'Horde_Date')) {
             $date = new Horde_Date($date);
         }
 

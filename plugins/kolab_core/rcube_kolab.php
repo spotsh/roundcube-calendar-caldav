@@ -281,7 +281,7 @@ class rcube_kolab
         $folder = $kolab->getFolder($name);
         $result = $folder->delete();
 
-        if (is_a($result, 'PEAR_Error')) {
+        if (is_object($result) && is_a($result, 'PEAR_Error')) {
             self::$last_error = $result->getMessage();
             return false;
         }
@@ -311,7 +311,7 @@ class rcube_kolab
             'default' => $default,
         ));
 
-        if (is_a($result, 'PEAR_Error')) {
+        if (is_object($result) && is_a($result, 'PEAR_Error')) {
             self::$last_error = $result->getMessage();
             return false;
         }
@@ -335,7 +335,7 @@ class rcube_kolab
         $folder->setFolder($newname);
 
         $result = $kolab->rename($folder);
-        if (is_a($result, 'PEAR_Error')) {
+        if (is_object($result) && is_a($result, 'PEAR_Error')) {
             self::$last_error = $result->getMessage();
             return false;
         }

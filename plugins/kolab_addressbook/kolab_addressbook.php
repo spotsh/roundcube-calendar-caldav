@@ -280,7 +280,7 @@ class kolab_addressbook extends rcube_plugin
     public function contact_form($p)
     {
         // none of our business
-        if (!is_a($GLOBALS['CONTACTS'], 'rcube_kolab_contacts'))
+        if (!is_object($GLOBALS['CONTACTS']) || !is_a($GLOBALS['CONTACTS'], 'rcube_kolab_contacts'))
             return $p;
 
         // extend the list of contact fields to be displayed in the 'personal' section

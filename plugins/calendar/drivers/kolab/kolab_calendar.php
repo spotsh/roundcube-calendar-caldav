@@ -370,17 +370,17 @@ class kolab_calendar
     $session = &Horde_Kolab_Session::singleton();
     $imap    = &$session->getImap();
 
-    if (is_a($imap, 'PEAR_Error')) {
+    if (is_object($imap) && is_a($imap, 'PEAR_Error')) {
       $error = $imap;
     }
     else {
       $result = $imap->select($this->imap_folder);
-      if (is_a($result, 'PEAR_Error')) {
+      if (is_object($result) && is_a($result, 'PEAR_Error')) {
         $error = $result;
       }
       else {
         $result = $imap->undeleteMessages($imap_uid);
-        if (is_a($result, 'PEAR_Error')) {
+        if (is_object($result) && is_a($result, 'PEAR_Error')) {
           $error = $result;
         }
         else {
