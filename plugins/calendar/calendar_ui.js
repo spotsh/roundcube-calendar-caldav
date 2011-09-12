@@ -362,6 +362,9 @@ function rcube_calendar_ui(settings)
         minWidth: 320,
         width: 420
       }).show();
+      
+      // set dialog size according to content
+      me.dialog_resize($dialog.get(0), $dialog.height(), 420);
 /* 
       // add link for "more options" drop-down
       $('<a>')
