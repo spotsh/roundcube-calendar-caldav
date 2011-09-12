@@ -59,6 +59,15 @@ class calendar extends rcube_plugin
     'calendar_agenda_range' => 60,
     'calendar_agenda_sections' => 'smart',
     'calendar_event_coloring'  => 0,
+    'calendar_date_format_sets' => array(
+      'yyyy-MM-dd' => array('MMM d yyyy',   'M-d',  'ddd MM-dd'),
+      'dd-MM-yyyy' => array('d MMM yyyy',   'd-M',  'ddd dd-MM'),
+      'yyyy/MM/dd' => array('MMM d yyyy',   'M/d',  'ddd MM/dd'),
+      'MM/dd/yyyy' => array('MMM d yyyy',   'M/d',  'ddd MM/dd'),
+      'dd/MM/yyyy' => array('d MMM yyyy',   'd/M',  'ddd dd/MM'),
+      'dd.MM.yyyy' => array('dd. MMM yyyy', 'd.M',  'ddd dd.MM.'),
+      'd.M.yyyy'   => array('d. MMM yyyy',  'd.M',  'ddd d.MM.'),
+    ),
   );
 
   private $default_categories = array(
@@ -296,16 +305,7 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
         'content' => $select->show($this->rc->config->get('calendar_default_view', $this->defaults['calendar_default_view'])),
       );
-/*
-      $field_id = 'rcmfd_time_format';
-      $choices = array('HH:mm', 'H:mm', 'h:mmt');
-      $select = new html_select(array('name' => '_time_format', 'id' => $field_id));
-      $select->add($choices);
-      $p['blocks']['view']['options']['time_format'] = array(
-        'title' => html::label($field_id, Q($this->gettext('time_format'))),
-        'content' => $select->show($this->rc->config->get('calendar_time_format', "HH:mm")),
-      );
-*/
+
       $field_id = 'rcmfd_timeslot';
       $choices = array('1', '2', '3', '4', '6');
       $select = new html_select(array('name' => '_timeslots', 'id' => $field_id));
@@ -329,7 +329,7 @@ class calendar extends rcube_plugin
         'content' => $select->show($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day'])),
       );
       
-      $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
+      $time_format = $this->rc->config->get('time_format', self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format'])));
       $select_hours = new html_select();
       for ($h = 0; $h < 24; $h++)
         $select_hours->add(date($time_format, mktime($h, 0, 0)), $h);
@@ -458,7 +458,6 @@ class calendar extends rcube_plugin
 
       $p['prefs'] = array(
         'calendar_default_view' => get_input_value('_default_view', RCUBE_INPUT_POST),
-#        'calendar_time_format'  => get_input_value('_time_format', RCUBE_INPUT_POST),
         'calendar_timeslots'    => get_input_value('_timeslots', RCUBE_INPUT_POST),
         'calendar_first_day'    => get_input_value('_first_day', RCUBE_INPUT_POST),
         'calendar_first_hour'   => intval(get_input_value('_first_hour', RCUBE_INPUT_POST)),
@@ -469,7 +468,7 @@ class calendar extends rcube_plugin
         'calendar_default_alarm_offset' => $default_alam,
         'calendar_default_calendar'     => get_input_value('_default_calendar', RCUBE_INPUT_POST),
       );
-      
+
       // categories
       if (!$this->driver->categoriesimmutable) {
         $old_categories = $new_categories = array();
@@ -815,17 +814,20 @@ class calendar extends rcube_plugin
    */
   function load_settings()
   {
+    $this->date_format_defaults();
     $settings = array();
     
     // configuration
     $settings['default_calendar'] = $this->rc->config->get('calendar_default_calendar');
     $settings['default_view'] = (string)$this->rc->config->get('calendar_default_view', $this->defaults['calendar_default_view']);
+    
     $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']);
+    $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']);
     $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', $this->defaults['calendar_date_short']);
-    $settings['date_long'] = (string)$this->rc->config->get('calendar_date_long', $this->defaults['calendar_date_long']);
+    $settings['date_long']  = (string)$this->rc->config->get('calendar_date_long', $this->defaults['calendar_date_long']);
     $settings['dates_long'] = str_replace(' yyyy', '[ yyyy]', $settings['date_long']) . "{ '&mdash;' " . $settings['date_long'] . '}';
     $settings['date_agenda'] = (string)$this->rc->config->get('calendar_date_agenda', $this->defaults['calendar_date_agenda']);
-    $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']);
+    
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
     $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']);
     $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']);
@@ -879,6 +881,35 @@ class calendar extends rcube_plugin
     }
 
     return $settings;
+  }
+  
+  /**
+   * Helper function to set date/time format according to config and user preferences
+   */
+  private function date_format_defaults()
+  {
+    static $defaults = array();
+    
+    // nothing to be done
+    if (isset($defaults['date_format']))
+      return;
+    
+    $defaults['date_format'] = $this->rc->config->get('calendar_date_format', self::from_php_date_format($this->rc->config->get('date_format')));
+    $defaults['time_format'] = $this->rc->config->get('calendar_time_format', self::from_php_date_format($this->rc->config->get('time_format')));
+    
+    // override defaults
+    if ($defaults['date_format'])
+      $this->defaults['calendar_date_format'] = $defaults['date_format'];
+    if ($defaults['time_format'])
+      $this->defaults['calendar_time_format'] = $defaults['time_format'];
+    
+    // derive format variants from basic date format
+    $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
+    if ($format_set = $format_sets[$this->defaults['calendar_date_format']]) {
+      $this->defaults['calendar_date_long'] = $format_set[0];
+      $this->defaults['calendar_date_short'] = $format_set[1];
+      $this->defaults['calendar_date_agenda'] = $format_set[2];
+    }
   }
 
   /**
@@ -1069,7 +1100,7 @@ class calendar extends rcube_plugin
   private static function to_php_date_format($from)
   {
     // "dd.MM.yyyy HH:mm:ss" => "d.m.Y H:i:s"
-    return strtr($from, array(
+    return strtr(strtr($from, array(
       'yyyy' => 'Y',
       'yy'   => 'y',
       'MMMM' => 'F',
@@ -1079,8 +1110,10 @@ class calendar extends rcube_plugin
       'dddd' => 'l',
       'ddd'  => 'D',
       'dd'   => 'd',
-      'HH'   => 'H',
-      'hh'   => 'h',
+      'HH'   => '**',
+      'hh'   => '%%',
+      'H'    => 'G',
+      'h'    => 'g',
       'mm'   => 'i',
       'ss'   => 's',
       'TT'   => 'A',
@@ -1088,6 +1121,37 @@ class calendar extends rcube_plugin
       'T'    => 'A',
       't'    => 'a',
       'u'    => 'c',
+    )), array(
+      '**'   => 'H',
+      '%%'   => 'h',
+    ));
+  }
+  
+  /**
+   * Convert from PHP date() format to fullcalendar format string
+   */
+  private static function from_php_date_format($from)
+  {
+    // "d.m.Y H:i:s" => "dd.MM.yyyy HH:mm:ss"
+    return strtr($from, array(
+      'y' => 'yy',
+      'Y' => 'yyyy',
+      'M' => 'MMM',
+      'F' => 'MMMM',
+      'm' => 'MM',
+      'n' => 'M',
+      'd' => 'dd',
+      'D' => 'ddd',
+      'l' => 'dddd',
+      'H' => 'HH',
+      'h' => 'hh',
+      'G' => 'H',
+      'g' => 'h',
+      'i' => 'mm',
+      's' => 'ss',
+      'A' => 'TT',
+      'a' => 'tt',
+      'c' => 'u',
     ));
   }
   
@@ -1474,6 +1538,7 @@ class calendar extends rcube_plugin
     $fromto = '';
     $duration = $event['end'] - $event['start'];
     
+    $this->date_format_defaults();
     $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
     $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
     
