@@ -7,6 +7,15 @@ $labels['officelocation'] = 'Office location';
 $labels['children'] = 'Children';
 $labels['pgppublickey'] = 'PGP publickey';
 $labels['freebusyurl'] = 'Free-busy URL';
+$labels['typebusiness'] = 'Business';
+$labels['typebusinessfax'] = 'Business Fax';
+$labels['typecompany'] = 'Company';
+$labels['typeprimary'] = 'Primary';
+$labels['typetelex'] = 'Telex';
+$labels['typeradio'] = 'Radio';
+$labels['typeisdn'] = 'ISDN';
+$labels['typettytdd'] = 'TTY/TDD';
+$labels['typecallback'] = 'Callback';
 $labels['settings'] = 'Settings';
 
 $labels['bookcreate'] = 'Create address book';

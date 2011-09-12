@@ -9,6 +9,16 @@ $labels['pgppublickey'] = 'Klucz publ. PGP';
 $labels['freebusyurl'] = 'URL Free-busy';
 $labels['settings'] = 'Ustawienia';
 
+$labels['typebusiness'] = 'Praca';
+$labels['typebusinessfax'] = 'Fax firmowy';
+$labels['typecallback'] = 'Callback';
+$labels['typecompany'] = 'Firma';
+$labels['typeprimary'] = 'Główny';
+$labels['typetelex'] = 'Teleks';
+$labels['typeradio'] = 'Radio';
+$labels['typeisdn'] = 'ISDN';
+$labels['typettytdd'] = 'TTY/TDD';
+
 $labels['addressbookprio'] = 'Wybór/zachowanie książek adresowych';
 $labels['personalfirst'] = 'Najpierw osobiste książki adresowe';
 $labels['globalfirst'] = 'Najpierw globalne książki adresowe';
