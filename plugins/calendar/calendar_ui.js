@@ -2013,7 +2013,7 @@ function rcube_calendar_ui(settings)
         
         $(li).click(function(e){
           var id = $(this).data('id');
-          rcmail.select_folder(id, me.selected_calendar, 'rcmlical');
+          rcmail.select_folder(id, 'rcmlical');
           rcmail.enable_command('calendar-edit', true);
           rcmail.enable_command('calendar-remove', !me.calendars[id].readonly);
           me.selected_calendar = id;
