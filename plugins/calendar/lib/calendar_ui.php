@@ -464,7 +464,7 @@ class calendar_ui
 
         $table->add('label', '');
         $table->add(null, $radio->show('', array('value' => 'until', 'id' => 'edit-recurrence-repeat-until')) . ' ' .
-          $this->cal->gettext('until') . ' ' . $input->show(''));
+          $this->cal->gettext('untildate') . ' ' . $input->show(''));
         $html = $table->show();
         break;
     }
