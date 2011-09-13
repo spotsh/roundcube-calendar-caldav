@@ -1122,8 +1122,9 @@ function EventManager(options, _sources) {
 				stickySource.events.push(event);
 				event.source = stickySource;
 			}
-			cache.push(event);
 		}
+		
+		cache.push(event);
 		reportEvents(cache);
 	}
 	
