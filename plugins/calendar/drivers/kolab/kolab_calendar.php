@@ -31,6 +31,7 @@ class kolab_calendar
   public $readonly = true;
   public $attachments = true;
   public $alarms = false;
+  public $categories = array();
 
   private $cal;
   private $storage;
@@ -220,6 +221,10 @@ class kolab_calendar
     
     $events = array();
     foreach ($this->events as $id => $event) {
+      // remember seen categories
+      if ($event['categories'])
+        $this->categories[$event['categories']]++;
+      
       // filter events by search query
       if (!empty($search)) {
         $hit = false;
@@ -571,6 +576,9 @@ class kolab_calendar
       $_attendees .= $rec['organizer']['display-name'] . ' ' . $rec['organizer']['smtp-address'] . ' ';
     }
     
+    // Roundcube only supports one category assignment
+    $categories = explode(',', $rec['categories']);
+    
     return array(
       'id' => $rec['uid'],
       'uid' => $rec['uid'],
@@ -583,7 +591,7 @@ class kolab_calendar
       'recurrence' => $rrule,
       'alarms' => $alarm_value . $alarm_unit,
       '_alarm' => intval($rec['alarm']),
-      'categories' => $rec['categories'],
+      'categories' => $categories[0],
       'attachments' => $attachments,
       'attendees' => $attendees,
       '_attendees' => $_attendees,

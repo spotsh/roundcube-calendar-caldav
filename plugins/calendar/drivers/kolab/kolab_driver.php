@@ -680,12 +680,21 @@ class kolab_driver extends calendar_driver
     if ($calendars && is_string($calendars))
       $calendars = explode(',', $calendars);
 
-    $events = array();
+    $events = $categories = array();
     foreach ($this->calendars as $cid => $calendar) {
       if ($calendars && !in_array($cid, $calendars))
         continue;
 
       $events = array_merge($events, $this->calendars[$cid]->list_events($start, $end, $search, $virtual));
+      $categories += $this->calendars[$cid]->categories;
+    }
+    
+    // add new categories to user prefs
+    $old_categories = $this->rc->config->get('calendar_categories', array());
+    if ($newcats = array_diff(array_map('strtolower', array_keys($categories)), array_map('strtolower', array_keys($old_categories)))) {
+      foreach ($newcats as $category)
+        $old_categories[$category] = '';  // no color set yet
+      $this->rc->user->save_prefs(array('calendar_categories' => $old_categories));
     }
 
     return $events;
@@ -835,19 +844,8 @@ class kolab_driver extends calendar_driver
    */
   public function list_categories()
   {
-    # fixed list according to http://www.kolab.org/doc/kolabformat-2.0rc7-html/c300.html
-    return array(
-      'important' => 'cc0000',
-      'business' => '333333',
-      'personal' => '333333',
-      'vacation' => '333333',
-      'must-attend' => '333333',
-      'travel-required' => '333333',
-      'needs-preparation' => '333333',
-      'birthday' => '333333',
-      'anniversary' => '333333',
-      'phone-call' => '333333',
-    );
+    // FIXME: complete list with categories saved in config objects (KEP:12)
+    return $this->rc->config->get('calendar_categories', array());
   }
 
   /**

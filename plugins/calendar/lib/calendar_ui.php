@@ -93,7 +93,10 @@ class calendar_ui
     $css = "\n";
     
     foreach ((array)$categories as $class => $color) {
-      $class = 'cat-' . asciiwords($class, true);
+      if (empty($color))
+        continue;
+      
+      $class = 'cat-' . asciiwords(strtolower($class), true);
       $css  .= ".$class { color: #$color }\n";
       if ($mode > 0) {
         if ($mode == 2) {

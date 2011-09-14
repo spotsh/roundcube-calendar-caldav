@@ -394,7 +394,7 @@ class calendar extends rcube_plugin
       
       
       // category definitions
-      if (!$this->driver->categoriesimmutable) {
+      if (!$this->driver->nocategories) {
         $p['blocks']['categories']['name'] = $this->gettext('categories');
 
         $categories = (array) $this->driver->list_categories();
@@ -403,9 +403,10 @@ class calendar extends rcube_plugin
           $key = md5($name);
           $field_class = 'rcmfd_category_' . str_replace(' ', '_', $name);
           $category_remove = new html_inputfield(array('type' => 'button', 'value' => 'X', 'class' => 'button', 'onclick' => '$(this).parent().remove()', 'title' => $this->gettext('remove_category')));
-          $category_name  = new html_inputfield(array('name' => "_categories[$key]", 'class' => $field_class, 'size' => 30));
+          $category_name  = new html_inputfield(array('name' => "_categories[$key]", 'class' => $field_class, 'size' => 30, 'disabled' => $this->driver->categoriesimmutable));
           $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => "$field_class colors", 'size' => 6));
-          $categories_list .= html::div(null, $category_name->show($name) . '&nbsp;' . $category_color->show($color) . '&nbsp;' . $category_remove->show());
+          $hidden = $this->driver->categoriesimmutable ? html::tag('input', array('type' => 'hidden', 'name' => "_categories[$key]", 'value' => $name)) : '';
+          $categories_list .= html::div(null, $hidden . $category_name->show($name) . '&nbsp;' . $category_color->show($color) . '&nbsp;' . $category_remove->show());
         }
 
         $p['blocks']['categories']['options']['category_' . $name] = array(
@@ -470,7 +471,7 @@ class calendar extends rcube_plugin
       );
 
       // categories
-      if (!$this->driver->categoriesimmutable) {
+      if (!$this->driver->nocategories) {
         $old_categories = $new_categories = array();
         foreach ($this->driver->list_categories() as $name => $color) {
           $old_categories[md5($name)] = $name;
@@ -953,7 +954,7 @@ class calendar extends rcube_plugin
       'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
-      'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'fc-event-cat-' . asciiwords($event['categories'], true),
+      'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'fc-event-cat-' . asciiwords(strtolower($event['categories']), true),
       'allDay'      => ($event['allday'] == 1),
     ) + $event;
   }

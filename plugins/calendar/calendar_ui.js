@@ -450,6 +450,11 @@ function rcube_calendar_ui(settings)
       // enable/disable alarm property according to backend support
       $('#edit-alarms')[(calendar.alarms ? 'show' : 'hide')]();
 
+      // check categories drop-down: add value if not exists
+      if (event.categories && !categories.find("option[value='"+event.categories+"']").length) {
+        $('<option>').attr('value', event.categories).text(event.categories).appendTo(categories).prop('selected', true);
+      }
+
       // set recurrence form
       var recurrence, interval, rrtimes, rrenddate;
       var load_recurrence_tab = function()
