@@ -678,10 +678,12 @@ class calendar extends rcube_plugin
             }
           }
         }
-        if ($status == 'unknown')
-          $action = 'import';
         
-        if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
+        if ($status == 'unknown') {
+          $html = html::div('rsvp-status', $this->gettext('notanattendee'));
+          $action = 'import';
+        }
+        else if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
           $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
           if ($existing['changed'] && $event['changed'] < $existing['changed']) {
             $action = '';

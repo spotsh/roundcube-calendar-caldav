@@ -164,6 +164,7 @@ $labels['acceptinvitation'] = 'Möchten Sie die Einladung zu diesem Termin anneh
 $labels['youhaveaccepted'] = 'Sie haben die Einladung angenommen';
 $labels['youhavetentative'] = 'Sie haben die Einladung mit Vorbehalt angenommen';
 $labels['youhavedeclined'] = 'Sie haben die Einladung abgelehnt';
+$labels['notanattendee'] = 'Sie sind nicht in der Liste der Teilnehmer aufgeführt';
 $labels['eventcancelled'] = 'Der Termin wurde vom Organisator abgesagt';
 
 // event dialog tabs
