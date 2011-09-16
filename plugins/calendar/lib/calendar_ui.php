@@ -459,11 +459,11 @@ class calendar_ui
           $this->cal->gettext('forever')));
 
         $table->add('label', '');
-        $table->add(null, html::label(null, $radio->show('', array('value' => 'count', 'id' => 'edit-recurrence-repeat-count')) . ' ' .
+        $table->add(null, $radio->show('', array('value' => 'count', 'id' => 'edit-recurrence-repeat-count')) . ' ' .
           $this->cal->gettext(array(
             'name' => 'forntimes',
             'vars' => array('nr' => $select->show(1)))
-          )));
+          ));
 
         $table->add('label', '');
         $table->add(null, $radio->show('', array('value' => 'until', 'id' => 'edit-recurrence-repeat-until')) . ' ' .

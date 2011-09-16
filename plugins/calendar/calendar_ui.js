@@ -2421,6 +2421,7 @@ function rcube_calendar_ui(settings)
           $('#recurrence-form-'+freq+', #recurrence-form-until').show();
       });
       $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
+      $('#edit-recurrence-repeat-times').change(function(e){ $('#edit-recurrence-repeat-count').prop('checked', true); });
 
       // init attendees autocompletion
       var ac_props;
