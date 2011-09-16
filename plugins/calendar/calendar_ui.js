@@ -859,6 +859,12 @@ function rcube_calendar_ui(settings)
     {
       if (delta) {
         freebusy_ui.start.setTime(freebusy_ui.start.getTime() + DAY_MS * delta);
+        // skip weekends if in workinhoursonly-mode
+        if (Math.abs(delta) == 1 && freebusy_ui.workinhoursonly) {
+          while (is_weekend(freebusy_ui.start))
+            freebusy_ui.start.setTime(freebusy_ui.start.getTime() + DAY_MS * delta);
+        }
+        
         freebusy_ui.end = new Date(freebusy_ui.start.getTime() + DAY_MS * freebusy_ui.numdays);
       }
       
