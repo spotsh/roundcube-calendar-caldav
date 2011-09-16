@@ -835,6 +835,9 @@ function rcube_calendar_ui(settings)
             $("#edit-attendees-table").css('visibility','visible');
           $dialog.dialog("destroy").hide();
         },
+        resizeStop: function() {
+          render_freebusy_overlay();
+        },
         buttons: buttons,
         minWidth: 640,
         width: 850
@@ -966,7 +969,7 @@ function rcube_calendar_ui(settings)
         
         // iterate through slots to determine position and size of the overlay
         table.children('thead').find('td').each(function(i, cell){
-          slotend = slotstart + slotsize - 60;
+          slotend = slotstart + slotsize - 1;
           // event starts in this slot: compute left
           if (eventstart >= slotstart && eventstart <= slotend) {
             fraction = 1 - (slotend - eventstart) / slotsize;
@@ -2464,7 +2467,7 @@ function rcube_calendar_ui(settings)
       $('#shedule-find-prev').button().click(function(){ freebusy_find_slot(-1); });
       $('#shedule-find-next').button().click(function(){ freebusy_find_slot(1); });
 
-      $('#schedule-freebusy-wokinghours').click(function(){
+      $('#schedule-freebusy-workinghours').click(function(){
         freebusy_ui.workinhoursonly = this.checked;
         $('#workinghourscss').remove();
         if (this.checked)

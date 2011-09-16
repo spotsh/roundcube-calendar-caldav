@@ -788,6 +788,7 @@ td.topalign {
 
 #schedule-freebusy-times {
 	border-collapse: collapse;
+	width: 100%;
 }
 
 #schedule-freebusy-times td {

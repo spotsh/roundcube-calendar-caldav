@@ -65,7 +65,7 @@ function rcube_calendar(settings)
         event_ids.push(alarm.id);
         
         html = '<h3 class="event-title">' + Q(alarm.title) + '</h3>';
-        html += '<div class="event-section">' + Q(alarm.location) + '</div>';
+        html += '<div class="event-section">' + Q(alarm.location || '') + '</div>';
         html += '<div class="event-section">' + Q(this.event_date_text(alarm)) + '</div>';
         
         adismiss = $('<a href="#" class="alarm-action-dismiss"></a>').html(rcmail.gettext('dismiss','calendar')).click(function(){
