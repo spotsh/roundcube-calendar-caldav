@@ -2607,7 +2607,6 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         event.source = source;  // link with source
         fc.fullCalendar('renderEvent', event);
       }
-      console.log(p);
       // refresh fish-eye view
       if (cal.fisheye_date)
         cal.fisheye_view(cal.fisheye_date);
