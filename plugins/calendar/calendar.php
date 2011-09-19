@@ -586,7 +586,7 @@ class calendar extends rcube_plugin
         $this->prepare_event($event, $action);
         if ($success = $this->driver->edit_event($event))
             $this->cleanup_event($event);
-        $reload =  $success && ($event['recurrence'] || $event['savemode']) ? 2 : 1;
+        $reload =  $success && ($event['recurrence'] || $event['savemode'] || $event['fromcalendar']) ? 2 : 1;
         break;
       
       case "resize":
@@ -937,7 +937,7 @@ class calendar extends rcube_plugin
   {
     $json = array();
     foreach ($events as $event) {
-      $json[] = $this->_client_event($event);
+      $json[] = $this->_client_event($event, $addcss);
     }
     return json_encode($json);
   }
@@ -945,7 +945,7 @@ class calendar extends rcube_plugin
   /**
    * Convert an event object to be used on the client
    */
-  private function _client_event($event)
+  private function _client_event($event, $addcss = false)
   {
     // compose a human readable strings for alarms_text and recurrence_text
     if ($event['alarms'])

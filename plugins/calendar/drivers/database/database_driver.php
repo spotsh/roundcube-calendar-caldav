@@ -440,6 +440,9 @@ class database_driver extends calendar_driver
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]);
     }
     
+    if ($event['fromcalendar'] && $event['fromcalendar'] != $event['calendar'])
+        $sql_set[] = 'calendar_id=' . $this->rc->db->quote($event['calendar']);
+    
     $query = $this->rc->db->query(sprintf(
       "UPDATE " . $this->db_events . "
        SET   changed=%s, start=%s, end=%s %s

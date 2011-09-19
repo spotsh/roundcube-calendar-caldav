@@ -53,7 +53,6 @@
  *      'priority' => 1|0|2,   // Event priority (0=low, 1=normal, 2=high)
  *   'sensitivity' => 0|1|2,   // Event sensitivity (0=public, 1=private, 2=confidential)
  *        'alarms' => '-15M:DISPLAY',  // Reminder settings inspired by valarm definition (e.g. display alert 15 minutes before event)
- *      'savemode' => 'all|future|current|new',   // How changes on recurring event should be handled
  *   'attachments' => array(   // List of attachments
  *            'name' => 'File name',
  *        'mimetype' => 'Content type',
@@ -67,6 +66,10 @@
  *            'role' => 'ORGANIZER|REQ-PARTICIPANT|OPT-PARTICIPANT|CHAIR',
  *          'status' => 'NEEDS-ACTION|UNKNOWN|ACCEPTED|TENTATIVE|DECLINED'
  *            'rsvp' => true|false,
+ *
+ *      'savemode' => 'all|future|current|new',   // How changes on recurring event should be handled
+ *        'notify' => true|false,  // whether to notify event attendees about changes
+ *  'fromcalendar' => 'Calendar identifier where the event was stored before',
  *    ),
  *  );
  */

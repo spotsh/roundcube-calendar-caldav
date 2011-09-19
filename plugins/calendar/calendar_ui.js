@@ -388,9 +388,8 @@ function rcube_calendar_ui(settings)
       event = me.selected_event; // change reference to clone
       freebusy_ui.needsupdate = false;
 
-      // reset dialog first, enable/disable fields according to editable state
+      // reset dialog first
       $('#eventtabs').get(0).reset();
-      $('#calendar-select')[(action == 'new' ? 'show' : 'hide')]();
 
       // event details
       var title = $('#edit-title').val(event.title || '');
@@ -646,14 +645,16 @@ function rcube_calendar_ui(settings)
               data.recurrence.BYDAY = $('#edit-recurrence-yearly-prefix').val() + byday;
           }
         }
-        
+
+        data.calendar = calendars.val();
+
         if (event.id) {
           data.id = event.id;
           if (event.recurrence)
             data.savemode = $('input.edit-recurring-savemode:checked').val();
+          if (data.calendar && data.calendar != event.calendar)
+            data.fromcalendar = event.calendar;
         }
-        else
-          data.calendar = calendars.val();
 
         update_event(action, data);
         $dialog.dialog("close");
@@ -2565,7 +2566,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         event.source = source;  // link with source
         fc.fullCalendar('renderEvent', event);
       }
-      
+      console.log(p);
       // refresh fish-eye view
       if (cal.fisheye_date)
         cal.fisheye_view(cal.fisheye_date);
