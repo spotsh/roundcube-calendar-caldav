@@ -563,11 +563,11 @@ class calendar extends rcube_plugin
     $success = $reload = $got_msg = false;
     
     // don't notify if modifying a recurring instance (really?)
-    if ($event['savemode'] && $event['savemode'] != 'all' && $event['notify'])
-      unset($event['notify']);
+    if ($event['_savemode'] && $event['_savemode'] != 'all' && $event['_notify'])
+      unset($event['_notify']);
     
     // read old event data in order to find changes
-    if (($event['notify'] || $event['decline']) && $action != 'new')
+    if (($event['_notify'] || $event['decline']) && $action != 'new')
       $old = $this->driver->get_event($event);
 
     switch ($action) {
@@ -586,17 +586,17 @@ class calendar extends rcube_plugin
         $this->prepare_event($event, $action);
         if ($success = $this->driver->edit_event($event))
             $this->cleanup_event($event);
-        $reload =  $success && ($event['recurrence'] || $event['savemode'] || $event['fromcalendar']) ? 2 : 1;
+        $reload =  $success && ($event['recurrence'] || $event['_savemode'] || $event['_fromcalendar']) ? 2 : 1;
         break;
       
       case "resize":
         $success = $this->driver->resize_event($event);
-        $reload = $event['savemode'] ? 2 : 1;
+        $reload = $event['_savemode'] ? 2 : 1;
         break;
       
       case "move":
         $success = $this->driver->move_event($event);
-        $reload =  $success && $event['savemode'] ? 2 : 1;
+        $reload =  $success && $event['_savemode'] ? 2 : 1;
         break;
       
       case "remove":
@@ -613,7 +613,7 @@ class calendar extends rcube_plugin
         }
 
         $success = $this->driver->remove_event($event, $undo_time < 1);
-        $reload = (!$success || $event['savemode']) ? 2 : 1;
+        $reload = (!$success || $event['_savemode']) ? 2 : 1;
 
         if ($undo_time > 0 && $success) {
           $_SESSION['calendar_event_undo'] = array('ts' => time(), 'data' => $event);
@@ -728,7 +728,7 @@ class calendar extends rcube_plugin
     }
     
     // send out notifications
-    if ($success && $event['notify'] && ($event['attendees'] || $old['attendees'])) {
+    if ($success && $event['_notify'] && ($event['attendees'] || $old['attendees'])) {
       // make sure we have the complete record
       $event = $action == 'remove' ? $old : $this->driver->get_event($event);
       

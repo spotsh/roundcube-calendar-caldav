@@ -603,7 +603,7 @@ function rcube_calendar_ui(settings)
         
         // tell server to send notifications
         if (data.attendees.length && organizer && ((event.id && notify.checked) || (!event.id && invite.checked))) {
-          data.notify = 1;
+          data._notify = 1;
         }
 
         // gather recurrence settings
@@ -651,9 +651,9 @@ function rcube_calendar_ui(settings)
         if (event.id) {
           data.id = event.id;
           if (event.recurrence)
-            data.savemode = $('input.edit-recurring-savemode:checked').val();
+            data._savemode = $('input.edit-recurring-savemode:checked').val();
           if (data.calendar && data.calendar != event.calendar)
-            data.fromcalendar = event.calendar;
+            data._fromcalendar = event.calendar;
         }
 
         update_event(action, data);
@@ -1527,9 +1527,9 @@ function rcube_calendar_ui(settings)
         var $dialog = $('<div>').html(html);
       
         $dialog.find('a.button').button().click(function(e){
-          data.savemode = String(this.href).replace(/.+#/, '');
+          data._savemode = String(this.href).replace(/.+#/, '');
           if ($dialog.find('input.confirm-attendees-donotify').get(0))
-            data.notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+            data._notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
           if (decline && $dialog.find('input.confirm-attendees-decline:checked'))
             data.decline = 1;
           update_event(action, data);
@@ -1548,7 +1548,7 @@ function rcube_calendar_ui(settings)
           buttons.push({
             text: rcmail.gettext((action == 'remove' ? 'remove' : 'save'), 'calendar'),
             click: function() {
-              data.notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+              data._notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
               data.decline = decline && $dialog.find('input.confirm-attendees-decline:checked').length ? 1 : 0;
               update_event(action, data);
               $(this).dialog("close");

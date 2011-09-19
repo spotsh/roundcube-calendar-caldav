@@ -66,11 +66,11 @@
  *            'role' => 'ORGANIZER|REQ-PARTICIPANT|OPT-PARTICIPANT|CHAIR',
  *          'status' => 'NEEDS-ACTION|UNKNOWN|ACCEPTED|TENTATIVE|DECLINED'
  *            'rsvp' => true|false,
- *
- *      'savemode' => 'all|future|current|new',   // How changes on recurring event should be handled
- *        'notify' => true|false,  // whether to notify event attendees about changes
- *  'fromcalendar' => 'Calendar identifier where the event was stored before',
  *    ),
+ *
+ *     '_savemode' => 'all|future|current|new',   // How changes on recurring event should be handled
+ *       '_notify' => true|false,  // whether to notify event attendees about changes
+ * '_fromcalendar' => 'Calendar identifier where the event was stored before',
  *  );
  */
 
