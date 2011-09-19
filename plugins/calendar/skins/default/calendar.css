@@ -262,6 +262,16 @@ div.uidialog {
 	text-align: center;
 }
 
+a.morelink {
+	font-size: 90%;
+	color: #C33;
+	text-decoration: none;
+}
+
+a.morelink:hover {
+	text-decoration: underline;
+}
+
 a.miniColors-trigger {
 	margin-top: -3px;
 }

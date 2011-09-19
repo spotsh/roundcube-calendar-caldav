@@ -64,10 +64,51 @@ function rcube_calendar_ui(settings)
     
     var Q = this.quote_html;
     
-    // php equivalent
-    var nl2br = function(str)
+    var text2html = function(str, maxlen, maxlines)
     {
-      return String(str).replace(/\n/g, "<br/>");
+      var html = Q(String(str));
+      
+      // limit visible text length
+      if (maxlen) {
+        var morelink = ' <a href="#more" onclick="$(this).hide().next().show();return false" class="morelink">'+rcmail.gettext('showmore','calendar')+'</a><span style="display:none">',
+          lines = html.split(/\r?\n/),
+          words, out = '', len = 0;
+        
+        for (var i=0; i < lines.length; i++) {
+          len += lines[i].length;
+          if (maxlines && i == maxlines - 1) {
+            out += lines[i] + '\n' + morelink;
+            maxlen = html.length * 2;
+          }
+          else if (len > maxlen) {
+            len = out.length;
+            words = lines[i].split(' ');
+            for (var j=0; j < words.length; j++) {
+              len += words[j].length + 1;
+              out += words[j] + ' ';
+              if (len > maxlen) {
+                out += morelink;
+                maxlen = html.length * 2;
+              }
+            }
+            out += '\n';
+          }
+          else
+            out += lines[i] + '\n';
+        }
+        
+        if (maxlen > str.length)
+          out += '</span>';
+        
+        html = out;
+      }
+      
+      // simple link parser
+      return html
+        .replace(/([hf]t+ps?:\/\/[^\s\n\(\)&]+)/g, '<a href="$1" target="_blank">$1</a>')
+        .replace(/([^\s\n\(\);]+@[^\s\n\(\)\[\]\/,;?!&"']+)/g, '<a href="mailto:$1">$1</a>')
+        .replace(/(mailto:)([^"]+)"/g, '$1" onclick="rcmail.command(\'compose\', \'$2\');return false"')
+        .replace(/\n/g, "<br/>");
     };
     
     // same as str.split(delimiter) but it ignores delimiters within quoted strings
@@ -260,9 +301,9 @@ function rcube_calendar_ui(settings)
       $('#event-title').html(Q(event.title)).show();
       
       if (event.location)
-        $('#event-location').html('@ ' + Q(event.location)).show();
+        $('#event-location').html('@ ' + text2html(event.location)).show();
       if (event.description)
-        $('#event-description').show().children('.event-text').html(nl2br(Q(event.description))); // TODO: format HTML with clickable links and stuff
+        $('#event-description').show().children('.event-text').html(text2html(event.description, 300, 6));
       
       // render from-to in a nice human-readable way
       $('#event-date').html(Q(me.event_date_text(event))).show();

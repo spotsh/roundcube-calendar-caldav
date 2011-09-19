@@ -65,6 +65,7 @@ $labels['parentcalendar'] = 'Superior calendar';
 $labels['searchearlierdates'] = '« Search for earlier events';
 $labels['searchlaterdates'] = 'Search for later events »';
 $labels['andnmore'] = '$nr more...';
+$labels['showmore'] = 'Show more...';
 $labels['togglerole'] = 'Click to toggle role';
 
 // agenda view
