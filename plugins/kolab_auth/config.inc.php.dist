@@ -19,6 +19,9 @@ $rcmail_config['kolab_auth_email'] = 'email';
 $rcmail_config['kolab_auth_admin_login']    = '';
 $rcmail_config['kolab_auth_admin_password'] = '';
 
+// Enable audit logging for abuse of administrative privileges.
+$rcmail_config['kolab_auth_auditlog']       = true;
+
 // Administrative role field (from fieldmap configuration) which must be filled with
 // specified value which adds privilege to login as another user.
 $rcmail_config['kolab_auth_role']       = '';
