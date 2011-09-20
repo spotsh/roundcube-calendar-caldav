@@ -95,7 +95,7 @@ class calendar_itip
       $this->cancel_itip_invitation($event);
     }
     
-    $message->headers($headers);
+    $message->headers($headers, true);
     $message->setTXTBody(rcube_message::format_flowed($mailbody, 79));
     
     // finally send the message
