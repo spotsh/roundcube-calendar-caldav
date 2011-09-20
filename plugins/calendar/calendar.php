@@ -1538,7 +1538,7 @@ class calendar extends rcube_plugin
   /**
    * Compose a date string for the given event
    */
-  public function event_date_text($event)
+  public function event_date_text($event, $tzinfo = false)
   {
     $fromto = '';
     $duration = $event['end'] - $event['start'];
@@ -1559,6 +1559,11 @@ class calendar extends rcube_plugin
     else {
       $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
         ' - ' . format_date($event['end'], $date_format) . ' ' . format_date($event['end'], $time_format);
+    }
+    
+    // add timezone information
+    if ($tzinfo && ($tzname = timezone_name_from_abbr("", $this->gmt_offset, 0))) {
+      $fromto .= ' (' . $tzname . ')';
     }
     
     return $fromto;

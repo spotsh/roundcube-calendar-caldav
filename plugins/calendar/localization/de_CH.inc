@@ -138,8 +138,8 @@ $labels['invitationsubject'] = 'Sie wurden zu "$title" eingeladen';
 $labels['invitationmailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nIm Anhang finden Sie eine iCalendar-Datei mit allen Details des Termins. Diese können Sie in Ihre Kalenderanwendung importieren.";
 $labels['invitationattendlinks'] = "Falls Ihr E-Mail-Programm keine iTip-Anfragen unterstützt, können Sie den folgenden Link verwenden, um den Termin zu bestätigen oder abzulehnen:\n\$url";
 $labels['eventupdatesubject'] = '"$title" wurde aktualisiert';
-$labels['eventupdatesubjectempty'] = 'An event that concerns you has been updated';
-$labels['eventupdatemailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nIm Anhang finden Sie eine iCalendar-Datei mit den aktualisiereten Termindaten. Diese können Sie in Ihre Kalenderanwendung importieren";
+$labels['eventupdatesubjectempty'] = 'Termin wurde aktualisiert';
+$labels['eventupdatemailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nIm Anhang finden Sie eine iCalendar-Datei mit den aktualisiereten Termindaten. Diese können Sie in Ihre Kalenderanwendung importieren.";
 $labels['eventcancelsubject'] = '"$title" wurde abgesagt';
 $labels['eventcancelmailbody'] = "*\$title*\n\nWann: \$date\n\nTeilnehmer: \$attendees\n\nDer Termin wurde von \$organizer abgesagt.\n\nIm Anhang finden Sie eine iCalendar-Datei mit den Termindaten.";
 

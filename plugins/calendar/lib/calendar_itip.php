@@ -77,7 +77,7 @@ class calendar_itip
       'name' => $bodytext,
       'vars' => array(
         'title' => $event['title'],
-        'date' => $this->cal->event_date_text($event),
+        'date' => $this->cal->event_date_text($event, true),
         'attendees' => join(', ', $attendees_list),
         'sender' => $this->sender['name'],
         'organizer' => $this->sender['name'],
