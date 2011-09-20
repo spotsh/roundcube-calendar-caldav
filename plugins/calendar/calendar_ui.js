@@ -1834,6 +1834,8 @@ function rcube_calendar_ui(settings)
           data.color = data.color.replace(/^#/, '');
         if (calendar.id)
           data.id = calendar.id;
+        if (alarms)
+          data.showalarms = alarms.checked ? 1 : 0;
 
         me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
         rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });

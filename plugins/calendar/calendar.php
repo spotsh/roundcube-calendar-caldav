@@ -515,6 +515,9 @@ class calendar extends rcube_plugin
     $cal = get_input_value('c', RCUBE_INPUT_GPC);
     $success = $reload = false;
 
+    if (isset($cal['showalarms']))
+      $cal['showalarms'] = intval($cal['showalarms']);
+
     switch ($action) {
       case "form-new":
       case "form-edit":
