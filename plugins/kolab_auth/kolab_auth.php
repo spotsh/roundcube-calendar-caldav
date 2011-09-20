@@ -33,32 +33,96 @@ class kolab_auth extends rcube_plugin
     private $ldap;
     private $data = array();
 
-	public function init()
-	{
-		$this->add_hook('authenticate', array($this, 'authenticate'));
-		$this->add_hook('user_create', array($this, 'user_create'));
+    public function init()
+    {
+        $rcmail = rcmail::get_instance();
+
+        $this->add_hook('authenticate', array($this, 'authenticate'));
+        $this->add_hook('user_create', array($this, 'user_create'));
 
         // Hooks related to "Login As" feature
-		$this->add_hook('template_object_loginform', array($this, 'login_form'));
-		$this->add_hook('imap_connect', array($this, 'imap_connect'));
-		$this->add_hook('managesieve_connect', array($this, 'imap_connect'));
-		$this->add_hook('smtp_connect', array($this, 'smtp_connect'));
-	}
+        $this->add_hook('template_object_loginform', array($this, 'login_form'));
+        $this->add_hook('imap_connect', array($this, 'imap_connect'));
+        $this->add_hook('managesieve_connect', array($this, 'imap_connect'));
+        $this->add_hook('smtp_connect', array($this, 'smtp_connect'));
+
+        $this->add_hook('write_log', array($this, 'write_log'));
+
+        if ($rcmail->config->get('kolab_auth_auditlog', false)) {
+            $rcmail->config->set('debug_level', 1);
+            $rcmail->config->set('devel_mode', true);
+            $rcmail->config->set('smtp_log', true);
+            $rcmail->config->set('log_logins', true);
+            $rcmail->config->set('log_session', true);
+            $rcmail->config->set('sql_debug', true);
+            $rcmail->config->set('memcache_debug', true);
+            $rcmail->config->set('imap_debug', true);
+            $rcmail->config->set('ldap_debug', true);
+            $rcmail->config->set('smtp_debug', true);
+
+        }
+
+    }
+
+    public function write_log($args) {
+        $rcmail = rcmail::get_instance();
+
+        if (!$rcmail->config->get('kolab_auth_auditlog', false)) {
+            return $args;
+        }
+
+        $args['abort'] = true;
+
+        if ($rcmail->config->get('log_driver') == 'syslog') {
+            $prio = $args['name'] == 'errors' ? LOG_ERR : LOG_INFO;
+            syslog($prio, $args['line']);
+            return $args;
+        } else {
+            $line = sprintf("[%s]: %s\n", $args['date'], $args['line']);
+
+            // log_driver == 'file' is assumed here
+            $log_dir = $rcmail->config->get('log_dir', INSTALL_PATH . 'logs');
+
+            // Append original username + target username
+            if (!is_dir($log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']))) {
+                // Attempt to create the directory
+                if (@mkdir($log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']), 0750, true)) {
+                    $log_dir = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
+                }
+            } else {
+                $log_dir = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
+            }
+
+            // try to open specific log file for writing
+            $logfile = $log_dir.'/'.$args['name'];
+
+            if ($fp = fopen($logfile, 'a')) {
+                fwrite($fp, $line);
+                fflush($fp);
+                fclose($fp);
+                return $args;
+            }
+            else
+                trigger_error("Error writing to log file $logfile; Please check permissions", E_USER_WARNING);
+        }
+
+        return $args;
+    }
 
     /**
      * Sets defaults for new user.
      */
-	public function user_create($args)
-	{
-		if (!empty($this->data['user_email']))
-    		$args['user_email'] = $this->data['user_email'];
-		if (!empty($this->data['user_name']))
-	    	$args['user_name'] = $this->data['user_name'];
-		if (!empty($this->data['user_alias']))
-	    	$args['user_alias'] = $this->data['user_alias'];
+    public function user_create($args)
+    {
+        if (!empty($this->data['user_email']))
+            $args['user_email'] = $this->data['user_email'];
+        if (!empty($this->data['user_name']))
+            $args['user_name'] = $this->data['user_name'];
+        if (!empty($this->data['user_alias']))
+            $args['user_alias'] = $this->data['user_alias'];
 
-		return $args;
-	}
+        return $args;
+    }
 
     /**
      * Modifies login form adding additional "Login As" field
@@ -202,6 +266,12 @@ class kolab_auth extends rcube_plugin
         if (!empty($origname)) {
             write_log('userlogins', sprintf('Admin login for %s by %s from %s',
                 $args['user'], $origname, rcmail_remote_ip()));
+
+            // If available, additionally mark the session to come from the
+            // original user. Useful for logging sessions of user A pretending
+            // to be user B.
+            $_SESSION['kolab_auth_admin'] = strtolower($origname);
+
         }
 
         return $args;
