@@ -346,7 +346,7 @@ class calendar_ui
    */
   function edit_attendees_notify($attrib = array())
   {
-    $checkbox = new html_checkbox(array('name' => 'notify', 'id' => 'edit-attendees-donotify', 'value' => 1));
+    $checkbox = new html_checkbox(array('name' => '_notify', 'id' => 'edit-attendees-donotify', 'value' => 1));
     return html::div($attrib, html::label(null, $checkbox->show(1) . ' ' . $this->cal->gettext('sendnotifications')));
   }
 
@@ -357,7 +357,7 @@ class calendar_ui
   {
     $attrib['id'] = 'edit-recurring-warning';
     
-    $radio = new html_radiobutton(array('name' => 'savemode', 'class' => 'edit-recurring-savemode'));
+    $radio = new html_radiobutton(array('name' => '_savemode', 'class' => 'edit-recurring-savemode'));
     $form = html::label(null, $radio->show('', array('value' => 'current')) . $this->cal->gettext('currentevent')) . ' ' .
        html::label(null, $radio->show('', array('value' => 'future')) . $this->cal->gettext('futurevents')) . ' ' .
        html::label(null, $radio->show('all', array('value' => 'all')) . $this->cal->gettext('allevents')) . ' ' .

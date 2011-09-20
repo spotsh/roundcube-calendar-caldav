@@ -281,7 +281,7 @@ class database_driver extends calendar_driver
         if ($old['recurrence']['EXDATE'])
           $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
         
-        switch ($event['savemode']) {
+        switch ($event['_savemode']) {
           case 'new':
             $event['uid'] = $this->cal->generate_uid();
             return $this->new_event($event);
@@ -440,6 +440,9 @@ class database_driver extends calendar_driver
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]);
     }
     
+    if ($event['_fromcalendar'] && $event['_fromcalendar'] != $event['calendar'])
+        $sql_set[] = 'calendar_id=' . $this->rc->db->quote($event['calendar']);
+    
     $query = $this->rc->db->query(sprintf(
       "UPDATE " . $this->db_events . "
        SET   changed=%s, start=%s, end=%s %s
@@ -577,7 +580,7 @@ class database_driver extends calendar_driver
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
         $master = $event['recurrence_id'] ? $this->get_event(array('id' => $old['recurrence_id'])) : $event;
-        $savemode = $event['savemode'];
+        $savemode = $event['_savemode'];
       }
 
       switch ($savemode) {

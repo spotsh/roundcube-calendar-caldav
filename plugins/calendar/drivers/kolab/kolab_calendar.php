@@ -32,9 +32,9 @@ class kolab_calendar
   public $attachments = true;
   public $alarms = false;
   public $categories = array();
+  public $storage;
 
   private $cal;
-  private $storage;
   private $events;
   private $id2uid;
   private $imap_folder = 'INBOX/Calendar';
@@ -306,6 +306,9 @@ class kolab_calendar
   {
     $updated = false;
     $old = $this->storage->getObject($event['id']);
+    if (PEAR::isError($old))
+      return false;
+
     $old['recurrence'] = '';  # clear old field, could have been removed in new, too
     $object = array_merge($old, $this->_from_rcube_event($event));
     $saved = $this->storage->save($object, $event['id']);

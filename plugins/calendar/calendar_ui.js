@@ -64,10 +64,51 @@ function rcube_calendar_ui(settings)
     
     var Q = this.quote_html;
     
-    // php equivalent
-    var nl2br = function(str)
+    var text2html = function(str, maxlen, maxlines)
     {
-      return String(str).replace(/\n/g, "<br/>");
+      var html = Q(String(str));
+      
+      // limit visible text length
+      if (maxlen) {
+        var morelink = ' <a href="#more" onclick="$(this).hide().next().show();return false" class="morelink">'+rcmail.gettext('showmore','calendar')+'</a><span style="display:none">',
+          lines = html.split(/\r?\n/),
+          words, out = '', len = 0;
+        
+        for (var i=0; i < lines.length; i++) {
+          len += lines[i].length;
+          if (maxlines && i == maxlines - 1) {
+            out += lines[i] + '\n' + morelink;
+            maxlen = html.length * 2;
+          }
+          else if (len > maxlen) {
+            len = out.length;
+            words = lines[i].split(' ');
+            for (var j=0; j < words.length; j++) {
+              len += words[j].length + 1;
+              out += words[j] + ' ';
+              if (len > maxlen) {
+                out += morelink;
+                maxlen = html.length * 2;
+              }
+            }
+            out += '\n';
+          }
+          else
+            out += lines[i] + '\n';
+        }
+        
+        if (maxlen > str.length)
+          out += '</span>';
+        
+        html = out;
+      }
+      
+      // simple link parser
+      return html
+        .replace(/([hf]t+ps?:\/\/[^\s\n\(\)&]+)/g, '<a href="$1" target="_blank">$1</a>')
+        .replace(/([^\s\n\(\);]+@[^\s\n\(\)\[\]\/,;?!&"']+)/g, '<a href="mailto:$1">$1</a>')
+        .replace(/(mailto:)([^"]+)"/g, '$1" onclick="rcmail.command(\'compose\', \'$2\');return false"')
+        .replace(/\n/g, "<br/>");
     };
     
     // same as str.split(delimiter) but it ignores delimiters within quoted strings
@@ -260,9 +301,9 @@ function rcube_calendar_ui(settings)
       $('#event-title').html(Q(event.title)).show();
       
       if (event.location)
-        $('#event-location').html('@ ' + Q(event.location)).show();
+        $('#event-location').html('@ ' + text2html(event.location)).show();
       if (event.description)
-        $('#event-description').show().children('.event-text').html(nl2br(Q(event.description))); // TODO: format HTML with clickable links and stuff
+        $('#event-description').show().children('.event-text').html(text2html(event.description, 300, 6));
       
       // render from-to in a nice human-readable way
       $('#event-date').html(Q(me.event_date_text(event))).show();
@@ -388,9 +429,8 @@ function rcube_calendar_ui(settings)
       event = me.selected_event; // change reference to clone
       freebusy_ui.needsupdate = false;
 
-      // reset dialog first, enable/disable fields according to editable state
+      // reset dialog first
       $('#eventtabs').get(0).reset();
-      $('#calendar-select')[(action == 'new' ? 'show' : 'hide')]();
 
       // event details
       var title = $('#edit-title').val(event.title || '');
@@ -604,7 +644,7 @@ function rcube_calendar_ui(settings)
         
         // tell server to send notifications
         if (data.attendees.length && organizer && ((event.id && notify.checked) || (!event.id && invite.checked))) {
-          data.notify = 1;
+          data._notify = 1;
         }
 
         // gather recurrence settings
@@ -646,14 +686,16 @@ function rcube_calendar_ui(settings)
               data.recurrence.BYDAY = $('#edit-recurrence-yearly-prefix').val() + byday;
           }
         }
-        
+
+        data.calendar = calendars.val();
+
         if (event.id) {
           data.id = event.id;
           if (event.recurrence)
-            data.savemode = $('input.edit-recurring-savemode:checked').val();
+            data._savemode = $('input.edit-recurring-savemode:checked').val();
+          if (data.calendar && data.calendar != event.calendar)
+            data._fromcalendar = event.calendar;
         }
-        else
-          data.calendar = calendars.val();
 
         update_event(action, data);
         $dialog.dialog("close");
@@ -1526,9 +1568,9 @@ function rcube_calendar_ui(settings)
         var $dialog = $('<div>').html(html);
       
         $dialog.find('a.button').button().click(function(e){
-          data.savemode = String(this.href).replace(/.+#/, '');
+          data._savemode = String(this.href).replace(/.+#/, '');
           if ($dialog.find('input.confirm-attendees-donotify').get(0))
-            data.notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+            data._notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
           if (decline && $dialog.find('input.confirm-attendees-decline:checked'))
             data.decline = 1;
           update_event(action, data);
@@ -1547,7 +1589,7 @@ function rcube_calendar_ui(settings)
           buttons.push({
             text: rcmail.gettext((action == 'remove' ? 'remove' : 'save'), 'calendar'),
             click: function() {
-              data.notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
+              data._notify = notify && $dialog.find('input.confirm-attendees-donotify').get(0).checked ? 1 : 0;
               data.decline = decline && $dialog.find('input.confirm-attendees-decline:checked').length ? 1 : 0;
               update_event(action, data);
               $(this).dialog("close");
@@ -2565,7 +2607,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
         event.source = source;  // link with source
         fc.fullCalendar('renderEvent', event);
       }
-      
+      console.log(p);
       // refresh fish-eye view
       if (cal.fisheye_date)
         cal.fisheye_view(cal.fisheye_date);

@@ -479,7 +479,7 @@ class kolab_driver extends calendar_driver
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
         $master = $event['recurrence_id'] ? $storage->get_event($event['recurrence_id']) : $event;
-        $savemode = $event['savemode'];
+        $savemode = $event['_savemode'];
       }
 
       switch ($savemode) {
@@ -537,10 +537,26 @@ class kolab_driver extends calendar_driver
     if (!($storage = $this->calendars[$event['calendar']]))
       return false;
 
+    // move event to another folder/calendar
+    if ($event['_fromcalendar'] && $event['_fromcalendar'] != $event['calendar']) {
+      if (!($fromcalendar = $this->calendars[$event['_fromcalendar']]))
+        return false;
+
+      if ($event['_savemode'] != 'new') {
+        if (!$fromcalendar->storage->move($event['id'], $storage->get_realname()))
+          return false;
+
+        $fromcalendar = $storage;
+        $storage->storage->synchronize();
+      }
+    }
+    else
+      $fromcalendar = $storage;
+
     $success = false;
     $savemode = 'all';
     $attachments = array();
-    $old = $master = $storage->get_event($event['id']);
+    $old = $master = $fromcalendar->get_event($event['id']);
 
     // delete existing attachment(s)
     if (!empty($event['deleted_attachments'])) {
@@ -575,8 +591,8 @@ class kolab_driver extends calendar_driver
 
     // modify a recurring event, check submitted savemode to do the right things
     if ($old['recurrence'] || $old['recurrence_id']) {
-      $master = $old['recurrence_id'] ? $storage->get_event($old['recurrence_id']) : $old;
-      $savemode = $event['savemode'];
+      $master = $old['recurrence_id'] ? $fromcalendar->get_event($old['recurrence_id']) : $old;
+      $savemode = $event['_savemode'];
     }
 
     // keep saved exceptions (not submitted by the client)
@@ -584,12 +600,19 @@ class kolab_driver extends calendar_driver
       $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
 
     $GLOBALS['conf']['kolab']['no_triggering'] = true;
-    
+
     switch ($savemode) {
       case 'new':
         // save submitted data as new (non-recurring) event
         $event['recurrence'] = array();
         $event['uid'] = $this->cal->generate_uid();
+        
+        // copy attachment data to new event
+        foreach ((array)$event['attachments'] as $idx => $attachment) {
+          if (!$attachment['data'])
+            $attachment['data'] = $fromcalendar->get_attachment_body($attachment['id']);
+        }
+        
         $success = $storage->insert_event($event);
         break;
         
