@@ -2,7 +2,7 @@
 
 /**
  * Kolab core library
- * 
+ *
  * Plugin to setup a basic environment for interaction with a Kolab server.
  * Other Kolab-related plugins will depend on it and can use the static API rcube_core
  *
@@ -29,8 +29,8 @@ class kolab_core extends rcube_plugin
         $include_path = $this->home . PATH_SEPARATOR . ini_get('include_path');
         set_include_path($include_path);
 
-	// Register password reset hook
-	$this->add_hook('password_change', array($this, 'password_change'));
+        // Register password reset hook
+        $this->add_hook('password_change', array($this, 'password_change'));
     }
 
     /**
@@ -38,9 +38,9 @@ class kolab_core extends rcube_plugin
      */
     public function password_change($args)
     {
-	rcmail::get_instance()->session->remove('__auth');
+        rcmail::get_instance()->session->remove('__auth');
 
-	return $args;
+        return $args;
     }
 }
 
