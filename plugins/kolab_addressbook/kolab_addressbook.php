@@ -95,6 +95,7 @@ class kolab_addressbook extends rcube_plugin
         $this->load_config();
 
         $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
+        $undelete = $this->rc->config->get('undo_timeout');
 
         // Disable all global address books
         // Assumes that all non-kolab_addressbook sources are global
@@ -127,6 +128,7 @@ class kolab_addressbook extends rcube_plugin
                 'readonly' => $abook->readonly,
                 'editable' => $abook->editable,
                 'groups'   => $abook->groups,
+                'undelete' => $abook->undelete && $undelete,
                 'realname' => rcube_charset_convert($abook->get_realname(), 'UTF7-IMAP'), // IMAP folder name
                 'class_name' => $abook->get_namespace(),
                 'kolab'    => true,
