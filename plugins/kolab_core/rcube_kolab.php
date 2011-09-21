@@ -27,7 +27,7 @@ require_once 'Horde/Perms.php';
 class rcube_kolab
 {
     public static $last_error;
-    
+
     private static $horde_auth;
     private static $config;
     private static $ready = false;
@@ -102,7 +102,7 @@ class rcube_kolab
             self::$ready = true;
         }
         else {
-    	    raise_error(array(
+            raise_error(array(
                 'code' => 600, 'type' => 'php',
                 'file' => __FILE__, 'line' => __LINE__,
                 'message' => sprintf("Unable to authenticate user %s!", $_SESSION['username'])),
@@ -197,19 +197,19 @@ class rcube_kolab
     public static function is_subscribed($folder)
     {
       static $subscribed;  // local cache
-      
+
       if (!$subscribed) {
         $rcmail = rcmail::get_instance();
         // try without connection first (list could be served from cache)
         $subscribed = $rcmail->imap ? $rcmail->imap->list_mailboxes() : array();
-        
+
         // now really get the list from the IMAP server
         if (empty($subscribed) || $subscribed == array('INBOX')) {
           $rcmail->imap_connect();
           $subscribed = $rcmail->imap->list_mailboxes();
         }
       }
-      
+
       return in_array($folder, $subscribed);
     }
 
