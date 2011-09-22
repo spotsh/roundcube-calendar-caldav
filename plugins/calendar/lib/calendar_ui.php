@@ -161,6 +161,7 @@ class calendar_ui
       $prop['attendees'] = $this->cal->driver->attendees;
       $prop['freebusy'] = $this->cal->driver->freebusy;
       $prop['attachments'] = $this->cal->driver->attachments;
+      $prop['undelete'] = $this->cal->driver->undelete;
       $jsenv[$id] = $prop;
 
       $html_id = html_identifier($id);

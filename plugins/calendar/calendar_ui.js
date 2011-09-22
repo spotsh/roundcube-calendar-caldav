@@ -1533,7 +1533,7 @@ function rcube_calendar_ui(settings)
     var update_event_confirm = function(action, event, data)
     {
       if (!data) data = event;
-      var decline = false, notify = false, html = '';
+      var decline = false, notify = false, html = '', cal = me.calendars[event.calendar];
       
       // event has attendees, ask whether to notify them
       if (has_attendees(event)) {
@@ -1618,7 +1618,7 @@ function rcube_calendar_ui(settings)
         return false;
       }
       // show regular confirm box when deleting
-      else if (action == 'remove') {
+      else if (action == 'remove' && !cal.undelete) {
         if (!confirm(rcmail.gettext('deleteventconfirm', 'calendar')))
           return false;
       }
