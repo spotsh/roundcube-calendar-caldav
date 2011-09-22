@@ -103,11 +103,16 @@ function rcube_calendar_ui(settings)
         html = out;
       }
       
-      // simple link parser
+      // simple link parser (similar to rcube_string_replacer class in PHP)
+      var utf_domain = '[^?&@"\'/\\(\\)\\s\\r\\t\\n]+\\.([^\x00-\x2f\x3b-\x40\x5b-\x60\x7b-\x7f]{2,}|xn--[a-z0-9]{2,})';
+      var url1 = '.:;,', url2 = 'a-z0-9%=#@+?&/_~\\[\\]-';
+      var link_pattern = new RegExp('([hf]t+ps?://)('+utf_domain+'(['+url1+']?['+url2+']+)*)?', 'ig');
+      var mailto_pattern = new RegExp('([^\\s\\n\\(\\);]+@'+utf_domain+')', 'ig');
+
       return html
-        .replace(/([hf]t+ps?:\/\/[^\s\n\(\)&]+)/g, '<a href="$1" target="_blank">$1</a>')
-        .replace(/([^\s\n\(\);]+@[^\s\n\(\)\[\]\/,;?!&"']+)/g, '<a href="mailto:$1">$1</a>')
-        .replace(/(mailto:)([^"]+)"/g, '$1" onclick="rcmail.command(\'compose\', \'$2\');return false"')
+        .replace(link_pattern, '<a href="$1$2" target="_blank">$1$2</a>')
+        .replace(mailto_pattern, '<a href="mailto:$1">$1</a>')
+        .replace(/(mailto:)([^"]+)"/g, '$1$2" onclick="rcmail.command(\'compose\', \'$2\');return false"')
         .replace(/\n/g, "<br/>");
     };
     
