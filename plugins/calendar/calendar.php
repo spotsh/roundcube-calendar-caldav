@@ -562,7 +562,7 @@ class calendar extends rcube_plugin
   function event_action()
   {
     $action = get_input_value('action', RCUBE_INPUT_GPC);
-    $event  = get_input_value('e', RCUBE_INPUT_POST);
+    $event  = get_input_value('e', RCUBE_INPUT_POST, true);
     $success = $reload = $got_msg = false;
     
     // don't notify if modifying a recurring instance (really?)
