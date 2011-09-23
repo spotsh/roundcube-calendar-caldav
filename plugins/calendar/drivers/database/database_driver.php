@@ -331,15 +331,17 @@ class database_driver extends calendar_driver
             
             // use start date from master but try to be smart on time or duration changes
             $old_start_date = date('Y-m-d', $old['start']);
-            $old_start_time = date('H:i:s', $old['start']);
+            $old_start_time = date('H:i', $old['start']);
             $old_duration = $old['end'] - $old['start'];
             
             $new_start_date = date('Y-m-d', $event['start']);
-            $new_start_time = date('H:i:s', $event['start']);
+            $new_start_time = date('H:i', $event['start']);
             $new_duration = $event['end'] - $event['start'];
             
+            $diff = $old_start_date != $new_start_date || $old_start_time != $new_start_time || $old_duration != $new_duration;
+            
             // shifted or resized
-            if ($old_start_date == $new_start_date || $old_duration == $new_duration) {
+            if ($diff && $event['id'] != $master['id'] && ($old_start_date == $new_start_date || $old_duration == $new_duration)) {
               $event['start'] = $master['start'] + ($event['start'] - $old['start']);
               $event['end'] = $event['start'] + $new_duration;
             }
