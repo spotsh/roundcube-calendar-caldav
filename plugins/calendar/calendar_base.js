@@ -18,6 +18,8 @@
 function rcube_calendar(settings)
 {
     // member vars
+    this.ui;
+    this.ui_loaded = false;
     this.settings = settings;
     this.alarm_ids = [];
     this.alarm_dialog = null;
@@ -156,6 +158,49 @@ function rcube_calendar(settings)
       this.dismiss_link = null;
     };
 
+    // create new event from current mail message
+    this.create_from_mail = function()
+    {
+      var uid;
+      if ((uid = rcmail.get_single_uid())) {
+        // load calendar UI (scripts and edit dialog template)
+        if (!this.ui_loaded) {
+          $.when(
+            $.getScript('./plugins/calendar/calendar_ui.js'),
+            $.get(rcmail.url('calendar/inlineui'), function(html){ $(document.body).append(html); }, 'html')
+          ).then(function() {
+            // register attachments form
+            rcmail.gui_object('attachmentlist', 'attachmentlist');
+            
+            // disable attendees feature (autocompletion and stuff is not initialized)
+            for (var c in rcmail.env.calendars)
+              rcmail.env.calendars[c].attendees = false;
+            
+            me.ui_loaded = true;
+            me.ui = new rcube_calendar_ui(me.settings);
+            me.create_from_mail();  // start over
+          });
+          return;
+        }
+        else {
+          // get message contents for event dialog
+          var lock = rcmail.set_busy(true, 'loading');
+          rcmail.http_post('calendar/mailtoevent', {
+              '_mbox': rcmail.env.mailbox,
+              '_uid': uid
+            }, lock);
+        }
+      }
+    };
+    
+    // callback function triggered from server with contents for the new event
+    this.mail2event_dialog = function(event)
+    {
+      if (event.title) {
+        this.ui.add_event(event);
+        rcmail.message_list.blur();
+      }
+    };
 }
 
 // static methods
@@ -222,6 +267,23 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       
       $('#'+p.action+'-'+p.id).show();
     });
+    
+    // register create-from-mail command to message_commands array
+    if (rcmail.env.task == 'mail') {
+      // place link above 'view source'
+      $('#messagemenu a.calendarlink').parent().insertBefore($('#messagemenu a.sourcelink').parent());
+      
+      rcmail.register_command('calendar-create-from-mail', function() { cal.create_from_mail() });
+      rcmail.addEventListener('plugin.mail2event_dialog', function(p){ cal.mail2event_dialog(p) });
+      rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.ui.saving_lock); });
+      
+      if (rcmail.env.action != 'show') {
+        rcmail.env.message_commands.push('calendar-create-from-mail');
+        rcmail.add_element($('<a>'));
+      }
+      else
+        rcmail.enable_command('calendar-create-from-mail', true);
+    }
   }
   
   rcmail.addEventListener('plugin.ping_url', function(p){

@@ -67,6 +67,7 @@ $labels['searchlaterdates'] = 'Spätere Termine suchen »';
 $labels['andnmore'] = '$nr weitere...';
 $labels['showmore'] = 'Mehr anzeigen...';
 $labels['togglerole'] = 'Klick zum Ändern der Rolle';
+$labels['createfrommail'] = 'Als Termin speichern';
 
 // agenda view
 $labels['listrange'] = 'Angezeigter Bereich:';

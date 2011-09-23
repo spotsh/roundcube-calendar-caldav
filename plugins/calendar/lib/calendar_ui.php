@@ -63,7 +63,34 @@ class calendar_ui
     
     $this->ready = true;
   }
-  
+
+  /**
+   * Register handler methods for the template engine
+   */
+  public function init_templates()
+  {
+    $this->cal->register_handler('plugin.calendar_css', array($this, 'calendar_css'));
+    $this->cal->register_handler('plugin.calendar_list', array($this, 'calendar_list'));
+    $this->cal->register_handler('plugin.calendar_select', array($this, 'calendar_select'));
+    $this->cal->register_handler('plugin.category_select', array($this, 'category_select'));
+    $this->cal->register_handler('plugin.freebusy_select', array($this, 'freebusy_select'));
+    $this->cal->register_handler('plugin.priority_select', array($this, 'priority_select'));
+    $this->cal->register_handler('plugin.sensitivity_select', array($this, 'sensitivity_select'));
+    $this->cal->register_handler('plugin.alarm_select', array($this, 'alarm_select'));
+    $this->cal->register_handler('plugin.snooze_select', array($this, 'snooze_select'));
+    $this->cal->register_handler('plugin.recurrence_form', array($this, 'recurrence_form'));
+    $this->cal->register_handler('plugin.attachments_form', array($this, 'attachments_form'));
+    $this->cal->register_handler('plugin.attachments_list', array($this, 'attachments_list'));
+    $this->cal->register_handler('plugin.attendees_list', array($this, 'attendees_list'));
+    $this->cal->register_handler('plugin.attendees_form', array($this, 'attendees_form'));
+    $this->cal->register_handler('plugin.attendees_freebusy_table', array($this, 'attendees_freebusy_table'));
+    $this->cal->register_handler('plugin.edit_attendees_notify', array($this, 'edit_attendees_notify'));
+    $this->cal->register_handler('plugin.edit_recurring_warning', array($this, 'recurring_event_warning'));
+    $this->cal->register_handler('plugin.event_rsvp_buttons', array($this, 'event_rsvp_buttons'));
+    $this->cal->register_handler('plugin.angenda_options', array($this, 'angenda_options'));
+    $this->cal->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
+  }
+
   /**
    * Adds CSS stylesheets to the page header
    */

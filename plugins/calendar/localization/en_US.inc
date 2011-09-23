@@ -67,6 +67,7 @@ $labels['searchlaterdates'] = 'Search for later events »';
 $labels['andnmore'] = '$nr more...';
 $labels['showmore'] = 'Show more...';
 $labels['togglerole'] = 'Click to toggle role';
+$labels['createfrommail'] = 'Save as event';
 
 // agenda view
 $labels['listrange'] = 'Range to display:';

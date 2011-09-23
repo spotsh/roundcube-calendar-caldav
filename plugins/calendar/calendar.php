@@ -135,6 +135,9 @@ class calendar extends rcube_plugin
       $this->register_action('randomdata', array($this, 'generate_randomdata'));
       $this->register_action('print', array($this,'print_view'));
       $this->register_action('mailimportevent', array($this, 'mail_import_event'));
+      $this->register_action('mailtoevent', array($this, 'mail_message2event'));
+      $this->register_action('inlineui', array($this, 'get_inline_ui'));
+      $this->register_action('check-recent', array($this, 'check_recent'));
 
       // remove undo information...
       if ($undo = $_SESSION['calendar_event_undo']) {
@@ -157,6 +160,19 @@ class calendar extends rcube_plugin
       if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
         $this->add_hook('message_load', array($this, 'mail_message_load'));
         $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
+      }
+      
+      // add 'Create event' item to message menu
+      if ($this->api->output->type == 'html') {
+        $this->api->add_content(html::tag('li', null, 
+          $this->api->output->button(array(
+            'command'  => 'calendar-create-from-mail',
+            'label'    => 'calendar.createfrommail',
+            'type'     => 'link',
+            'classact' => 'calendarlink active',
+            'class'    => 'calendarlink',
+          ))),
+          'messagemenu');
       }
     }
     
@@ -227,27 +243,7 @@ class calendar extends rcube_plugin
     // Add JS files to the page header
     $this->ui->addJS();
 
-    $this->register_handler('plugin.calendar_css', array($this->ui, 'calendar_css'));
-    $this->register_handler('plugin.calendar_list', array($this->ui, 'calendar_list'));
-    $this->register_handler('plugin.calendar_select', array($this->ui, 'calendar_select'));
-    $this->register_handler('plugin.category_select', array($this->ui, 'category_select'));
-    $this->register_handler('plugin.freebusy_select', array($this->ui, 'freebusy_select'));
-    $this->register_handler('plugin.priority_select', array($this->ui, 'priority_select'));
-    $this->register_handler('plugin.sensitivity_select', array($this->ui, 'sensitivity_select'));
-    $this->register_handler('plugin.alarm_select', array($this->ui, 'alarm_select'));
-    $this->register_handler('plugin.snooze_select', array($this->ui, 'snooze_select'));
-    $this->register_handler('plugin.recurrence_form', array($this->ui, 'recurrence_form'));
-    $this->register_handler('plugin.attachments_form', array($this->ui, 'attachments_form'));
-    $this->register_handler('plugin.attachments_list', array($this->ui, 'attachments_list'));
-    $this->register_handler('plugin.attendees_list', array($this->ui, 'attendees_list'));
-    $this->register_handler('plugin.attendees_form', array($this->ui, 'attendees_form'));
-    $this->register_handler('plugin.attendees_freebusy_table', array($this->ui, 'attendees_freebusy_table'));
-    $this->register_handler('plugin.edit_attendees_notify', array($this->ui, 'edit_attendees_notify'));
-    $this->register_handler('plugin.edit_recurring_warning', array($this->ui, 'recurring_event_warning'));
-    $this->register_handler('plugin.event_rsvp_buttons', array($this->ui, 'event_rsvp_buttons'));
-    $this->register_handler('plugin.angenda_options', array($this->ui, 'angenda_options'));
-    $this->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
-
+    $this->ui->init_templates();
     $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
 
     // initialize attendees autocompletion
@@ -799,6 +795,15 @@ class calendar extends rcube_plugin
   }
   
   /**
+   * Handler for check-recent requests which are accidentally sent to calendar taks
+   */
+  function check_recent()
+  {
+    // NOP
+    $this->rc->output->send();
+  }
+  
+  /**
    * Construct the ics file for exporting events to iCalendar format;
    */
   function export_events()
@@ -1230,7 +1235,7 @@ class calendar extends rcube_plugin
     $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
     $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
 
-    $eventid = $calendar.':'.$event;
+    $eventid = 'cal:'.$event;
 
     if (!is_array($_SESSION['event_session']) || $_SESSION['event_session']['id'] != $eventid) {
       $_SESSION['event_session'] = array();
@@ -1442,7 +1447,7 @@ class calendar extends rcube_plugin
    */
   private function prepare_event(&$event, $action)
   {
-    $eventid = $event['calendar'].':'.$event['id'];
+    $eventid = 'cal:'.$event['id'];
 
     $attachments = array();
     if (is_array($_SESSION['event_session']) && $_SESSION['event_session']['id'] == $eventid) {
@@ -1456,7 +1461,7 @@ class calendar extends rcube_plugin
     }
 
     $event['attachments'] = $attachments;
-    
+
     // check for organizer in attendees
     if ($event['attendees']) {
       $emails = $this->get_user_emails();
@@ -1487,6 +1492,7 @@ class calendar extends rcube_plugin
   private function cleanup_event(&$event)
   {
     // remove temp. attachment files
+    $eventid = 'cal:'.$event['id'];
     if (!empty($_SESSION['event_session']) && ($eventid = $_SESSION['event_session']['id'])) {
       $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $eventid));
       unset($_SESSION['event_session']);
@@ -1695,6 +1701,29 @@ class calendar extends rcube_plugin
     
     $this->rc->output->set_pagetitle($title);
     $this->rc->output->send("calendar.print");
+  }
+
+  /**
+   *
+   */
+  public function get_inline_ui()
+  {
+    foreach (array('save','cancel','savingdata') as $label)
+      $texts['calendar.'.$label] = $this->gettext($label);
+    
+    $texts['calendar.new_event'] = $this->gettext('createfrommail');
+    
+    $this->ui->init_templates();
+    $this->ui->calendar_list();  # set env['calendars']
+    echo $this->api->output->parse('calendar.eventedit', false, false);
+    echo html::tag('script', array('type' => 'text/javascript'),
+      "rcmail.set_env('calendars', " . json_encode($this->api->output->env['calendars']) . ");\n".
+      "rcmail.set_env('deleteicon', '" . $this->api->output->env['deleteicon'] . "');\n".
+      "rcmail.set_env('cancelicon', '" . $this->api->output->env['cancelicon'] . "');\n".
+      "rcmail.set_env('loadingicon', '" . $this->api->output->env['loadingicon'] . "');\n".
+      "rcmail.add_label(" . json_encode($texts) . ");\n"
+    );
+    exit;
   }
 
   /**
@@ -2074,6 +2103,67 @@ class calendar extends rcube_plugin
         $this->rc->output->command('display_message', $this->gettext('itipresponseerror'), 'error');
     }
 
+    $this->rc->output->send();
+  }
+
+
+  /**
+   * Read email message and return contents for a new event based on that message
+   */
+  public function mail_message2event()
+  {
+    $uid = get_input_value('_uid', RCUBE_INPUT_POST);
+    $mbox = get_input_value('_mbox', RCUBE_INPUT_POST);
+    $event = array();
+    
+    // establish imap connection
+    $this->rc->imap_connect();
+    $this->rc->imap->set_mailbox($mbox);
+    $message = new rcube_message($uid);
+
+    if ($message->headers) {
+      $event['title'] = trim($message->subject);
+      $event['description'] = trim($message->first_text_part());
+      
+      // copy mail attachments to event
+      if ($message->attachments) {
+        $eventid = 'cal:';
+        if (!is_array($_SESSION['event_session']) || $_SESSION['event_session']['id'] != $eventid) {
+          $_SESSION['event_session'] = array();
+          $_SESSION['event_session']['id'] = $eventid;
+          $_SESSION['event_session']['attachments'] = array();
+        }
+
+        foreach ((array)$message->attachments as $part) {
+          $attachment = array(
+            'data' => $this->rc->imap->get_message_part($uid, $part->mime_id, $part),
+            'size' => $part->size,
+            'name' => $part->filename,
+            'mimetype' => $part->mimetype,
+            'group' => $eventid,
+          );
+
+          $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
+
+          if ($attachment['status'] && !$attachment['abort']) {
+            $id = $attachment['id'];
+
+            // store new attachment in session
+            unset($attachment['status'], $attachment['abort'], $attachment['data']);
+            $_SESSION['event_session']['attachments'][$id] = $attachment;
+
+            $attachment['id'] = 'rcmfile' . $attachment['id'];  # add prefix to consider it 'new'
+            $event['attachments'][] = $attachment;
+          }
+        }
+      }
+      
+      $this->rc->output->command('plugin.mail2event_dialog', $event);
+    }
+    else {
+      $this->rc->output->command('display_message', $this->gettext('messageopenerror'), 'error');
+    }
+    
     $this->rc->output->send();
   }
 

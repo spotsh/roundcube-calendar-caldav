@@ -723,6 +723,10 @@ function rcube_calendar_ui(settings)
 
       // activate the first tab
       $('#eventtabs').tabs('select', 0);
+      
+      // hack: set task to 'calendar' to make all dialog actions work correctly
+      var comm_path_before = rcmail.env.comm_path;
+      rcmail.env.comm_path = comm_path_before.replace(/_task=[a-z]+/, '_task=calendar');
 
       var editform = $("#eventedit");
 
@@ -738,6 +742,7 @@ function rcube_calendar_ui(settings)
           rcmail.ksearch_blur();
           rcmail.ksearch_destroy();
           freebusy_data = {};
+          rcmail.env.comm_path = comm_path_before;  // restore comm_path
         },
         buttons: buttons,
         minWidth: 500,
@@ -1494,7 +1499,7 @@ function rcube_calendar_ui(settings)
     var update_event = function(action, data)
     {
       me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
-      rcmail.http_post('event', { action:action, e:data });
+      rcmail.http_post('calendar/event', { action:action, e:data });
       
       // render event temporarily into the calendar
       if ((data.start && data.end) || data.id) {
@@ -1771,15 +1776,17 @@ function rcube_calendar_ui(settings)
     };
 
     // public method to bring up the new event dialog
-    this.add_event = function() {
+    this.add_event = function(templ) {
       if (this.selected_calendar) {
         var now = new Date();
-        var date = fc.fullCalendar('getDate') || now;
+        var date = fc.fullCalendar('getDate');
+        if (typeof date != 'Date')
+          date = now;
         date.setHours(now.getHours()+1);
         date.setMinutes(0);
         var end = new Date(date.getTime());
         end.setHours(date.getHours()+1);
-        event_edit_dialog('new', { start:date, end:end, allDay:false, calendar:this.selected_calendar });
+        event_edit_dialog('new', $.extend({ start:date, end:end, allDay:false, calendar:this.selected_calendar }, templ || {}));
       }
     };
 
@@ -2391,7 +2398,7 @@ function rcube_calendar_ui(settings)
         },
         beforeShowDay: function(date) {
           var view = fc.fullCalendar('getView');
-          var active = date.getTime() >= view.visStart.getTime() && date.getTime() < view.visEnd.getTime();
+          var active = view.visStart && date.getTime() >= view.visStart.getTime() && date.getTime() < view.visEnd.getTime();
           return [ true, (active ? 'ui-datepicker-activerange ui-datepicker-active-' + view.name : ''), ''];
         }
       })) // set event handler for clicks on calendar week cell of the datepicker widget

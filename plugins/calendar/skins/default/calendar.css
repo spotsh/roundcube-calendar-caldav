@@ -1162,8 +1162,11 @@ fieldset #calendarcategories div {
 	margin-bottom: 0.3em;
 }
 
-
 /* Invitation UI in mail */
+
+#messagemenu li a.calendarlink {
+	background: url(images/calendars.png) 7px -109px no-repeat;
+}
 
 div.calendar-invitebox {
 	min-height: 20px;
