@@ -241,7 +241,6 @@ class database_driver extends calendar_driver
 
       if ($event_id) {
         $event['id'] = $event_id;
-        $this->cache[$eventid] = $event;
 
         // add attachments
         if (!empty($event['attachments'])) {
@@ -655,9 +654,10 @@ class database_driver extends calendar_driver
       return $this->cache[$id];
     
     $result = $this->rc->db->query(sprintf(
-      "SELECT * FROM " . $this->db_events . "
-       WHERE calendar_id IN (%s)
-       AND $col=?",
+      "SELECT e.*, COUNT(a.attachment_id) AS _attachments FROM " . $this->db_events . " AS e
+       LEFT JOIN " . $this->db_attachments . " AS a ON (a.event_id = e.event_id OR a.event_id = e.recurrence_id)
+       WHERE e.calendar_id IN (%s)
+       AND e.$col=?",
        $this->calendar_ids
       ),
       $id);
