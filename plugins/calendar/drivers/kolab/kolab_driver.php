@@ -670,15 +670,17 @@ class kolab_driver extends calendar_driver
         $diff = $old_start_date != $new_start_date || $old_start_time != $new_start_time || $old_duration != $new_duration;
         
         // shifted or resized
-        if ($diff && $event['id'] != $master['id'] && ($old_start_date == $new_start_date || $old_duration == $new_duration)) {
+        if ($diff && ($old_start_date == $new_start_date || $old_duration == $new_duration)) {
           $event['start'] = $master['start'] + ($event['start'] - $old['start']);
           $event['end'] = $event['start'] + $new_duration;
           
           // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::update_event()
-          if (strlen($event['recurrence']['BYDAY']) == 2)
-            unset($event['recurrence']['BYDAY']);
-          if ($old['recurrence']['BYMONTH'] == gmdate('n', $old['start']))
-            unset($event['recurrence']['BYMONTH']);
+          if ($old_start_date != $new_start_date) {
+            if (strlen($event['recurrence']['BYDAY']) == 2)
+              unset($event['recurrence']['BYDAY']);
+            if ($old['recurrence']['BYMONTH'] == gmdate('n', $old['start']))
+              unset($event['recurrence']['BYMONTH']);
+          }
         }
 
         $success = $storage->update_event($event);
