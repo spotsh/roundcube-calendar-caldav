@@ -1,0 +1,100 @@
+/* Stylesheets for the Kolab Z-Push configuration UI */
+
+#devices-table {
+	width: 100%;
+	table-layout: fixed;
+}
+
+#devices-table td {
+	cursor: pointer;
+}
+
+#devices-table td span.devicetype {
+	padding-left: 1em;
+	font-style: italic;
+	color: #666;
+}
+
+#devices-table tr.selected td span.devicetype {
+	color: #ccc;
+}
+
+#foldersubscriptions thead td {
+	color: #999;
+	font-weight: bold;
+	padding: 4px;
+}
+
+
+#foldersubscriptions tbody td {
+	padding: 2px 4px;
+	border-bottom: 1px solid #ddd;
+}
+
+#foldersubscriptions td label {
+	display: block;
+}
+
+#foldersubscriptions td.mailbox {
+	padding-right: 3em;
+	padding-left: 25px;
+	min-width: 12em;
+	background: url(foldertypes.png) 2px 2px no-repeat;
+}
+
+#foldersubscriptions td.virtual {
+	color: #999;
+}
+
+#foldersubscriptions td.mail {
+	background-position: 2px -17px;
+}
+
+#foldersubscriptions td.event {
+	background-position: 2px -37px;
+}
+
+#foldersubscriptions td.contact {
+	background-position: 2px -57px;
+}
+
+#foldersubscriptions td.note {
+	background-position: 2px -77px;
+}
+
+#foldersubscriptions td.task {
+	background-position: 2px -97px;
+}
+
+#folderscrollist {
+	overflow: auto;
+	max-height: 400px;
+	margin-top: 0.5em;
+}
+
+#introtext {
+	position: absolute;
+	top: 12px;
+	left: 5px;
+	padding-left: 10px;
+}
+
+#introtext .pointer-left {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 14px;
+	height: 100%;
+	background: url(pointer-left.gif) right center no-repeat;
+}
+
+#introtext .inner {
+	border: 3px solid #e7e7e7;
+	background: #fff;
+}
+
+#introtext .bordered {
+	padding: 12px;
+	border: 1px solid #ccc;
+	background: #fff;
+}
