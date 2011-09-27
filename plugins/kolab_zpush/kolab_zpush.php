@@ -111,7 +111,6 @@ class kolab_zpush extends rcube_plugin
             break;
 
         case 'save':
-            console($_POST);
             $this->init_imap();
             $devices = $this->list_devices();
             $syncmode = get_input_value('syncmode', RCUBE_INPUT_POST);
@@ -128,11 +127,15 @@ class kolab_zpush extends rcube_plugin
                     $this->root_meta['DEVICE'][$device_id]['ALIAS'] = $devicealias;
                     $this->root_meta['FOLDER'][$device_id]['S'] = intval($subsciptions[self::ROOT_MAILBOX]);
 
-#                    $err = !$this->rc->imap->set_metadata(self::ROOT_MAILBOX,
-#                        array(self::ACTIVESYNC_KEY => $this->serialize_metadata($this->root_meta)));
+                    $err = !$this->rc->imap->set_metadata(self::ROOT_MAILBOX,
+                        array(self::ACTIVESYNC_KEY => $this->serialize_metadata($this->root_meta)));
                 }
                 // iterate over folders list and update metadata if necessary
                 foreach ($this->folders_meta() as $folder => $meta) {
+                    // skip root folder (already handled above)
+                    if ($folder == self::ROOT_MAILBOX)
+                        continue;
+                    
                     if ($subsciptions[$folder] != $meta[$device_id]['S']) {
                         $meta[$device_id]['S'] = intval($subsciptions[$folder]);
                         $this->folders_meta[$folder] = $meta;
@@ -144,7 +147,7 @@ class kolab_zpush extends rcube_plugin
                             $metadata = $this->unserialize_metadata($asyncdata);
                         $metadata['FOLDER'] = $meta;
 
-#                        $err |= !$this->rc->imap->set_metadata($folder, array(self::ACTIVESYNC_KEY => $this->serialize_metadata($metadata)));
+                        $err |= !$this->rc->imap->set_metadata($folder, array(self::ACTIVESYNC_KEY => $this->serialize_metadata($metadata)));
                     }
                 }
                 
@@ -152,7 +155,7 @@ class kolab_zpush extends rcube_plugin
                 $this->cache->remove('folders');
                 $this->cache->write('folders', $this->folders_meta);
                 
-                $this->rc->output->command('plugin.zpush_save_complete', array('success' => !$err, 'devicename' => Q($devicealias)));
+                $this->rc->output->command('plugin.zpush_save_complete', array('success' => !$err, 'id' => $device_id, 'devicename' => Q($devicealias)));
             }
             
             if ($err)
@@ -190,6 +193,7 @@ class kolab_zpush extends rcube_plugin
         $this->register_handler('plugin.deviceconfigform', array($this->ui, 'device_config_form'));
         $this->register_handler('plugin.foldersubscriptions', array($this->ui, 'folder_subscriptions'));
         
+        $this->rc->output->set_env('devicecount', count($this->list_devices()));
         $this->rc->output->send('kolab_zpush.config');
     }
 

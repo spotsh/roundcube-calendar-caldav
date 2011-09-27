@@ -43,7 +43,13 @@
 		</p>
 	</form>
 	<div id="introtext">
-		<div class="inner"><div class="bordered"><roundcube:label name="kolab_zpush.introtext" /></div></div>
+		<div class="inner"><div class="bordered">
+			<roundcube:if condition="env:devicecount" />
+				<roundcube:label name="kolab_zpush.introtext" />
+			<roundcube:else />
+				<roundcube:label name="kolab_zpush.nodevices" html="true" />
+			<roundcube:endif />
+		</div></div>
 		<div class="pointer-left"></div>
 	</div>
 </div>

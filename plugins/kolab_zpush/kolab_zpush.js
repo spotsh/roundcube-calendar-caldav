@@ -20,7 +20,6 @@ function kolab_zpush_config()
 
 
     /* constructor */
-
     var devicelist = new rcube_list_widget(rcmail.gui_objects.devicelist,
         { multiselect:true, draggable:false, keyboard:true });
     devicelist.addEventListener('select', select_device);
@@ -51,6 +50,10 @@ function kolab_zpush_config()
     // callback from server after loading device data
     function device_data_ready(data)
     {
+        // reset form first
+        $('input.alarm:checked').prop('checked', false);
+        $('input.subscription:checked').prop('checked', false).change();
+        
         if (data.id && data.id == active_device) {
             $('#config-device-alias').val(data.devicealias);
             $('#config-device-mode').val(data.syncmode);
@@ -101,6 +104,7 @@ function kolab_zpush_config()
     {
         if (p.success && p.devicename) {
             $('#devices-table tr.selected span.devicealias').html(p.devicename);
+            rcmail.env.devices[p.id].ALIAS = p.devicename;
         }
     }
 
