@@ -74,6 +74,11 @@ class kolab_zpush_ui
         $select->add(array($this->config->gettext('modeauto'), $this->config->gettext('modeflat'), $this->config->gettext('modefolder')), array('-1', '0', '1'));
         $table->add('title', html::label($field_id, $this->config->gettext('syncmode')));
         $table->add(null, $select->show('-1'));
+        
+        $field_id = 'config-device-laxpic';
+        $checkbox = new html_checkbox(array('name' => 'laxpic', 'value' => '1', 'id' => $field_id));
+        $table->add('title', $this->config->gettext('imageformat'));
+        $table->add(null, html::label($field_id, $checkbox->show() . ' ' . $this->config->gettext('laxpiclabel')));
 
         return $table->show($attrib);
     }

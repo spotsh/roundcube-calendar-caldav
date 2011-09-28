@@ -84,23 +84,23 @@ class kolab_zpush extends rcube_plugin
     public function json_command()
     {
         $cmd = get_input_value('cmd', RCUBE_INPUT_GPC);
-        $device_id = get_input_value('id', RCUBE_INPUT_GPC);
+        $imei = get_input_value('id', RCUBE_INPUT_GPC);
 
         switch ($cmd) {
         case 'load':
             $result = array();
             $this->init_imap();
             $devices = $this->list_devices();
-            if ($device = $devices[$device_id]) {
-                $result['id'] = $device_id;
+            if ($device = $devices[$imei]) {
+                $result['id'] = $imei;
                 $result['devicealias'] = $device['ALIAS'];
                 $result['syncmode'] = intval($device['MODE']);
                 $result['laxpic'] = intval($device['LAXPIC']);
                 $result['subscribed'] = array();
 
                 foreach ($this->folders_meta() as $folder => $meta) {
-                    if ($meta[$device_id]['S'])
-                        $result['subscribed'][$folder] = intval($meta[$device_id]['S']);
+                    if ($meta[$imei]['S'])
+                        $result['subscribed'][$folder] = intval($meta[$imei]['S']);
                 }
 
                 $this->rc->output->command('plugin.zpush_data_ready', $result);
@@ -113,22 +113,31 @@ class kolab_zpush extends rcube_plugin
         case 'save':
             $this->init_imap();
             $devices = $this->list_devices();
-            $syncmode = get_input_value('syncmode', RCUBE_INPUT_POST);
+            $syncmode = intval(get_input_value('syncmode', RCUBE_INPUT_POST));
             $devicealias = get_input_value('devicealias', RCUBE_INPUT_POST);
+            $laxpic = intval(get_input_value('laxpic', RCUBE_INPUT_POST));
             $subsciptions = get_input_value('subscribed', RCUBE_INPUT_POST);
             $err = false;
             
-            if ($device = $devices[$device_id]) {
+            if ($device = $devices[$imei]) {
                 // update device config if changed
-                if ($devicealias != $this->root_meta['DEVICE'][$device_id]['ALIAS'] ||
-                       $syncmode != $this->root_meta['DEVICE'][$device_id]['MODE'] ||
-                       $subsciptions[self::ROOT_MAILBOX] != $this->root_meta['FOLDER'][$device_id]['S']) {
-                    $this->root_meta['DEVICE'][$device_id]['MODE'] = $syncmode;
-                    $this->root_meta['DEVICE'][$device_id]['ALIAS'] = $devicealias;
-                    $this->root_meta['FOLDER'][$device_id]['S'] = intval($subsciptions[self::ROOT_MAILBOX]);
+                if ($devicealias != $this->root_meta['DEVICE'][$imei]['ALIAS']  ||
+                       $syncmode != $this->root_meta['DEVICE'][$imei]['MODE']   ||
+                       $laxpic   != $this->root_meta['DEVICE'][$imei]['LAXPIC'] ||
+                       $subsciptions[self::ROOT_MAILBOX] != $this->root_meta['FOLDER'][$imei]['S']) {
+                    $this->root_meta['DEVICE'][$imei]['MODE'] = $syncmode;
+                    $this->root_meta['DEVICE'][$imei]['ALIAS'] = $devicealias;
+                    $this->root_meta['DEVICE'][$imei]['LAXPIC'] = $laxpic;
+                    $this->root_meta['FOLDER'][$imei]['S'] = intval($subsciptions[self::ROOT_MAILBOX]);
 
                     $err = !$this->rc->imap->set_metadata(self::ROOT_MAILBOX,
                         array(self::ACTIVESYNC_KEY => $this->serialize_metadata($this->root_meta)));
+
+                    // update cached meta data
+                    if (!$err) {
+                        $this->cache->remove('devicemeta');
+                        $this->cache->write('devicemeta', $this->rc->imap->get_metadata(self::ROOT_MAILBOX, self::ACTIVESYNC_KEY));
+                    }
                 }
                 // iterate over folders list and update metadata if necessary
                 foreach ($this->folders_meta() as $folder => $meta) {
@@ -136,8 +145,8 @@ class kolab_zpush extends rcube_plugin
                     if ($folder == self::ROOT_MAILBOX)
                         continue;
                     
-                    if ($subsciptions[$folder] != $meta[$device_id]['S']) {
-                        $meta[$device_id]['S'] = intval($subsciptions[$folder]);
+                    if ($subsciptions[$folder] != $meta[$imei]['S']) {
+                        $meta[$imei]['S'] = intval($subsciptions[$folder]);
                         $this->folders_meta[$folder] = $meta;
                         unset($meta['TYPE']);
                         
@@ -155,7 +164,7 @@ class kolab_zpush extends rcube_plugin
                 $this->cache->remove('folders');
                 $this->cache->write('folders', $this->folders_meta);
                 
-                $this->rc->output->command('plugin.zpush_save_complete', array('success' => !$err, 'id' => $device_id, 'devicename' => Q($devicealias)));
+                $this->rc->output->command('plugin.zpush_save_complete', array('success' => !$err, 'id' => $imei, 'devicealias' => Q($devicealias)));
             }
             
             if ($err)
@@ -180,10 +189,7 @@ class kolab_zpush extends rcube_plugin
         $this->init_imap();
         
         // checks if IMAP server supports any of METADATA, ANNOTATEMORE, ANNOTATEMORE2
-        if ($this->rc->imap->get_capability('METADATA') || $this->rc->imap->get_capability('ANNOTATEMORE') || $this->rc->imap->get_capability('ANNOTATEMORE2')) {
-            $this->list_devices();
-        }
-        else {
+        if (!($this->rc->imap->get_capability('METADATA') || $this->rc->imap->get_capability('ANNOTATEMORE') || $this->rc->imap->get_capability('ANNOTATEMORE2'))) {
             $this->rc->output->show_message($this->gettext('notsupported'), 'error');
         }
         

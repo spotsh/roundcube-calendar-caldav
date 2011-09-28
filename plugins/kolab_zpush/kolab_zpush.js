@@ -57,6 +57,7 @@ function kolab_zpush_config()
         if (data.id && data.id == active_device) {
             $('#config-device-alias').val(data.devicealias);
             $('#config-device-mode').val(data.syncmode);
+            $('#config-device-laxpic').prop('checked', data.laxpic ? true : false);
             
             $('input.subscription').each(function(i, elem){
                 var key = elem.value;
@@ -83,7 +84,8 @@ function kolab_zpush_config()
             cmd: 'save',
             id: active_device,
             devicealias: $('#config-device-alias').val(),
-            syncmode: $('#config-device-mode option:selected').val()
+            syncmode: $('#config-device-mode option:selected').val(),
+            laxpic: $('#config-device-laxpic').get(0).checked ? 1 : 0
         };
 
         data.subscribed = {};
@@ -102,9 +104,9 @@ function kolab_zpush_config()
     // callback function when saving has completed
     function save_complete(p)
     {
-        if (p.success && p.devicename) {
-            $('#devices-table tr.selected span.devicealias').html(p.devicename);
-            rcmail.env.devices[p.id].ALIAS = p.devicename;
+        if (p.success && p.devicealias) {
+            $('#devices-table tr.selected span.devicealias').html(p.devicealias);
+            rcmail.env.devices[p.id].ALIAS = p.devicealias;
         }
     }
 
