@@ -32,7 +32,7 @@ function rcube_calendar_ui(settings)
     var DAY_MS = 86400000;
     var HOUR_MS = 3600000;
     var me = this;
-    var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0);
+    var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0) - (settings.dst || 0);
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
     var event_defaults = { free_busy:'busy' };
@@ -2272,6 +2272,12 @@ function rcube_calendar_ui(settings)
       },
       // callback for event resizing
       eventResize: function(event, delta) {
+        // sanitize event dates
+        if (event.allDay)
+          event.start.setHours(12);
+        if (!event.end || event.end.getTime() < event.start.getTime())
+          event.end = new Date(event.start.getTime() + HOUR_MS);
+
         // send resize request to server
         var data = {
           id: event.id,

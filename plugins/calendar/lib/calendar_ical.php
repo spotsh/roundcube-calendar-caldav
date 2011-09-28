@@ -52,7 +52,7 @@ class calendar_ical
     
     // compose timezone string
     if ($cal->timezone) {
-      $hours = floor($cal->timezone);
+      $hours = floor($cal->timezone + $cal->dst_active);
       $this->timezone = sprintf('%s%02d:%02d', ($hours >= 0 ? '+' : ''), $hours, ($cal->timezone - $hours) * 60);
     }
   }
@@ -104,12 +104,12 @@ class calendar_ical
     
     // check for all-day dates
     if (is_array($event['start'])) {
-      // create timestamp at 00:00 in user's timezone
+      // create timestamp at 12:00 in user's timezone
       $event['start'] = $this->_date2time($event['start']);
       $event['allday'] = true;
     }
     if (is_array($event['end'])) {
-      $event['end'] = $this->_date2time($event['end']) - 60;
+      $event['end'] = $this->_date2time($event['end']) - 23 * 3600;
     }
 
     // map other attributes to internal fields
@@ -221,8 +221,8 @@ class calendar_ical
    */
   private function _date2time($prop)
   {
-    // create timestamp at 00:00 in user's timezone
-    return is_array($prop) ? strtotime(sprintf('%04d%02d%02dT000000%s', $prop['year'], $prop['month'], $prop['mday'], $this->timezone)) : $prop;
+    // create timestamp at 12:00 in user's timezone
+    return is_array($prop) ? strtotime(sprintf('%04d%02d%02dT120000%s', $prop['year'], $prop['month'], $prop['mday'], $this->timezone)) : $prop;
   }
 
 
@@ -265,7 +265,7 @@ class calendar_ical
         // correctly set all-day dates
         if ($event['allday']) {
           $vevent .= "DTSTART;VALUE=DATE:" . gmdate('Ymd', $event['start'] + $this->cal->gmt_offset) . self::EOL;
-          $vevent .= "DTEND;VALUE=DATE:" . gmdate('Ymd', $event['end'] + $this->cal->gmt_offset + 60) . self::EOL;  // ends the next day
+          $vevent .= "DTEND;VALUE=DATE:" . gmdate('Ymd', $event['end'] + $this->cal->gmt_offset + 86400) . self::EOL;  // ends the next day
         }
         else {
           $vevent .= "DTSTART:" . gmdate('Ymd\THis\Z', $event['start']) . self::EOL;

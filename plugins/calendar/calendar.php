@@ -96,8 +96,10 @@ class calendar extends rcube_plugin
     $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
 
     // set user's timezone
-    $this->timezone = $this->rc->config->get_timezone();
-    $this->gmt_offset = $this->timezone * 3600;
+    $this->timezone = $this->rc->config->get('timezone');
+    $this->dst_active = $this->rc->config->get('dst_active');
+    $this->gmt_offset = ($this->timezone + $this->dst_active) * 3600;
+    $this->user_timezone = new DateTimeZone($this->timezone ? timezone_name_from_abbr("", $this->gmt_offset, $this->dst_active) : 'GMT');
 
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
@@ -589,11 +591,13 @@ class calendar extends rcube_plugin
         break;
       
       case "resize":
+        $this->prepare_event($event, $action);
         $success = $this->driver->resize_event($event);
         $reload = $event['_savemode'] ? 2 : 1;
         break;
       
       case "move":
+        $this->prepare_event($event, $action);
         $success = $this->driver->move_event($event);
         $reload =  $success && $event['_savemode'] ? 2 : 1;
         break;
@@ -850,6 +854,7 @@ class calendar extends rcube_plugin
     $settings['agenda_sections'] = $this->rc->config->get('calendar_agenda_sections', $this->defaults['calendar_agenda_sections']);
     $settings['event_coloring'] = (int)$this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring']);
     $settings['timezone'] = $this->timezone;
+    $settings['dst'] = $this->dst_active;
 
     // localization
     $settings['days'] = array(
@@ -932,6 +937,19 @@ class calendar extends rcube_plugin
   {
     $ts = is_numeric($datetime) ? $datetime : strtotime($datetime);
     return $ts + $this->gmt_offset;
+  }
+
+  /**
+   * Fix DST difference between client and target date
+   */
+  function fixDST($time)
+  {
+    $date = new DateTime(null, $this->user_timezone);
+    $date->setTimeStamp($time);
+    $diff = $date->format('I') - $this->dst_active;
+    $time += $diff * 3600;
+    
+    return $time;
   }
 
   /**
@@ -1447,9 +1465,11 @@ class calendar extends rcube_plugin
    */
   private function prepare_event(&$event, $action)
   {
-    $eventid = 'cal:'.$event['id'];
+    $event['start'] = $this->fixDST($event['start']);
+    $event['end'] = $this->fixDST($event['end']);
 
     $attachments = array();
+    $eventid = 'cal:'.$event['id'];
     if (is_array($_SESSION['event_session']) && $_SESSION['event_session']['id'] == $eventid) {
       if (!empty($_SESSION['event_session']['attachments'])) {
         foreach ($_SESSION['event_session']['attachments'] as $id => $attachment) {
@@ -1463,7 +1483,7 @@ class calendar extends rcube_plugin
     $event['attachments'] = $attachments;
 
     // check for organizer in attendees
-    if ($event['attendees']) {
+    if ($event['attendees'] && ($action == 'new' || $action == 'edit')) {
       $emails = $this->get_user_emails();
       $organizer = $owner = false;
       foreach ($event['attendees'] as $i => $attendee) {
@@ -1571,7 +1591,7 @@ class calendar extends rcube_plugin
     }
     
     // add timezone information
-    if ($tzinfo && ($tzname = timezone_name_from_abbr("", $this->gmt_offset, 0))) {
+    if ($tzinfo && ($tzname = $this->user_timezone->getName())) {
       $fromto .= ' (' . $tzname . ')';
     }
     

@@ -447,7 +447,7 @@ class kolab_calendar
     
     $events = array();
     $duration = $event['end'] - $event['start'];
-    $tz_offset = $event['allday'] ? $this->cal->timezone * 3600 - date('Z') : 0;
+    $tz_offset = $event['allday'] ? $this->cal->gmt_offset - date('Z') : 0;
     $next = new Horde_Date($event['start'] + $tz_offset);  # shift all-day times to server timezone because computation operates in local TZ
     $dst_start = $next->format('I');
     $hour = $next->hour;
@@ -494,8 +494,8 @@ class kolab_calendar
     if ($allday) {  // in Roundcube all-day events only go from 12:00 to 13:00
       $rec['start-date'] += 12 * 3600;
       $rec['end-date']   -= 11 * 3600;
-      $rec['end-date']   -= $this->cal->timezone * 3600 - date('Z', $rec['end-date']);    // shift 00 times from server's timezone to user's timezone
-      $rec['start-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['start-date']);  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
+      $rec['end-date']   -= $this->cal->gmt_offset - date('Z', $rec['end-date']);    // shift times from server's timezone to user's timezone
+      $rec['start-date'] -= $this->cal->gmt_offset - date('Z', $rec['start-date']);  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
       // sanity check
       if ($rec['end-date'] <= $rec['start-date'])
         $rec['end-date'] += 86400;
@@ -623,7 +623,7 @@ class kolab_calendar
   private function _from_rcube_event($event)
   {
     $priority_map = $this->priority_map;
-    $tz_offset = $this->cal->timezone * 3600;
+    $tz_offset = $this->cal->gmt_offset;
 
     $object = array(
     // kolab         => roundcube
