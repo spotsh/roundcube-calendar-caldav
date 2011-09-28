@@ -469,8 +469,10 @@ class kolab_driver extends calendar_driver
   public function remove_event($event, $force = true)
   {
     $success = false;
+    $_savemode = $event['_savemode'];
 
     if (($storage = $this->calendars[$event['calendar']]) && ($event = $storage->get_event($event['id']))) {
+      $event['_savemode'] = $_savemode;
       $savemode = 'all';
       $master = $event;
 
@@ -484,8 +486,17 @@ class kolab_driver extends calendar_driver
 
       switch ($savemode) {
         case 'current':
-          // add exception to master event
-          $master['recurrence']['EXDATE'][] = $event['start'];
+          // removing the first instance => just move to next occurence
+          if ($master['id'] == $event['id']) {
+            $recurring = reset($storage->_get_recurring_events($event, $event['start'], $event['end'] + 86400 * 370, $event['id'].'-1'));
+            $master['start'] = $recurring['start'];
+            $master['end'] = $recurring['end'];
+            if ($master['recurrence']['COUNT'])
+              $master['recurrence']['COUNT']--;
+          }
+          else {  // add exception to master event
+            $master['recurrence']['EXDATE'][] = $event['start'];
+          }
           $success = $storage->update_event($master);
           break;
 

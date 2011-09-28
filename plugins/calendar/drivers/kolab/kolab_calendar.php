@@ -434,7 +434,7 @@ class kolab_calendar
   /**
    * Create instances of a recurring event
    */
-  private function _get_recurring_events($event, $start, $end, $event_id = null)
+  public function _get_recurring_events($event, $start, $end, $event_id = null)
   {
     // use Horde classes to compute recurring instances
     require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
