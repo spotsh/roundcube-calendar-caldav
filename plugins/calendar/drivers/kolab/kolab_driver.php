@@ -476,6 +476,7 @@ class kolab_driver extends calendar_driver
       $savemode = 'all';
       $master = $event;
 
+      $this->rc->session->remove('calendar_restore_event_data');
       $GLOBALS['conf']['kolab']['no_triggering'] = true;
 
       // read master if deleting a recurring event
@@ -486,6 +487,8 @@ class kolab_driver extends calendar_driver
 
       switch ($savemode) {
         case 'current':
+          $_SESSION['calendar_restore_event_data'] = $master;
+          
           // removing the first instance => just move to next occurence
           if ($master['id'] == $event['id']) {
             $recurring = reset($storage->_get_recurring_events($event, $event['start'], $event['end'] + 86400 * 370, $event['id'].'-1'));
@@ -502,6 +505,8 @@ class kolab_driver extends calendar_driver
 
         case 'future':
           if ($master['id'] != $event['id']) {
+            $_SESSION['calendar_restore_event_data'] = $master;
+            
             // set until-date on master event
             $master['recurrence']['UNTIL'] = $event['start'] - 86400;
             unset($master['recurrence']['COUNT']);
@@ -531,7 +536,12 @@ class kolab_driver extends calendar_driver
   public function restore_event($event)
   {
     if ($storage = $this->calendars[$event['calendar']]) {
-      if ($success = $storage->restore_event($event))
+      if (!empty($_SESSION['calendar_restore_event_data']))
+        $success = $storage->update_event($_SESSION['calendar_restore_event_data']);
+      else
+        $success = $storage->restore_event($event);
+      
+      if ($success)
         $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
       
       return $success;
