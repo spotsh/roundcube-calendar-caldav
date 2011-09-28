@@ -449,13 +449,16 @@ class kolab_calendar
     $duration = $event['end'] - $event['start'];
     $tz_offset = $event['allday'] ? $this->cal->timezone * 3600 - date('Z') : 0;
     $next = new Horde_Date($event['start'] + $tz_offset);  # shift all-day times to server timezone because computation operates in local TZ
+    $dst_start = $next->format('I');
+    $hour = $next->hour;
     $i = 0;
     while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
       if ($event['allday']) {
         $next->hour = $hour;  # fix time for all-day events
         $next->min = 0;
       }
-      $rec_start = $next->timestamp() - $tz_offset;
+      $dst_diff = ($dst_start - $next->format('I')) * 3600;  # consider difference in daylight saving between base event and recurring instance
+      $rec_start = $next->timestamp() - $tz_offset - $dst_diff;
       $rec_end = $rec_start + $duration;
       $rec_id = $event['id'] . '-' . ++$i;
       
