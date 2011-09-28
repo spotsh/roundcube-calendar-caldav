@@ -491,9 +491,10 @@ class kolab_calendar
   {
     $start_time = date('H:i:s', $rec['start-date']);
     $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
-    if ($allday) {  // in Roundcube all-day events only go until 23:59:59 of the last day
-      $rec['end-date']--;
-      $rec['end-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['end-date']);   // shift 00 times from server's timezone to user's timezone
+    if ($allday) {  // in Roundcube all-day events only go from 12:00 to 13:00
+      $rec['start-date'] += 12 * 3600;
+      $rec['end-date']   -= 11 * 3600;
+      $rec['end-date']   -= $this->cal->timezone * 3600 - date('Z', $rec['end-date']);    // shift 00 times from server's timezone to user's timezone
       $rec['start-date'] -= $this->cal->timezone * 3600 - date('Z', $rec['start-date']);  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
       // sanity check
       if ($rec['end-date'] <= $rec['start-date'])
@@ -727,13 +728,13 @@ class kolab_calendar
     
     // whole day event
     if ($event['allday']) {
-      $object['end-date'] += 60;  // end is at 23:59 => jump to the next day
+      $object['end-date'] += 12 * 3600;  // end is at 13:00 => jump to the next day
       $object['end-date'] += $tz_offset - date('Z');   // shift 00 times from user's timezone to server's timezone 
       $object['start-date'] += $tz_offset - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
       
       // sanity check: end date is same or smaller than start
       if (date('Y-m-d', $object['end-date']) <= date('Y-m-d', $object['start-date']))
-        $object['end-date'] = mktime(0,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date'])) + 86400;
+        $object['end-date'] = mktime(13,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date'])) + 86400;
       
       $object['_is_all_day'] = 1;
     }

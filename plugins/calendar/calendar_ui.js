@@ -458,8 +458,8 @@ function rcube_calendar_ui(settings)
       notify.checked = has_attendees(event), invite.checked = true;
       
       if (event.allDay) {
-        starttime.val("00:00").hide();
-        endtime.val("23:59").hide();
+        starttime.val("12:00").hide();
+        endtime.val("13:00").hide();
         allday.checked = true;
       }
       else {
@@ -780,8 +780,8 @@ function rcube_calendar_ui(settings)
       freebusy_ui.endtime = $('#schedule-endtime').val($.fullCalendar.formatDate(event.end, settings['time_format'])).show();
       
       if (allday.checked) {
-        freebusy_ui.starttime.val("00:00").hide();
-        freebusy_ui.endtime.val("23:59").hide();
+        freebusy_ui.starttime.val("12:00").hide();
+        freebusy_ui.endtime.val("13:00").hide();
         event.allDay = true;
       }
       
@@ -1332,8 +1332,8 @@ function rcube_calendar_ui(settings)
       if (me.selected_event) {
         var allday = $('#edit-allday').get(0);
         me.selected_event.allDay = allday.checked;
-        me.selected_event.start = parse_datetime(allday.checked ? '00:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
-        me.selected_event.end   = parse_datetime(allday.checked ? '23:59' : $('#edit-endtime').val(), $('#edit-enddate').val());
+        me.selected_event.start = parse_datetime(allday.checked ? '12:00' : $('#edit-starttime').val(), $('#edit-startdate').val());
+        me.selected_event.end   = parse_datetime(allday.checked ? '13:00' : $('#edit-endtime').val(), $('#edit-enddate').val());
         if (event_attendees)
           freebusy_ui.needsupdate = true;
         $('#edit-startdate').data('duration', Math.round((me.selected_event.end.getTime() - me.selected_event.start.getTime()) / 1000));
@@ -2237,13 +2237,13 @@ function rcube_calendar_ui(settings)
         if (event.end == null || event.end.getTime() < event.start.getTime()) {
           event.end = new Date(event.start.getTime() + (allDay ? DAY_MS : HOUR_MS));
         }
-        // moved to all-day section: set times to 00:00 - 23:59
+        // moved to all-day section: set times to 12:00 - 13:00
         if (allDay && !event.allday) {
-          event.start.setHours(0);
+          event.start.setHours(12);
           event.start.setMinutes(0);
           event.start.setSeconds(0);
-          event.end.setHours(23);
-          event.end.setMinutes(59);
+          event.end.setHours(13);
+          event.end.setMinutes(0);
           event.end.setSeconds(0);
         }
         // moved from all-day section: set times to working hours
