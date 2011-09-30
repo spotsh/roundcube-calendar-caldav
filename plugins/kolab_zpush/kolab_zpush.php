@@ -54,6 +54,9 @@ class kolab_zpush extends rcube_plugin
         
         $this->register_action('plugin.zpushconfig', array($this, 'config_view'));
         $this->register_action('plugin.zpushjson', array($this, 'json_command'));
+        
+        if ($this->rc->action == 'plugin.zpushconfig')
+          $this->require_plugin('kolab_core');
     }
 
 
@@ -172,6 +175,56 @@ class kolab_zpush extends rcube_plugin
             else
                 $this->rc->output->show_message($this->gettext('successfullysaved'), 'confirmation');
             
+            break;
+
+        case 'delete':
+            $this->init_imap();
+            $devices = $this->list_devices();
+            
+            if ($device = $devices[$imei]) {
+                unset($this->root_meta['DEVICE'][$imei], $this->root_meta['FOLDER'][$imei]);
+
+                // update annotation and cached meta data
+                if ($success = $this->rc->imap->set_metadata(self::ROOT_MAILBOX, array(self::ACTIVESYNC_KEY => $this->serialize_metadata($this->root_meta)))) {
+                    $this->cache->remove('devicemeta');
+                    $this->cache->write('devicemeta', $this->rc->imap->get_metadata(self::ROOT_MAILBOX, self::ACTIVESYNC_KEY));
+
+                    // remove device annotation in every folder
+                    foreach ($this->folders_meta() as $folder => $meta) {
+                        // skip root folder (already handled above)
+                        if ($folder == self::ROOT_MAILBOX)
+                            continue;
+
+                        if (isset($meta[$imei])) {
+                            $type = $meta['TYPE'];  // remember folder type
+                            unset($meta[$imei], $meta['TYPE']);
+
+                            // read metadata first and update FOLDER property
+                            $folderdata = $this->rc->imap->get_metadata($folder, array(self::ACTIVESYNC_KEY));
+                            if ($asyncdata = $folderdata[$folder][self::ACTIVESYNC_KEY])
+                                $metadata = $this->unserialize_metadata($asyncdata);
+                            $metadata['FOLDER'] = $meta;
+
+                            if ($this->rc->imap->set_metadata($folder, array(self::ACTIVESYNC_KEY => $this->serialize_metadata($metadata)))) {
+                                $this->folders_meta[$folder] = $metadata;
+                                $this->folders_meta[$folder]['TYPE'] = $type;
+                            }
+                        }
+                    }
+
+                    // update cache
+                    $this->cache->remove('folders');
+                    $this->cache->write('folders', $this->folders_meta);
+                }
+            }
+
+            if ($success) {
+                $this->rc->output->show_message($this->gettext('successfullydeleted'), 'confirmation');
+                $this->rc->output->redirect(array('action' => 'plugin.zpushconfig'));  // reload UI
+            }
+            else
+                $this->rc->output->show_message($this->gettext('savingerror'), 'error');
+
             break;
         }
 

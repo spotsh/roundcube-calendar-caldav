@@ -79,6 +79,9 @@ class kolab_zpush_ui
         $checkbox = new html_checkbox(array('name' => 'laxpic', 'value' => '1', 'id' => $field_id));
         $table->add('title', $this->config->gettext('imageformat'));
         $table->add(null, html::label($field_id, $checkbox->show() . ' ' . $this->config->gettext('laxpiclabel')));
+        
+        if ($attrib['form'])
+            $this->rc->output->add_gui_object('editform', $attrib['form']);
 
         return $table->show($attrib);
     }
@@ -88,22 +91,81 @@ class kolab_zpush_ui
     {
         if (!$attrib['id'])
             $attrib['id'] = 'foldersubscriptions';
-
-        $table = new html_table();
-        $table->add_header('foldername', $this->config->gettext('folder'));
-        $table->add_header('subscription', $attrib['syncicon'] ? html::img(array('src' => $this->skin_path . $attrib['syncicon'], 'title' => $this->config->gettext('synchronize'))) : '');
-        $table->add_header('alarm', $attrib['alarmicon'] ? html::img(array('src' => $this->skin_path . $attrib['alarmicon'], 'title' => $this->config->gettext('withalarms'))) : '');
-
-        $folders_tree = array();
-        $delimiter    = $this->rc->imap->get_hierarchy_delimiter();
-        foreach ($this->config->list_folders() as $folder)
-            rcmail_build_folder_tree($folders_tree, $folder, $delimiter);
-
-        $this->render_folders($folders_tree, $table, 0);
-
+        
+        // group folders by type
+        $folder_groups = array('mail' => array(), 'contact' => array(), 'event' => array());
+        $folder_meta = $this->config->folders_meta();
+        foreach ($this->config->list_folders() as $folder) {
+            $type = $folder_meta[$folder]['TYPE'] ? $folder_meta[$folder]['TYPE'] : 'mail';
+            $folder_groups[$type][] = $folder;
+        }
+        
+        // build block for every folder type
+        foreach ($folder_groups as $type => $group) {
+            if (empty($group))
+                continue;
+            $attrib['type'] = $type;
+            $html .= html::div('subscriptionblock',
+                html::tag('h3', $type, $this->config->gettext($type)) .
+                $this->folder_subscriptions_block($group, $attrib));
+        }
+        
         $this->rc->output->add_gui_object('subscriptionslist', $attrib['id']);
+        
+        return html::div($attrib, $html);
+    }
 
-        return $table->show($attrib);
+    public function folder_subscriptions_block($a_folders, $attrib)
+    {
+        $alarms = ($attrib['type'] == 'event' || $attrib['type'] == 'task');
+        
+        $table = new html_table(array('cellspacing' => 0));
+        $table->add_header('subscription', $attrib['syncicon'] ? html::img(array('src' => $this->skin_path . $attrib['syncicon'], 'title' => $this->config->gettext('synchronize'))) : '');
+        $table->add_header('alarm', $alarms && $attrib['alarmicon'] ? html::img(array('src' => $this->skin_path . $attrib['alarmicon'], 'title' => $this->config->gettext('withalarms'))) : '');
+        $table->add_header('foldername', $this->config->gettext('folder'));
+
+        $checkbox_sync = new html_checkbox(array('name' => 'subscribed[]', 'class' => 'subscription'));
+        $checkbox_alarm = new html_checkbox(array('name' => 'alarm[]', 'class' => 'alarm', 'disabled' => true));
+
+        $names = array();
+        foreach ($a_folders as $folder) {
+            $foldername = $origname = preg_replace('/^INBOX &raquo;\s+/', '', rcube_kolab::object_name($folder));
+
+            // find folder prefix to truncate (the same code as in kolab_addressbook plugin)
+            for ($i = count($names)-1; $i >= 0; $i--) {
+                if (strpos($foldername, $names[$i].' &raquo; ') === 0) {
+                    $length = strlen($names[$i].' &raquo; ');
+                    $prefix = substr($foldername, 0, $length);
+                    $count  = count(explode(' &raquo; ', $prefix));
+                    $foldername = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($foldername, $length);
+                    break;
+                }
+            }
+
+            $names[] = $origname;
+
+            $classes = array('mailbox');
+
+            if ($folder_class = rcmail_folder_classname($folder)) {
+                $foldername = rcube_label($folder_class);
+                $classes[] = $folder_class;
+            }
+
+            $folder_id = 'rcmf' . html_identifier($folder);
+            $padding = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
+
+            $table->add_row(array('class' => (($level+1) * $idx++) % 2 == 0 ? 'even' : 'odd'));
+            $table->add('subscription', $checkbox_sync->show('', array('value' => $folder, 'id' => $folder_id)));
+
+            if ($alarms)
+                $table->add('alarm', $checkbox_alarm->show('', array('value' => $folder, 'id' => $folder_id.'_alarm')));
+            else
+                $table->add('alarm', '');
+            
+            $table->add(join(' ', $classes), html::label($folder_id, $padding . Q($foldername)));
+        }
+
+        return $table->show();
     }
 
     /**

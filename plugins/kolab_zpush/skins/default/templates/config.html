@@ -20,7 +20,7 @@
 	<roundcube:object name="plugin.devicelist" id="devices-table" class="records-table" cellspacing="0" />
 </div>
 <div class="boxfooter">
-	<roundcube:button command="device-create" type="link" title="newcontactgroup" class="buttonPas adddevice" classAct="button adddevice" content=" " />
+	<roundcube:button type="link" command="plugin.delete-device" title="kolab_zpush.deletedevice" class="buttonPas delete" classAct="button delete" content=" " />
 </div>
 </div>
 
@@ -33,9 +33,7 @@
 		</fieldset>
 		<fieldset>
 			<legend><roundcube:label name="kolab_zpush.folderstosync" /></legend>
-			<div id="folderscrollist">
-				<roundcube:object name="plugin.foldersubscriptions" form="configform" id="foldersubscriptions" cellspacing="0" summary="Folder subscription table" syncicon="synchronize.png" alarmicon="alarm-clock.png" />
-			</div>
+			<roundcube:object name="plugin.foldersubscriptions" form="configform" id="foldersubscriptions" syncicon="synchronize.png" alarmicon="alarm-clock.png" />
 		</fieldset>
 		<p class="formbuttons">
 			<roundcube:button type="input" class="button mainaction" command="plugin.save-config" label="save" />

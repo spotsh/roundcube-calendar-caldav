@@ -1,7 +1,7 @@
 /**
  * Client scripts for the Kolab Z-Push configuration utitlity
  *
- * @version 0.1
+ * @version 0.2
  * @author Thomas Bruederli <roundcube@gmail.com>
  *
  * Copyright (C) 2011, Kolab Systems AG
@@ -25,19 +25,26 @@ function kolab_zpush_config()
     devicelist.addEventListener('select', select_device);
     devicelist.init();
     
-    rcmail.register_command('plugin.save-config', save_config, true);
+    rcmail.register_command('plugin.save-config', save_config);
+    rcmail.register_command('plugin.delete-device', delete_device_config);
     rcmail.addEventListener('plugin.zpush_data_ready', device_data_ready);
     rcmail.addEventListener('plugin.zpush_save_complete', save_complete);
 
     $('input.subscription').change(function(e){ $('#'+this.id+'_alarm').prop('disabled', !this.checked); });
     $(window).bind('resize', resize_ui);
-
+    
+    // select the one and only device from list
+    if (rcmail.env.devicecount == 1) {
+        for (var imei in rcmail.env.devices)
+            break;
+        devicelist.select(imei);
+    }
 
     /* private methods */
     function select_device(list)
     {
         active_device = list.get_single_selection();
-        rcmail.enable_command('plugin.save-config');
+        rcmail.enable_command('plugin.save-config', 'plugin.delete-device', true);
         
         if (active_device) {
             http_lock = rcmail.set_busy(true, 'loading');
@@ -109,14 +116,23 @@ function kolab_zpush_config()
             rcmail.env.devices[p.id].ALIAS = p.devicealias;
         }
     }
+    
+    // handler for delete commands
+    function delete_device_config()
+    {
+        if (active_device && confirm(rcmail.gettext('devicedeleteconfirm', 'kolab_zpush'))) {
+            http_lock = rcmail.set_busy(true, 'kolab_zpush.savingdata');
+            rcmail.http_post('plugin.zpushjson', { cmd:'delete', id:active_device }, http_lock);
+        }
+    }
 
     // handler for window resize events: sets max-height of folders list scroll container
     function resize_ui()
     {
         if (active_device) {
             var h = $(window).height();
-            var pos = $('#folderscrollist').offset();
-            $('#folderscrollist').css('max-height', (h - pos.top - 90) + 'px');
+            var pos = $('#foldersubscriptions').offset();
+            $('#foldersubscriptions').css('max-height', (h - pos.top - 90) + 'px');
         }
     }
 }

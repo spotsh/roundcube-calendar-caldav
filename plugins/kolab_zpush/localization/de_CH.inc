@@ -13,6 +13,11 @@ $labels['withalarms'] = 'Mit Erinnerungen';
 $labels['syncsettings'] = 'Synchronisationseinstellungen';
 $labels['deviceconfig'] = 'Gerätekonfiguration';
 $labels['folderstosync'] = 'Order zum Synchronisieren';
+$labels['mail'] = 'E-Mail';
+$labels['contact'] = 'Adressbücher';
+$labels['event'] = 'Kalendar';
+$labels['task'] = 'Aufgaben';
+$labels['note'] = 'Notizen';
 $labels['deletedevice'] = 'Gerät löschen';
 $labels['imageformat'] = 'Bildformat';
 $labels['laxpiclabel'] = 'Erlaube PNG- und GIF-Bilder';
@@ -21,5 +26,7 @@ $labels['nodevices'] = 'Es sind noch keine Geräte registriert.<br/><br/>Um ein 
 $labels['savingdata'] = 'Daten werden gespeichert...';
 $labels['savingerror'] = 'Fehler beim Speichern';
 $labels['notsupported'] = 'Ihr Server unterstützt keine Activesync-Konfiguration';
+$labels['devicedeleteconfirm'] = 'Wollen Sie wirklich alle Einstellungen für dieses Gerät löschen?';
+$labels['successfullydeleted'] = 'Die Geräteinstellungen wurden erfolgreich gelöscht';
 
 ?>
