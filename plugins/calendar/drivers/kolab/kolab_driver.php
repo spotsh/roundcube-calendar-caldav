@@ -318,14 +318,14 @@ class kolab_driver extends calendar_driver
 
     // save color in METADATA
     // TODO: also save 'showalarams' and other properties here
-/* DISABLED until KEP #12 is approved
+
     if ($result && $prop['color']) {
       if (!($meta_saved = $this->rc->imap->set_metadata($folder, array('/shared/vendor/kolab/color' => $prop['color']))))  // try in shared namespace
         $meta_saved = $this->rc->imap->set_metadata($folder, array('/private/vendor/kolab/color' => $prop['color']));    // try in private namespace
       if ($meta_saved)
         unset($prop['color']);  // unsetting will prevent fallback to local user prefs
     }
-*/
+
     return $result ? $folder : false;
   }
 

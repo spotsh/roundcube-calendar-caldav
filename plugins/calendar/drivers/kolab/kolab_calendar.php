@@ -155,11 +155,10 @@ class kolab_calendar
   {
     // color is defined in folder METADATA
     // FIXME: Kolab_Folder::getKolabAttribute() only reads value.shared; value.priv should be considered first
-/* DISABLED until KEP #12 is approved
     if ($color = $this->storage->_folder->getKolabAttribute('color')) {
       return $color;
     }
-*/
+
     // calendar color is stored in user prefs (temporary solution)
     $prefs = $this->cal->rc->config->get('kolab_calendars', array());
 
