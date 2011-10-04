@@ -8,6 +8,7 @@ $labels['foldertypejournal'] = 'Dziennik';
 $labels['foldertypetask'] = 'Zadania';
 $labels['foldertypenote'] = 'Notatki';
 $labels['foldertypecontact'] = 'Kontakty';
+$labels['foldertypeconfiguration'] = 'Konfiguracja';
 $labels['default'] = 'Domyślny';
 $labels['inbox'] = 'Odebrane';
 $labels['drafts'] = 'Szkice';

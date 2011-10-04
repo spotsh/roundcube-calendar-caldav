@@ -9,6 +9,7 @@ $labels['foldertypejournal'] = 'Journal';
 $labels['foldertypetask'] = 'Tasks';
 $labels['foldertypenote'] = 'Notes';
 $labels['foldertypecontact'] = 'Contacts';
+$labels['foldertypeconfiguration'] = 'Configuration';
 
 $labels['default'] = 'Default';
 $labels['inbox'] = 'Inbox';

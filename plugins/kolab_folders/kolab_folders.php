@@ -27,7 +27,7 @@ class kolab_folders extends rcube_plugin
 {
     public $task = '?(?!login).*';
 
-    public $types = array('mail', 'event', 'journal', 'task', 'note', 'contact');
+    public $types = array('mail', 'event', 'journal', 'task', 'note', 'contact', 'configuration');
     public $mail_types = array('drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
     private $rc;
 
@@ -167,10 +167,6 @@ class kolab_folders extends rcube_plugin
      */
     function folder_form($args)
     {
-        if ($args['options']['is_root']) {
-            return $args;
-        }
-
         if (!$this->metadata_support()) {
             return $args;
         }
@@ -184,6 +180,10 @@ class kolab_folders extends rcube_plugin
                 'value' => sprintf('%s (%s)', $this->gettext('foldertypemail'), $this->gettext('inbox')),
             );
 
+            return $args;
+        }
+
+        if ($args['options']['is_root']) {
             return $args;
         }
 
