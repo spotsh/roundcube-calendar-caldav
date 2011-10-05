@@ -5,7 +5,7 @@
  *
  * Class providing functionality to manage iTIP invitations
  *
- * @version 0.6-beta
+ * @version 0.7-beta
  * @author Thomas Bruederli <roundcube@gmail.com>
  * @package calendar
  *

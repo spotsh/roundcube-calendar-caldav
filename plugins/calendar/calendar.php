@@ -3,7 +3,7 @@
 /**
  * Calendar plugin for Roundcube webmail
  *
- * @version 0.6-beta
+ * @version 0.7-beta
  * @author Lazlo Westerhof <hello@lazlo.me>
  * @author Thomas Bruederli <roundcube@gmail.com>
  *

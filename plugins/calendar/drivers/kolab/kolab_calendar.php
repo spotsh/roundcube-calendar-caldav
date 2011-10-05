@@ -3,7 +3,7 @@
 /**
  * Kolab calendar storage class 
  *
- * @version 0.6-beta
+ * @version 0.7-beta
  * @author Thomas Bruederli <roundcube@gmail.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *

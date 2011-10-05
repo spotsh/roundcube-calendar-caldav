@@ -1,7 +1,7 @@
 /**
  * Print view for the Calendar plugin
  *
- * @version 0.6-beta
+ * @version 0.7-beta
  * @author Thomas Bruederli <roundcube@gmail.com>
  *
  * Copyright (C) 2011, Kolab Systems AG
