@@ -325,9 +325,9 @@ function rcube_calendar_ui(settings)
         $('#event-category').show().children('.event-text').html(Q(event.categories)).removeClass().addClass('event-text cat-'+String(event.categories).replace(rcmail.identifier_expr, ''));
       if (event.free_busy)
         $('#event-free-busy').show().children('.event-text').html(Q(rcmail.gettext(event.free_busy, 'calendar')));
-      if (event.priority != 1) {
-        var priolabels = { 0:rcmail.gettext('low'), 1:rcmail.gettext('normal'), 2:rcmail.gettext('high') };
-        $('#event-priority').show().children('.event-text').html(Q(priolabels[event.priority]));
+      if (event.priority > 0) {
+        var priolabels = [ '', rcmail.gettext('high'), rcmail.gettext('highest'), '', '', rcmail.gettext('normal'), '', '', rcmail.gettext('low'), rcmail.gettext('lowest') ];
+        $('#event-priority').show().children('.event-text').html(Q(event.priority+' '+priolabels[event.priority]));
       }
       if (event.sensitivity != 0) {
         var sensitivityclasses = { 0:'public', 1:'private', 2:'confidential' };

@@ -246,7 +246,7 @@ class calendar extends rcube_plugin
     $this->ui->addJS();
 
     $this->ui->init_templates();
-    $this->rc->output->add_label('low','normal','high','delete','cancel','uploading','noemailwarning');
+    $this->rc->output->add_label('lowest','low','normal','high','highest','delete','cancel','uploading','noemailwarning');
 
     // initialize attendees autocompletion
     rcube_autocomplete_init();
@@ -1232,7 +1232,7 @@ class calendar extends rcube_plugin
         'categories' => $cats[array_rand($cats)],
         'calendar' => array_rand($cals),
         'alarms' => $alarm > 0 ? "-{$alarm}M:DISPLAY" : '',
-        'priority' => 1,
+        'priority' => rand(0,9),
       ));
     }
     

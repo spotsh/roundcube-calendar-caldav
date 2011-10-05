@@ -41,7 +41,7 @@ class kolab_calendar
   private $namespace;
   private $search_fields = array('title', 'description', 'location', '_attendees');
   private $sensitivity_map = array('public', 'private', 'confidential');
-  private $priority_map = array('low', 'normal', 'high');
+  private $priority_map = array('low' => 9, 'normal' => 5, 'high' => 1);
   private $role_map = array('REQ-PARTICIPANT' => 'required', 'OPT-PARTICIPANT' => 'optional', 'CHAIR' => 'resource');
   private $status_map = array('NEEDS-ACTION' => 'none', 'TENTATIVE' => 'tentative', 'CONFIRMED' => 'accepted', 'ACCEPTED' => 'accepted', 'DECLINED' => 'declined');
   private $month_map = array('', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
@@ -154,8 +154,7 @@ class kolab_calendar
   public function get_color()
   {
     // color is defined in folder METADATA
-    // FIXME: Kolab_Folder::getKolabAttribute() only reads value.shared; value.priv should be considered first
-    if ($color = $this->storage->_folder->getKolabAttribute('color')) {
+    if ($color = $this->storage->_folder->getKolabAttribute('color', HORDE_ANNOT_READ_PRIVATE_SHARED)) {
       return $color;
     }
 
@@ -552,7 +551,6 @@ class kolab_calendar
     }
 
     $sensitivity_map = array_flip($this->sensitivity_map);
-    $priority_map = array_flip($this->priority_map);
     $status_map = array_flip($this->status_map);
     $role_map = array_flip($this->role_map);
 
@@ -608,7 +606,7 @@ class kolab_calendar
       'attendees' => $attendees,
       '_attendees' => $_attendees,
       'free_busy' => $rec['show-time-as'],
-      'priority' => isset($priority_map[$rec['priority']]) ? $priority_map[$rec['priority']] : 1,
+      'priority' => is_numeric($rec['priority']) ? intval($rec['priority']) : (isset($this->priority_map[$rec['priority']]) ? $this->priority_map[$rec['priority']] : 0),
       'sensitivity' => $sensitivity_map[$rec['sensitivity']],
       'changed' => $rec['last-modification-date'],
       'calendar' => $this->id,
@@ -635,7 +633,7 @@ class kolab_calendar
       'end-date'     => $event['end'],
       'sensitivity'  =>$this->sensitivity_map[$event['sensitivity']],
       'show-time-as' => $event['free_busy'],
-      'priority'     => isset($priority_map[$event['priority']]) ? $priority_map[$event['priority']] : 1,
+      'priority'     => $event['priority'],
     );
     
     //handle alarms

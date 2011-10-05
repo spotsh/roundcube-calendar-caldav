@@ -288,9 +288,16 @@ class calendar_ui
   {
     $attrib['name'] = 'priority';
     $select = new html_select($attrib);
-    $select->add($this->cal->gettext('normal'), '1');
-    $select->add($this->cal->gettext('low'), '0');
-    $select->add($this->cal->gettext('high'), '2');
+    $select->add('---', '0');
+    $select->add('1 '.$this->cal->gettext('highest'), '1');
+    $select->add('2 '.$this->cal->gettext('high'),    '2');
+    $select->add('3 ',                                '3');
+    $select->add('4 ',                                '4');
+    $select->add('5 '.$this->cal->gettext('normal'),  '5');
+    $select->add('6 ',                                '6');
+    $select->add('7 ',                                '7');
+    $select->add('8 '.$this->cal->gettext('low'),     '8');
+    $select->add('9 '.$this->cal->gettext('lowest'),  '9');
     return $select->show(null);
   }
   

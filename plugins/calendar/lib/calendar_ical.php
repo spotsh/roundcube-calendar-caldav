@@ -99,7 +99,7 @@ class calendar_ical
       'end' => $ve->getAttribute('DTEND'),
       // set defaults
       'free_busy' => 'busy',
-      'priority' => 1,
+      'priority' => 0,
     );
     
     // check for all-day dates
@@ -155,8 +155,7 @@ class calendar_ical
         
         case 'PRIORITY':
           if (is_numeric($attr['value'])) {
-            $event['priority'] = $attr['value'] <= 4 ? 2 /* high */ :
-              ($attr['value'] == 5 ? 1 /* normal */ : 0 /* low */);
+            $event['priority'] = $attr['value'];
           }
           break;
         
@@ -303,8 +302,8 @@ class calendar_ical
         
         $vevent .= "TRANSP:" . ($event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE') . self::EOL;
         
-        if ($event['priority'] != 1) {
-          $vevent .= "PRIORITY:" . ($event['priority'] == 2 ? '1' : '9') . self::EOL;
+        if ($event['priority']) {
+          $vevent .= "PRIORITY:" . $event['priority'] . self::EOL;
         }
         
         if ($event['cancelled'])
