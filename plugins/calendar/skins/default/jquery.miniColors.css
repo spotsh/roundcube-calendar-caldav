@@ -65,6 +65,27 @@
 	overflow: hidden;
 }
 
+.miniColors-presets {
+	position: absolute;
+	left: 185px;
+	top: 5px;
+	width: 60px;
+}
+
+.miniColors-colorPreset {
+	float: left;
+	width: 18px;
+	height: 15px;
+	margin: 2px;
+	border: 1px solid #333;
+	cursor: pointer;
+}
+
+.miniColors-colorPreset-active {
+	border: 2px dotted #666;
+	margin: 1px;
+}
+
 /* Hacks for IE6/7 */
 
 * html .miniColors-colors {

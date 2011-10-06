@@ -252,6 +252,7 @@ class calendar extends rcube_plugin
     rcube_autocomplete_init();
 
     $this->rc->output->set_env('calendar_driver', $this->rc->config->get('calendar_driver'), false);
+    $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
 
     $view = get_input_value('view', RCUBE_INPUT_GPC);
     if (in_array($view, array('agendaWeek', 'agendaDay', 'month', 'table')))
@@ -425,14 +426,15 @@ class calendar extends rcube_plugin
             var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).addClass("colors").val("000000");
             var button = $("<input>").attr("type", "button").attr("value", "X").addClass("button").click(function(){ $(this).parent().remove() });
             $("<div>").append(input).append("&nbsp;").append(color).append("&nbsp;").append(button).appendTo("#calendarcategories");
-            color.miniColors();
+            color.miniColors({ colorValues:mscolors });
           }
         }');
 
         // include color picker
         $this->include_script('lib/js/jquery.miniColors.min.js');
         $this->include_stylesheet('skins/' .$this->rc->config->get('skin') . '/jquery.miniColors.css');
-        $this->rc->output->add_script('$("input.colors").miniColors()', 'docready');
+        $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
+        $this->rc->output->add_script('$("input.colors").miniColors({ colorValues:rcmail.env.mscolors })', 'docready');
       }
     }
 

@@ -352,4 +352,14 @@ abstract class calendar_driver
     return $html;
   }
 
+  /**
+   * Return a (limited) list of color values to be used for calendar and category coloring
+   *
+   * @return mixed List for colors as hex values or false if no presets should be shown
+   */
+  public function get_color_values()
+  {
+      return false;
+  }
+
 }
