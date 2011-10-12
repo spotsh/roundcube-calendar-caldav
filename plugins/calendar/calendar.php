@@ -130,6 +130,7 @@ class calendar extends rcube_plugin
       $this->register_action('calendar', array($this, 'calendar_action'));
       $this->register_action('load_events', array($this, 'load_events'));
       $this->register_action('export_events', array($this, 'export_events'));
+      $this->register_action('import_events', array($this, 'import_events'));
       $this->register_action('upload', array($this, 'attachment_upload'));
       $this->register_action('get-attachment', array($this, 'attachment_get'));
       $this->register_action('freebusy-status', array($this, 'freebusy_status'));
@@ -808,7 +809,69 @@ class calendar extends rcube_plugin
     // NOP
     $this->rc->output->send();
   }
-  
+
+  /**
+   *
+   */
+  function import_events()
+  {
+    // Upload progress update
+    if (!empty($_GET['_progress'])) {
+      rcube_upload_progress();
+    }
+
+    $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
+    $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
+
+    // process uploaded file if there is no error
+    $err = $_FILES['_data']['error'];
+
+    if (!$err && $_FILES['_data']['tmp_name']) {
+      $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
+      $events = $this->get_ical()->import_from_file($_FILES['_data']['tmp_name']);
+
+      $count = $errors = 0;
+      $rangestart = $_REQUEST['_range'] ? strtotime("now -" . intval($_REQUEST['_range']) . " months") : 0;
+      foreach ($events as $event) {
+        // TODO: correctly handle recurring events which start before $rangestart
+        if ($event['end'] < $rangestart && (!$event['recurrence'] || ($event['recurrence']['until'] && $event['recurrence']['until'] < $rangestart)))
+          continue;
+
+        $event['calendar'] = $calendar;
+        if ($success = $this->driver->new_event($event)) {
+          $count++;
+        }
+        else
+          $errors++;
+      }
+
+      if ($count) {
+        $this->rc->output->command('display_message', $this->gettext(array('name' => 'importsuccess', 'vars' => array('nr' => $count))), 'confirmation');
+        $this->rc->output->command('plugin.import_success', array('source' => $calendar, 'refetch' => true));
+      }
+      else if (!$errors) {
+        $this->rc->output->command('display_message', $this->gettext('importnone'), 'notice');
+        $this->rc->output->command('plugin.import_success', array('source' => $calendar));
+      }
+      else
+        $this->rc->output->command('display_message', $this->gettext('importerror'), 'error');
+    }
+    else {
+      if ($err == UPLOAD_ERR_INI_SIZE || $err == UPLOAD_ERR_FORM_SIZE) {
+        $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+            'size' => show_bytes(parse_bytes(ini_get('upload_max_filesize'))))));
+      }
+      else {
+        $msg = rcube_label('fileuploaderror');
+      }
+
+      $this->rc->output->command('display_message', $msg, 'error');
+      $this->rc->output->command('plugin.unlock_saving', false);
+    }
+
+    $this->rc->output->send('iframe');
+  }
+
   /**
    * Construct the ics file for exporting events to iCalendar format;
    */
@@ -818,11 +881,16 @@ class calendar extends rcube_plugin
     $end = get_input_value('end', RCUBE_INPUT_GET);
     if (!$start) $start = mktime(0, 0, 0, 1, date('n'), date('Y')-1);
     if (!$end) $end = mktime(0, 0, 0, 31, 12, date('Y')+10);
-    $calendar_name = get_input_value('source', RCUBE_INPUT_GET);
-    $events = $this->driver->load_events($start, $end, null, $calendar_name, 0);
-   
+    $calid = $calname = get_input_value('source', RCUBE_INPUT_GET);
+    $calendars = $this->driver->list_calendars();
+    
+    if ($calendars[$calid]) {
+      $calname = $calendars[$calid]['name'] ? $calendars[$calid]['name'] : $calid;
+      $events = $this->driver->load_events($start, $end, null, $calid, 0);
+    }
+
     header("Content-Type: text/calendar");
-    header("Content-Disposition: inline; filename=".$calendar_name.'.ics');
+    header("Content-Disposition: inline; filename=".$calname.'.ics');
     
     $this->get_ical()->export($events, '', true);
     exit;
@@ -2015,7 +2083,7 @@ class calendar extends rcube_plugin
       // find writeable calendar to store event
       $cal_id = $this->rc->config->get('calendar_default_calendar');
       $calendars = $this->driver->list_calendars();
-      $calendar = $calendars[$cal_id] ? $calendars[$calname] : null;
+      $calendar = $calendars[$cal_id] ? $calendars[$cal_id] : null;
       if (!$calendar || $calendar['readonly']) {
         foreach ($calendars as $cal) {
           if (!$cal['readonly']) {

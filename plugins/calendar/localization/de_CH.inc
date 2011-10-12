@@ -68,6 +68,10 @@ $labels['andnmore'] = '$nr weitere...';
 $labels['showmore'] = 'Mehr anzeigen...';
 $labels['togglerole'] = 'Klick zum Ändern der Rolle';
 $labels['createfrommail'] = 'Als Termin speichern';
+$labels['importevents'] = 'Termine importieren';
+$labels['importrange'] = 'Termine ab';
+$labels['onemonthback'] = '1 Monat zurück';
+$labels['nmonthsback'] = '$nr Monate zurück';
 
 // agenda view
 $labels['listrange'] = 'Angezeigter Bereich:';
@@ -196,6 +200,9 @@ $labels['attendeupdateesuccess'] = 'Teilnehmerstatus erfolgreich aktualisiert';
 $labels['itipresponseerror'] = 'Die Antwort auf diese Einladung konnte nicht versendet werden';
 $labels['sentresponseto'] = 'Antwort auf diese Einladung erfolgreich an $mailto gesendet';
 $labels['localchangeswarning'] = 'Die Änderungen an diesem Termin können nur in Ihrem persönlichen Kalender gespeichert werden.';
+$labels['importsuccess'] = 'Es wurden $nr Termine erfolgreich importiert';
+$labels['importnone'] = 'Keine Termine zum Importieren gefunden';
+$labels['importerror'] = 'Fehler beim Importieren';
 
 // recurrence form
 $labels['repeat'] = 'Wiederholung';

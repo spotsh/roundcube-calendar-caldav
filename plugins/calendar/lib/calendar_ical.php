@@ -66,13 +66,7 @@ class calendar_ical
    */
   public function import($vcal, $charset = RCMAIL_CHARSET)
   {
-    // use Horde:iCalendar to parse vcalendar file format
-    require_once 'Horde/iCalendar.php';
-    
-    // set target charset for parsed events
-    $GLOBALS['_HORDE_STRING_CHARSET'] = RCMAIL_CHARSET;
-    
-    $parser = new Horde_iCalendar;
+    $parser = $this->get_parser();
     $parser->parsevCalendar($vcal, 'VCALENDAR', $charset);
     $this->method = $parser->getAttributeDefault('METHOD', '');
     $this->events = array();
@@ -84,6 +78,59 @@ class calendar_ical
     }
     
     return $this->events;
+  }
+
+  /**
+   * Read iCalendar events from a file
+   *
+   * @param string File path to read from
+   * @return array List of events extracted from the file
+   */
+  public function import_from_file($filepath)
+  {
+    $this->events = array();
+    $fp = fopen($filepath, 'r');
+
+    // check file content first
+    $begin = fread($fp, 1024);
+    if (!preg_match('/BEGIN:VCALENDAR/i', $begin))
+      return $this->events;
+
+    $parser = $this->get_parser();
+    $buffer = '';
+
+    fseek($fp, 0);
+    while (($line = fgets($fp, 2048)) !== false) {
+      $buffer .= $line;
+      if (preg_match('/END:VEVENT/i', $line)) {
+        $parser->parsevCalendar($buffer, 'VCALENDAR', RCMAIL_CHARSET, false);
+        $buffer = '';
+      }
+    }
+    fclose($fp);
+
+    if ($data = $parser->getComponents()) {
+      foreach ($data as $comp) {
+        if ($comp->getType() == 'vEvent')
+          $this->events[] = $this->_to_rcube_format($comp);
+      }
+    }
+
+    return $this->events;
+  }
+
+  /**
+   * Load iCal parser from the Horde lib
+   */
+  private function get_parser()
+  {
+    // use Horde:iCalendar to parse vcalendar file format
+    require_once 'Horde/iCalendar.php';
+
+    // set target charset for parsed events
+    $GLOBALS['_HORDE_STRING_CHARSET'] = RCMAIL_CHARSET;
+
+    return new Horde_iCalendar;
   }
 
   /**

@@ -1893,6 +1893,95 @@ function rcube_calendar_ui(settings)
       }
     };
 
+    // open a dialog to upload an .ics file with events to be imported
+    this.import_events = function(calendar)
+    {
+      // close show dialog first
+      var $dialog = $("#eventsimport").dialog('close');
+      var form = rcmail.gui_objects.importform;
+      
+      $('#event-import-calendar').val(calendar.id);
+      
+      var buttons = {};
+      buttons[rcmail.gettext('import', 'calendar')] = function() {
+        if (form && form.elements._data.value) {
+          rcmail.async_upload_form(form, 'import_events', function(e) {
+            rcmail.set_busy(false, null, me.saving_lock);
+          });
+
+          // display upload indicator
+          me.saving_lock = rcmail.set_busy(true, 'uploading');
+        }
+      };
+      
+      buttons[rcmail.gettext('cancel', 'calendar')] = function() {
+        $dialog.dialog("close");
+      };
+      
+      // open jquery UI dialog
+      $dialog.dialog({
+        modal: true,
+        resizable: false,
+        closeOnEscape: false,
+        title: rcmail.gettext('importevents', 'calendar'),
+        close: function() {
+          $dialog.dialog("destroy").hide();
+        },
+        buttons: buttons,
+        width: 520
+      }).show();
+      
+    };
+
+    // callback from server if import succeeded
+    this.import_success = function(p)
+    {
+      $("#eventsimport").dialog('close');
+      rcmail.set_busy(false, null, me.saving_lock);
+      rcmail.gui_objects.importform.reset();
+
+      if (p.refetch)
+        this.refresh(p);
+    };
+
+    // refresh the calendar view after saving event data
+    this.refresh = function(p)
+    {
+      var source = me.calendars[p.source];
+
+      if (source && (p.refetch || (p.update && !source.active))) {
+        // activate event source if new event was added to an invisible calendar
+        if (!source.active) {
+          source.active = true;
+          fc.fullCalendar('addEventSource', source);
+          $('#' + rcmail.get_folder_li(source.id, 'rcmlical').id + ' input').prop('checked', true);
+        }
+        else
+          fc.fullCalendar('refetchEvents', source);
+      }
+      // add/update single event object
+      else if (source && p.update) {
+        var event = p.update;
+        event.temp = false;
+        event.editable = source.editable;
+        var existing = fc.fullCalendar('clientEvents', event.id);
+        if (existing.length) {
+          $.extend(existing[0], event);
+          fc.fullCalendar('updateEvent', existing[0]);
+        }
+        else {
+          event.source = source;  // link with source
+          fc.fullCalendar('renderEvent', event);
+        }
+        // refresh fish-eye view
+        if (me.fisheye_date)
+          me.fisheye_view(me.fisheye_date);
+      }
+
+      // remove temp events
+      fc.fullCalendar('removeEvents', function(e){ return e.temp; });
+    };
+
 
     /***  event searching  ***/
 
@@ -2085,7 +2174,7 @@ function rcube_calendar_ui(settings)
           var id = $(this).data('id');
           rcmail.select_folder(id, 'rcmlical');
           rcmail.enable_command('calendar-edit', true);
-          rcmail.enable_command('calendar-remove', !me.calendars[id].readonly);
+          rcmail.enable_command('calendar-remove', 'events-import', !me.calendars[id].readonly);
           me.selected_calendar = id;
         })
         .dblclick(function(){ me.calendar_edit_dialog(me.calendars[me.selected_calendar]); })
@@ -2589,6 +2678,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
+  rcmail.register_command('events-import', function(){ cal.import_events(cal.calendars[cal.selected_calendar]); }, false);
  
   // search and export events
   rcmail.register_command('export', function(){ rcmail.goto_url('export_events', { source:cal.selected_calendar }); }, true);
@@ -2599,42 +2689,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
   rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
-  rcmail.addEventListener('plugin.refresh_calendar', function(p){
-    var fc = $('#calendar');
-    var source = cal.calendars[p.source];
-    
-    if (source && (p.refetch || (p.update && !source.active))) {
-      // activate event source if new event was added to an invisible calendar
-      if (!source.active) {
-        source.active = true;
-        fc.fullCalendar('addEventSource', source);
-        $('#' + rcmail.get_folder_li(source.id, 'rcmlical').id + ' input').prop('checked', true);
-      }
-      else
-        fc.fullCalendar('refetchEvents', source);
-    }
-    // add/update single event object
-    else if (source && p.update) {
-      var event = p.update;
-      event.temp = false;
-      event.editable = source.editable;
-      var existing = fc.fullCalendar('clientEvents', event.id);
-      if (existing.length) {
-        $.extend(existing[0], event);
-        fc.fullCalendar('updateEvent', existing[0]);
-      }
-      else {
-        event.source = source;  // link with source
-        fc.fullCalendar('renderEvent', event);
-      }
-      // refresh fish-eye view
-      if (cal.fisheye_date)
-        cal.fisheye_view(cal.fisheye_date);
-    }
-
-    // remove temp events
-    fc.fullCalendar('removeEvents', function(e){ return e.temp; });
-  });
+  rcmail.addEventListener('plugin.refresh_calendar', function(p){ cal.refresh(p); });
+  rcmail.addEventListener('plugin.import_success', function(p){ cal.import_success(p); });
 
   // let's go
   var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);

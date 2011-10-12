@@ -68,6 +68,10 @@ $labels['andnmore'] = '$nr more...';
 $labels['showmore'] = 'Show more...';
 $labels['togglerole'] = 'Click to toggle role';
 $labels['createfrommail'] = 'Save as event';
+$labels['importevents'] = 'Import events';
+$labels['importrange'] = 'Events from';
+$labels['onemonthback'] = '1 month back';
+$labels['nmonthsback'] = '$nr months back';
 
 // agenda view
 $labels['listrange'] = 'Range to display:';
@@ -197,6 +201,9 @@ $labels['itipresponseerror'] = 'Failed to send the response to this event invita
 $labels['itipinvalidrequest'] = 'This invitation is no longer valid';
 $labels['sentresponseto'] = 'Successfully sent invitation response to $mailto';
 $labels['localchangeswarning'] = 'You are about to make changes that will only be reflected on your personal calendar';
+$labels['importsuccess'] = 'Successfully imported $nr events';
+$labels['importnone'] = 'No events found to be imported';
+$labels['importerror'] = 'An error occured while importing';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';

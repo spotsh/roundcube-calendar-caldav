@@ -88,6 +88,7 @@ class calendar_ui
     $this->cal->register_handler('plugin.edit_recurring_warning', array($this, 'recurring_event_warning'));
     $this->cal->register_handler('plugin.event_rsvp_buttons', array($this, 'event_rsvp_buttons'));
     $this->cal->register_handler('plugin.angenda_options', array($this, 'angenda_options'));
+    $this->cal->register_handler('plugin.events_import_form', array($this, 'events_import_form'));
     $this->cal->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
   }
 
@@ -553,6 +554,55 @@ class calendar_ui
       $select_wday->add($this->cal->gettext('dayofmonth'), '');
     
     return $select_prefix->show() . '&nbsp;' . $select_wday->show();
+  }
+
+  /**
+   * Form for uploading and importing events
+   */
+  function events_import_form($attrib = array())
+  {
+    if (!$attrib['id'])
+      $attrib['id'] = 'rcmImportForm';
+
+    // Get max filesize, enable upload progress bar
+    $max_filesize = rcube_upload_init();
+
+    $button = new html_inputfield(array('type' => 'button'));
+    $input = new html_inputfield(array(
+      'type' => 'file', 'name' => '_data', 'size' => $attrib['uploadfieldsize']));
+
+    $select = new html_select(array('name' => '_range', 'id' => 'event-import-range'));
+    $select->add(array(
+        $this->cal->gettext('onemonthback'),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>2))),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>6))),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>12))),
+        $this->cal->gettext('all'),
+      ),
+      array('1','2','6','12',0));
+    
+    $html .= html::div('form-section',
+      html::div(null, $input->show()) .
+      html::div('hint', rcube_label(array('name' => 'maxuploadsize', 'vars' => array('size' => $max_filesize))))
+    );
+    
+    $html .= html::div('form-section',
+      html::label('event-import-calendar', $this->cal->gettext('calendar')) .
+      $this->calendar_select(array('name' => 'calendar', 'id' => 'event-import-calendar'))
+    );
+
+    $html .= html::div('form-section',
+      html::label('event-import-range', $this->cal->gettext('importrange')) .
+      $select->show(1)
+    );
+
+    $this->rc->output->add_gui_object('importform', $attrib['id']);
+    $this->rc->output->add_label('import');
+
+    return html::tag('form', array('action' => $this->rc->url(array('task' => 'calendar', 'action' => 'import_events')),
+      'method' => "post", 'enctype' => 'multipart/form-data', 'id' => $attrib['id']),
+      $html
+    );
   }
 
   /**
