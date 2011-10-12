@@ -1944,6 +1944,7 @@ class calendar extends rcube_plugin
       $part = $this->message->mime_parts[$mime_id];
       $charset = $part->ctype_parameters['charset'] ? $part->ctype_parameters['charset'] : RCMAIL_CHARSET;
       $events = $this->ical->import($this->message->get_part_content($mime_id), $charset);
+      $title = $this->gettext('title');
       
       // successfully parsed events?
       if (empty($events))
