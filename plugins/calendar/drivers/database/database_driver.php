@@ -662,7 +662,7 @@ class database_driver extends calendar_driver
       ),
       $id);
 
-    if ($result && ($event = $this->rc->db->fetch_assoc($result))) {
+    if ($result && ($event = $this->rc->db->fetch_assoc($result)) && $event['event_id']) {
       $this->cache[$id] = $this->_read_postprocess($event);
       return $this->cache[$id];
     }
