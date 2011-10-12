@@ -250,7 +250,46 @@ class calendar_ical
           break;
       }
     }
-    
+
+    // find alarms
+    if ($valarm = $ve->findComponent('valarm')) {
+      $action = 'DISPLAY';
+      $trigger = null;
+      
+      foreach ($valarm->getAllAttributes() as $attr) {
+        switch ($attr['name']) {
+          case 'TRIGGER':
+            if ($attr['params']['VALUE'] == 'DATE-TIME') {
+              $trigger = '@' . $attr['value'];
+            }
+            else {
+              $trigger = $attr['value'];
+              $offset = abs($trigger);
+              $unit = 'S';
+              if ($offset % 86400 == 0) {
+                $unit = 'D';
+                $trigger = intval($trigger / 86400);
+              }
+              else if ($offset % 3600 == 0) {
+                $unit = 'H';
+                $trigger = intval($trigger / 3600);
+              }
+              else if ($offset % 60 == 0) {
+                $unit = 'M';
+                $trigger = intval($trigger / 60);
+              }
+            }
+            break;
+
+          case 'ACTION':
+            $action = $attr['value'];
+            break;
+        }
+      }
+      if ($trigger)
+        $event['alarms'] = $trigger . $unit . ':' . $action;
+    }
+
     // add organizer to attendees list if not already present
     if ($organizer && !isset($_attendees[$organizer['email']]))
       array_unshift($event['attendees'], $organizer);
