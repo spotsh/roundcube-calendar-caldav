@@ -224,7 +224,7 @@ class database_driver extends calendar_driver
         $event['calendar'],
         strval($event['uid']),
         intval($event['all_day']),
-        $event['recurrence'],
+        $event['_recurrence'],
         strval($event['title']),
         strval($event['description']),
         strval($event['location']),
@@ -365,8 +365,7 @@ class database_driver extends calendar_driver
   {
     // compose vcalendar-style recurrencue rule from structured data
     $rrule = $event['recurrence'] ? calendar::to_rrule($event['recurrence']) : '';
-    $event['_exdates'] = (array)$event['recurrence']['EXDATE'];
-    $event['recurrence'] = rtrim($rrule, ';');
+    $event['_recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     
     if (isset($event['allday'])) {
@@ -435,11 +434,14 @@ class database_driver extends calendar_driver
   {
     $event = $this->_save_preprocess($event);
     $sql_set = array();
-    $set_cols = array('all_day', 'recurrence', 'recurrence_id', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'attendees', 'alarms', 'notifyat');
+    $set_cols = array('all_day', 'recurrence_id', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'attendees', 'alarms', 'notifyat');
     foreach ($set_cols as $col) {
       if (isset($event[$col]))
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]);
     }
+    
+    if ($event['_recurrence'])
+      $sql_set[] = $this->rc->db->quote_identifier('recurrence') . '=' . $this->rc->db->quote($event['_recurrence']);
     
     if ($event['_fromcalendar'] && $event['_fromcalendar'] != $event['calendar'])
         $sql_set[] = 'calendar_id=' . $this->rc->db->quote($event['calendar']);
@@ -501,17 +503,13 @@ class database_driver extends calendar_driver
     
     // create new fake entries
     if ($event['recurrence']) {
-      // TODO: replace Horde classes with something that has less than 6'000 lines of code
-      $recurrence = new Horde_Date_Recurrence($event['start']);
-      $recurrence->fromRRule20($event['recurrence']);
+      // include library class
+      require_once($this->cal->home . '/lib/calendar_recurrence.php');
       
-      foreach ((array)$event['_exdates'] as $exdate)
-        $recurrence->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+      $recurrence = new calendar_recurrence($this->cal, $event);
       
       $duration = $event['end'] - $event['start'];
-      $next = new Horde_Date($event['start']);
-      while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
-        $next_ts = $next->timestamp();
+      while ($next_ts = $recurrence->next_start()) {
         $notify_at = $this->_get_notification(array('alarms' => $event['alarms'], 'start' => $next_ts, 'end' => $next_ts + $duration));
         $query = $this->rc->db->query(sprintf(
           "INSERT INTO " . $this->db_events . "

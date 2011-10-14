@@ -434,29 +434,15 @@ class kolab_calendar
    */
   public function _get_recurring_events($event, $start, $end, $event_id = null)
   {
-    // use Horde classes to compute recurring instances
-    require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
+    // include library class
+    require_once($this->cal->home . '/lib/calendar_recurrence.php');
     
-    $recurrence = new Horde_Date_Recurrence($event['start']);
-    $recurrence->fromRRule20(calendar::to_rrule($event['recurrence']));
-    
-    foreach ((array)$event['recurrence']['EXDATE'] as $exdate)
-      $recurrence->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+    $recurrence = new calendar_recurrence($this->cal, $event);
     
     $events = array();
     $duration = $event['end'] - $event['start'];
-    $tz_offset = $event['allday'] ? $this->cal->gmt_offset - date('Z') : 0;
-    $next = new Horde_Date($event['start'] + $tz_offset);  # shift all-day times to server timezone because computation operates in local TZ
-    $dst_start = $next->format('I');
-    $hour = $next->hour;
     $i = 0;
-    while ($next = $recurrence->nextActiveRecurrence(array('year' => $next->year, 'month' => $next->month, 'mday' => $next->mday + 1, 'hour' => $next->hour, 'min' => $next->min, 'sec' => $next->sec))) {
-      if ($event['allday']) {
-        $next->hour = $hour;  # fix time for all-day events
-        $next->min = 0;
-      }
-      $dst_diff = ($dst_start - $next->format('I')) * 3600;  # consider difference in daylight saving between base event and recurring instance
-      $rec_start = $next->timestamp() - $tz_offset - $dst_diff;
+    while ($rec_start = $recurrence->next_start()) {
       $rec_end = $rec_start + $duration;
       $rec_id = $event['id'] . '-' . ++$i;
       
