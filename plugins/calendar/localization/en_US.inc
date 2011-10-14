@@ -170,7 +170,7 @@ $labels['acceptinvitation'] = 'Do you accept this invitation?';
 $labels['youhaveaccepted'] = 'You have accepted this invitation';
 $labels['youhavetentative'] = 'You have tentatively accepted this invitation';
 $labels['youhavedeclined'] = 'You have declined this invitation';
-$labels['notanattendee'] = 'You\'re not listed as an attendde of this event';
+$labels['notanattendee'] = 'You\'re not listed as an attendee of this event';
 $labels['eventcancelled'] = 'The event has been cancelled';
 
 // event dialog tabs
