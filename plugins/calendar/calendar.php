@@ -684,6 +684,20 @@ class calendar extends rcube_plugin
             }
           }
         }
+        else {
+          // get a list of writeable calendars
+          $calendars = $this->driver->list_calendars();
+          $calendar_select = new html_select(array('name' => 'calendar', 'id' => 'calendar-saveto'));
+          $numcals = 0;
+          foreach ($calendars as $calendar) {
+            if (!$calendar['readonly']) {
+              $calendar_select->add($calendar['name'], $calendar['id']);
+              $numcals++;
+            }
+          }
+          if ($numcals <= 1)
+            $calendar_select = null;
+        }
         
         if ($status == 'unknown') {
           $html = html::div('rsvp-status', $this->gettext('notanattendee'));
@@ -702,6 +716,7 @@ class calendar extends rcube_plugin
           'status' => $status,
           'action' => $action,
           'html' => $html,
+          'select' => $calendar_select ? html::span('calendar-select', $this->gettext('saveincalendar') . '&nbsp;' . $calendar_select->show($this->rc->config->get('calendar_default_calendar'))) : '',
         ));
         return;
 
@@ -2082,7 +2097,7 @@ class calendar extends rcube_plugin
     // successfully parsed events?
     if (!empty($events) && ($event = $events[$index])) {
       // find writeable calendar to store event
-      $cal_id = $this->rc->config->get('calendar_default_calendar');
+      $cal_id = !empty($_REQUEST['_calendar']) ? get_input_value('_calendar', RCUBE_INPUT_POST) : $this->rc->config->get('calendar_default_calendar');
       $calendars = $this->driver->list_calendars();
       $calendar = $calendars[$cal_id] ? $calendars[$cal_id] : null;
       if (!$calendar || $calendar['readonly']) {

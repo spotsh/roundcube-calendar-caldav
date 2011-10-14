@@ -172,6 +172,7 @@ $labels['youhavetentative'] = 'Sie haben die Einladung mit Vorbehalt angenommen'
 $labels['youhavedeclined'] = 'Sie haben die Einladung abgelehnt';
 $labels['notanattendee'] = 'Sie sind nicht in der Liste der Teilnehmer aufgeführt';
 $labels['eventcancelled'] = 'Der Termin wurde vom Organisator abgesagt';
+$labels['saveincalendar'] = 'speichern in';
 
 // event dialog tabs
 $labels['tabsummary'] = 'Übersicht';

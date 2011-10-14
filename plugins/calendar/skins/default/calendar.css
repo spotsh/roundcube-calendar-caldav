@@ -1193,9 +1193,15 @@ div.calendar-invitebox .rsvp-buttons {
 }
 
 #event-rsvp input.button,
-div.calendar-invitebox input.button {
+div.calendar-invitebox input.button,
+div.calendar-invitebox select {
 	font-size: 11px;
 	margin-right: 0.5em;
+}
+
+div.calendar-invitebox .calendar-select {
+	font-size: 11px;
+	margin-left: 1em;
 }
 
 div.calendar-invitebox .rsvp-status.loading {

@@ -211,6 +211,7 @@ rcube_calendar.add_event_from_mail = function(mime_id, status)
       '_uid': rcmail.env.uid,
       '_mbox': rcmail.env.mailbox,
       '_part': mime_id,
+      '_calendar': $('#calendar-saveto').val(),
       '_status': status
     }, lock);
   return false;
@@ -265,7 +266,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       else
         $('#loading-'+p.id).hide();
       
-      $('#'+p.action+'-'+p.id).show();
+      $('#'+p.action+'-'+p.id).show().append(p.select);
     });
     
     // register create-from-mail command to message_commands array
