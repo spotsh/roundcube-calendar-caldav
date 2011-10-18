@@ -77,6 +77,9 @@ $rcmail_config['calendar_work_start'] = 6;
 // working hours end
 $rcmail_config['calendar_work_end'] = 18;
 
+// show line at current time of the day
+$rcmail_config['calendar_time_indicator'] = true;
+
 // how to colorize events:
 // 0: according to calendar color
 // 1: according to category color

@@ -1755,6 +1755,7 @@ function rcube_calendar_ui(settings)
           columnFormat: { day: 'dddd ' + settings['date_short'] },
           titleFormat: { day: 'dddd ' + settings['date_long'] },
           allDayText: rcmail.gettext('all-day', 'calendar'),
+          currentTimeIndicator: settings.time_indicator,
           eventRender: fc_event_render,
           eventClick: function(event) {
             event_show_dialog(event);
@@ -2264,6 +2265,7 @@ function rcube_calendar_ui(settings)
       },
       selectable: true,
       selectHelper: false,
+      currentTimeIndicator: settings.time_indicator,
       loading: function(isLoading) {
         me.is_loading = isLoading;
         this._rc_loading = rcmail.set_busy(isLoading, 'loading', this._rc_loading);
@@ -2392,7 +2394,6 @@ function rcube_calendar_ui(settings)
         view._morelink = [];
       }
     });
-
 
     // format time string
     var formattime = function(hour, minutes, start) {
