@@ -1539,9 +1539,6 @@ class calendar extends rcube_plugin
    */
   private function prepare_event(&$event, $action)
   {
-    $event['start'] = $event['start'];
-    $event['end'] = $event['end'];
-
     $attachments = array();
     $eventid = 'cal:'.$event['id'];
     if (is_array($_SESSION['event_session']) && $_SESSION['event_session']['id'] == $eventid) {
