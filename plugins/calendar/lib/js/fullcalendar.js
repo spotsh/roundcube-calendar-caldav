@@ -4037,7 +4037,7 @@ function AgendaEventRenderer() {
 			var width = daycol.width();
 			timeline.css({ left: left + 'px', width: width + 'px' });
 		}
-	};
+	}
 	
 	
 	/* Dragging
