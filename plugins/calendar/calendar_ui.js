@@ -2506,6 +2506,7 @@ function rcube_calendar_ui(settings)
               base_date.setMonth(minical.data('month')-1);
             if (minical.data('year'))
               base_date.setYear(minical.data('year'));
+            base_date.setHours(12);
             var day_off = base_date.getDay() - 1;
             if (day_off < 0) day_off = 6;
             var base_kw = $.datepicker.iso8601Week(base_date);
