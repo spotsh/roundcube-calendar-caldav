@@ -33,6 +33,7 @@ function rcube_calendar_ui(settings)
     var HOUR_MS = 3600000;
     var me = this;
     var gmt_offset = (new Date().getTimezoneOffset() / -60) - (settings.timezone || 0) - (settings.dst || 0);
+    var client_timezone = new Date().getTimezoneOffset();
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
     var event_defaults = { free_busy:'busy' };
@@ -162,13 +163,18 @@ function rcube_calendar_ui(settings)
     // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
     var date2unixtime = function(date)
     {
-      return Math.round(date.getTime()/1000 + gmt_offset * 3600);
+      var dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;  // adjust DST offset
+      return Math.round(date.getTime()/1000 + gmt_offset * 3600 + dst_offset);
     };
     
     var fromunixtime = function(ts)
     {
       ts -= gmt_offset * 3600;
-      return new Date(ts * 1000);
+      var date = new Date(ts * 1000),
+        dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;
+      if (dst_offset)  // adjust DST offset
+        date.setTime((ts + 3600) * 1000);
+      return date;
     };
     
     // determine whether the given date is on a weekend

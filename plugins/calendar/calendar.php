@@ -1027,19 +1027,6 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Fix DST difference between client and target date
-   */
-  function fixDST($time)
-  {
-    $date = new DateTime(null, $this->user_timezone);
-    $date->setTimeStamp($time);
-    $diff = $date->format('I') - $this->dst_active;
-    $time += $diff * 3600;
-    
-    return $time;
-  }
-
-  /**
    * Encode events as JSON
    *
    * @param  array  Events as array
@@ -1552,8 +1539,8 @@ class calendar extends rcube_plugin
    */
   private function prepare_event(&$event, $action)
   {
-    $event['start'] = $this->fixDST($event['start']);
-    $event['end'] = $this->fixDST($event['end']);
+    $event['start'] = $event['start'];
+    $event['end'] = $event['end'];
 
     $attachments = array();
     $eventid = 'cal:'.$event['id'];
