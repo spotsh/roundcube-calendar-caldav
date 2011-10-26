@@ -166,6 +166,7 @@ class kolab_auth extends rcube_plugin
 
         $rcmail      = rcmail::get_instance();
         $admin_login = $rcmail->config->get('kolab_auth_admin_login');
+        $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
         $login_attr  = $rcmail->config->get('kolab_auth_login');
         $alias_attr  = $rcmail->config->get('kolab_auth_alias');
         $name_attr   = $rcmail->config->get('kolab_auth_name');
@@ -245,8 +246,11 @@ class kolab_auth extends rcube_plugin
             }
 
             $args['user'] = $loginas;
+
             // Mark session to use SASL proxy for IMAP authentication
-            $_SESSION['kolab_auth_admin'] = true;
+            $_SESSION['kolab_auth_admin']    = strtolower($origname);
+            $_SESSION['kolab_auth_login']    = $rcmail->encrypt($admin_login);
+            $_SESSION['kolab_auth_password'] = $rcmail->encrypt($admin_pass);
         }
 
         // Set credentials
@@ -266,12 +270,6 @@ class kolab_auth extends rcube_plugin
         if (!empty($origname)) {
             write_log('userlogins', sprintf('Admin login for %s by %s from %s',
                 $args['user'], $origname, rcmail_remote_ip()));
-
-            // If available, additionally mark the session to come from the
-            // original user. Useful for logging sessions of user A pretending
-            // to be user B.
-            $_SESSION['kolab_auth_admin'] = strtolower($origname);
-
         }
 
         return $args;
@@ -283,11 +281,9 @@ class kolab_auth extends rcube_plugin
     public function imap_connect($args)
     {
         if (!empty($_SESSION['kolab_auth_admin'])) {
-            $this->load_config();
-
             $rcmail      = rcmail::get_instance();
-            $admin_login = $rcmail->config->get('kolab_auth_admin_login');
-            $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
+            $admin_login = $rcmail->decrypt($_SESSION['kolab_auth_login']);
+            $admin_pass  = $rcmail->decrypt($_SESSION['kolab_auth_password']);
 
             $args['auth_cid'] = $admin_login;
             $args['auth_pw']  = $admin_pass;
@@ -302,11 +298,9 @@ class kolab_auth extends rcube_plugin
     public function smtp_connect($args)
     {
         if (!empty($_SESSION['kolab_auth_admin'])) {
-            $this->load_config();
-
             $rcmail      = rcmail::get_instance();
-            $admin_login = $rcmail->config->get('kolab_auth_admin_login');
-            $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
+            $admin_login = $rcmail->decrypt($_SESSION['kolab_auth_login']);
+            $admin_pass  = $rcmail->decrypt($_SESSION['kolab_auth_password']);
 
             $args['options']['smtp_auth_cid'] = $admin_login;
             $args['options']['smtp_auth_pw']  = $admin_pass;

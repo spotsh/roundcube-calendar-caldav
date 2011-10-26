@@ -86,10 +86,22 @@ class rcube_kolab
         // pass the current IMAP authentication credentials to the Horde auth system
         self::$horde_auth = Auth::singleton('kolab');
 
+        $username    = $_SESSION['username'];
+        $credentials = array('password' => $pwd);
+
+        // Hack proxy auth for "Login As" feature of kolab_auth plugin
+        if (!empty($_SESSION['kolab_auth_admin'])) {
+            $username = $_SESSION['kolab_auth_admin'];
+            $conf['kolab']['imap']['user'] = $_SESSION['username'];
+            $conf['kolab']['imap']['authuser'] = $rcmail->decrypt($_SESSION['kolab_auth_login']);
+            $conf['kolab']['imap']['password'] = $rcmail->decrypt($_SESSION['kolab_auth_password']);
+            $conf['kolab']['user_mail'] = $_SESSION['username'];
+        }
+
         if (self::$horde_auth->isAuthenticated()) {
             self::$ready = true;
         }
-        else if (self::$horde_auth->authenticate($_SESSION['username'], array('password' => $pwd), false)) {
+        else if (self::$horde_auth->authenticate($username, $credentials, false)) {
             // we could use Auth::setAuth() here, but it requires the whole bunch
             // of includes and global objects, do it as simple as possible
             $_SESSION['__auth'] = array(
