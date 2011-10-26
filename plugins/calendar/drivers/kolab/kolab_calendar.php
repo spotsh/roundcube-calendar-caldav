@@ -715,6 +715,10 @@ class kolab_calendar
       $object['end-date'] += $tz_offset - date('Z');   // shift 00 times from user's timezone to server's timezone 
       $object['start-date'] += $tz_offset - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
       
+      // create timestamps at exactly 00:00. This is also needed for proper re-interpretation in _to_rcube_event() after updating an event
+      $object['start-date'] = mktime(0,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date']));
+      $object['end-date']   = mktime(0,0,0, date('n', $object['end-date']),   date('j', $object['end-date']),   date('Y', $object['end-date']));
+      
       // sanity check: end date is same or smaller than start
       if (date('Y-m-d', $object['end-date']) <= date('Y-m-d', $object['start-date']))
         $object['end-date'] = mktime(13,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date'])) + 86400;
