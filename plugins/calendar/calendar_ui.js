@@ -2381,7 +2381,7 @@ function rcube_calendar_ui(settings)
           if (event.end.getTime() < event.start.getTime())
             event.end = new Date(newstart + HOUR_MS);
         }
-        console.log(event.start, event.end);
+        
         // send move request to server
         var data = {
           id: event.id,
