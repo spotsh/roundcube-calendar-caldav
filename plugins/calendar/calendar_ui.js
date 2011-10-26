@@ -159,7 +159,26 @@ function rcube_calendar_ui(settings)
       
       return date;
     };
-    
+
+    // clone the given date object and optionally adjust time
+    var clone_date = function(date, adjust)
+    {
+      var d = new Date(date.getTime());
+      
+      // set time to 00:00
+      if (adjust == 1) {
+        d.setHours(0);
+        d.setMinutes(0);
+      }
+      // set time to 23:59
+      else if (adjust == 2) {
+        d.setHours(23);
+        d.setMinutes(59);
+      }
+      
+      return d;
+    };
+
     // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
     var date2unixtime = function(date)
     {
@@ -598,8 +617,8 @@ function rcube_calendar_ui(settings)
       var buttons = {};
       
       buttons[rcmail.gettext('save', 'calendar')] = function() {
-        var start = parse_datetime(starttime.val(), startdate.val());
-        var end = parse_datetime(endtime.val(), enddate.val());
+        var start = parse_datetime(allday.checked ? '12:00' : starttime.val(), startdate.val());
+        var end   = parse_datetime(allday.checked ? '13:00' : endtime.val(), enddate.val());
         
         // basic input validatetion
         if (start.getTime() > end.getTime()) {
@@ -1019,8 +1038,8 @@ function rcube_calendar_ui(settings)
         var table = $('#schedule-freebusy-times'),
           width = 0,
           pos = { top:table.children('thead').height(), left:0 },
-          eventstart = date2unixtime(me.selected_event.start),
-          eventend = date2unixtime(me.selected_event.end) - 60,
+          eventstart = date2unixtime(clone_date(me.selected_event.start, me.selected_event.allDay?1:0)),
+          eventend = date2unixtime(clone_date(me.selected_event.end, me.selected_event.allDay?2:0)) - 60,
           slotstart = date2unixtime(freebusy_ui.start),
           slotsize = freebusy_ui.interval * 60,
           slotend, fraction, $cell;
@@ -1110,7 +1129,7 @@ function rcube_calendar_ui(settings)
             type: 'GET',
             dataType: 'json',
             url: rcmail.url('freebusy-times'),
-            data: { email:email, start:date2unixtime(start), end:date2unixtime(end), interval:interval, _remote:1 },
+            data: { email:email, start:date2unixtime(clone_date(start, 1)), end:date2unixtime(clone_date(end, 2)), interval:interval, _remote:1 },
             success: function(data) {
               freebusy_ui.loading--;
               
@@ -1230,6 +1249,12 @@ function rcube_calendar_ui(settings)
     // write changed event date/times back to form fields
     var update_freebusy_dates = function(start, end)
     {
+      if (me.selected_event.allDay) {
+        start.setHours(12);
+        start.setMinutes(0);
+        end.setHours(13);
+        end.setMinutes(0);
+      }
       me.selected_event.start = start;
       me.selected_event.end = end;
       freebusy_ui.startdate.val($.fullCalendar.formatDate(start, settings['date_format']));
@@ -1466,7 +1491,7 @@ function rcube_calendar_ui(settings)
         type: 'GET',
         dataType: 'html',
         url: rcmail.url('freebusy-status'),
-        data: { email:email, start:date2unixtime(event.start), end:date2unixtime(event.end), _remote: 1 },
+        data: { email:email, start:date2unixtime(clone_date(event.start, event.allDay?1:0)), end:date2unixtime(clone_date(event.end, event.allDay?2:0)), _remote: 1 },
         success: function(status){
           icon.removeClass('loading').addClass(String(status).toLowerCase());
         },
@@ -2356,7 +2381,7 @@ function rcube_calendar_ui(settings)
           if (event.end.getTime() < event.start.getTime())
             event.end = new Date(newstart + HOUR_MS);
         }
-        
+        console.log(event.start, event.end);
         // send move request to server
         var data = {
           id: event.id,

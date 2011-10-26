@@ -1675,8 +1675,8 @@ class calendar extends rcube_plugin
   public function freebusy_status()
   {
     $email = get_input_value('email', RCUBE_INPUT_GPC);
-    $start = get_input_value('start', RCUBE_INPUT_GET);
-    $end = get_input_value('end', RCUBE_INPUT_GET);
+    $start = get_input_value('start', RCUBE_INPUT_GPC);
+    $end = get_input_value('end', RCUBE_INPUT_GPC);
     
     if (!$start) $start = time();
     if (!$end) $end = $start + 3600;
@@ -1712,9 +1712,9 @@ class calendar extends rcube_plugin
   public function freebusy_times()
   {
     $email = get_input_value('email', RCUBE_INPUT_GPC);
-    $start = get_input_value('start', RCUBE_INPUT_GET);
-    $end = get_input_value('end', RCUBE_INPUT_GET);
-    $interval = intval(get_input_value('interval', RCUBE_INPUT_GET));
+    $start = get_input_value('start', RCUBE_INPUT_GPC);
+    $end = get_input_value('end', RCUBE_INPUT_GPC);
+    $interval = intval(get_input_value('interval', RCUBE_INPUT_GPC));
     
     if (!$start) $start = time();
     if (!$end)   $end = $start + 86400 * 30;

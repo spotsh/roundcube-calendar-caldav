@@ -474,7 +474,7 @@ class kolab_calendar
   private function _to_rcube_event($rec)
   {
     $start_time = date('H:i:s', $rec['start-date']);
-    $allday = $start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']);
+    $allday = $rec['_is_all_day'] || ($start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']));
     if ($allday) {  // in Roundcube all-day events only go from 12:00 to 13:00
       $rec['start-date'] += 12 * 3600;
       $rec['end-date']   -= 11 * 3600;
