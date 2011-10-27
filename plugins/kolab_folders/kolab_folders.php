@@ -27,7 +27,7 @@ class kolab_folders extends rcube_plugin
     public $task = '?(?!login).*';
 
     public $types = array('mail', 'event', 'journal', 'task', 'note', 'contact', 'configuration');
-    public $mail_types = array('drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
+    public $mail_types = array('inbox', 'drafts', 'sentitems', 'outbox', 'wastebasket', 'junkemail');
     private $rc;
 
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
@@ -69,7 +69,7 @@ class kolab_folders extends rcube_plugin
         }
 
         // get folders types
-        $folderdata = $this->get_folder_type_list($args['root'].$args['name']);
+        $folderdata = $this->get_folder_type_list($args['root'].$args['name'], true);
 
         if (!is_array($folderdata)) {
             $args['folders'] = false;
@@ -82,9 +82,9 @@ class kolab_folders extends rcube_plugin
         if ($args['mode'] == 'LIST' && $filter != 'mail'
             && $args['root'] == '' && $args['name'] == '*'
         ) {
-            foreach ($folderdata as $folder => $data) {
-                if (!preg_match($regexp, $data[kolab_folders::CTYPE_KEY])) {
-                    unset ($folderdata[$folder]);
+            foreach ($folderdata as $folder => $type) {
+                if (!preg_match($regexp, $type)) {
+                    unset($folderdata[$folder]);
                 }
             }
             $args['folders'] = array_keys($folderdata);
@@ -107,12 +107,11 @@ class kolab_folders extends rcube_plugin
 
         // Filter folders list
         foreach ($args['folders'] as $idx => $folder) {
-            $data = $folderdata[$folder];
-            // Empty data => mail
-            if ($filter == 'mail' && empty($data)) {
+            $type = $folderdata[$folder];
+            if ($filter == 'mail' && empty($type)) {
                 continue;
             }
-            if (empty($data) || !preg_match($regexp, $data[kolab_folders::CTYPE_KEY])) {
+            if (empty($type) || !preg_match($regexp, $type)) {
                 unset($args['folders'][$idx]);
             }
         }
@@ -143,10 +142,7 @@ class kolab_folders extends rcube_plugin
         for ($i=1, $cnt=$table->size(); $i<=$cnt; $i++) {
             $attrib = $table->get_row_attribs($i);
             $folder = $attrib['foldername']; // UTF7-IMAP
-            $data   = $folderdata[$folder];
-
-            if (!empty($data))
-                $type = $data[kolab_folders::CTYPE_KEY];
+            $type   = $folderdata[$folder];
 
             if (!$type)
                 $type = 'mail';
@@ -442,30 +438,43 @@ class kolab_folders extends rcube_plugin
     /**
      * Returns list of folder(s) type(s)
      *
-     * @param string $mbox Folder name or pattern
+     * @param string $mbox     Folder name or pattern
+     * @param bool   $defaults Enables creation of configured default folders
      *
      * @return array List of folders data, indexed by folder name
      */
-    function get_folder_type_list($mbox)
+    function get_folder_type_list($mbox, $create_defaults = false)
     {
         // Use mailboxes. prefix so the cache will be cleared by core
         // together with other mailboxes-related cache data
-        $cache_key = 'mailboxes.types.'.$mbox;
+        $cache_key = 'mailboxes.folder-type.'.$mbox;
 
         // get cached metadata
         $metadata = $this->rc->imap->get_cache($cache_key);
-        if (is_array($metadata)) {
-            return $metadata;
-        }
 
-        $metadata = $this->rc->imap->get_metadata($mbox, kolab_folders::CTYPE_KEY);
+        if (!is_array($metadata)) {
+            $metadata = $this->rc->imap->get_metadata($mbox, kolab_folders::CTYPE_KEY);
+            $need_update = true;
+        }
 
         if (!is_array($metadata)) {
             return false;
         }
 
+        // make the result more flat
+        if ($need_update) {
+            $metadata = array_map('implode', $metadata);
+        }
+
+        // create default folders if needed
+        if ($create_defaults) {
+            $this->create_default_folders($metadata, $cache_key);
+        }
+
         // write mailboxlist to cache
-        $this->rc->imap->update_cache($cache_key, $metadata);
+        if ($need_update) {
+            $this->rc->imap->update_cache($cache_key, $metadata);
+        }
 
         return $metadata;
     }
@@ -487,30 +496,19 @@ class kolab_folders extends rcube_plugin
 
         $type     .= '.default';
         $namespace = $this->rc->imap->get_namespace();
-        $delimiter = $this->rc->imap->get_hierarchy_delimiter();
+
+        // get all folders of specified type
+        $folderdata = array_intersect($folderdata, array($type)); 
+        unset($folders[0]);
 
         foreach ($folderdata as $folder => $data) {
-            if ($data[kolab_folders::CTYPE_KEY] != $type) {
-                unset ($folderdata[$folder]);
-                continue;
-            }
-
-            // folder found, check if it is in personal namespace
-            $fname = $folder . $delimiter;
-
-            if (!empty($namespace['other'])) {
-                foreach ($namespace['other'] as $item) {
-                    if ($item[0] === $fname) {
-                        unset ($folderdata[$folder]);
-                        continue 2;
-                    }
-                }
-            }
-            if (!empty($namespace['shared'])) {
-                foreach ($namespace['shared'] as $item) {
-                    if ($item[0] === $fname) {
-                        unset ($folderdata[$folder]);
-                        continue 2;
+            // check if folder is in personal namespace
+            foreach (array('shared', 'other') as $nskey) {
+                if (!empty($namespace[$nskey])) {
+                    foreach ($namespace[$nskey] as $ns) {
+                        if ($ns[0] && substr($folder, 0, strlen($ns[0])) == $ns[0]) {
+                            continue 3;
+                        }
                     }
                 }
             }
@@ -547,5 +545,99 @@ class kolab_folders extends rcube_plugin
     private function clear_folders_cache()
     {
         unset($_SESSION['horde_session_objects']['kolab_folderlist']);
+    }
+
+    /**
+     * Creates default folders if they doesn't exist
+     */
+    private function create_default_folders(&$folderdata, $cache_key = null)
+    {
+        $namespace   = $this->rc->imap->get_namespace();
+        $defaults    = array();
+        $need_update = false;
+
+        // Find personal namespace prefix
+        if (is_array($namespace['personal']) && count($namespace['personal']) == 1) {
+            $prefix = $namespace['personal'][0][0];
+        }
+        else {
+            $prefix = '';
+        }
+
+        $this->load_config();
+
+        // get configured defaults
+        foreach ($this->types as $type) {
+            $subtypes = $type == 'mail' ? $this->mail_types : array('default');
+            foreach ($subtypes as $subtype) {
+                $opt_name = 'kolab_folders_' . $type . '_' . $subtype;
+                if ($folder = $this->rc->config->get($opt_name)) {
+                    // convert configuration value to UTF7-IMAP charset
+                    $folder = rcube_charset_convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
+                    // and namespace prefix if needed
+                    if ($prefix && strpos($folder, $prefix) === false && $folder != 'INBOX') {
+                        $folder = $prefix . $folder;
+                    }
+                    $defaults[$type . '.' . $subtype] = $folder;
+                }
+            }
+        }
+
+        // find default folders
+        foreach ($defaults as $type => $foldername) {
+            // folder exists, do nothing
+            if (!empty($folderdata[$foldername])) {
+                continue;
+            }
+
+            // special case, need to set type only
+            if ($foldername == 'INBOX' || $type == 'mail.inbox') {
+                $this->set_folder_type($foldername, 'mail.inbox');
+                continue;
+            }
+
+            // get all folders of specified type
+            $folders = array_intersect($folderdata, array($type)); 
+            unset($folders[0]);
+
+            // find folders in personal namespace
+            foreach ($folders as $folder) {
+                if ($folder) {
+                    foreach (array('shared', 'other') as $nskey) {
+                        if (!empty($namespace[$nskey])) {
+                            foreach ($namespace[$nskey] as $ns) {
+                                if ($ns[0] && substr($folder, 0, strlen($ns[0])) == $ns[0]) {
+                                    continue 3;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // got folder in personal namespace
+                continue 2;
+            }
+
+            list($type1, $type2) = explode('.', $type);
+
+            // create folder
+            if ($type1 != 'mail' || !$this->rc->imap->mailbox_exists($foldername)) {
+                $this->rc->imap->create_mailbox($foldername, $type1 == 'mail');
+            }
+
+            // set type
+            $result = $this->set_folder_type($foldername, $type);
+
+            // add new folder to the result
+            if ($result) {
+                $folderdata[$foldername] = $type;
+                $need_update = true;
+            }
+        }
+
+        // update cache
+        if ($need_update && $cache_key) {
+            $this->rc->imap->update_cache($cache_key, $folderdata);
+        }
     }
 }

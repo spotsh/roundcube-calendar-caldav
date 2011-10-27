@@ -11,14 +11,15 @@ With this plugin enabled it is possible to:
  - set/get/change folder's type
  - filter folders list by folder type.
  - style folders list rows (in folder manager)
+ - create default folders with specified type
 
 http://www.kolab.org/doc/kolabformat-2.0-html
 
 2. Examples.
 ------------
 
-To get list of all folders of type 'events' use code:
+To get list of all folders of type 'event' use code:
 
-$RCMAIL->imap->list_mailboxes('', '*', 'events');
+$RCMAIL->imap->list_mailboxes('', '*', 'event');
 
 Plugin provides also set_folder_type/get_folder_type methods.
