@@ -7,7 +7,7 @@
  * @author Lazlo Westerhof
  * @author Thomas Bruederli
  * @url http://rc-calendar.lazlo.me
- * @licence GNU GPL
+ * @licence GNU AGPL
  * @copyright (c) 2010 Lazlo Westerhof - Netherlands
  *
  **/

@@ -8,7 +8,7 @@
  * @author Albert Lee
  * @author Aleksander Machniak <machniak@kolabsys.com>
  * @url http://rc-calendar.lazlo.me
- * @licence GNU GPL
+ * @licence GNU AGPL
  * @copyright (c) 2010 Lazlo Westerhof - Netherlands
  *
  **/
