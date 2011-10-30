@@ -1,19 +1,19 @@
 /**
  * Roundcube Calendar Kolab backend
  *
- * @version 0.6 beta
+ * @version 0.7-beta
  * @author Thomas Bruederli
- * @licence GNU GPL
+ * @licence GNU AGPL
  **/
 
-CREATE TABLE `kolab_alarms` (
+CREATE TABLE IF NOT EXISTS `kolab_alarms` (
   `event_id` VARCHAR(255) NOT NULL,
   `notifyat` DATETIME DEFAULT NULL,
   `dismissed` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
   PRIMARY KEY(`event_id`)
 ) /*!40000 ENGINE=INNODB */;
 
-CREATE TABLE `itipinvitations` (
+CREATE TABLE IF NOT EXISTS `itipinvitations` (
   `token` VARCHAR(64) NOT NULL,
   `event_uid` VARCHAR(255) NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0',
