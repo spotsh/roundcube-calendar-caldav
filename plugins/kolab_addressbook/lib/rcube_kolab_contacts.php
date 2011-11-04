@@ -768,7 +768,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
         else {
             $id = md5($list['uid']);
-            $this->distlists[$record['ID']] = $list;
+            $this->distlists[$id] = $list;
             $result = array('id' => $id, 'name' => $name);
         }
 
