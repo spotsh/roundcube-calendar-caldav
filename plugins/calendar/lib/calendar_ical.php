@@ -166,7 +166,7 @@ class calendar_ical
         case 'ORGANIZER':
           $organizer = array(
             'name' => $attr['params']['CN'],
-            'email' => preg_replace('/^mailto:/', '', $attr['value']),
+            'email' => preg_replace('/^mailto:/i', '', $attr['value']),
             'role' => 'ORGANIZER',
             'status' => 'ACCEPTED',
           );
@@ -179,7 +179,7 @@ class calendar_ical
         case 'ATTENDEE':
           $attendee = array(
             'name' => $attr['params']['CN'],
-            'email' => preg_replace('/^mailto:/', '', $attr['value']),
+            'email' => preg_replace('/^mailto:/i', '', $attr['value']),
             'role' => $attr['params']['ROLE'] ? $attr['params']['ROLE'] : 'REQ-PARTICIPANT',
             'status' => $attr['params']['PARTSTAT'],
             'rsvp' => $attr['params']['RSVP'] == 'TRUE',
