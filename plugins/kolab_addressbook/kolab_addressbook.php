@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Kolab address book 0.5
+ * Kolab address book 0.6
  *
  * Sample plugin to add a new address book source with data from Kolab storage
  * It provides also a possibilities to manage contact folders

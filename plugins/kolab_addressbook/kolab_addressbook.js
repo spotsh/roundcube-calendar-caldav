@@ -154,7 +154,12 @@ rcube_webmail.prototype.book_update = function(data, old)
         name = folders[n-1];
         for (n in sources)
             if (sources[n].realname && sources[n].realname == name) {
-                row.insertAfter('#rcmli'+n);
+                // folder row found
+                n = $('#rcmli'+n);
+                // skip groups
+                while (n.next().hasClass('contactgroup'))
+                    n = n.next();
+                row.insertAfter(n);
                 break;
             }
     }
@@ -169,7 +174,7 @@ rcube_webmail.prototype.book_update = function(data, old)
         // remove old row (just after the new row has been inserted)
         refrow.remove();
 
-	// update groups
+        // update groups
         for (n in groups) {
             if (groups[n].source == old) {
                 // update existing row
