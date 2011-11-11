@@ -335,14 +335,17 @@ class rcube_kolab_contacts extends rcube_addressbook
      *
      * @param mixed   $fields   The field name of array of field names to search in
      * @param mixed   $value    Search value (or array of values when $fields is array)
-     * @param boolean $strict   True for strict (=), False for partial (LIKE) matching
+     * @param int     $mode     Matching mode:
+     *                          0 - partial (*abc*),
+     *                          1 - strict (=),
+     *                          2 - prefix (abc*)
      * @param boolean $select   True if results are requested, False if count only
      * @param boolean $nocount  True to skip the count query (select only)
      * @param array   $required List of fields that cannot be empty
      *
      * @return object rcube_result_set List of contact records and 'count' value
      */
-    public function search($fields, $value, $strict=false, $select=true, $nocount=false, $required=array())
+    public function search($fields, $value, $mode=0, $select=true, $nocount=false, $required=array())
     {
         $this->_fetch_contacts();
 
@@ -381,7 +384,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         $regexp = '/^(' . implode($fields, '|') . ')(?:.*)$/';
 
         // save searching conditions
-        $this->filter = array('fields' => $fields, 'value' => $value, 'strict' => $strict, 'ids' => array());
+        $this->filter = array('fields' => $fields, 'value' => $value, 'mode' => $mode, 'ids' => array());
 
         // search be iterating over all records in memory
         foreach ($this->contacts as $id => $contact) {
@@ -403,18 +406,21 @@ class rcube_kolab_contacts extends rcube_addressbook
                     $search = $value;
                 }
 
-                $s_len = strlen($search);
-
                 foreach ((array)$contact[$col] as $val) {
-                    // composite field, e.g. address
-                    if (is_array($val)) {
-                        $val = implode($val);
-                    }
                     $val = mb_strtolower($val);
+                    switch ($mode) {
+                    case 1:
+                        $got = ($val == $search);
+                        break;
+                    case 2:
+                        $got = ($search == substr($val, 0, strlen($search)));
+                        break;
+                    default:
+                        $got = (strpos($val, $search) !== false);
+                        break;
+                    }
 
-                    if (($strict && $val == $search)
-                        || (!$strict && $s_len && strpos($val, $search) !== false)
-                    ) {
+                    if ($got) {
                         if (!$advanced) {
                             $this->filter['ids'][] = $id;
                             break 2;
@@ -441,7 +447,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     public function refresh_search()
     {
         if ($this->filter)
-            $this->search($this->filter['fields'], $this->filter['value'], $this->filter['strict']);
+            $this->search($this->filter['fields'], $this->filter['value'], $this->filter['mode']);
 
         return $this->get_search_set();
     }
