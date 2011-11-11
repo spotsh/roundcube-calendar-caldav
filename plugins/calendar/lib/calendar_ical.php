@@ -69,11 +69,14 @@ class calendar_ical
     $parser = $this->get_parser();
     $parser->parsevCalendar($vcal, 'VCALENDAR', $charset);
     $this->method = $parser->getAttributeDefault('METHOD', '');
-    $this->events = array();
+    $this->events = $seen = array();
     if ($data = $parser->getComponents()) {
       foreach ($data as $comp) {
-        if ($comp->getType() == 'vEvent')
-          $this->events[] = $this->_to_rcube_format($comp);
+        if ($comp->getType() == 'vEvent') {
+          $event = $this->_to_rcube_format($comp);
+          if (!$seen[$event['uid']]++)
+            $this->events[] = $event;
+        }
       }
     }
     
@@ -88,7 +91,7 @@ class calendar_ical
    */
   public function import_from_file($filepath)
   {
-    $this->events = array();
+    $this->events = $seen = array();
     $fp = fopen($filepath, 'r');
 
     // check file content first
@@ -111,8 +114,11 @@ class calendar_ical
 
     if ($data = $parser->getComponents()) {
       foreach ($data as $comp) {
-        if ($comp->getType() == 'vEvent')
-          $this->events[] = $this->_to_rcube_format($comp);
+        if ($comp->getType() == 'vEvent') {
+          $event = $this->_to_rcube_format($comp);
+          if (!$seen[$event['uid']]++)
+            $this->events[] = $event;
+        }
       }
     }
 
