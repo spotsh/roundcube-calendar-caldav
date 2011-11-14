@@ -1066,9 +1066,8 @@ div.fc-event-location {
 	font-size: 90%;
 }
 
-.fc-event-more {
+.fc-more-link {
 	color: #999;
-	font-size: 90%;
 	padding-top: 1px;
 	cursor: pointer;
 }
