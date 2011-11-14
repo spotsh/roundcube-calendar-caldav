@@ -1,5 +1,5 @@
 --- js/fullcalendar-1.5.2.js	2011-08-21 22:07:18.000000000 +0200
-+++ js/fullcalendar.js	2011-10-18 23:01:09.000000000 +0200
++++ js/fullcalendar.js	2011-11-14 23:44:05.000000000 +0100
 @@ -29,6 +29,7 @@
  		right: 'today prev,next'
  	},
@@ -84,17 +84,20 @@
  			currentView.renderEvents(events, modifiedEventID);
  			currentView.eventsDirty = false;
  		}
-@@ -632,6 +659,9 @@
+@@ -632,6 +659,12 @@
  		if (name == 'height' || name == 'contentHeight' || name == 'aspectRatio') {
  			options[name] = value;
  			updateSize();
 +		} else if (name.indexOf('list') == 0 || name == 'tableCols') {
 +			options[name] = value;
 +			currentView.start = null; // force re-render
++		}
++		else if (name == 'maxHeight') {
++			options[name] = value;
  		}
  	}
  	
-@@ -897,15 +927,16 @@
+@@ -897,15 +930,16 @@
  	}
  	
  	
@@ -115,7 +118,7 @@
  		}
  	}
  	
-@@ -1092,8 +1123,9 @@
+@@ -1092,8 +1126,9 @@
  				stickySource.events.push(event);
  				event.source = stickySource;
  			}
@@ -126,7 +129,7 @@
  		reportEvents(cache);
  	}
  	
-@@ -1581,10 +1613,23 @@
+@@ -1581,10 +1616,23 @@
  			return 'th';
  		}
  		return ['st', 'nd', 'rd'][date%10-1] || 'th';
@@ -151,7 +154,7 @@
  
  fc.applyAll = applyAll;
  
-@@ -3536,10 +3581,10 @@
+@@ -3536,10 +3584,10 @@
  	function slotSelectionMousedown(ev) {
  		if (ev.which == 1 && opt('selectable')) { // ev.which==1 means left mouse button
  			unselect(ev);
@@ -164,7 +167,7 @@
  					var d1 = cellDate(origCell);
  					var d2 = cellDate(cell);
  					dates = [
-@@ -3651,7 +3696,7 @@
+@@ -3651,7 +3699,7 @@
  	var calendar = t.calendar;
  	var formatDate = calendar.formatDate;
  	var formatDates = calendar.formatDates;
@@ -173,7 +176,7 @@
  	
  	
  	/* Rendering
-@@ -3675,6 +3720,12 @@
+@@ -3675,6 +3723,12 @@
  			setHeight(); // no params means set to viewHeight
  		}
  		renderSlotSegs(compileSlotSegs(slotEvents), modifiedEventId);
@@ -186,7 +189,7 @@
  	}
  	
  	
-@@ -3764,7 +3815,8 @@
+@@ -3764,7 +3818,8 @@
  			height,
  			slotSegmentContainer = getSlotSegmentContainer(),
  			rtl, dis, dit,
@@ -196,7 +199,7 @@
  			
  		if (rtl = opt('isRTL')) {
  			dis = -1;
-@@ -3791,8 +3843,11 @@
+@@ -3791,8 +3846,11 @@
  				outerWidth = availWidth / (levelI + forward + 1);
  			}else{
  				if (forward) {
@@ -210,7 +213,7 @@
  				}else{
  					// can be entire width, aligned left
  					outerWidth = availWidth;
-@@ -3803,7 +3858,7 @@
+@@ -3803,7 +3861,7 @@
  				* dis + (rtl ? availWidth - outerWidth : 0);   // rtl
  			seg.top = top;
  			seg.left = left;
@@ -219,7 +222,7 @@
  			seg.outerHeight = bottom - top;
  			html += slotSegHtml(event, seg);
  		}
-@@ -3953,6 +4008,37 @@
+@@ -3953,6 +4011,37 @@
  	}
  	
  	
@@ -257,7 +260,7 @@
  	
  	/* Dragging
  	-----------------------------------------------------------------------------------*/
-@@ -4262,7 +4348,7 @@
+@@ -4262,7 +4351,7 @@
  	
  	function opt(name, viewNameOverride) {
  		var v = options[name];
@@ -266,7 +269,90 @@
  			return smartProperty(v, viewNameOverride || viewName);
  		}
  		return v;
-@@ -4806,6 +4892,8 @@
+@@ -4528,6 +4617,9 @@
+ 		var seg;
+ 		var top;
+ 		var k;
++		var overflows;
++		var overflowLinks;
++		var maxHeight = opt('maxHeight');
+ 		segmentContainer[0].innerHTML = daySegHTML(segs); // faster than .html()
+ 		daySegElementResolve(segs, segmentContainer.children());
+ 		daySegElementReport(segs);
+@@ -4539,26 +4631,69 @@
+ 		// set row heights, calculate event tops (in relation to row top)
+ 		for (rowI=0; rowI<rowCnt; rowI++) {
+ 			levelI = 0;
++			overflows = [];
++			overflowLinks = {};
+ 			colHeights = [];
+ 			for (j=0; j<colCnt; j++) {
++				overflows[j] = 0;
+ 				colHeights[j] = 0;
+ 			}
+ 			while (i<segCnt && (seg = segs[i]).row == rowI) {
+ 				// loop through segs in a row
+ 				top = arrayMax(colHeights.slice(seg.startCol, seg.endCol));
+-				seg.top = top;
+-				top += seg.outerHeight;
++				if (maxHeight && top + seg.outerHeight > maxHeight) {
++					seg.overflow = true;
++				}
++				else {
++					seg.top = top;
++					top += seg.outerHeight;
++				}
+ 				for (k=seg.startCol; k<seg.endCol; k++) {
+-					colHeights[k] = top;
++					if (overflows[k])
++						seg.overflow = true;
++					if (seg.overflow) {
++						if (seg.isStart && !overflowLinks[k])
++							overflowLinks[k] = { seg:seg, top:top, date:cloneDate(seg.start, true), count:0 };
++						if (overflowLinks[k])
++							overflowLinks[k].count++;
++						overflows[k]++;
++					}
++					else
++						colHeights[k] = top;
+ 				}
+ 				i++;
+ 			}
+ 			rowDivs[rowI].height(arrayMax(colHeights));
++			renderOverflowLinks(overflowLinks, rowDivs[rowI]);
+ 		}
+ 		daySegSetTops(segs, getRowTops(rowDivs));
+ 	}
+ 	
+ 	
++	function renderOverflowLinks(overflowLinks, rowDiv) {
++		var container = getDaySegmentContainer();
++		var colCnt = getColCnt();
++		var element, triggerRes, link;
++		for (var j=0; j<colCnt; j++) {
++			if ((link = overflowLinks[j])) {
++				if (link.count > 1) {
++					element = $('<a>').addClass('fc-more-link').html('+'+link.count).appendTo(container);
++					element[0].style.position = 'absolute';
++					element[0].style.left = link.seg.left + 'px';
++					element[0].style.top = (link.top + rowDiv[0].offsetTop) + 'px';
++					triggerRes = trigger('overflowRender', link, { count:link.count, date:link.date }, element);
++					if (triggerRes === false)
++						element.remove();
++				}
++				else {
++					link.seg.top = link.top;
++					link.seg.overflow = false;
++				}
++			}
++		}
++	}
++	
++	
+ 	function renderTempDaySegs(segs, adjustRow, adjustTop) {
+ 		var tempContainer = $("<div/>");
+ 		var elements;
+@@ -4806,6 +4941,8 @@
  				}
  				seg.outerHeight = element[0].offsetHeight + val;
  			}
@@ -275,7 +361,22 @@
  		}
  	}
  	
-@@ -5206,5 +5294,561 @@
+@@ -4842,11 +4979,13 @@
+ 		for (i=0; i<segCnt; i++) {
+ 			seg = segs[i];
+ 			element = seg.element;
+-			if (element) {
++			if (element && !seg.overflow) {
+ 				element[0].style.top = rowTops[seg.row] + (seg.top||0) + 'px';
+ 				event = seg.event;
+ 				trigger('eventAfterRender', event, event, element);
+ 			}
++			else if (element)
++				element.hide();
+ 		}
+ 	}
+ 	
+@@ -5206,5 +5345,561 @@
  	};
  	
  }
