@@ -116,7 +116,7 @@ class kolab_zpush extends rcube_plugin
             $this->init_imap();
             $devices = $this->list_devices();
             $syncmode = intval(get_input_value('syncmode', RCUBE_INPUT_POST));
-            $devicealias = get_input_value('devicealias', RCUBE_INPUT_POST);
+            $devicealias = get_input_value('devicealias', RCUBE_INPUT_POST, true);
             $laxpic = intval(get_input_value('laxpic', RCUBE_INPUT_POST));
             $subsciptions = get_input_value('subscribed', RCUBE_INPUT_POST);
             $err = false;
