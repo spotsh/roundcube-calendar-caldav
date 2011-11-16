@@ -91,12 +91,13 @@ class kolab_zpush_ui
         if (!$attrib['id'])
             $attrib['id'] = 'foldersubscriptions';
         
-        // group folders by type
-        $folder_groups = array('mail' => array(), 'contact' => array(), 'event' => array());
+        // group folders by type (show only known types)
+        $folder_groups = array('mail' => array(), 'contact' => array(), 'event' => array(), 'task' => array());
         $folder_meta = $this->config->folders_meta();
         foreach ($this->config->list_folders() as $folder) {
             $type = $folder_meta[$folder]['TYPE'] ? $folder_meta[$folder]['TYPE'] : 'mail';
-            $folder_groups[$type][] = $folder;
+            if (is_array($folder_groups[$type]))
+                $folder_groups[$type][] = $folder;
         }
         
         // build block for every folder type
