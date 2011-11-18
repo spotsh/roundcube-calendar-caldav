@@ -3,7 +3,7 @@
 /**
  * Type-aware folder management/listing for Kolab
  *
- * @version 0.3
+ * @version @package_version@
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

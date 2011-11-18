@@ -6,6 +6,7 @@
  * Plugin to setup a basic environment for interaction with a Kolab server.
  * Other Kolab-related plugins will depend on it and can use the static API rcube_core
  *
+ * @version @package_version@
  * @author Thomas Bruederli <roundcube@gmail.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

@@ -1,12 +1,13 @@
 <?php
 
 /**
- * Kolab address book 0.6
+ * Kolab address book
  *
  * Sample plugin to add a new address book source with data from Kolab storage
  * It provides also a possibilities to manage contact folders
  * (create/rename/delete/acl) directly in Addressbook UI.
  *
+ * @version @package_version@
  * @author Thomas Bruederli <roundcube@gmail.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *

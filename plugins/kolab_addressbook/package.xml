@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" packagerversion="1.9.0" version="2.0" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+    http://pear.php.net/dtd/tasks-1.0.xsd
+    http://pear.php.net/dtd/package-2.0
+    http://pear.php.net/dtd/package-2.0.xsd">
+	<name>kolab_addressbook</name>
+    <uri>http://kolabsys.com</uri>
+	<summary>Kolab addressbook</summary>
+	<description>
+	    Sample plugin to add a new address book source with data from Kolab storage.
+        It provides also a possibilities to manage contact folders
+        (create/rename/delete/acl) directly in Addressbook UI.
+	</description>
+	<lead>
+		<name>Aleksander Machniak</name>
+		<user>machniak</user>
+		<email>machniak@kolabsys.com</email>
+		<active>yes</active>
+	</lead>
+	<lead>
+		<name>Thomas Bruederli</name>
+		<user>bruederli</user>
+		<email>bruederli@kolabsys.com</email>
+		<active>yes</active>
+	</lead>
+	<date>2011-11-01</date>
+	<version>
+		<release>0.6</release>
+		<api>0.6</api>
+	</version>
+	<stability>
+		<release>stable</release>
+		<api>stable</api>
+	</stability>
+	<license uri="http://www.gnu.org/licenses/agpl.html">GNU AGPLv3</license>
+	<notes>-</notes>
+	<contents>
+		<dir baseinstalldir="/" name="/">
+			<file name="kolab_addressbook.php" role="php">
+				<tasks:replace from="@name@" to="name" type="package-info"/>
+				<tasks:replace from="@package_version@" to="version" type="package-info"/>
+			</file>
+			<file name="lib/kolab_addressbook_ui.php" role="php"></file>
+			<file name="lib/rcube_kolab_contacts.php" role="php"></file>
+			<file name="config.inc.php.dist" role="data"></file>
+			<file name="LICENSE" role="data"></file>
+			<file name="skins/default/kolab_addressbook.css" role="data"></file>
+			<file name="skins/default/kolab_folders.gif" role="data"></file>
+			<file name="skins/default/kolab_folders.png" role="data"></file>
+			<file name="skins/default/templates/bookedit.html" role="data"></file>
+
+			<file name="localization/en_US.inc" role="data"></file>
+			<file name="localization/ja_JP.inc" role="data"></file>
+			<file name="localization/pl_PL.inc" role="data"></file>
+			<file name="localization/ru_RU.inc" role="data"></file>
+		</dir>
+		<!-- / -->
+	</contents>
+	<dependencies>
+		<required>
+			<php>
+				<min>5.2.1</min>
+			</php>
+			<pearinstaller>
+				<min>1.7.0</min>
+			</pearinstaller>
+            <package>
+                <name>kolab_core</name>
+                <uri>http://kolabsys.com</uri>
+            </package>
+		</required>
+	</dependencies>
+	<phprelease/>
+</package>

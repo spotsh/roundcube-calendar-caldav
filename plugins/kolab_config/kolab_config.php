@@ -6,6 +6,7 @@
  * Plugin to use Kolab server as a configuration storage. Provides an API to handle
  * configuration according to http://wiki.kolab.org/KEP:9.
  *
+ * @version @package_version@
  * @author Machniak Aleksander <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
