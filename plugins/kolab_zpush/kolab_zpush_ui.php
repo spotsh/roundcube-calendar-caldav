@@ -125,7 +125,7 @@ class kolab_zpush_ui
         $table->add_header('foldername', $this->config->gettext('folder'));
 
         $checkbox_sync = new html_checkbox(array('name' => 'subscribed[]', 'class' => 'subscription'));
-        $checkbox_alarm = new html_checkbox(array('name' => 'alarm[]', 'class' => 'alarm', 'disabled' => true));
+        $checkbox_alarm = new html_checkbox(array('name' => 'alarm[]', 'class' => 'alarm'));
 
         $names = array();
         foreach ($a_folders as $folder) {
@@ -166,51 +166,6 @@ class kolab_zpush_ui
         }
 
         return $table->show();
-    }
-
-    /**
-     * Recursively compose folders table
-     */
-    private function render_folders($a_folders, $table, $level = 0)
-    {
-        $idx = 0;
-        $checkbox_sync = new html_checkbox(array('name' => 'subscribed[]', 'class' => 'subscription'));
-        $checkbox_alarm = new html_checkbox(array('name' => 'alarm[]', 'class' => 'alarm', 'disabled' => true));
-        $folders_meta = $this->config->folders_meta();
-
-        foreach ($a_folders as $key => $folder) {
-            $classes = array('mailbox');
-
-            if ($folder_class = rcmail_folder_classname($folder['id'])) {
-                $foldername = rcube_label($folder_class);
-                $classes[] = $folder_class;
-            }
-            else
-                $foldername = $folder['name'];
-
-            // visualize folder type
-            if ($type = $folders_meta[$folder['id']]['TYPE'])
-                $classes[] = $type;
-
-            if ($folder['virtual'])
-                $classes[] = 'virtual';
-
-            $folder_id = 'rcmf' . html_identifier($folder['id']);
-            $padding = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
-
-            $table->add_row(array('class' => (($level+1) * $idx++) % 2 == 0 ? 'even' : 'odd'));
-            $table->add(join(' ', $classes), html::label($folder_id, $padding . Q($foldername)));
-            $table->add('subscription', $folder['virtual'] ? '' : $checkbox_sync->show('', array('value' => $folder['id'], 'id' => $folder_id)));
-
-            if (($type == 'event' || $type == 'task') && !$folder['virtual'])
-                $table->add('alarm', $checkbox_alarm->show('', array('value' => $folder['id'], 'id' => $folder_id.'_alarm')));
-            else
-                $table->add('alarm', '');
-
-            if (!empty($folder['folders']))
-                $this->render_folders($folder['folders'], $table, $level+1);
-        }
-        
     }
 
 }

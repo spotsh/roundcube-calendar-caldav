@@ -39,9 +39,18 @@ function kolab_zpush_config()
     rcmail.addEventListener('plugin.zpush_data_ready', device_data_ready);
     rcmail.addEventListener('plugin.zpush_save_complete', save_complete);
 
-    $('input.subscription').change(function(e){ $('#'+this.id+'_alarm').prop('disabled', !this.checked); });
+    $('input.alarm').change(function(e){ if (this.checked) $('#'+this.id.replace(/_alarm/, '')).prop('checked', this.checked); });
+    $('input.subscription').change(function(e){ if (!this.checked) $('#'+this.id+'_alarm').prop('checked', false); });
     $(window).bind('resize', resize_ui);
-    
+
+    $('.subscriptionblock thead td.subscription img, .subscriptionblock thead td.alarm img').click(function(e){
+      var $this = $(this);
+      var classname = $this.parent().get(0).className;
+      var check = !($this.data('checked') || false);
+      $this.css('cursor', 'pointer').data('checked', check)
+        .closest('table').find('input.'+classname).prop('checked', check).change();
+    });
+
     // select the one and only device from list
     if (rcmail.env.devicecount == 1) {
         for (var imei in rcmail.env.devices)
