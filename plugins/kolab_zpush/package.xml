@@ -29,8 +29,9 @@
 			<file name="kolab_zpush.php" role="php"></file>
 			<file name="kolab_zpush_ui.php" role="php"></file>
 			<file name="kolab_zpush.js" role="data"></file>
-			<file name="localization/en_US.inc" role="data"></file>
 			<file name="localization/de_CH.inc" role="data"></file>
+			<file name="localization/en_US.inc" role="data"></file>
+			<file name="localization/pl_PL.inc" role="data"></file>
 			<file name="skins/default/templates/config.html" role="data"></file>
 			<file name="skins/default/config.css" role="data"></file>
 			<file name="skins/default/alarm-clock.png" role="data"></file>
