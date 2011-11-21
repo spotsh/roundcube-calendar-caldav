@@ -6,7 +6,7 @@
  * Authenticate on LDAP server, finds canonized authentication ID for IMAP
  * and for new users create identity based on LDAP information.
  *
- * @version 0.1
+ * @version @package_version@
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

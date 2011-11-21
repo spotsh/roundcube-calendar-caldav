@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_zpush</name>
-	<channel>pear.roundcube.net</channel>
+    <uri>http://kolabsys.com</uri>
 	<summary>Z-Push configuration utility for Kolab accounts</summary>
 	<description></description>
 	<lead>
@@ -38,7 +38,7 @@
 			<file name="skins/default/foldertypes.png" role="data"></file>
 			<file name="skins/default/pointer-left.gif" role="data"></file>
 			<file name="skins/default/synchronize.png" role="data"></file>
-			<file name="README.txt" role="data"></file>
+			<file name="README" role="data"></file>
 			<file name="LICENSE" role="data"></file>
 		</dir>
 	</contents>
@@ -50,6 +50,14 @@
 			<pearinstaller>
 				<min>1.7.0</min>
 			</pearinstaller>
+			<package>
+                <name>kolab_core</name>
+                <uri>http://kolabsys.com</uri>
+            </package>
+			<package>
+                <name>jqueryui</name>
+                <channel>pear.roundcube.net</uri>
+            </package>
 		</required>
 	</dependencies>
 	<phprelease/>

@@ -5,9 +5,9 @@
  *
  * Uitility class to compute instances of recurring events.
  *
- * @version 0.7-beta
+ * @version @package_version@
  * @author Thomas Bruederli <roundcube@gmail.com>
- * @package calendar
+ * @package @package_name@
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
  *

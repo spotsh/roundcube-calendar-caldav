@@ -3,7 +3,7 @@
  *
  * Plugin to add a calendar to Roundcube.
  *
- * @version 0.3 beta
+ * @version @package_version@
  * @author Lazlo Westerhof
  * @author Thomas Bruederli
  * @url http://rc-calendar.lazlo.me

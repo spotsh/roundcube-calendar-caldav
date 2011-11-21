@@ -3,7 +3,7 @@
  *
  * Plugin to add a calendar to RoundCube.
  *
- * @version 0.3 beta
+ * @version @package_version@
  * @author Lazlo Westerhof
  * @author Albert Lee
  * @author Aleksander Machniak <machniak@kolabsys.com>

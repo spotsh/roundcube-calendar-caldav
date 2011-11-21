@@ -3,7 +3,7 @@
 /**
  * iCalendar functions for the Calendar plugin
  *
- * @version 0.7-beta
+ * @version @package_version@
  * @author Lazlo Westerhof <hello@lazlo.me>
  * @author Thomas Bruederli <roundcube@gmail.com>
  * @author Bogomil "Bogo" Shopov <shopov@kolabsys.com>

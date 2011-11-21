@@ -9,7 +9,7 @@
  * Supports impersonate feature (login as another user). To use this feature
  * imap_auth_type/smtp_auth_type must be set to DIGEST-MD5 or PLAIN.
  *
- * @version 0.1
+ * @version @package_version@
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
