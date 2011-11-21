@@ -19,6 +19,7 @@ CREATE TABLE `calendars` (
   `color` varchar(8) NOT NULL,
   `showalarms` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY(`calendar_id`),
+  INDEX `user_name_idx` (`user_id`, `name`),
   CONSTRAINT `fk_calendars_user_id` FOREIGN KEY (`user_id`)
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
@@ -45,8 +46,9 @@ CREATE TABLE `events` (
   `attendees` text DEFAULT NULL,
   `notifyat` datetime DEFAULT NULL,
   PRIMARY KEY(`event_id`),
-  INDEX `uid_idx` (`uid`,`calendar_id`),
-	INDEX `recurrence_idx` (`recurrence_id`),
+  INDEX `uid_idx` (`uid`),
+  INDEX `recurrence_idx` (`recurrence_id`),
+  INDEX `calendar_notify_idx` (`calendar_id`,`notifyat`),
   CONSTRAINT `fk_events_calendar_id` FOREIGN KEY (`calendar_id`)
     REFERENCES `calendars`(`calendar_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
@@ -71,7 +73,7 @@ CREATE TABLE `itipinvitations` (
   `expires` DATETIME DEFAULT NULL,
   `cancelled` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
   PRIMARY KEY(`token`),
-  INDEX `uid_idx` (`event_uid`,`user_id`),
+  INDEX `uid_idx` (`user_id`,`event_uid`),
   CONSTRAINT `fk_itipinvitations_user_id` FOREIGN KEY (`user_id`)
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;

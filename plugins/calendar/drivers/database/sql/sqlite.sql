@@ -70,5 +70,5 @@ CREATE TABLE itipinvitations (
     REFERENCES users(user_id)
 );
 
-CREATE INDEX ix_itipinvitations_uid ON itipinvitations(event_uid,user_id);
+CREATE INDEX ix_itipinvitations_uid ON itipinvitations(user_id, event_uid);
 

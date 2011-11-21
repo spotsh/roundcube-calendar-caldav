@@ -30,6 +30,8 @@ CREATE TABLE calendars (
     PRIMARY KEY (calendar_id)
 );
 
+CREATE INDEX calendars_user_id_idx ON calendars (user_id, name);
+
 
 CREATE SEQUENCE event_ids
     INCREMENT BY 1
@@ -62,6 +64,10 @@ CREATE TABLE events (
     PRIMARY KEY (event_id)
 );
 
+CREATE INDEX events_calendar_id_notifyat_idx ON events (calendar_id, notifyat);
+CREATE INDEX events_uid_idx ON events (uid);
+CREATE INDEX events_recurrence_id_idx ON events (recurrence_id);
+
 
 CREATE SEQUENCE attachment_ids
     INCREMENT BY 1
@@ -79,3 +85,19 @@ CREATE TABLE attachments (
     data text NOT NULL DEFAULT '',
     PRIMARY KEY (attachment_id)
 );
+
+CREATE INDEX attachments_user_id_idx ON attachments (user_id);
+
+
+CREATE TABLE itipinvitations (
+    token varchar(64) NOT NULL,
+    event_uid varchar(255) NOT NULL,
+    user_id integer NOT NULL
+        REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    event TEXT NOT NULL,
+    expires timestamp without time zone DEFAULT NULL,
+    cancelled smallint NOT NULL DEFAULT 0,
+    PRIMARY KEY (token)
+);
+
+CREATE INDEX itipinvitations_user_id_event_uid_idx ON itipinvitations (user_id, event_uid);

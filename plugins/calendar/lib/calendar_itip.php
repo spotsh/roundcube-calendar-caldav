@@ -238,7 +238,9 @@ class calendar_itip
     // already stored this
     if ($stored[$base])
       return $token;
-    
+
+    // @TODO: REPLACE works only with MySQL
+
     $query = $this->rc->db->query(
       "REPLACE INTO itipinvitations
        (token, event_uid, user_id, event, expires)
