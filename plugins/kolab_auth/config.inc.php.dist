@@ -22,13 +22,41 @@ $rcmail_config['kolab_auth_admin_password'] = '';
 // Enable audit logging for abuse of administrative privileges.
 $rcmail_config['kolab_auth_auditlog']       = true;
 
-// Administrative role field (from fieldmap configuration) which must be filled with
-// specified value which adds privilege to login as another user.
-$rcmail_config['kolab_auth_role']       = '';
+// Role field (from fieldmap configuration)
+$rcmail_config['kolab_auth_role']       = 'role';
+// The required value for the role attribute to contain should the user be allowed
+// to login as another user.
 $rcmail_config['kolab_auth_role_value'] = '';
 
 // Administrative group name to which user must be assigned to
 // which adds privilege to login as another user.
 $rcmail_config['kolab_auth_group'] = '';
+
+// Enable plugins on a role-by-role basis. In this example, the 'acl' plugin
+// is enabled for people with a 'cn=professional-user,dc=mykolab,dc=ch' role.
+//
+// Note that this does NOT mean the 'acl' plugin is disabled for other people.
+$rcmail_config['kolab_auth_role_plugins'] = Array(
+        'cn=professional-user,dc=mykolab,dc=ch' => Array(
+                'acl',
+            ),
+    );
+
+// Settings on a role-by-role basis. In this example, the 'htmleditor' setting
+// is enabled(1) for people with a 'cn=professional-user,dc=mykolab,dc=ch' role,
+// and it cannot be overridden. Sample use-case: disable htmleditor for normal people,
+// do not allow the setting to be controlled through the preferences, enable the
+// html editor for professional users and allow them to override the setting in
+// the preferences.
+$rcmail_config['kolab_auth_role_settings'] = Array(
+        'cn=professional-user,dc=mykolab,dc=ch' => Array(
+                'htmleditor' => Array(
+                        'mode' => 'override',
+                        'value' => 1,
+                        'allow_override' => true
+                    ),
+            ),
+    );
+
 
 ?>
