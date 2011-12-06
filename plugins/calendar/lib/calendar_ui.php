@@ -48,10 +48,11 @@ class calendar_ui
       
     // add taskbar button
     $this->cal->add_button(array(
-      'name' => 'calendar',
-      'class' => 'button-calendar',
-      'label' => 'calendar.calendar',
-      'href' => './?_task=calendar',
+      'name'    => 'calendar',
+      'class'   => 'button-calendar',
+      'label'   => 'calendar.calendar',
+      'href'    => './?_task=calendar',
+      'onclick' => sprintf("%s.command('plugin.calendar');return false", JS_OBJECT_NAME),
       ), 'taskbar');
     
     // load basic client script (which - unfortunately - requires fullcalendar)

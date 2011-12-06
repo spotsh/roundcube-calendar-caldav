@@ -38,6 +38,7 @@ class kolab_auth extends rcube_plugin
         $rcmail = rcmail::get_instance();
 
         $this->add_hook('authenticate', array($this, 'authenticate'));
+        $this->add_hook('startup', array($this, 'startup'));
         $this->add_hook('user_create', array($this, 'user_create'));
 
         // Hooks related to "Login As" feature
@@ -48,6 +49,7 @@ class kolab_auth extends rcube_plugin
 
         $this->add_hook('write_log', array($this, 'write_log'));
 
+        // TODO: This section does not actually seem to work
         if ($rcmail->config->get('kolab_auth_auditlog', false)) {
             $rcmail->config->set('debug_level', 1);
             $rcmail->config->set('devel_mode', true);
@@ -62,6 +64,89 @@ class kolab_auth extends rcube_plugin
 
         }
 
+    }
+
+    public function startup($args) {
+        // Arguments are task / action, not interested
+        if (!empty($_SESSION['user_roledns'])) {
+            $this->load_user_role_plugins_and_settings($_SESSION['user_roledns']);
+        }
+
+        return $args;
+    }
+
+    public function load_user_role_plugins_and_settings($role_dns) {
+        $rcmail = rcmail::get_instance();
+        $this->load_config();
+
+        // Check role dependent plugins to enable and settings to modify
+
+        // Example 'kolab_auth_role_plugins' =
+        //
+        //  Array(
+        //      '<role_dn>' => Array('plugin1', 'plugin2'),
+        //  );
+
+        $role_plugins = $rcmail->config->get('kolab_auth_role_plugins');
+
+        // Example $rcmail_config['kolab_auth_role_settings'] =
+        //
+        //  Array(
+        //      '<role_dn>' => Array(
+        //          '$setting' => Array(
+        //              'mode' => '(override|merge)', (default: override)
+        //              'value' => <>,
+        //              'allow_override' => (true|false) (default: false)
+        //          ),
+        //      ),
+        //  );
+
+        $role_settings = $rcmail->config->get('kolab_auth_role_settings');
+
+        foreach ($role_dns as $role_dn) {
+            if (isset($role_plugins[$role_dn]) && is_array($role_plugins[$role_dn])) {
+                foreach ($role_plugins[$role_dn] as $plugin) {
+                    $this->require_plugin($plugin);
+                }
+            }
+
+            if (isset($role_settings[$role_dn]) && is_array($role_settings[$role_dn])) {
+                foreach ($role_settings[$role_dn] as $setting_name => $setting) {
+                    if (!isset($setting['mode'])) {
+                        $setting['mode'] = 'override';
+                    }
+
+                    if ($setting['mode'] == "override") {
+                        $rcmail->config->set($setting_name, $setting['value']);
+                    } elseif ($setting['mode'] == "merge") {
+                        $orig_setting = $rcmail->config->get($setting_name);
+
+                        if (!empty($orig_setting)) {
+                            if (is_array($orig_setting)) {
+                                $rcmail->config->set($setting_name, array_merge($orig_setting, $setting['value']));
+                            }
+                        } else {
+                            $rcmail->config->set($setting_name, $setting['value']);
+                        }
+                    }
+
+                    if (!isset($setting['allow_override']) || !$setting['allow_override']) {
+                        $rcmail->config->set('dont_override', array_merge($rcmail->config->get('dont_override', Array()), Array($setting_name)));
+                    } else {
+                        $dont_override = $rcmail->config->get('dont_override');
+                        if (in_array($setting_name, $dont_override)) {
+                            $_dont_override = Array();
+                            foreach ($dont_override as $_setting) {
+                                if ($_setting != $setting_name) {
+                                    $_dont_override[] = $_setting;
+                                }
+                            }
+                            $rcmail->config->set('dont_override', $_dont_override);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public function write_log($args) {
@@ -186,6 +271,12 @@ class kolab_auth extends rcube_plugin
 
         if (empty($record)) {
             return $args;
+        }
+
+        $role_attr = $rcmail->config->get('kolab_auth_role');
+
+        if (!empty($role_attr) && !empty($record[$role_attr])) {
+            $_SESSION['user_roledns'] = (array)($record[$role_attr]);
         }
 
         // Login As...

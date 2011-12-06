@@ -1,0 +1,44 @@
+<?php
+    /* piwik site id */
+    $rcmail_config['piwik_analytics_id'] = 4;
+
+    /* domain of your piwik installation */
+    $rcmail_config['piwik_analytics_url'] = 'noc.kolabsys.com/piwik/';
+
+    /* exclude private pages - analytics will works only for non-logged users */
+    $rcmail_config['piwik_analytics_privacy'] = false;
+
+    /* exclude the following templates */
+    $rcmail_config['piwik_analytics_exclude'] = Array(
+        );
+
+    //  Possible templates:
+
+//             "message",
+//             "messagepreview",
+//             "compose",
+//             "editidentity",
+//             "editcontact",
+//             "showcontact"
+
+    //  "message",
+    //  "messagepart",
+    //  "messagepreview",
+    //  "messageerror",
+    //  "showcontact",
+    //  "addcontact",
+    //  "editcontact",
+    //  "importcontacts",
+    //  "addressbook",
+    //  "compose",
+    //  "editidentity",
+    //  "error",
+    //  "identities",
+    //  "login",
+    //  "mail",
+    //  "managefolders",
+    //  "plugin",
+    //  "settingsedit",
+    //  "settings"
+
+?>
