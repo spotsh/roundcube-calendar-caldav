@@ -1,0 +1,18 @@
+Roundcube Open Documents Viewer
+-------------------------------
+
+The rendering of open documents is based on the WebODF library written
+by Tobias Hintze. See http://webodf.org for more information.
+
+
+INSTALLATION
+------------
+
+Make the the folder 'files' in this directory writeable for the webserver.
+It is used to temporarily store attachment files. Make sure in the webserver
+configuraton that this directory is not browsable. For Apache webservers
+the included .htaccess file should arelad do the job.
+
+Add 'odfviewer' to the list of plugins in config/main.inc.php file of your
+Roundcube installation.
+

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<title>Roundcube WebODF Viewer</title>
+<style type="text/css" media="screen">
+
+	body, div {
+		padding: 0px;
+		margin: 0px;
+		border: 0px;
+		background: #fff;
+	}
+	body.odfcanvas {
+		height: 100%;
+		background: black;
+		text-align: center;
+	}
+	
+</style>
+<link rel="stylesheet" type="text/css" href="%%DOCROOT%%webodf.css"/>
+<script type="text/javascript" src="%%DOCROOT%%webodf.js" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">
+
+	function init() {
+		var odfelement = document.getElementById("odf"),
+			odfcanvas = new odf.OdfCanvas(odfelement);
+		odfcanvas.load('%%DOCURL%%');
+	}
+	window.setTimeout(init, 0);
+
+</script>
+</head>
+ 
+<body class="odfcanvas">
+	<div id="odf"></div>
+</body>
+</html>
