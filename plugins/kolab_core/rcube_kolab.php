@@ -4,7 +4,7 @@
  * Utilities providing Kolab functionality using Kolab_* classes
  * from the Horde project.
  *
- * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

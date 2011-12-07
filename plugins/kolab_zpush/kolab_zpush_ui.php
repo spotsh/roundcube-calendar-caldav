@@ -3,7 +3,7 @@
 /**
  * Z-Push configuration user interface builder
  *
- * @version 0.1
+ * @version 0.2
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

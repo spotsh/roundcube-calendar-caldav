@@ -7,7 +7,7 @@
  * Other Kolab-related plugins will depend on it and can use the static API rcube_core
  *
  * @version @package_version@
- * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
  *

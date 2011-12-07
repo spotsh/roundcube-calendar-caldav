@@ -4,7 +4,7 @@
  * Kolab calendar storage class
  *
  * @version @package_version@
- * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

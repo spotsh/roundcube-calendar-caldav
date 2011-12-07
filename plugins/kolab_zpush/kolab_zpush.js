@@ -2,7 +2,7 @@
  * Client scripts for the Kolab Z-Push configuration utitlity
  *
  * @version 0.2
- * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
  *

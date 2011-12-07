@@ -16,13 +16,12 @@
 	<date>2011-11-14</date>
 	<time>12:12:00</time>
 	<version>
-		<release>0.1</release>
+		<release>0.2</release>
 	</version>
 	<stability>
 		<release>stable</release>
 	</stability>
 	<license uri="http://www.gnu.org/licenses/agpl.html">GNU AGPL</license>
-	<sources uri="./kolab_zpush-0.1.tgz" />
 	<notes>-</notes>
 	<contents>
 		<dir baseinstalldir="/" name="/">
@@ -52,13 +51,13 @@
 				<min>1.7.0</min>
 			</pearinstaller>
 			<package>
-                <name>kolab_core</name>
-                <uri>http://kolabsys.com</uri>
-            </package>
+				<name>kolab_core</name>
+				<uri>http://kolabsys.com</uri>
+			</package>
 			<package>
-                <name>jqueryui</name>
-                <channel>pear.roundcube.net</uri>
-            </package>
+				<name>jqueryui</name>
+				<channel>pear.roundcube.net</uri>
+			</package>
 		</required>
 	</dependencies>
 	<phprelease/>

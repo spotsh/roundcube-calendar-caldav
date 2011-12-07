@@ -5,7 +5,7 @@
  *
  * @version @package_version@
  * @author Lazlo Westerhof <hello@lazlo.me>
- * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>

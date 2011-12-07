@@ -8,7 +8,7 @@
  * (create/rename/delete/acl) directly in Addressbook UI.
  *
  * @version @package_version@
- * @author Thomas Bruederli <roundcube@gmail.com>
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
