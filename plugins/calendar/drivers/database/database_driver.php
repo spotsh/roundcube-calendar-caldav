@@ -578,7 +578,7 @@ class database_driver extends calendar_driver
 
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
-        $master = $event['recurrence_id'] ? $this->get_event(array('id' => $old['recurrence_id'])) : $event;
+        $master = $event['recurrence_id'] ? $this->get_event(array('id' => $event['recurrence_id'])) : $event;
         $savemode = $event['_savemode'];
       }
 
