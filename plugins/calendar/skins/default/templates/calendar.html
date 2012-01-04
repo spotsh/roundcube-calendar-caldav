@@ -36,6 +36,7 @@
     <li><roundcube:button command="calendar-edit" label="calendar.edit" classAct="active" /></li>
     <li><roundcube:button command="calendar-remove" label="calendar.remove" classAct="active" /></li>
     <li><roundcube:button command="events-import" label="calendar.importevents" classAct="active" /></li>
+    <li><roundcube:button command="calendar-showurl" label="calendar.showurl" classAct="active" /></li>
     <roundcube:if condition="env:calendar_driver == 'kolab'" />
     <li class="separator_above"><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
     <roundcube:endif />
@@ -140,6 +141,11 @@
 
 <div id="eventsimport" class="uidialog">
   <roundcube:object name="plugin.events_import_form" id="events-import-form" uploadFieldSize="30" />
+</div>
+
+<div id="calendarurlbox" class="uidialog">
+  <p><roundcube:label name="calendar.showurldescription" /></p>
+  <textarea id="calfeedurl" rows="2" readonly="readonly"></textarea>
 </div>
 
 <div id="alarm-snooze-dropdown" class="popupmenu">

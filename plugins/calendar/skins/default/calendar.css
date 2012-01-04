@@ -162,6 +162,14 @@ pre {
     background-position: 0 -92px;
 }
 
+#calfeedurl {
+	width: 98%;
+	background: #fbfbfb;
+	padding: 4px;
+	margin-bottom: 1em;
+	resize: none;
+}
+
 #agendalist {
 	width: 100%;
 	margin: 0 auto;
@@ -1164,7 +1172,9 @@ fieldset #calendarcategories div {
 /* Invitation UI in mail */
 
 #messagemenu li a.calendarlink {
-	background: url(images/calendars.png) 7px -109px no-repeat;
+	background-image: url(images/calendars.png);
+	background-position: 7px -109px;
+	background-repeat: no-repeat;
 }
 
 div.calendar-invitebox {

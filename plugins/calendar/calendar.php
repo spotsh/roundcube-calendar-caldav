@@ -38,6 +38,7 @@ class calendar extends rcube_plugin
   public $home;  // declare public to be used in other classes
   public $urlbase;
   public $timezone;
+  public $timezone_offset;
   public $gmt_offset;
 
   public $ical;
@@ -96,10 +97,11 @@ class calendar extends rcube_plugin
     $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
 
     // set user's timezone
-    $this->timezone = $this->rc->config->get('timezone');
-    $this->dst_active = $this->rc->config->get('dst_active');
-    $this->gmt_offset = ($this->timezone + $this->dst_active) * 3600;
-    $this->user_timezone = new DateTimeZone($this->timezone ? timezone_name_from_abbr("", $this->gmt_offset, $this->dst_active) : 'GMT');
+    $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
+    $now = new DateTime('now', $this->timezone);
+    $this->timezone_offset = $now->format('Z') / 3600;
+    $this->dst_active = $now->format('I');
+    $this->gmt_offset = $now->getOffset();
 
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
@@ -118,6 +120,9 @@ class calendar extends rcube_plugin
     // catch iTIP confirmation requests that don're require a valid session
     if ($this->rc->action == 'attend' && !empty($_REQUEST['_t'])) {
       $this->add_hook('startup', array($this, 'itip_attend_response'));
+    }
+    else if ($this->rc->action == 'feed' && !empty($_REQUEST['_cal'])) {
+      $this->add_hook('startup', array($this, 'ical_feed_export'));
     }
     else if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
       if ($this->rc->action != 'upload') {
@@ -890,7 +895,7 @@ class calendar extends rcube_plugin
   /**
    * Construct the ics file for exporting events to iCalendar format;
    */
-  function export_events()
+  function export_events($terminate = true)
   {
     $start = get_input_value('start', RCUBE_INPUT_GET);
     $end = get_input_value('end', RCUBE_INPUT_GET);
@@ -903,13 +908,72 @@ class calendar extends rcube_plugin
       $calname = $calendars[$calid]['name'] ? $calendars[$calid]['name'] : $calid;
       $events = $this->driver->load_events($start, $end, null, $calid, 0);
     }
+    else
+      $events = array();
 
     header("Content-Type: text/calendar");
     header("Content-Disposition: inline; filename=".$calname.'.ics');
-    
+
     $this->get_ical()->export($events, '', true);
+
+    if ($terminate)
+      exit;
+  }
+
+
+  /**
+   * Handler for iCal feed requests
+   */
+  function ical_feed_export()
+  {
+    // process HTTP auth info
+    if (!empty($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
+      $_POST['_user'] = $_SERVER['PHP_AUTH_USER']; // used for rcmail::autoselect_host()
+      $auth = $this->rc->plugins->exec_hook('authenticate', array(
+        'host' => $this->rc->autoselect_host(),
+        'user' => trim($_SERVER['PHP_AUTH_USER']),
+        'pass' => $_SERVER['PHP_AUTH_PW'],
+        'cookiecheck' => true,
+        'valid' => true,
+      ));
+      if ($auth['valid'] && !$auth['abort'])
+        $this->rc->login($auth['user'], $auth['pass'], $auth['host']);
+    }
+
+    // require HTTP auth
+    if (empty($_SESSION['user_id'])) {
+      header('WWW-Authenticate: Basic realm="Roundcube Calendar"');
+      header('HTTP/1.0 401 Unauthorized');
+      exit;
+    }
+
+    // decode calendar feed hash
+    $format = 'ics';
+    $calhash = get_input_value('_cal', RCUBE_INPUT_GET);
+    if (preg_match(($suff_regex = '/\.([a-z0-9]{3,5})$/i'), $calhash, $m)) {
+      $format = strtolower($m[1]);
+      $calhash = preg_replace($suff_regex, '', $calhash);
+    }
+
+    if (!strpos($calhash, ':'))
+      $calhash = base64_decode($calhash);
+
+    list($user, $_GET['source']) = explode(':', $calhash, 2);
+
+    // sanity check user
+    if ($this->rc->user->get_username() == $user) {
+      $this->load_driver();
+      $this->export_events(false);
+    }
+    else {
+      header('HTTP/1.0 404 Not Found');
+    }
+
+    // don't save session data
+    session_destroy();
     exit;
   }
+
 
   /**
    *
@@ -939,7 +1003,7 @@ class calendar extends rcube_plugin
     $settings['agenda_sections'] = $this->rc->config->get('calendar_agenda_sections', $this->defaults['calendar_agenda_sections']);
     $settings['event_coloring'] = (int)$this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring']);
     $settings['time_indicator'] = (int)$this->rc->config->get('calendar_time_indicator', $this->defaults['calendar_time_indicator']);
-    $settings['timezone'] = $this->timezone;
+    $settings['timezone'] = $this->timezone_offset;
     $settings['dst'] = $this->dst_active;
 
     // localization
@@ -1661,8 +1725,8 @@ class calendar extends rcube_plugin
     }
     
     // add timezone information
-    if ($tzinfo && ($tzname = $this->user_timezone->getName())) {
-      $fromto .= ' (' . $tzname . ')';
+    if ($tzinfo && ($tzname = $this->timezone->getName())) {
+      $fromto .= ' (' . strtr($tzname, '_', ' ') . ')';
     }
     
     return $fromto;
@@ -2309,6 +2373,12 @@ class calendar extends rcube_plugin
     $url .= preg_replace('!^\./!', '/', $this->rc->url($param));
     
     return $url; 
+  }
+
+
+  public function ical_feed_hash($source)
+  {
+    return base64_encode($this->rc->user->get_username() . ':' . $source);
   }
 
 }

@@ -1953,6 +1953,26 @@ function rcube_calendar_ui(settings)
         this.refresh(p);
     };
 
+    // show URL of the given calendar in a dialog box
+    this.showurl = function(calendar)
+    {
+      var $dialog = $('#calendarurlbox').dialog('close');
+
+      if (calendar.feedurl) {
+        $dialog.dialog({
+          resizable: true,
+          closeOnEscape: true,
+          title: rcmail.gettext('showurl', 'calendar'),
+          close: function() {
+            $dialog.dialog("destroy").hide();
+          },
+          width: 520
+        }).show();
+
+        $('#calfeedurl').val(calendar.feedurl).select();
+      }
+    };
+
     // refresh the calendar view after saving event data
     this.refresh = function(p)
     {
@@ -2183,7 +2203,7 @@ function rcube_calendar_ui(settings)
           var id = $(this).data('id');
           rcmail.select_folder(id, 'rcmlical');
           rcmail.enable_command('calendar-edit', true);
-          rcmail.enable_command('calendar-remove', 'events-import', !me.calendars[id].readonly);
+          rcmail.enable_command('calendar-remove', 'events-import', 'calendar-showurl', !me.calendars[id].readonly);
           me.selected_calendar = id;
         })
         .dblclick(function(){ me.calendar_edit_dialog(me.calendars[me.selected_calendar]); })
@@ -2673,6 +2693,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('events-import', function(){ cal.import_events(cal.calendars[cal.selected_calendar]); }, false);
+  rcmail.register_command('calendar-showurl', function(){ cal.showurl(cal.calendars[cal.selected_calendar]); }, false);
  
   // search and export events
   rcmail.register_command('export', function(){ rcmail.goto_url('export_events', { source:cal.selected_calendar }); }, true);
