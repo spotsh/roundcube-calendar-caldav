@@ -40,7 +40,7 @@ body.calendarmain {
 	-webkit-box-shadow: none;
 }
 
-.ui-datepicker td a {
+#datepicker .ui-datepicker td a {
 	padding: 5px 4px;
 	font-size: 12px;
 }
@@ -125,7 +125,6 @@ pre {
 	right: 0;
 }
 
-#attachmentlist li,
 #calendarslist li {
 	margin: 0;
 	height: 20px;
@@ -139,10 +138,25 @@ pre {
 	display: block;
 }
 
-#calendarslist li span {
+#calendarslist li span.calname {
 	cursor: default;
 	background: url(images/calendars.png) 0 -2px no-repeat;
 	padding-left: 22px;
+	color: #004458;
+}
+
+#calendarslist li span.handle {
+	display: inline-block;
+	padding: 0;
+	border-radius: 7px;
+	margin-right: 6px;
+	width: 10px;
+	height: 10px;
+	font-size: 0.8em;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	-webkit-box-shadow: inset 0px 0 1px 1px rgba(0, 0, 0, 0.3);
+	-moz-box-shadow: inset 0px 0 1px 1px rgba(0, 0, 0, 0.3);
+	box-shadow: inset 0px 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 #calendarslist li input {
@@ -153,30 +167,29 @@ pre {
 
 #calendarslist li.selected {
 	background-color: #c7e3ef;
-	color: inherit;
 }
 
-#calendarslist li.selected span {
+#calendarslist li.selected span.calname {
 	font-weight: bold;
 }
 
-#calendarslist li.readonly span {
+#calendarslist li.readonly span.calname {
 	background-position: 0 -20px;
 }
 
-#calendarslist li.other span {
+#calendarslist li.other span.calname {
 	background-position: 0 -38px;
 }
 
-#calendarslist li.other.readonly span {
+#calendarslist li.other.readonly span.calname {
 	background-position: 0 -56px;
 }
 
-#calendarslist li.shared span {
+#calendarslist li.shared span.calname {
 	background-position: 0 -74px;
 }
 
-#calendarslist li.shared.readonly span {
+#calendarslist li.shared.readonly span.calname {
 	background-position: 0 -92px;
 }
 
@@ -319,14 +332,6 @@ a.miniColors-trigger {
 
 .attachments-list ul li a:hover {
 	text-decoration: underline;
-}
-
-#attachmentlist {
-	margin: 0 -0.8em;
-}
-
-#attachmentlist li {
-	padding: 2px 2px 3px 0.8em;
 }
 
 #eventshow .attachments-list ul li {

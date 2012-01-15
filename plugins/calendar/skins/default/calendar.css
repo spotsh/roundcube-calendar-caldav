@@ -123,10 +123,11 @@ pre {
 	display: block;
 }
 
-#calendarslist li span {
+#calendarslist li span.handle {
 	cursor: default;
 	background: url(images/calendars.png) 0 -2px no-repeat;
-	padding-left: 18px;
+	display: inline-block;
+	width: 20px;
 }
 
 #calendarslist li input {
@@ -142,23 +143,23 @@ pre {
 	font-weight: bold;
 }
 
-#calendarslist li.readonly span {
+#calendarslist li.readonly span.handle {
     background-position: 0 -20px;
 }
 
-#calendarslist li.other span {
+#calendarslist li.other span.handle {
     background-position: 0 -38px;
 }
 
-#calendarslist li.other.readonly span {
+#calendarslist li.other.readonly span.handle {
     background-position: 0 -56px;
 }
 
-#calendarslist li.shared span {
+#calendarslist li.shared span.handle {
     background-position: 0 -74px;
 }
 
-#calendarslist li.shared.readonly span {
+#calendarslist li.shared.readonly span.handle {
     background-position: 0 -92px;
 }
 

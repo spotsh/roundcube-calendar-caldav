@@ -168,6 +168,7 @@ class calendar_ui
         $css .= " border-color: #$color;";
         $css .= "}\n";
       }
+      $css .= ".$class .handle { background-color: #$color; }";
     }
     
     return html::tag('style', array('type' => 'text/css'), $css);
@@ -203,7 +204,9 @@ class calendar_ui
         $class .= ' '.$prop['class_name'];
 
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
-        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') . html::span(null, Q($prop['name'])));
+        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
+        html::span('handle', '&nbsp;') .
+        html::span('calname', Q($prop['name'])));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);
