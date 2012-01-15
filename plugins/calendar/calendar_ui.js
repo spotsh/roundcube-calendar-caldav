@@ -6,7 +6,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -2146,7 +2146,7 @@ function rcube_calendar_ui(settings)
     this.dialog_resize = function(id, height, width)
     {
       var win = $(window), w = win.width(), h = win.height();
-      $(id).dialog('option', { height: Math.min(h-20, height+110), width: Math.min(w-20, width+50) })
+      $(id).dialog('option', { height: Math.min(h-20, height+130), width: Math.min(w-20, width+50) })
         .dialog('option', 'position', ['center', 'center']);  // only works in a separate call (!?)
     };
 
@@ -2154,7 +2154,7 @@ function rcube_calendar_ui(settings)
     this.view_resize = function()
     {
       var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').height() + 2 : 0;
-      fc.fullCalendar('option', 'height', $('#main').height() - footer);
+      fc.fullCalendar('option', 'height', $('#calendar').height() - footer);
     };
 
 
@@ -2236,7 +2236,7 @@ function rcube_calendar_ui(settings)
       month: viewdate.getMonth(),
       year: viewdate.getFullYear(),
       ignoreTimezone: true,  // will treat the given date strings as in local (browser's) timezone
-      height: $('#main').height(),
+      height: $('#calendar').height(),
       eventSources: event_sources,
       monthNames : settings['months'],
       monthNamesShort : settings['months_short'],

@@ -1,0 +1,5 @@
+# get all unknown files from default skin folder
+RewriteEngine On
+RewriteCond  %{REQUEST_FILENAME}  !-f
+RewriteCond  %{REQUEST_FILENAME}  !-d
+RewriteRule  (.*)                 ../default/$1  [qsappend,last]

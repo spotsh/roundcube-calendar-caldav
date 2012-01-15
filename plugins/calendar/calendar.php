@@ -177,8 +177,9 @@ class calendar extends rcube_plugin
             'command'  => 'calendar-create-from-mail',
             'label'    => 'calendar.createfrommail',
             'type'     => 'link',
-            'classact' => 'calendarlink active',
-            'class'    => 'calendarlink',
+            'classact' => 'icon calendarlink active',
+            'class'    => 'icon calendarlink',
+            'innerclass' => 'icon calendar',
           ))),
           'messagemenu');
       }
