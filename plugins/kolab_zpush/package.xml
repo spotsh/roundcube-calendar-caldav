@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_zpush</name>
-    <uri>http://kolabsys.com</uri>
+    <uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
 	<summary>Z-Push configuration utility for Kolab accounts</summary>
 	<description></description>
 	<lead>
@@ -16,7 +16,7 @@
 	<date>2011-11-14</date>
 	<time>12:12:00</time>
 	<version>
-		<release>0.2</release>
+		<release>0.3</release>
 	</version>
 	<stability>
 		<release>stable</release>
@@ -38,6 +38,13 @@
 			<file name="skins/default/foldertypes.png" role="data"></file>
 			<file name="skins/default/pointer-left.gif" role="data"></file>
 			<file name="skins/default/synchronize.png" role="data"></file>
+			<file name="skins/larry/templates/config.html" role="data"></file>
+			<file name="skins/larry/config.css" role="data"></file>
+			<file name="skins/larry/alarm-clock.png" role="data"></file>
+			<file name="skins/larry/deviceactions.png" role="data"></file>
+			<file name="skins/larry/foldertypes.png" role="data"></file>
+			<file name="skins/larry/pointer-left.png" role="data"></file>
+			<file name="skins/larry/synchronize.png" role="data"></file>
 			<file name="README" role="data"></file>
 			<file name="LICENSE" role="data"></file>
 		</dir>

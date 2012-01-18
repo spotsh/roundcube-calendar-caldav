@@ -6,7 +6,7 @@
  * @version 0.2
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -286,7 +286,7 @@ class kolab_zpush extends rcube_plugin
             }
             // fetch folder data from server
             else {
-                $this->folders = $this->rc->imap->list_unsubscribed();
+                $this->folders = $this->rc->imap->list_folders();
                 foreach ($this->folders as $folder) {
                     $folderdata = $this->rc->imap->get_metadata($folder, array(self::ACTIVESYNC_KEY, self::CTYPE_KEY));
                     $foldertype = explode('.', $folderdata[$folder][self::CTYPE_KEY]);
