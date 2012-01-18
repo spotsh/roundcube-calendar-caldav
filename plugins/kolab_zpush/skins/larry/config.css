@@ -31,11 +31,6 @@
 	color: #69939e;
 }
 
-.boxfooter a.button.delete,
-.boxfooter a.buttonPas.delete {
-	background-image: url(deviceactions.png);
-}
-
 div.subscriptionblock {
 	float: left;
 	margin: 0 3em 2em 0;
