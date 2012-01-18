@@ -16,7 +16,7 @@ body.calendarmain {
 	overflow: hidden;
 }
 
-#mainscreen {
+body.calendarmain #mainscreen {
 	left: 0;
 }
 

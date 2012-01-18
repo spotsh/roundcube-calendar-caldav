@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_config</name>
-    <uri>http://kolabsys.com</uri>
+    <uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
 	<summary>Kolab configuration storage</summary>
 	<description>
         Plugin to use Kolab server as a configuration storage. Provides an API to handle
