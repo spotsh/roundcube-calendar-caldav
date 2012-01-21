@@ -276,10 +276,12 @@ function rcube_calendar_ui(settings)
     {
       var i, id, len, img, content, li, elem,
         ul = document.createElement('UL');
+      ul.className = 'attachmentslist';
 
       for (i=0, len=list.length; i<len; i++) {
-        li = document.createElement('LI');
         elem = list[i];
+        li = document.createElement('LI');
+        li.className = elem.classname;
 
         if (edit) {
           rcmail.env.attachments[elem.id] = elem;
@@ -287,6 +289,7 @@ function rcube_calendar_ui(settings)
           content = document.createElement('A');
           content.href = '#delete';
           content.title = rcmail.gettext('delete');
+          content.className = 'delete';
           $(content).click({id: elem.id}, function(e) { remove_attachment(this, e.data.id); return false; });
 
           if (!rcmail.env.deleteicon)
@@ -303,7 +306,8 @@ function rcube_calendar_ui(settings)
 
         // name/link
         content = document.createElement('A');
-        content.innerHTML = list[i].name;
+        content.innerHTML = elem.name;
+        content.className = 'file';
         content.href = '#load';
         $(content).click({event: event, att: elem}, function(e) {
           load_attachment(e.data.event, e.data.att); return false; });
@@ -343,7 +347,8 @@ function rcube_calendar_ui(settings)
         $('#event-description').show().children('.event-text').html(text2html(event.description, 300, 6));
       
       // render from-to in a nice human-readable way
-      $('#event-date').html(Q(me.event_date_text(event))).show();
+      // -> now shown in dialog title
+      // $('#event-date').html(Q(me.event_date_text(event))).show();
       
       if (event.recurrence && event.recurrence_text)
         $('#event-repeat').show().children('.event-text').html(Q(event.recurrence_text));
@@ -432,7 +437,7 @@ function rcube_calendar_ui(settings)
         modal: false,
         resizable: !bw.ie6,
         closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
-        title: null,
+        title: Q(me.event_date_text(event)),
         close: function() {
           $dialog.dialog('destroy').hide();
         },

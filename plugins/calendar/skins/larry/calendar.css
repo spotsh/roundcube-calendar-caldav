@@ -57,6 +57,7 @@ body.calendarmain #mainscreen {
 	background: -o-linear-gradient(top, #d9f1fb 0%, #c5e3ee 100%);
 	background: -ms-linear-gradient(top, #d9f1fb 0%, #c5e3ee 100%);
 	background: linear-gradient(top, #d9f1fb 0%, #c5e3ee 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#d9f1fb', endColorstr='#c5e3ee', GradientType=0);
 }
 
 #datepicker .ui-datepicker-activerange a.ui-state-active {
@@ -67,6 +68,17 @@ body.calendarmain #mainscreen {
 	background: -o-linear-gradient(top, #00acd4 0%, #008fc7 100%);
 	background: -ms-linear-gradient(top, #00acd4 0%, #008fc7 100%);
 	background: linear-gradient(top, #00acd4 0%, #008fc7 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00acd4', endColorstr='#008fc7', GradientType=0);
+}
+
+.ie9 #datepicker .ui-datepicker-activerange a {
+	filter: none;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20preserveAspectRatio%3D%22none%22%20version%3D%221.0%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22mLG1%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%220%25%22%20y2%3D%22100%25%22%20spreadMethod%3D%22pad%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23d9f1fb%22%20stop-opacity%3D%221%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c5e3ee%22%20stop-opacity%3D%221%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20style%3D%22fill%3Aurl%28%23mLG1%29%3B%22/%3E%3C/svg%3E) !important;
+}
+
+.ie9 #datepicker .ui-datepicker-activerange a.ui-state-active {
+	filter: none;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20preserveAspectRatio%3D%22none%22%20version%3D%221.0%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22mLG1%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%220%25%22%20y2%3D%22100%25%22%20spreadMethod%3D%22pad%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%2300acd4%22%20stop-opacity%3D%221%22/%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23008fc7%22%20stop-opacity%3D%221%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20style%3D%22fill%3Aurl%28%23mLG1%29%3B%22/%3E%3C/svg%3E) !important;
 }
 
 #datepicker td.ui-datepicker-week-col {
@@ -142,6 +154,7 @@ pre {
 	cursor: default;
 	background: url(images/calendars.png) 0 -2px no-repeat;
 	padding-left: 22px;
+	padding-bottom: 2px;
 	color: #004458;
 }
 
@@ -245,6 +258,10 @@ pre {
 	right: 4px;
 }
 
+body.calendarmain #searchmenulink {
+	width: 15px;
+}
+
 div.uidialog {
 	display: none;
 }
@@ -306,36 +323,22 @@ a.miniColors-trigger {
 	font-weight: bold;
 }
 
-.attachments-list ul {
-	margin: 0px;
-	padding: 0px;
-	list-style-image: none;
-	list-style-type: none;
+#edit-attachments {
+	margin-top: 0.6em;
 }
 
-.attachments-list ul li {
-	height: 18px;
-	font-size: 12px;
-	padding-top: 2px;
-	padding-right: 8px;
+#edit-attachments ul li {
+	display: block;
+	color: #333;
+	font-weight: bold;
+	padding: 8px 4px 3px 30px;
+	text-shadow: 0px 1px 1px #fff;
+	text-decoration: none;
 	white-space: nowrap;
 }
 
-.attachments-list ul li img {
-	padding-right: 2px;
-	vertical-align: middle;
-}
-
-.attachments-list ul li a {
-	text-decoration: none;
-}
-
-.attachments-list ul li a:hover {
-	text-decoration: underline;
-}
-
-#eventshow .attachments-list ul li {
-	float: left;
+#edit-attachments ul li a.file {
+	padding: 0;
 }
 
 #edit-attachments-form {
@@ -344,6 +347,15 @@ a.miniColors-trigger {
 
 #edit-attachments-form .buttons {
 	margin: 0.5em 0;
+}
+
+#event-attachments .attachmentslist li {
+	float: left;
+	margin-right: 1em;
+}
+
+#event-attachments .attachmentslist li a {
+	outline: none;
 }
 
 #event-attendees span.attendee {
@@ -991,11 +1003,6 @@ span.spacer {
 /* fullcalendar style overrides */
 
 .rcube-fc-content {
-	position: absolute !important;
-	top: 37px;
-	left: 0;
-	right: 0;
-	bottom: 28px;
 	overflow: hidden;
 	border: 0;
 	border-radius: 4px 4px 0 0;
@@ -1003,6 +1010,14 @@ span.spacer {
 	-o-box-shadow: 0 0 2px #999;
 	-webkit-box-shadow: 0 0 2px #999;
 	-moz-box-shadow: 0 0 2px #999;
+}
+
+.fc-content {
+	position: absolute !important;
+	top: 37px;
+	left: 0;
+	right: 0;
+	bottom: 28px;
 	background: #fff;
 }
 
@@ -1159,8 +1174,8 @@ div.calendar-invitebox {
 	min-height: 20px;
 	margin: 5px 8px;
 	padding: 3px 6px 6px 34px;
-	border: 1px solid #C2D071;
-	background: url(images/calendar.png) 6px 5px no-repeat #F7FDCB;
+	border: 1px solid #ffdf0e;
+	background: url(images/calendar.png) 6px 5px no-repeat #fef893;
 }
 
 div.calendar-invitebox td.ititle {
@@ -1180,14 +1195,13 @@ div.calendar-invitebox .rsvp-buttons {
 }
 
 #event-rsvp input.button,
-div.calendar-invitebox input.button,
-div.calendar-invitebox select {
-	font-size: 11px;
+div.calendar-invitebox input.button {
+	font-weight: bold;
 	margin-right: 0.5em;
 }
 
 div.calendar-invitebox .calendar-select {
-	font-size: 11px;
+	font-weight: 10px;
 	margin-left: 1em;
 }
 

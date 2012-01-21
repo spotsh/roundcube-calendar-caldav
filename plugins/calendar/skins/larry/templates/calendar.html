@@ -5,7 +5,7 @@
 <roundcube:include file="/includes/links.html" />
 <!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="./plugins/calendar/skins/default/iehacks.css" /><![endif]-->
 </head>
-<body class="calendarmain">
+<body class="calendarmain noscroll">
 
 <roundcube:include file="/includes/header.html" />
 
@@ -13,7 +13,7 @@
 	<div id="sidebar">
 		<div id="quicksearchbar">
 			<roundcube:object name="plugin.searchform" id="quicksearchbox" />
-			<roundcube:button name="searchmenulink" id="searchmenulink" class="iconbutton searchoptions" onclick="return false" title="searchmod" content=" " />
+			<a id="searchmenulink" class="iconbutton searchoptions" > </a>
 			<roundcube:button command="reset-search" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
 		</div>
 
@@ -98,7 +98,7 @@
 	</div>
 	<div class="event-section" id="event-attachments">
 		<label><roundcube:label name="attachments" /></label>
-		<div class="event-text attachments-list"></div>
+		<div class="event-text"></div>
 	</div>
 
 	<roundcube:object name="plugin.event_rsvp_buttons" id="event-rsvp" style="display:none" />

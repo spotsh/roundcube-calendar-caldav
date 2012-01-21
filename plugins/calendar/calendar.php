@@ -1117,6 +1117,10 @@ class calendar extends rcube_plugin
     if ($event['recurrence'])
       $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
 
+    foreach ((array)$event['attachments'] as $k => $attachment) {
+      $event['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
+    }
+
     return array(
       'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
       'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
@@ -1438,6 +1442,7 @@ class calendar extends rcube_plugin
 
           $content = html::a(array(
             'href' => "#delete",
+            'class' => 'delete',
             'onclick' => sprintf("return %s.remove_from_attachment_list('rcmfile%s')", JS_OBJECT_NAME, $id),
             'title' => rcube_label('delete'),
           ), $button);
@@ -1448,6 +1453,7 @@ class calendar extends rcube_plugin
             'html' => $content,
             'name' => $attachment['name'],
             'mimetype' => $attachment['mimetype'],
+            'classname' => rcmail_filetype2classname($attachment['mimetype'], $attachment['name']),
             'complete' => true), $uploadid);
         }
         else {  // upload failed
