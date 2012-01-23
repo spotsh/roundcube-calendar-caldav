@@ -131,8 +131,9 @@ class rcube_kolab_contacts extends rcube_addressbook
 
     public function __construct($imap_folder = null)
     {
-        if ($imap_folder)
+        if ($imap_folder) {
             $this->imap_folder = $imap_folder;
+        }
 
         // extend coltypes configuration 
         $format = rcube_kolab::get_format('contact');
@@ -653,8 +654,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         // store IMAP uids for undelete()
-        if (!$force)
+        if (!$force) {
             $_SESSION['kolab_delete_uids'] = $imap_uids;
+        }
 
         return $count;
     }

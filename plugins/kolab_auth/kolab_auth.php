@@ -43,7 +43,7 @@ class kolab_auth extends rcube_plugin
 
         // Hooks related to "Login As" feature
         $this->add_hook('template_object_loginform', array($this, 'login_form'));
-        $this->add_hook('imap_connect', array($this, 'imap_connect'));
+        $this->add_hook('storage_connect', array($this, 'imap_connect'));
         $this->add_hook('managesieve_connect', array($this, 'imap_connect'));
         $this->add_hook('smtp_connect', array($this, 'smtp_connect'));
 
@@ -135,7 +135,7 @@ class kolab_auth extends rcube_plugin
                     } else {
                         $dont_override = $rcmail->config->get('dont_override');
                         if (in_array($setting_name, $dont_override)) {
-                            $_dont_override = Array();
+                            $_dont_override = array();
                             foreach ($dont_override as $_setting) {
                                 if ($_setting != $setting_name) {
                                     $_dont_override[] = $_setting;

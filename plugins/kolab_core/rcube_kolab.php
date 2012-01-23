@@ -222,15 +222,9 @@ class rcube_kolab
       static $subscribed;  // local cache
 
       if (!$subscribed) {
-        $rcmail = rcmail::get_instance();
-        // try without connection first (list could be served from cache)
-        $subscribed = $rcmail->imap ? $rcmail->imap->list_mailboxes() : array();
-
-        // now really get the list from the IMAP server
-        if (empty($subscribed) || $subscribed == array('INBOX')) {
-          $rcmail->imap_connect();
-          $subscribed = $rcmail->imap->list_mailboxes();
-        }
+        $rcmail     = rcmail::get_instance();
+        $storage    = $rcmail->get_storage();
+        $subscribed = $storage->list_folders();
       }
 
       return in_array($folder, $subscribed);
@@ -390,10 +384,9 @@ class rcube_kolab
      */
     public static function object_name($folder, &$folder_ns=null)
     {
-        $rcmail = rcmail::get_instance();
-        $rcmail->imap_init();
-
-        $namespace = $rcmail->imap->get_namespace();
+        $rcmail    = rcmail::get_instance();
+        $storage   = $rcmail->get_storage();
+        $namespace = $storage->get_namespace();
         $found     = false;
 
         if (!empty($namespace['shared'])) {
@@ -444,9 +437,9 @@ class rcube_kolab
         }
 
         if (empty($delim))
-            $delim = $rcmail->imap->get_hierarchy_delimiter();
+            $delim = $storage->get_hierarchy_delimiter();
 
-        $folder = rcube_charset_convert($folder, 'UTF7-IMAP');
+        $folder = rcube_charset::convert($folder, 'UTF7-IMAP');
         $folder = str_replace($delim, ' &raquo; ', $folder);
 
         if ($prefix)
@@ -467,10 +460,9 @@ class rcube_kolab
      */
     public static function folder_namespace($folder)
     {
-        $rcmail = rcmail::get_instance();
-        $rcmail->imap_init();
-
-        $namespace = $rcmail->imap->get_namespace();
+        $rcmail    = rcmail::get_instance();
+        $storage   = $rcmail->get_storage();
+        $namespace = $storage->get_namespace();
 
         if (!empty($namespace)) {
             foreach ($namespace as $nsname => $nsvalue) {
@@ -498,10 +490,13 @@ class rcube_kolab
      */
     public static function folder_selector($type, $attrs, $current = '')
     {
+        $rcmail    = rcmail::get_instance();
+        $storage   = $rcmail->get_storage();
+
         // get all folders of specified type
         $folders = self::get_folders($type);
 
-        $delim = $_SESSION['imap_delimiter'];
+        $delim = $storage->get_hierarchy_delimiter();
         $names = array();
         $len   = strlen($current);
 
@@ -528,12 +523,12 @@ class rcube_kolab
                 }
             }
 
-            $names[$name] = rcube_charset_convert($name, 'UTF7-IMAP');
+            $names[$name] = rcube_charset::convert($name, 'UTF7-IMAP');
         }
 
         // Make sure parent folder is listed (might be skipped e.g. if it's namespace root)
         if ($p_len && !isset($names[$parent])) {
-            $names[$parent] = rcube_charset_convert($parent, 'UTF7-IMAP');
+            $names[$parent] = rcube_charset::convert($parent, 'UTF7-IMAP');
         }
 
         // Sort folders list

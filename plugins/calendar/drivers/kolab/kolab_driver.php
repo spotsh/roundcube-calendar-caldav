@@ -78,7 +78,7 @@ class kolab_driver extends calendar_driver
       // convert to UTF8 and sort
       $names = array();
       foreach ($folders as $folder)
-        $names[$folder->name] = rcube_charset_convert($folder->name, 'UTF7-IMAP');
+        $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
 
       asort($names, SORT_LOCALE_STRING);
 
@@ -160,8 +160,8 @@ class kolab_driver extends calendar_driver
     }
     
     // subscribe to new calendar by default
-    $this->rc->imap_connect();
-    $this->rc->imap->subscribe($folder);
+    $storage = $this->rc->get_storage();
+    $storage->subscribe($folder);
 
     // create ID
     $id = rcube_kolab::folder_id($folder);
@@ -226,11 +226,11 @@ class kolab_driver extends calendar_driver
   public function subscribe_calendar($prop)
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
-      $this->rc->imap_connect();
+      $storage = $this->rc->get_storage();
       if ($prop['active'])
-        return $this->rc->imap->subscribe($cal->get_realname());
+        return $storage->subscribe($cal->get_realname());
       else
-        return $this->rc->imap->unsubscribe($cal->get_realname());
+        return $storage->unsubscribe($cal->get_realname());
     }
     
     return false;
@@ -246,14 +246,14 @@ class kolab_driver extends calendar_driver
    */
   private function folder_update(&$prop)
   {
-    $folder    = rcube_charset_convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+    $folder    = rcube_charset::convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
     $oldfolder = $prop['oldname']; // UTF7
     $parent    = $prop['parent']; // UTF7
-    $delimiter = $_SESSION['imap_delimiter'];
+    $storage   = $this->rc->get_storage();
+    $delimiter = $storage->get_hierarchy_delimiter();
 
     if (strlen($oldfolder)) {
-        $this->rc->imap_connect();
-        $options = $this->rc->imap->mailbox_info($oldfolder);
+        $options = $storage->folder_info($oldfolder);
     }
 
     if (!empty($options) && ($options['norename'] || $options['protected'])) {
@@ -285,14 +285,12 @@ class kolab_driver extends calendar_driver
     }
     else {
       // add namespace prefix (when needed)
-      $this->rc->imap_init();
-      $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+      $folder = $storage->mod_folder($folder, 'in');
     }
 
     // Check access rights to the parent folder
     if (strlen($parent) && (!strlen($oldfolder) || $oldfolder != $folder)) {
-      $this->rc->imap_connect();
-      $parent_opts = $this->rc->imap->mailbox_info($parent);
+      $parent_opts = $storage->folder_info($parent);
       if ($parent_opts['namespace'] != 'personal'
         && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
       ) {
@@ -320,8 +318,8 @@ class kolab_driver extends calendar_driver
     // TODO: also save 'showalarams' and other properties here
 
     if ($result && $prop['color']) {
-      if (!($meta_saved = $this->rc->imap->set_metadata($folder, array('/shared/vendor/kolab/color' => $prop['color']))))  // try in shared namespace
-        $meta_saved = $this->rc->imap->set_metadata($folder, array('/private/vendor/kolab/color' => $prop['color']));    // try in private namespace
+      if (!($meta_saved = $storage->set_metadata($folder, array('/shared/vendor/kolab/color' => $prop['color']))))  // try in shared namespace
+        $meta_saved = $storage->set_metadata($folder, array('/private/vendor/kolab/color' => $prop['color']));    // try in private namespace
       if ($meta_saved)
         unset($prop['color']);  // unsetting will prevent fallback to local user prefs
     }
@@ -1016,7 +1014,8 @@ class kolab_driver extends calendar_driver
 
     $hidden_fields[] = array('name' => 'oldname', 'value' => $folder);
 
-    $delim  = $_SESSION['imap_delimiter'];
+    $storage = $this->rc->get_storage();
+    $delim   = $storage->get_hierarchy_delimiter();
     $form   = array();
 
     if (strlen($folder)) {
@@ -1024,8 +1023,7 @@ class kolab_driver extends calendar_driver
       array_pop($path_imap);  // pop off name part
       $path_imap = implode($path_imap, $delim);
 
-      $this->rc->imap_connect();
-      $options = $this->rc->imap->mailbox_info($folder);
+      $options = $storage->folder_info($folder);
     }
     else {
       $path_imap = '';
@@ -1179,7 +1177,8 @@ class kolab_driver extends calendar_driver
 
     $hidden_fields[] = array('name' => 'oldname', 'value' => $folder);
 
-    $delim  = $_SESSION['imap_delimiter'];
+    $storage = $this->rc->get_storage();
+    $delim   = $storage->get_hierarchy_delimiter();
     $form   = array();
 
     if (strlen($folder)) {
@@ -1187,8 +1186,7 @@ class kolab_driver extends calendar_driver
       array_pop($path_imap);  // pop off name part
       $path_imap = implode($path_imap, $delim);
 
-      $this->rc->imap_connect();
-      $options = $this->rc->imap->mailbox_info($folder);
+      $options = $storage->folder_info($folder);
     
       // Allow plugins to modify the form content (e.g. with ACL form)
       $plugin = $this->rc->plugins->exec_hook('calendar_form_kolab',

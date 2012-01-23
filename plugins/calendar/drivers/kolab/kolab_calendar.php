@@ -145,7 +145,7 @@ class kolab_calendar
   public function get_foldername()
   {
     $parts = explode('/', $this->imap_folder);
-    return rcube_charset_convert(end($parts), 'UTF7-IMAP');
+    return rcube_charset::convert(end($parts), 'UTF7-IMAP');
   }
 
   /**
