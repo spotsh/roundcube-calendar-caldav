@@ -64,7 +64,7 @@ $labels['confidential'] = 'confidential';
 $labels['alarms'] = 'Reminder';
 $labels['generated'] = 'generated at';
 $labels['printdescriptions'] = 'Print descriptions';
-$labels['parentcalendar'] = 'Superior calendar';
+$labels['parentcalendar'] = 'Insert inside';
 $labels['searchearlierdates'] = '« Search for earlier events';
 $labels['searchlaterdates'] = 'Search for later events »';
 $labels['andnmore'] = '$nr more...';
@@ -210,6 +210,7 @@ $labels['localchangeswarning'] = 'You are about to make changes that will only b
 $labels['importsuccess'] = 'Successfully imported $nr events';
 $labels['importnone'] = 'No events found to be imported';
 $labels['importerror'] = 'An error occured while importing';
+$labels['aclnorights'] = 'You do not have administrator rights on this calendar.';
 
 // recurrence form
 $labels['repeat'] = 'Repeat';
