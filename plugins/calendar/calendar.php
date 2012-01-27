@@ -1978,7 +1978,7 @@ class calendar extends rcube_plugin
             $invitation = $itip->get_invitation($token);
 
             // save the event to his/her default calendar if not yet present
-            if (!$this->driver->get_event($this->event) && ($calendar = $this->get_default_calendar())) {
+            if (!$this->driver->get_event($this->event) && ($calendar = $this->get_default_calendar(true))) {
               $invitation['event']['calendar'] = $calendar['id'];
               if ($this->driver->new_event($invitation['event']))
                 $this->rc->output->command('display_message', $this->gettext(array('name' => 'importedsuccessfully', 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
