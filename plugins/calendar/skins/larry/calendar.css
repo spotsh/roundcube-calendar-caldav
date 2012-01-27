@@ -534,8 +534,8 @@ td.topalign {
 #edit-attendees-notify {
 	margin: 0.3em 0;
 	padding: 0.5em;
-	background-color: #F7FDCB;
-	border: 1px solid #C2D071;
+	border: 1px solid #ffdf0e;
+	background-color: #fef893;
 }
 
 #edit-attendees-table {
@@ -1192,11 +1192,7 @@ div.calendar-invitebox .rsvp-status.tentative {
 	width: 40em;
 	margin: 80px auto;
 	padding: 10px 10px 10px 90px;
-	border: 1px solid #ccc;
-	box-shadow: 1px 1px 24px #ccc;
-	-moz-box-shadow: 1px 1px 18px #ccc;
-	-webkit-box-shadow: #ccc 1px 1px 18px;
-	background: url(images/invitation.png) 10px 10px no-repeat #fbfbfb;
+	background: url(images/invitation.png) 10px 10px no-repeat #fff;
 }
 
 .calendaritipattend .calendar-invitebox {

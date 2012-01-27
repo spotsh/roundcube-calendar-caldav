@@ -238,6 +238,26 @@ class calendar extends rcube_plugin
     return $this->ical;
   }
 
+  /**
+   *
+   */
+  public function get_default_calendar($writeable = false)
+  {
+    $cal_id = $this->rc->config->get('calendar_default_calendar');
+    $calendars = $this->driver->list_calendars();
+    $calendar = $calendars[$cal_id] ? $calendars[$cal_id] : null;
+    if (!$calendar || ($writeable && $calendar['readonly'])) {
+      foreach ($calendars as $cal) {
+        if (!$writeable || !$cal['readonly']) {
+          $calendar = $cal;
+          break;
+        }
+      }
+    }
+    
+    return $calendar;
+  }
+
 
   /**
    * Render the main calendar view from skin template
@@ -1944,13 +1964,26 @@ class calendar extends rcube_plugin
               break;
             }
           }
-          
+
           // send itip reply to organizer
           if ($status && $itip->update_invitation($invitation, $invitation['attendee'], strtoupper($status))) {
             $this->invitestatus = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
           }
           else
             $this->rc->output->command('display_message', $this->gettext('errorsaving'), 'error', -1);
+
+          // if user is logged in...
+          if ($this->rc->user->ID) {
+            $this->load_driver();
+            $invitation = $itip->get_invitation($token);
+
+            // save the event to his/her default calendar if not yet present
+            if (!$this->driver->get_event($this->event) && ($calendar = $this->get_default_calendar())) {
+              $invitation['event']['calendar'] = $calendar['id'];
+              if ($this->driver->new_event($invitation['event']))
+                $this->rc->output->command('display_message', $this->gettext(array('name' => 'importedsuccessfully', 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
+            }
+          }
         }
         
         $this->register_handler('plugin.event_inviteform', array($this, 'itip_event_inviteform'));
@@ -1971,10 +2004,10 @@ class calendar extends rcube_plugin
   /**
    *
    */
-  public function itip_event_inviteform($p)
+  public function itip_event_inviteform($attrib)
   {
     $hidden = new html_hiddenfield(array('name' => "_t", 'value' => $this->token));
-    return html::tag('form', array('action' => $this->rc->url(array('task' => 'calendar', 'action' => 'attend')), 'method' => 'post', 'noclose' => true)) . $hidden->show();
+    return html::tag('form', array('action' => $this->rc->url(array('task' => 'calendar', 'action' => 'attend')), 'method' => 'post', 'noclose' => true) + $attrib) . $hidden->show();
   }
   
   /**
