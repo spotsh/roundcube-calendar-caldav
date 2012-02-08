@@ -10,7 +10,7 @@
 <roundcube:include file="/includes/header.html" />
 
 <div id="mainscreen">
-	<div id="sidebar">
+	<div id="calendarsidebar">
 		<div id="quicksearchbar">
 			<roundcube:object name="plugin.searchform" id="quicksearchbox" />
 			<a id="searchmenulink" class="iconbutton searchoptions" > </a>
@@ -29,7 +29,7 @@
 			</div>
 		</div>
 	</div>
-	<div id="sidebartoggle"></div>
+	<div id="calendarsidebartoggle"></div>
 	
 	<div id="calendartoolbar" class="toolbar">
 		<roundcube:button command="addevent" type="link" class="button addevent disabled" classAct="button addevent" classSel="button addevent pressed" label="calendar.new_event" title="calendar.new_event" />
@@ -176,24 +176,24 @@ $(document).ready(function(e){
 	UI.init();
 
 	// initialize sidebar toggle
-	$('#sidebartoggle').click(function() {
+	$('#calendarsidebartoggle').click(function() {
 		var width = $(this).data('sidebarwidth');
 		var offset = $(this).data('offset');
-		var $sidebar = $('#sidebar'), time = 250;
+		var $sidebar = $('#calendarsidebar'), time = 250;
 		
 		if ($sidebar.is(':visible')) {
-			$sidebar.animate({ left:'-'+(width+10)+'px' }, time, function(){ $('#sidebar').hide(); });
-			$(this).animate({ left:'8px'}, time, function(){ $('#sidebartoggle').addClass('sidebarclosed') });
+			$sidebar.animate({ left:'-'+(width+10)+'px' }, time, function(){ $('#calendarsidebar').hide(); });
+			$(this).animate({ left:'8px'}, time, function(){ $('#calendarsidebartoggle').addClass('sidebarclosed') });
 			$('#calendar').animate({ left:'20px'}, time, function(){ $(this).fullCalendar('render'); });
 		}
 		else {
 			$sidebar.show().animate({ left:'10px' }, time);
-			$(this).animate({ left:offset+'px'}, time, function(){ $('#sidebartoggle').removeClass('sidebarclosed'); });
+			$(this).animate({ left:offset+'px'}, time, function(){ $('#calendarsidebartoggle').removeClass('sidebarclosed'); });
 			$('#calendar').animate({ left:(width+16)+'px'}, time, function(){ $(this).fullCalendar('render'); });
 		}
 	})
-	.data('offset', $('#sidebartoggle').position().left)
-	.data('sidebarwidth', $('#sidebar').width() + $('#sidebar').position().left);
+	.data('offset', $('#calendarsidebartoggle').position().left)
+	.data('sidebarwidth', $('#calendarsidebar').width() + $('#calendarsidebar').position().left);
 });
 
 </script>

@@ -2158,7 +2158,7 @@ function rcube_calendar_ui(settings)
     // adjust calendar view size
     this.view_resize = function()
     {
-      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').height() + 2 : 0;
+      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').outerHeight() : 0;
       fc.fullCalendar('option', 'height', $('#calendar').height() - footer);
     };
 
