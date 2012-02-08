@@ -22,7 +22,7 @@ body.calendarmain {
 	bottom: 10px;
 }
 
-#sidebar {
+#calendarsidebar {
 	position: absolute;
 	top: 37px;
 	left: 10px;
@@ -58,7 +58,7 @@ body.calendarmain {
 	cursor: pointer;
 }
 
-#sidebartoggle {
+#calendarsidebartoggle {
 	position: absolute;
 	left: 244px;
 	width: 8px;
@@ -72,7 +72,7 @@ div.sidebarclosed {
 	background-position: -8px 48% !important;
 }
 
-#sidebartoggle:hover {
+#calendarsidebartoggle:hover {
 	background-color: #ddd;
 }
 

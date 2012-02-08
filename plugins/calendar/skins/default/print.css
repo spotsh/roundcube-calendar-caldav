@@ -20,6 +20,10 @@ body, td, th, div, p, h3, select, input, textarea {
 	overflow: visible;
 }
 
+#calendar .fc-header-right {
+	padding-right: 0;
+}
+
 #printconfig {
 	position: fixed;
 	top: 0;

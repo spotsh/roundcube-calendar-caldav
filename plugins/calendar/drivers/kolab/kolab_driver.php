@@ -1193,6 +1193,9 @@ class kolab_driver extends calendar_driver
         array('form' => $form, 'options' => $options, 'name' => $folder));
     }
 
+    if (!$plugin['form']['sharing']['content'])
+        $plugin['form']['sharing']['content'] = html::div('hint', $this->cal->gettext('aclnorights'));
+
     return $plugin['form']['sharing']['content'];
   }
 

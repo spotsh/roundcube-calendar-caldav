@@ -2158,7 +2158,7 @@ function rcube_calendar_ui(settings)
     // adjust calendar view size
     this.view_resize = function()
     {
-      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').height() + 2 : 0;
+      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').outerHeight() : 0;
       fc.fullCalendar('option', 'height', $('#calendar').height() - footer);
     };
 
@@ -2208,7 +2208,7 @@ function rcube_calendar_ui(settings)
           var id = $(this).data('id');
           rcmail.select_folder(id, 'rcmlical');
           rcmail.enable_command('calendar-edit', true);
-          rcmail.enable_command('calendar-remove', 'events-import', 'calendar-showurl', !me.calendars[id].readonly);
+          rcmail.enable_command('calendar-remove', 'events-import', 'calendar-showurl', true);
           me.selected_calendar = id;
         })
         .dblclick(function(){ me.calendar_edit_dialog(me.calendars[me.selected_calendar]); })
