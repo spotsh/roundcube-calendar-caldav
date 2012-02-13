@@ -1017,22 +1017,30 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     private function _sort_contacts_comp($a, $b)
     {
-        $a_value = $a[$this->sort_col];
-        $b_value = $b[$this->sort_col];
+        $a_value = $b_value = '';
 
-        if (!$a_value && $this->sort_col == 'name') {
-            $a_value = join(' ', array_filter(array($a['firstname'], $a['middlename'], $a['surname'])));
-        }
-        if (!$a_value) {
-            $a_value = is_array($a['email']) ? $a['email'][0] : $a['email'];
+        switch ($this->sort_col) {
+        case 'name':
+            $a_value = $a['name'] . $a['prefix'];
+            $b_value = $b['name'] . $b['prefix'];
+        case 'firstname':
+            $a_value .= $a['firstname'] . $a['middlename'] . $a['surname'];
+            $b_value .= $b['firstname'] . $b['middlename'] . $b['surname'];
+            break;
+
+        case 'surname':
+            $a_value = $a['surname'] . $a['firstname'] . $a['middlename'];
+            $b_value = $b['surname'] . $b['firstname'] . $b['middlename'];
+            break;
+
+        default:
+            $a_value = $a[$this->sort_col];
+            $b_value = $b[$this->sort_col];
+            break;
         }
 
-        if (!$b_value && $this->sort_col == 'name') {
-            $b_value = join(' ', array_filter(array($b['firstname'], $b['middlename'], $b['surname'])));
-        }
-        if (!$b_value) {
-            $b_value = is_array($b['email']) ? $b['email'][0] : $b['email'];
-        }
+        $a_value .= is_array($a['email']) ? $a['email'][0] : $a['email'];
+        $b_value .= is_array($b['email']) ? $b['email'][0] : $b['email'];
 
         // return strcasecmp($a_value, $b_value);
         // make sorting unicode-safe and locale-dependent
