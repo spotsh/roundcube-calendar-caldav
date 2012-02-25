@@ -1,11 +1,12 @@
 /*
- * FullCalendar v1.5.2 Stylesheet
+ * FullCalendar v1.5.3-rcube-0.7.1 Stylesheet
  *
  * Copyright (c) 2011 Adam Shaw
+ * Copyright (c) 2011, Kolab Systems AG
  * Dual licensed under the MIT and GPL licenses, located in
  * MIT-LICENSE.txt and GPL-LICENSE.txt respectively.
  *
- * Date: Sun Aug 21 22:06:09 2011 -0700
+ * Date: Mon Feb 13 23:00:46 2012 +0100
  *
  */
 
@@ -477,7 +478,7 @@ table.fc-border-separate {
 	text-decoration: none;
 	cursor: pointer;
 	padding: 1px;
-}	
+}
 
 /* Agenda Week View, Agenda Day View
 ------------------------------------------------------------------------*/
@@ -620,8 +621,7 @@ table.fc-border-separate {
 .fc-agenda .ui-resizable-resizing { /* TODO: better selector */
 	_overflow: hidden;
 	}
-
-
+	
 .fc-timeline {
 	position: absolute;
 	width: 100%;
