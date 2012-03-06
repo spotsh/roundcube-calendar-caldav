@@ -287,6 +287,7 @@ class kolab_storage_folder
             }
 
             // TODO: update cache with new UID
+            $this->uid2msg[$object['uid']] = $result;
         }
         
         return $result;
@@ -296,16 +297,16 @@ class kolab_storage_folder
     /**
      * Delete the specified object from this folder.
      *
-     * @param  array   $object  The Kolab object to delete
+     * @param  mixed   $object  The Kolab object to delete or object UID
      * @param  boolean $trigger Should the folder be triggered?
      * @param  boolean $expunge Should the folder be expunged?
      *
      * @return boolean True if successful, false on error
      */
-    function delete($object, $trigger = true, $expunge = true)
+    function delete($object, $expunge = true, $trigger = true)
     {
-        if (!empty($object['_msguid'])) {
-            return $this->imap->delete_message($object['_msguid'], $this->name);
+        if ($msguid = is_array($object) ? $object['_msguid'] : $this->uid2msguid($object)) {
+            return $this->imap->delete_message($msguid, $this->name);
         }
 
         return false;

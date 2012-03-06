@@ -72,7 +72,7 @@ abstract class kolab_format
 
         if (is_a($datetime, 'DateTime')) {
             $result = new KolabDateTime();
-            $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'), 0, 0, 0);
+            $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
 
             if (!$dateonly)
                 $result->setTime($datetime->format('G'), $datetime->format('i'), $datetime->format('s'));
@@ -89,12 +89,26 @@ abstract class kolab_format
      * @param object vector Object
      * @return array Indexed array contaning vector elements
      */
-    public static function vector2array($vec)
+    public static function vector2array($vec, $max = PHP_INT_MAX)
     {
         $arr = array();
-        for ($i=0; $i < $vec->size(); $i++)
+        for ($i=0; $i < $vec->size() && $i < $max; $i++)
             $arr[] = $vec->get($i);
         return $arr;
+    }
+
+    /**
+     * Build a libkolabxml vector (string) from a PHP array
+     *
+     * @param array Array with vector elements
+     * @return object vectors
+     */
+    public static function array2vector($arr)
+    {
+        $vec = new vectors;
+        foreach ((array)$arr as $val)
+            $vec->push($val);
+        return $vec;
     }
 
     /**

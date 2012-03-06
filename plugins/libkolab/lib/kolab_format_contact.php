@@ -4,7 +4,26 @@
 class kolab_format_contact extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
-    
+
+    public $phonetypes = array(
+        'home'    => Telephone::Home,
+        'work'    => Telephone::Work,
+        'text'    => Telephone::Text,
+        'main'    => Telephone::Voice,
+        'homefax' => Telephone::Fax,
+        'workfax' => Telephone::Fax,
+        'mobile'  => Telephone::Cell,
+        'video'   => Telephone::Video,
+        'pager'   => Telephone::Pager,
+        'car'     => Telephone::Car,
+        'other'   => Telephone::Textphone,
+    );
+
+    public $addresstypes = array(
+        'home' => Address::Home,
+        'work' => Address::Work,
+    );
+
     private $data;
     private $obj;
 
@@ -36,12 +55,29 @@ class kolab_format_contact extends kolab_format
       'body'         => 'notes',
       'pgp-publickey' => 'pgppublickey',
       'free-busy-url' => 'freebusyurl',
-      'gender'       => 'gender',
     );
+    private $kolab2_phonetypes = array(
+        'home1' => 'home',
+        'business1' => 'work',
+        'business2' => 'work',
+        'businessfax' => 'workfax',
+    );
+    private $kolab2_addresstypes = array(
+        'business' => 'work'
+    );
+    private $kolab2_gender = array(0 => 'male', 1 => 'female');
 
+
+    /**
+     * Default constructor
+     */
     function __construct()
     {
         $this->obj = new Contact;
+
+        // complete phone types
+        $this->phonetypes['homefax'] |= Telephone::Home;
+        $this->phonetypes['workfax'] |= Telephone::Work;
     }
 
     /**
@@ -85,44 +121,49 @@ class kolab_format_contact extends kolab_format
         $this->obj->setUid($object['uid']);
 
         $nc = new NameComponents;
-        // surname
-        $sn = new vectors();
-        $sn->push($object['surname']);
-        $nc->setSurnames($sn);
-        // firstname
-        $gn = new vectors();
-        $gn->push($object['firstname']);
-        $nc->setGiven($gn);
-        // middle name
-        $mn = new vectors();
-        if ($object['middlename'])
-            $mn->push($object['middlename']);
-        $nc->setAdditional($mn);
-        // prefix
-        $px = new vectors();
-        if ($object['prefix'])
-            $px->push($object['prefix']);
-        $nc->setPrefixes($px);
-        // suffix
-        $sx = new vectors();
-        if ($object['suffix'])
-            $sx->push($object['suffix']);
-        $nc->setSuffixes($sx);
-
+        $nc->setSurnames(self::array2vector($object['surname']));
+        $nc->setGiven(self::array2vector($object['firstname']));
+        $nc->setAdditional(self::array2vector($object['middlename']));
+        $nc->setPrefixes(self::array2vector($object['prefix']));
+        $nc->setSuffixes(self::array2vector($object['suffix']));
         $this->obj->setNameComponents($nc);
         $this->obj->setName($object['name']);
 
-        // email addresses
-        $emails = new vectors;
-        foreach ($object['email'] as $em)
-            $emails->push($em);
-        $this->obj->setEmailAddresses($emails);
+        if ($object['nickname'])
+            $this->obj->setNickNames(self::array2vector($object['nickname']));
+
+        // organisation related properties (affiliation)
+        $org = new Affiliation;
+        if ($object['organization'])
+            $org->setOrganisation($object['organization']);
+        if ($object['jobtitle'])
+            $org->setTitles(self::array2vector($object['jobtitle']));
+        if ($object['officelocation'])
+            $org->setOffices(self::array2vector($object['officelocation']));
+        if ($object['manager'])
+            $org->setManagers(self::array2vector($object['manager']));
+        if ($object['assistant'])
+            $org->setAssistants(self::array2vector($object['assistant']));
+        // department ?
+
+        $orgs = new vectoraffiliation;
+        $orgs->push($org);
+        $this->obj->setAffiliations($orgs);
+
+        // email, im, url
+        $this->obj->setEmailAddresses(self::array2vector($object['email']));
+        $this->obj->setIMaddresses(self::array2vector($object['im']));
+        $this->obj->setUrls(self::array2vector($object['website']));
 
         // addresses
         $adrs = new vectoraddress;
         foreach ($object['address'] as $address) {
             $adr = new Address;
-            $adr->setTypes($address['type'] == 'work' ? Address::Work : Address::Home);
+            $type = $this->addresstypes[$address['type']];
+            if (isset($type))
+                $adr->setTypes($type);
+            else if ($address['type'])
+                $adr->setLabel($address['type']);
             if ($address['street'])
                 $adr->setStreet($address['street']);
             if ($address['locality'])
@@ -138,6 +179,30 @@ class kolab_format_contact extends kolab_format
         }
         $this->obj->setAddresses($adrs);
 
+        // telephones
+        $tels = new vectortelephone;
+        foreach ((array)$object['phone'] as $phone) {
+            $tel = new Telephone;
+            if (isset($this->phonetypes[$phone['type']]))
+                $tel->setTypes($this->phonetypes[$phone['type']]);
+            $tel->setNumber($phone['number']);
+            $tels->push($tel);
+        }
+        $this->obj->setTelephones($tels);
+
+        if ($object['gender'])
+            $this->obj->setGender($object['gender'] == 'female' ? Contact::Female : Contact::Male);
+        if ($object['notes'])
+            $this->obj->setNote($object['notes']);
+        if ($object['freebusyurl'])
+            $this->obj->setFreeBusyUrl($object['freebusyurl']);
+//        if ($object['birthday'])
+//            $this->obj->setBDay(self::getDateTime($object['birthday'], null, true));
+//        if ($object['anniversary'])
+//            $this->obj->setAnniversary(self::getDateTime($object['anniversary'], null, true));
+
+        // handle spouse, children, profession, initials, pgppublickey, etc.
+
         // cache this data
         $this->data = $object;
     }
@@ -150,7 +215,6 @@ class kolab_format_contact extends kolab_format
         return $this->data || (is_object($this->obj) && true /*$this->obj->isValid()*/);
     }
 
-
     /**
      * Convert the Contact object into a hash array data structure
      *
@@ -162,7 +226,7 @@ class kolab_format_contact extends kolab_format
         if (!empty($this->data))
             return $this->data;
 
-        // TODO: read object properties into local data object
+        // read object properties into local data object
         $object = array(
             'uid'       => $this->obj->uid(),
             # 'changed'   => $this->obj->lastModified(),
@@ -175,14 +239,30 @@ class kolab_format_contact extends kolab_format
         $object['middlename'] = join(' ', self::vector2array($nc->additional()));
         $object['prefix']     = join(' ', self::vector2array($nc->prefixes()));
         $object['suffix']     = join(' ', self::vector2array($nc->suffixes()));
+        $object['nickname']   = join(' ', self::vector2array($this->obj->nickNames()));
 
-        $object['email'] = self::vector2array($this->obj->emailAddresses());
+        // organisation related properties (affiliation)
+        $orgs = $this->obj->affiliations();
+        if ($orgs->size()) {
+            $org = $orgs->get(0);
+            $object['organization']   = $org->organisation();
+            $object['jobtitle']       = join(' ', self::vector2array($org->titles()));
+            $object['manager']        = join(' ', self::vector2array($org->managers()));
+            $object['assistant']      = join(' ', self::vector2array($org->assistants()));
+            $object['officelocation'] = join(' ', self::vector2array($org->offices()));
+        }
 
+        $object['email']   = self::vector2array($this->obj->emailAddresses());
+        $object['im']      = self::vector2array($this->obj->imAddresses());
+        $object['website'] = self::vector2array($this->obj->urls());
+
+        // addresses
+        $adrtypes = array_flip($this->addresstypes);
         $addresses = $this->obj->addresses();
         for ($i=0; $i < $addresses->size(); $i++) {
             $adr = $addresses->get($i);
             $object['address'][] = array(
-                'type'     => $adr->types() == Address::Work ? 'work' : 'home',
+                'type'     => $adrtypes[$adr->types()] ? $adrtypes[$adr->types()] : '', /*$adr->label(),*/
                 'street'   => $adr->street(),
                 'code'     => $adr->code(),
                 'locality' => $adr->locality(),
@@ -190,6 +270,20 @@ class kolab_format_contact extends kolab_format
                 'country'  => $adr->country()
             );
         }
+
+        // telehones
+        $tels = $this->obj->telephones();
+        $teltypes = array_flip($this->phonetypes);
+        for ($i=0; $i < $tels->size(); $i++) {
+            $tel = $tels->get($i);
+            $object['phone'][] = array('number' => $tel->number(), 'type' => $teltypes[$tel->types()]);
+        }
+
+        $object['notes'] = $this->obj->note();
+        $object['freebusyurl'] = $this->obj->freeBusyUrl();
+        
+        if ($g = $this->obj->gender())
+            $object['gender'] = $g == Contact::Female ? 'female' : 'male';
 
         $this->data = $object;
         return $this->data;
@@ -212,7 +306,7 @@ class kolab_format_contact extends kolab_format
         }
 
         if (isset($record['gender']))
-            $object['gender'] = $this->gender_map[$record['gender']];
+            $object['gender'] = $this->kolab2_gender[$record['gender']];
 
         foreach ((array)$record['email'] as $i => $email)
             $object['email'][] = $email['smtp-address'];
@@ -223,7 +317,7 @@ class kolab_format_contact extends kolab_format
         if (is_array($record['address'])) {
             foreach ($record['address'] as $i => $adr) {
                 $object['address'][] = array(
-                    'type' => $adr['type'],
+                    'type' => $this->kolab2_addresstypes[$adr['type']] ? $this->kolab2_addresstypes[$adr['type']] : $adr['type'],
                     'street' => $adr['street'],
                     'locality' => $adr['locality'],
                     'code' => $adr['postal-code'],
