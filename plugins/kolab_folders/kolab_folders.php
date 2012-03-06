@@ -408,7 +408,7 @@ class kolab_folders extends rcube_plugin
         // Code copied from rcube_imap::_list_mailboxes()
         // Server supports LIST-EXTENDED, we can use selection options
         // #1486225: Some dovecot versions returns wrong result using LIST-EXTENDED
-        if (!$this->rc->config->get('imap_force_lsub') && $imap->get_capability('LIST-EXTENDED')) {
+        if (!$this->rc->config->get('imap_force_lsub') && $storage->get_capability('LIST-EXTENDED')) {
             // This will also set mailbox options, LSUB doesn't do that
             $a_folders = $storage->conn->listMailboxes($root, $name,
                 NULL, array('SUBSCRIBED'));
