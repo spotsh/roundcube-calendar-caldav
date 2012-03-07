@@ -129,11 +129,27 @@ class kolab_storage_folder
      *
      * @return string  Permissions as string
      */
-    function get_acl()
+    public function get_acl()
     {
         return join('', (array)$this->imap->get_acl($this->name));
     }
 
+    /**
+     * Get number of objects stored in this folder
+     *
+     * @param string  $type Object type (e.g. contact, event, todo, journal, note, configuration)
+     * @return integer The number of objects of the given type
+     */
+    public function count($type = null)
+    {
+        if (!$type) $type = $this->type;
+
+        // search by object type
+        $ctype  = self::KTYPE_PREFIX . $type;
+        $index = $this->imap->search_once($this->name, 'HEADER X-Kolab-Type ' . $ctype);
+
+        return $index->count();
+    }
 
     /**
      * List all Kolab objects of the given type
@@ -141,7 +157,7 @@ class kolab_storage_folder
      * @param string  $type Object type (e.g. contact, event, todo, journal, note, configuration)
      * @return array  List of Kolab data objects (each represented as hash array)
      */
-    function get_objects($type = null)
+    public function get_objects($type = null)
     {
         if (!$type) $type = $this->type;
 
@@ -303,7 +319,7 @@ class kolab_storage_folder
      *
      * @return boolean True if successful, false on error
      */
-    function delete($object, $expunge = true, $trigger = true)
+    public function delete($object, $expunge = true, $trigger = true)
     {
         if ($msguid = is_array($object) ? $object['_msguid'] : $this->uid2msguid($object)) {
             return $this->imap->delete_message($msguid, $this->name);
@@ -319,6 +335,19 @@ class kolab_storage_folder
     public function delete_all()
     {
         return $this->imap->clear_folder($this->name);
+    }
+
+
+    /**
+     * Restore a previously deleted object
+     *
+     * @param string Object UID
+     * @return mixed Message UID on success, false on error
+     */
+    public function undelete($uid)
+    {
+        // TODO: implement this
+        return false;
     }
 
 
