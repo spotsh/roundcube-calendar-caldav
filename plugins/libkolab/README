@@ -1,0 +1,16 @@
+libkolab plugin to access to Kolab groupware data
+=================================================
+
+The contained library classes establish a connection to the Kolab server
+and manage the access to the Kolab groupware objects stored in various
+IMAP folders. For reading and writing these objects, the PHP bindings of
+the libkolabxml library are used.
+
+
+REQUIREMENTS
+------------
+* libkolabxml PHP bindings
+  - kolabformat.so loaded into PHP
+  - kolabformat.php placed somewhere in the include_path
+* Horde Kolab_Format package and all of its dependencies
+
