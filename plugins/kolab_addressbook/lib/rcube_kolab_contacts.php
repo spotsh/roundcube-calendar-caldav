@@ -46,7 +46,7 @@ class rcube_kolab_contacts extends rcube_addressbook
       'department'   => array('limit' => 1),
       'email'        => array('subtypes' => null),
       'phone'        => array(),
-      'address'      => array('subtypes' => array('home','business')),
+      'address'      => array('subtypes' => array('home','work')),
       'officelocation' => array('type' => 'text', 'size' => 40, 'maxlength' => 50, 'limit' => 1,
                                 'label' => 'kolab_addressbook.officelocation', 'category' => 'main'),
       'website'      => array('subtypes' => null),
@@ -249,6 +249,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // list member of the selected group
         if ($this->gid) {
+            $this->_fetch_groups();
             $seen = array();
             $this->result->count = 0;
             foreach ((array)$this->distlists[$this->gid]['member'] as $member) {
@@ -256,8 +257,11 @@ class rcube_kolab_contacts extends rcube_addressbook
                 if (is_array($this->filter['ids']) && array_search($member['ID'], $this->filter['ids']) === false)
                     continue;
 
-                if ($this->contacts[$member['ID']] && !$seen[$member['ID']]++)
+                $contact = $this->storagefolder->get_object($member['uid']);
+                if ($contact  && !$seen[$member['ID']]++) {
+                    $this->contacts[$member['ID']] = $this->_to_rcube_contact($contact);
                     $this->result->count++;
+                }
             }
             $ids = array_keys($seen);
         }
@@ -518,11 +522,11 @@ class rcube_kolab_contacts extends rcube_addressbook
 
             $saved = $this->storagefolder->save($object, 'contact');
 
-            if (PEAR::isError($saved)) {
+            if (!$saved) {
                 raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
-                  'message' => "Error saving contact object to Kolab server:" . $saved->getMessage()),
+                  'message' => "Error saving contact object to Kolab server"),
                 true, false);
             }
             else {
@@ -553,7 +557,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             $object = array_merge($old, $this->_from_rcube_contact($save_data));
 
             $saved = $this->storagefolder->save($object, 'contact', $uid);
-            if (!$saved || PEAR::isError($saved)) {
+            if (!$saved) {
                 raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
@@ -563,6 +567,8 @@ class rcube_kolab_contacts extends rcube_addressbook
             else {
                 $this->contacts[$id] = $this->_to_rcube_contact($object);
                 $updated = true;
+                
+                // TODO: update data in groups this contact is member of
             }
         }
 
@@ -717,16 +723,16 @@ class rcube_kolab_contacts extends rcube_addressbook
         );
         $saved = $this->storagefolder->save($list, 'distribution-list');
 
-        if (PEAR::isError($saved)) {
+        if (!$saved) {
             raise_error(array(
               'code' => 600, 'type' => 'php',
               'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list object to Kolab server:" . $saved->getMessage()),
+              'message' => "Error saving distribution-list object to Kolab server"),
             true, false);
             return false;
         }
         else {
-            $id = md5($list['uid']);
+            $id = $this->_uid2id($list['uid']);
             $this->distlists[$id] = $list;
             $result = array('id' => $id, 'name' => $name);
         }
@@ -748,11 +754,11 @@ class rcube_kolab_contacts extends rcube_addressbook
         if ($list = $this->distlists[$gid])
             $deleted = $this->storagefolder->delete($list['uid']);
 
-        if (PEAR::isError($deleted)) {
+        if (!$deleted) {
             raise_error(array(
               'code' => 600, 'type' => 'php',
               'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error deleting distribution-list object from the Kolab server:" . $deleted->getMessage()),
+              'message' => "Error deleting distribution-list object from the Kolab server"),
             true, false);
         }
         else
@@ -778,11 +784,11 @@ class rcube_kolab_contacts extends rcube_addressbook
             $saved = $this->storagefolder->save($list, 'distribution-list', $list['uid']);
         }
 
-        if (PEAR::isError($saved)) {
+        if (!$saved) {
             raise_error(array(
               'code' => 600, 'type' => 'php',
               'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list object to Kolab server:" . $saved->getMessage()),
+              'message' => "Error saving distribution-list object to Kolab server"),
             true, false);
             return false;
         }
@@ -806,7 +812,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         $exists = array();
 
         $this->_fetch_groups();
-        $this->_fetch_contacts();
         $list = $this->distlists[$gid];
 
         foreach ((array)$list['member'] as $i => $member)
@@ -817,13 +822,14 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         foreach ($ids as $contact_id) {
             if ($uid = $this->_id2uid($contact_id)) {
-                $contact = $this->contacts[$contact_id];
+                $contact = $this->storagefolder->get_object($uid);
                 foreach ($this->get_col_values('email', $contact, true) as $email) {
                     $list['member'][] = array(
                         'uid' => $uid,
-                        'display-name' => $contact['name'],
-                        'smtp-address' => $email,
+                        'mailto' => $email,
+                        'name' => $contact['name'],
                     );
+                    break;
                 }
                 $this->groupmembers[$contact_id][] = $gid;
                 $added++;
@@ -833,11 +839,11 @@ class rcube_kolab_contacts extends rcube_addressbook
         if ($added)
             $saved = $this->storagefolder->save($list, 'distribution-list', $list['uid']);
 
-        if (PEAR::isError($saved)) {
+        if (!$saved) {
             raise_error(array(
               'code' => 600, 'type' => 'php',
               'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list to Kolab server:" . $saved->getMessage()),
+              'message' => "Error saving distribution-list to Kolab server"),
             true, false);
             $added = false;
         }
@@ -874,11 +880,11 @@ class rcube_kolab_contacts extends rcube_addressbook
         $list['member'] = $new_member;
         $saved = $this->storagefolder->save($list, 'distribution-list', $list['uid']);
 
-        if (PEAR::isError($saved)) {
+        if (!$saved) {
             raise_error(array(
               'code' => 600, 'type' => 'php',
               'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list object to Kolab server:" . $saved->getMessage()),
+              'message' => "Error saving distribution-list object to Kolab server"),
             true, false);
         }
         else {
@@ -1046,8 +1052,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         // photo is stored as separate attachment
-        if ($record['photo'] && ($att = $record['_attachments'][$record['photo']])) {
-            $out['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['key']);
+        if ($record['photo'] && strlen($record['photo']) < 255 && ($att = $record['_attachments'][$record['photo']])) {
+            // only fetch photo content if requested
+            if (rcmail::get_instance()->action == 'photo')
+                $record['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['key']);
         }
 
         // remove empty fields
@@ -1062,13 +1070,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         if (!$contact['uid'] && $contact['ID'])
             $contact['uid'] = $this->_id2uid($contact['ID']);
 
-/*
-        // format dates
-        if ($object['birthday'] && ($date = @strtotime($object['birthday'])))
-            $object['birthday'] = date('Y-m-d', $date);
-        if ($object['anniversary'] && ($date = @strtotime($object['anniversary'])))
-            $object['anniversary'] = date('Y-m-d', $date);
-*/
         $contact['email'] = array_filter($this->get_col_values('email', $contact, true));
         $contact['website'] = array_filter($this->get_col_values('website', $contact, true));
         $contact['im'] = array_filter($this->get_col_values('im', $contact, true));
@@ -1111,6 +1112,10 @@ class rcube_kolab_contacts extends rcube_addressbook
             'content' => preg_match('![^a-z0-9/=+-]!i', $contact['photo']) ? $contact['photo'] : base64_decode($contact['photo']),
           );
           $contact['photo'] = $attkey;
+        }
+        else if (isset($contact['photo']) && empty($contact['photo'])) {
+            // unset photo attachment
+            $contact['_attachments']['photo.attachment'] = false;
         }
 
         return $contact;

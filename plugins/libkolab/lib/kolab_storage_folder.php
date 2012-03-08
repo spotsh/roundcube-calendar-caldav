@@ -202,16 +202,19 @@ class kolab_storage_folder
      * Fetch a Kolab object attachment which is stored in a separate part
      * of the mail MIME message that represents the Kolab record.
      *
-     * @param string Object's UID
-     * @param string The attachment key stored in the Kolab XML
-     * @return mixed The attachment content as binary string
+     * @param string  Object's UID
+     * @param string  The attachment's mime number
+     * @param string  IMAP folder where message is stored;
+     *                If set, that also implies that the given UID is an IMAP UID
+     * @return mixed  The attachment content as binary string
      */
-    public function get_attachment($uid, $key)
+    public function get_attachment($uid, $part, $mailbox = null)
     {
-        // TODO: implement this
+        if ($msguid = ($mailbox ? $uid : $this->uid2msguid($uid))) {
+            if ($mailbox)
+                $this->imap->set_folder($mailbox);
 
-        if ($msguid = $this->uid2msguid($uid)) {
-            $message = new rcube_message($msguid);
+            return $this->imap->get_message_part($msguid, $part);
         }
 
         return null;
@@ -219,21 +222,34 @@ class kolab_storage_folder
 
 
     /**
+     * Fetch the mime message from the storage server and extract
+     * the Kolab groupware object from it
      *
+     * @param string The IMAP message UID to fetch
+     * @param string The object type expected
+     * @return array Hash array representing the Kolab object
      */
-    private function read_object($msguid, $type = null)
+    private function read_object($msguid, $type = null, $folder = null)
     {
         if (!$type) $type = $this->type;
+        if (!$folder) $folder = $this->name;
         $ctype= self::KTYPE_PREFIX . $type;
 
-        $this->imap->set_folder($this->name);
+        $this->imap->set_folder($folder);
         $message = new rcube_message($msguid);
+        $attachments = array();
 
         // get XML part
         foreach ((array)$message->attachments as $part) {
-            if ($part->mimetype == $ctype || preg_match('!application/([a-z]+\+)?xml!', $part->mimetype)) {
+            if (!$xml && ($part->mimetype == $ctype || preg_match('!application/([a-z]+\+)?xml!', $part->mimetype))) {
                 $xml = $part->body ? $part->body : $message->get_part_content($part->mime_id);
-                break;
+            }
+            else if ($part->filename) {
+                $attachments[$part->filename] = array(
+                    'key' => $part->mime_id,
+                    'type' => $part->mimetype,
+                    'size' => $part->size,
+                );
             }
         }
 
@@ -271,6 +287,7 @@ class kolab_storage_folder
             $object = $format->to_array();
             $object['_msguid'] = $msguid;
             $object['_mailbox'] = $this->name;
+            $object['_attachments'] = $attachments;
             return $object;
         }
 
@@ -290,6 +307,15 @@ class kolab_storage_folder
     {
         if (!$type)
             $type = $this->type;
+
+        // copy attachments from old message
+        if (!empty($object['_msguid']) && ($old = $this->read_object($object['_msguid'], $type, $object['_mailbox']))) {
+            foreach ($old['_attachments'] as $name => $att) {
+                if (!isset($object['_attachments'][$name])) {
+                    $object['_attachments'][$name] = $old['_attachments'][$name];
+                }
+            }
+        }
 
         if ($raw_msg = $this->build_message($object, $type)) {
             $result = $this->imap->save_message($this->name, $raw_msg, '', false);
@@ -414,6 +440,18 @@ class kolab_storage_folder
             $rcmail->config->get('mime_param_folding') == 2 ? 'quoted-printable' : null,
             '', RCMAIL_CHARSET
         );
+
+        // save object attachments as separate parts
+        // TODO: optimize memory consumption by using tempfiles for transfer
+        foreach ((array)$object['_attachments'] as $name => $att) {
+            if (empty($att['content']) && !empty($att['key'])) {
+                $msguid = !empty($object['_msguid']) ? $object['_msguid'] : $object['uid'];
+                $att['content'] = $this->get_attachment($msguid, $att['key'], $object['_mailbox']);
+            }
+            if (!empty($att['content'])) {
+                $mime->addAttachment($att['content'], $att['type'], $name, false);
+            }
+        }
 
         return $mime->getMessage();
     }

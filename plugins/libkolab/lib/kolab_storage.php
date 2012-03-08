@@ -203,4 +203,25 @@ class kolab_storage
         return $folder;
     }
 
+    /**
+     * Creates a SELECT field with folders list
+     *
+     * @param string $type    Folder type
+     * @param array  $attrs   SELECT field attributes (e.g. name)
+     * @param string $current The name of current folder (to skip it)
+     *
+     * @return html_select SELECT object
+     */
+    public static function folder_selector($type, $attrs, $current = '')
+    {
+        // TODO: implement this
+
+
+        // Build SELECT field of parent folder
+        $select = new html_select($attrs);
+        $select->add('---', '');
+
+
+        return $select;
+    }
 }
