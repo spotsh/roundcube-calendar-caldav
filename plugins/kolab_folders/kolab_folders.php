@@ -94,6 +94,9 @@ class kolab_folders extends rcube_plugin
 
         // Get folders list
         if ($args['mode'] == 'LIST') {
+            if (!$storage->check_connection()) {
+                return $args;        
+            }
             $args['folders'] = $storage->conn->listMailboxes($args['root'], $args['name']);
         }
         else {
@@ -405,18 +408,22 @@ class kolab_folders extends rcube_plugin
     {
         $storage = $this->rc->get_storage();
 
+        if (!$storage->check_connection()) {
+            return null;
+        }
+
         // Code copied from rcube_imap::_list_mailboxes()
         // Server supports LIST-EXTENDED, we can use selection options
         // #1486225: Some dovecot versions returns wrong result using LIST-EXTENDED
-        if (!$this->rc->config->get('imap_force_lsub') && $storage->get_capability('LIST-EXTENDED')) {
+        if (!$this->rc->config->get('imap_force_lsub') && $imap->get_capability('LIST-EXTENDED')) {
             // This will also set mailbox options, LSUB doesn't do that
             $a_folders = $storage->conn->listMailboxes($root, $name,
                 NULL, array('SUBSCRIBED'));
 
             // remove non-existent folders
-            if (is_array($a_folders) && $name = '*') {
+            if (is_array($a_folders) && $name = '*' && !empty($storage->conn->data['LIST'])) {
                 foreach ($a_folders as $idx => $folder) {
-                    if ($storage->conn->data['LIST'] && ($opts = $storage->conn->data['LIST'][$folder])
+                    if (($opts = $storage->conn->data['LIST'][$folder])
                         && in_array('\\NonExistent', $opts)
                     ) {
                         $storage->conn->unsubscribe($folder);
@@ -430,10 +437,10 @@ class kolab_folders extends rcube_plugin
             $a_folders = $storage->conn->listSubscribed($root, $name);
 
             // unsubscribe non-existent folders, remove from the list
-            if (is_array($a_folders) && $name == '*') {
+            if (is_array($a_folders) && $name == '*' && !empty($storage->conn->data['LIST'])) {
                 foreach ($a_folders as $idx => $folder) {
-                    if ($storage->conn->data['LIST'] && ($opts = $storage->conn->data['LIST'][$folder])
-                        && in_array('\\Noselect', $opts)
+                    if (!isset($storage->conn->data['LIST'][$folder])
+                        || in_array('\\Noselect', $storage->conn->data['LIST'][$folder])
                     ) {
                         // Some servers returns \Noselect for existing folders
                         if (!$storage->folder_exists($folder)) {
