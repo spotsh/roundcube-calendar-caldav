@@ -53,25 +53,25 @@ abstract class kolab_format
     }
 
     /**
-     * Convert the given date/time value into a c_DateTime object
+     * Convert the given date/time value into a cDateTime object
      *
      * @param mixed         Date/Time value either as unix timestamp, date string or PHP DateTime object
      * @param DateTimeZone  The timezone the date/time is in. Use global default if empty
      * @param boolean       True of the given date has no time component
-     * @return c_DateTime   The libkolabxml date/time object or null on error
+     * @return object       The libkolabxml date/time object or null on error
      */
-    public static function getDateTime($datetime, $tz = null, $dateonly = false)
+    public static function get_datetime($datetime, $tz = null, $dateonly = false)
     {
         if (!$tz) $tz = self::$timezone;
         $result = null;
 
         if (is_numeric($datetime))
             $datetime = new DateTime('@'.$datetime, $tz);
-        else if (is_string($datetime))
+        else if (is_string($datetime) && strlen($datetime))
             $datetime = new DateTime($datetime, $tz);
 
         if (is_a($datetime, 'DateTime')) {
-            $result = new KolabDateTime();
+            $result = new cDateTime();
             $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
 
             if (!$dateonly)
@@ -81,6 +81,41 @@ abstract class kolab_format
         }
 
         return $result;
+    }
+
+    /**
+     * Convert the given cDateTime into a PHP DateTime object
+     *
+     * @param object cDateTime  The libkolabxml datetime object
+     * @return object DateTime  PHP datetime instance
+     */
+    public static function php_datetime($cdt)
+    {
+        if (!is_object($cdt) || !$cdt->isValid())
+            return null;
+
+        $d = new DateTime;
+        $d->setTimezone(self::$timezone);
+
+        try {
+            if ($tzs = $cdt->timezone()) {
+                $tz = new DateTimeZone($tzs);
+                $d->setTimezone($tz);
+            }
+        }
+        catch (Exception $e) { }
+
+        $d->setDate($cdt->year(), $cdt->month(), $cdt->day());
+
+        if ($cdt->isDateOnly()) {
+            $d->_dateonly = true;
+            $d->setTime(12, 0, 0);  // set time to noon to avoid timezone troubles
+        }
+        else {
+            $d->setTime($cdt->hour(), $cdt->minute(), $cdt->second());
+        }
+
+        return $d;
     }
 
     /**

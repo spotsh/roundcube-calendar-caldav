@@ -46,7 +46,7 @@ class rcube_kolab_contacts extends rcube_addressbook
       'department'   => array('limit' => 1),
       'email'        => array('subtypes' => null),
       'phone'        => array(),
-      'address'      => array('subtypes' => array('home','business')),
+      'address'      => array('subtypes' => array('home','work')),
       'officelocation' => array('type' => 'text', 'size' => 40, 'maxlength' => 50, 'limit' => 1,
                                 'label' => 'kolab_addressbook.officelocation', 'category' => 'main'),
       'website'      => array('subtypes' => null),
@@ -1046,8 +1046,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         // photo is stored as separate attachment
-        if ($record['photo'] && ($att = $record['_attachments'][$record['photo']])) {
-            $out['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['key']);
+        if ($record['photo'] && strlen($record['photo']) < 255 && ($att = $record['_attachments'][$record['photo']])) {
+            // only fetch photo content if requested
+            if ($rcmail = rcmail::get_instance()->action == 'photo')
+                $record['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['key']);
         }
 
         // remove empty fields
@@ -1111,6 +1113,10 @@ class rcube_kolab_contacts extends rcube_addressbook
             'content' => preg_match('![^a-z0-9/=+-]!i', $contact['photo']) ? $contact['photo'] : base64_decode($contact['photo']),
           );
           $contact['photo'] = $attkey;
+        }
+        else if (isset($contact['photo']) && empty($contact['photo'])) {
+            // unset photo attachment
+            $contact['_attachments']['photo.attachment'] = false;
         }
 
         return $contact;

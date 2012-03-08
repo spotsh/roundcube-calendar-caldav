@@ -55,6 +55,7 @@ class kolab_format_contact extends kolab_format
       'body'         => 'notes',
       'pgp-publickey' => 'pgppublickey',
       'free-busy-url' => 'freebusyurl',
+      'picture'       => 'photo',
     );
     private $kolab2_phonetypes = array(
         'home1' => 'home',
@@ -114,7 +115,7 @@ class kolab_format_contact extends kolab_format
         if (false && !$this->obj->created()) {
             if (!empty($object['created']))
                 $object['created'] = new DateTime('now', self::$timezone);
-            $this->obj->setCreated(self::getDateTime($object['created']));
+            $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
         // do the hard work of setting object values
@@ -196,10 +197,10 @@ class kolab_format_contact extends kolab_format
             $this->obj->setNote($object['notes']);
         if ($object['freebusyurl'])
             $this->obj->setFreeBusyUrl($object['freebusyurl']);
-//        if ($object['birthday'])
-//            $this->obj->setBDay(self::getDateTime($object['birthday'], null, true));
-//        if ($object['anniversary'])
-//            $this->obj->setAnniversary(self::getDateTime($object['anniversary'], null, true));
+        if ($object['birthday'])
+            $this->obj->setBDay(self::get_datetime($object['birthday'], null, true));
+        if ($object['anniversary'])
+            $this->obj->setAnniversary(self::get_datetime($object['anniversary'], null, true));
 
         // handle spouse, children, profession, initials, pgppublickey, etc.
 
@@ -281,7 +282,13 @@ class kolab_format_contact extends kolab_format
 
         $object['notes'] = $this->obj->note();
         $object['freebusyurl'] = $this->obj->freeBusyUrl();
-        
+
+        if ($bday = self::php_datetime($this->obj->bDay()))
+            $object['birthday'] = $bday->format('c');
+
+        if ($anniversary = self::php_datetime($this->obj->anniversary()))
+            $object['anniversary'] = $anniversary->format('c');
+
         if ($g = $this->obj->gender())
             $object['gender'] = $g == Contact::Female ? 'female' : 'male';
 
@@ -325,11 +332,6 @@ class kolab_format_contact extends kolab_format
                     'country' => $adr['country'],
                 );
             }
-        }
-
-        // photo is stored as separate attachment
-        if ($record['picture'] && ($att = $record['_attachments'][$record['picture']])) {
-            $object['photo'] = $att['content'] ? $att['content'] : $this->contactstorage->getAttachment($att['key']);
         }
 
         // remove empty fields
