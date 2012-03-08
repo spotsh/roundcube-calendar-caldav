@@ -10,7 +10,7 @@ class kolab_format_distributionlist extends kolab_format
 
     function __construct()
     {
-        $obj = new DistList;
+        $this->obj = new DistList;
     }
 
     /**
@@ -35,12 +35,28 @@ class kolab_format_distributionlist extends kolab_format
 
     public function set(&$object)
     {
-        // TODO: do the hard work of setting object values
+        // set some automatic values if missing
+        if (empty($object['uid']))
+            $object['uid'] = self::generate_uid();
+
+        // do the hard work of setting object values
+        $this->obj->setUid($object['uid']);
+        $this->obj->setName($object['name']);
+
+        $members = new vectormember;
+        foreach ($object['member'] as $member) {
+            $m = new Member;
+            $m->setName($member['name']);
+            $m->setEmail($member['mailto']);
+            $m->setUid($member['uid']);
+            $members->push($m);
+        }
+        $this->obj->setMembers($members);
     }
 
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && true /*$this->obj->isValid()*/);
+        return $this->data || (is_object($this->obj) && $this->obj->isValid());
     }
 
     /**
@@ -87,40 +103,17 @@ class kolab_format_distributionlist extends kolab_format
 
         $members = $this->obj->members();
         for ($i=0; $i < $members->size(); $i++) {
-            $adr = self::decode_member($members->get($i));
-            if ($adr[0]['mailto'])
+            $member = $members->get($i);
+            if ($mailto = $member->email())
                 $object['member'][] = array(
-                    'mailto' => $adr[0]['mailto'],
-                    'name' => $adr[0]['name'],
-                    'uid' => '????',
+                    'mailto' => $mailto,
+                    'name' => $member->name(),
+                    'uid' => $member->uid(),
                 );
         }
 
+        $this->data = $object;
         return $this->data;
     }
 
-    /**
-     * Compose a valid Mailto URL according to RFC 822
-     *
-     * @param string E-mail address
-     * @param string Person name
-     * @return string Formatted string
-     */
-    public static function format_member($email, $name = '')
-    {
-        // let Roundcube internals do the job
-        return 'mailto:' . format_email_recipient($email, $name);
-    }
-
-    /**
-     * Split a mailto: url into a structured member component
-     *
-     * @param string RFC 822 mailto: string
-     * @return array Hash array with member properties
-     */
-    public static function decode_member($str)
-    {
-        $adr = rcube_mime::decode_address_list(preg_replace('/^mailto:/', '', $str));
-        return $adr[0];
-    }
 }

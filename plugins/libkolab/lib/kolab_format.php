@@ -45,11 +45,11 @@ abstract class kolab_format
     /**
      * Generate random UID for Kolab objects
      *
-     * @return string  MD5 hash with a unique value
+     * @return string  UUID with a unique MD5 value
      */
     public static function generate_uid()
     {
-        return md5(uniqid(mt_rand(), true));
+        return 'urn:uuid:' . md5(uniqid(mt_rand(), true));
     }
 
     /**
