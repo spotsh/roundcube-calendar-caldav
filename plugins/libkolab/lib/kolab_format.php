@@ -3,6 +3,9 @@
 /**
  * Kolab format model class wrapping libkolabxml bindings
  *
+ * Abstract base class for different Kolab groupware objects read from/written
+ * to the new Kolab 3 format using the PHP bindings of libkolabxml.
+ *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
