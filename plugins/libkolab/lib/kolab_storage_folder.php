@@ -343,15 +343,20 @@ class kolab_storage_folder
      * Delete the specified object from this folder.
      *
      * @param  mixed   $object  The Kolab object to delete or object UID
-     * @param  boolean $trigger Should the folder be triggered?
      * @param  boolean $expunge Should the folder be expunged?
+     * @param  boolean $trigger Should the folder update be triggered?
      *
      * @return boolean True if successful, false on error
      */
     public function delete($object, $expunge = true, $trigger = true)
     {
-        if ($msguid = is_array($object) ? $object['_msguid'] : $this->uid2msguid($object)) {
+        $msguid = is_array($object) ? $object['_msguid'] : $this->uid2msguid($object);
+
+        if ($msguid && $expunge) {
             return $this->imap->delete_message($msguid, $this->name);
+        }
+        else if ($msguid) {
+            return $this->imap->set_flag($msguid, 'DELETED', $this->name);
         }
 
         return false;
