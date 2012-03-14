@@ -4,9 +4,6 @@
 class kolab_format_distributionlist extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
-    
-    private $data;
-    private $obj;
 
     function __construct()
     {
@@ -30,17 +27,17 @@ class kolab_format_distributionlist extends kolab_format
      */
     public function write()
     {
-        return kolabformat::writeDistlist($this->obj);
+        $xml = kolabformat::writeDistlist($this->obj);
+        parent::update_uid();
+        return $xml;
     }
 
     public function set(&$object)
     {
         // set some automatic values if missing
-        if (empty($object['uid']))
-            $object['uid'] = self::generate_uid();
+        if (!empty($object['uid']))
+            $this->obj->setUid($object['uid']);
 
-        // do the hard work of setting object values
-        $this->obj->setUid($object['uid']);
         $this->obj->setName($object['name']);
 
         $members = new vectormember;

@@ -4,9 +4,6 @@
 class kolab_format_event extends kolab_format
 {
     public $CTYPE = 'application/calendar+xml';
-    
-    private $data;
-    private $obj;
 
     function __construct()
     {
@@ -20,7 +17,9 @@ class kolab_format_event extends kolab_format
 
     public function write()
     {
-        return kolabformat::writeEvent($this->obj);
+        $xml = kolabformat::writeEvent($this->obj);
+        parent::update_uid();
+        return $xml;
     }
 
     public function set(&$object)

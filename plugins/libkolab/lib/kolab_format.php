@@ -26,6 +26,9 @@ abstract class kolab_format
 {
     public static $timezone;
 
+    protected $obj;
+    protected $data;
+
     /**
      * Factory method to instantiate a kolab_format object of the given type
      */
@@ -43,27 +46,17 @@ abstract class kolab_format
     }
 
     /**
-     * Generate random UID for Kolab objects
-     *
-     * @return string  UUID with a unique MD5 value
-     */
-    public static function generate_uid()
-    {
-        return 'urn:uuid:' . md5(uniqid(mt_rand(), true));
-    }
-
-    /**
      * Convert the given date/time value into a cDateTime object
      *
      * @param mixed         Date/Time value either as unix timestamp, date string or PHP DateTime object
      * @param DateTimeZone  The timezone the date/time is in. Use global default if empty
      * @param boolean       True of the given date has no time component
-     * @return object       The libkolabxml date/time object or null on error
+     * @return object       The libkolabxml date/time object
      */
     public static function get_datetime($datetime, $tz = null, $dateonly = false)
     {
         if (!$tz) $tz = self::$timezone;
-        $result = null;
+        $result = new cDateTime();
 
         if (is_numeric($datetime))
             $datetime = new DateTime('@'.$datetime, $tz);
@@ -71,7 +64,6 @@ abstract class kolab_format
             $datetime = new DateTime($datetime, $tz);
 
         if (is_a($datetime, 'DateTime')) {
-            $result = new cDateTime();
             $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
 
             if (!$dateonly)
@@ -141,9 +133,32 @@ abstract class kolab_format
     public static function array2vector($arr)
     {
         $vec = new vectors;
-        foreach ((array)$arr as $val)
-            $vec->push($val);
+        foreach ((array)$arr as $val) {
+            if (strlen($val))
+                $vec->push($val);
+        }
         return $vec;
+    }
+
+    /**
+     * Save the last generated UID to the object properties.
+     * Should be called after kolabformat::writeXXXX();
+     */
+    protected function update_uid()
+    {
+        // get generated UID
+        if (!$this->data['uid']) {
+            $this->data['uid'] = kolabformat::getSerializedUID();
+            $this->obj->setUid($this->data['uid']);
+        }
+    }
+
+    /**
+     * Direct getter for object properties
+     */
+    function __get($var)
+    {
+        return $this->data[$var];
     }
 
     /**

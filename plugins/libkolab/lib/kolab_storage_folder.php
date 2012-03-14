@@ -44,6 +44,7 @@ class kolab_storage_folder
     private $imap;
     private $info;
     private $owner;
+    private $objcache = array();
     private $uid2msg = array();
 
 
@@ -239,13 +240,18 @@ class kolab_storage_folder
      *
      * @param string The IMAP message UID to fetch
      * @param string The object type expected
-     * @return array Hash array representing the Kolab object
+     * @param string The folder name where the message is stored
+     * @return mixed Hash array representing the Kolab object, a kolab_format instance or false if not found
      */
     private function read_object($msguid, $type = null, $folder = null)
     {
         if (!$type) $type = $this->type;
         if (!$folder) $folder = $this->name;
         $ctype= self::KTYPE_PREFIX . $type;
+
+        // requested message not in local cache
+        if ($this->objcache[$msguid])
+            return $this->objcache[$msguid];
 
         $this->imap->set_folder($folder);
         $message = new rcube_message($msguid);
@@ -296,10 +302,16 @@ class kolab_storage_folder
         }
 
         if ($format->is_valid()) {
+            if ($formatobj)
+                return $format;
+
             $object = $format->to_array();
             $object['_msguid'] = $msguid;
             $object['_mailbox'] = $this->name;
             $object['_attachments'] = $attachments;
+            $object['_formatobj'] = $format;
+
+            $this->objcache[$msguid] = $object;
             return $object;
         }
 
@@ -425,11 +437,21 @@ class kolab_storage_folder
      */
     private function build_message(&$object, $type)
     {
-        $format = kolab_format::factory($type);
+        // load old object to preserve data we don't understand/process
+        if (is_object($object['_formatobj']))
+            $format = $object['_formatobj'];
+        else if ($object['_msguid'] && ($old = $this->read_object($object['_msguid'], $type, $object['_mailbox'])))
+            $format = $old['_formatobj'];
+
+        // create new kolab_format instance
+        if (!$format)
+            $format = kolab_format::factory($type);
+
         $format->set($object);
         $xml = $format->write();
+        $object['uid'] = $format->uid;  // get read UID from format
 
-        if (!$format->is_valid()) {
+        if (!$format->is_valid() || empty($object['uid'])) {
             return false;
         }
 
@@ -450,7 +472,7 @@ class kolab_storage_folder
         $mime->headers($headers);
         $mime->setTXTBody('This is a Kolab Groupware object. '
             . 'To view this object you will need an email client that understands the Kolab Groupware format. '
-            . "For a list of such email clients please visit http://www.kolab.org/kolab2-clients.html\n\n");
+            . "For a list of such email clients please visit http://www.kolab.org/\n\n");
 
         $mime->addAttachment($xml,
             $format->CTYPE,

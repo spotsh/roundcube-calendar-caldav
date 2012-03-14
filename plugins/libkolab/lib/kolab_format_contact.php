@@ -24,8 +24,10 @@ class kolab_format_contact extends kolab_format
         'work' => Address::Work,
     );
 
-    private $data;
-    private $obj;
+    private $gendermap = array(
+        'female' => Contact::Female,
+        'male' => Contact::Male,
+    );
 
     // old Kolab 2 format field map
     private $kolab2_fieldmap = array(
@@ -98,7 +100,9 @@ class kolab_format_contact extends kolab_format
      */
     public function write()
     {
-        return kolabformat::writeContact($this->obj);
+        $xml = kolabformat::writeContact($this->obj);
+        parent::update_uid();
+        return $xml;
     }
 
     /**
@@ -109,18 +113,16 @@ class kolab_format_contact extends kolab_format
     public function set(&$object)
     {
         // set some automatic values if missing
-        if (empty($object['uid']))
-            $object['uid'] = self::generate_uid();
-
         if (false && !$this->obj->created()) {
             if (!empty($object['created']))
                 $object['created'] = new DateTime('now', self::$timezone);
             $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
-        // do the hard work of setting object values
-        $this->obj->setUid($object['uid']);
+        if (!empty($object['uid']))
+            $this->obj->setUid($object['uid']);
 
+        // do the hard work of setting object values
         $nc = new NameComponents;
         $nc->setSurnames(self::array2vector($object['surname']));
         $nc->setGiven(self::array2vector($object['firstname']));
@@ -130,7 +132,7 @@ class kolab_format_contact extends kolab_format
         $this->obj->setNameComponents($nc);
         $this->obj->setName($object['name']);
 
-        if ($object['nickname'])
+        if (isset($object['nickname']))
             $this->obj->setNickNames(self::array2vector($object['nickname']));
 
         // organisation related properties (affiliation)
@@ -191,15 +193,15 @@ class kolab_format_contact extends kolab_format
         }
         $this->obj->setTelephones($tels);
 
-        if ($object['gender'])
-            $this->obj->setGender($object['gender'] == 'female' ? Contact::Female : Contact::Male);
-        if ($object['notes'])
+        if (isset($object['gender']))
+            $this->obj->setGender($this->gendermap[$object['gender']] ? $this->gendermap[$object['gender']] : Contact::NotSet);
+        if (isset($object['notes']))
             $this->obj->setNote($object['notes']);
-        if ($object['freebusyurl'])
+        if (isset($object['freebusyurl']))
             $this->obj->setFreeBusyUrl($object['freebusyurl']);
-        if ($object['birthday'])
+        if (isset($object['birthday']))
             $this->obj->setBDay(self::get_datetime($object['birthday'], null, true));
-        if ($object['anniversary'])
+        if (isset($object['anniversary']))
             $this->obj->setAnniversary(self::get_datetime($object['anniversary'], null, true));
 
         if (!empty($object['photo'])) {
@@ -304,8 +306,9 @@ class kolab_format_contact extends kolab_format
         if ($anniversary = self::php_datetime($this->obj->anniversary()))
             $object['anniversary'] = $anniversary->format('c');
 
-        if ($g = $this->obj->gender())
-            $object['gender'] = $g == Contact::Female ? 'female' : 'male';
+        $gendermap = array_flip($this->gendermap);
+        if (($g = $this->obj->gender()) && $gendermap[$g])
+            $object['gender'] = $gendermap[$g];
 
         if ($this->obj->photoMimetype())
             $object['photo'] = $this->obj->photo();

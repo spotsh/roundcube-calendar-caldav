@@ -518,8 +518,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         if (!$existing) {
             // generate new Kolab contact item
             $object = $this->_from_rcube_contact($save_data);
-            $object['uid'] = kolab_format::generate_uid();
-
             $saved = $this->storagefolder->save($object, 'contact');
 
             if (!$saved) {
@@ -554,7 +552,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         $updated = false;
         if ($old = $this->storagefolder->get_object($this->_id2uid($id))) {
-            $object = array_merge($old, $this->_from_rcube_contact($save_data));
+            $object = $this->_from_rcube_contact($save_data, $old);
 
             $saved = $this->storagefolder->save($object, 'contact', $uid);
             if (!$saved) {
@@ -1030,9 +1028,9 @@ class rcube_kolab_contacts extends rcube_addressbook
     }
 
     /**
-     * Map fields from Roundcube format to internal Kolab_Format
+     * Map fields from Roundcube format to internal kolab_format_contact properties
      */
-    private function _from_rcube_contact($contact)
+    private function _from_rcube_contact($contact, $old = array())
     {
         if (!$contact['uid'] && $contact['ID'])
             $contact['uid'] = $this->_id2uid($contact['ID']);
@@ -1085,7 +1083,14 @@ class rcube_kolab_contacts extends rcube_addressbook
             $contact['_attachments']['photo.attachment'] = false;
         }
 
-        return $contact;
+        // copy meta data (starting with _) from old object
+        foreach ((array)$old as $key => $val) {
+            if (!isset($contact[$key]) && $key[0] == '_')
+                $contact[$key] = $val;
+        }
+
+        // add empty values for some fields which can be removed in the UI
+        return $contact + array('nickname' => '', 'birthday' => '', 'anniversary' => '', 'freebusyurl' => '');
     }
 
 }
