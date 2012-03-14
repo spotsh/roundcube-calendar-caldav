@@ -52,8 +52,20 @@ class kolab_storage_folder
      */
     function __construct($name, $imap = null)
     {
-        $this->name = $name;
         $this->imap = is_object($imap) ? $imap : rcmail::get_instance()->get_storage();
+        $this->imap->set_options(array('skip_deleted' => false));
+        $this->set_folder($name);
+    }
+
+
+    /**
+     * Set the IMAP folder name this instance connects to
+     *
+     * @param string The folder name/path
+     */
+    public function set_folder($name)
+    {
+        $this->name = $name;
         $this->imap->set_folder($this->name);
 
         $metadata = $this->imap->get_metadata($this->name, array(kolab_storage::CTYPE_KEY));
@@ -146,7 +158,7 @@ class kolab_storage_folder
 
         // search by object type
         $ctype  = self::KTYPE_PREFIX . $type;
-        $index = $this->imap->search_once($this->name, 'HEADER X-Kolab-Type ' . $ctype);
+        $index = $this->imap->search_once($this->name, 'UNDELETED HEADER X-Kolab-Type ' . $ctype);
 
         return $index->count();
     }
@@ -163,7 +175,7 @@ class kolab_storage_folder
 
         // search by object type
         $ctype  = self::KTYPE_PREFIX . $type;
-        $search = 'HEADER X-Kolab-Type ' . $ctype;
+        $search = 'UNDELETED HEADER X-Kolab-Type ' . $ctype;
 
         $index = $this->imap->search_once($this->name, $search);
         $results = array();
@@ -194,7 +206,7 @@ class kolab_storage_folder
         if ($msguid && ($object = $this->read_object($msguid)))
             return $object;
 
-        return array('uid' => $uid);
+        return false;
     }
 
 
@@ -380,7 +392,12 @@ class kolab_storage_folder
      */
     public function undelete($uid)
     {
-        // TODO: implement this
+        if ($msguid = $this->uid2msguid($uid)) {
+            if ($this->imap->set_flag($msguid, 'UNDELETED', $this->name)) {
+                return $msguid;
+            }
+        }
+
         return false;
     }
 

@@ -217,7 +217,7 @@ class kolab_format_contact extends kolab_format
             $this->obj->setPhoto('','');
         }
 
-        // handle spouse, children, profession, initials, pgppublickey, etc.
+        // TODO: handle spouse, children, profession, initials, pgppublickey, etc.
 
         // cache this data
         $this->data = $object;

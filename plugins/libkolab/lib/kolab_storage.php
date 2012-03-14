@@ -62,7 +62,7 @@ class kolab_storage
     /**
      * Get a list of storage folders for the given data type
      *
-     * @param string Data type to list folders for (contact,event,task,note)
+     * @param string Data type to list folders for (contact,distribution-list,event,task,note)
      *
      * @return array List of Kolab_Folder objects (folder names in UTF7-IMAP)
      */
@@ -91,6 +91,31 @@ class kolab_storage
     {
         self::setup();
         return self::$ready ? new kolab_storage_folder($folder, null, self::$imap) : null;
+    }
+
+
+    /**
+     * Getter for a single Kolab object, identified by its UID.
+     * This will search all folders storing objects of the given type.
+     *
+     * @param string Object UID
+     * @param string Object type (contact,distribution-list,event,task,note)
+     * @return array The Kolab object represented as hash array or false if not found
+     */
+    public static function get_object($uid, $type)
+    {
+        $folder = null;
+        foreach ((array)self::$imap->list_folders('', '*', $type) as $foldername) {
+            if (!$folder)
+                $folder = new kolab_storage_folder($foldername, self::$imap);
+            else
+                $folder->set_folder($foldername);
+
+            if ($object = $folder->get_object($uid))
+                return $object;
+        }
+
+        return false;
     }
 
 

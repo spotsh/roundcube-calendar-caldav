@@ -632,55 +632,22 @@ class rcube_kolab_contacts extends rcube_addressbook
         if (!is_array($ids))
             $ids = explode(',', $ids);
 
-        $count     = 0;
-        $uids      = array();
-/*
-        TODO: re-implement this using kolab_storage_folder::undelete();
-
-        $imap_uids = $_SESSION['kolab_delete_uids'];
-
-        // convert contact IDs into IMAP UIDs
-        foreach ($ids as $id)
-            if ($uid = $imap_uids[$id])
-                $uids[] = $uid;
-
-        if (!empty($uids)) {
-            $session = &Horde_Kolab_Session::singleton();
-            $imap = &$session->getImap();
-
-            if (is_object($imap) && is_a($imap, 'PEAR_Error')) {
-                $error = $imap;
+        $count = 0;
+        foreach ($ids as $id) {
+            $uid = $this->_id2uid($id);
+            if ($this->storagefolder->undelete($uid)) {
+                $count++;
             }
             else {
-                $result = $imap->select($this->imap_folder);
-                if (is_object($result) && is_a($result, 'PEAR_Error')) {
-                    $error = $result;
-                }
-                else {
-                    $result = $imap->undeleteMessages(implode(',', $uids));
-                    if (is_object($result) && is_a($result, 'PEAR_Error')) {
-                        $error = $result;
-                    }
-                    else {
-                        $this->_connect();
-                        $this->storagefolder->synchronize();
-                    }
-                }
-            }
-
-            if ($error) {
                 raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
-                  'message' => "Error undeleting a contact object(s) from the Kolab server:" . $error->getMessage()),
+                  'message' => "Error undeleting a contact object $uid from the Kolab server"),
                 true, false);
             }
-
-            $rcmail = rcmail::get_instance();
-            $rcmail->session->remove('kolab_delete_uids');
         }
-*/
-        return count($uids);
+
+        return $count;
     }
 
 
