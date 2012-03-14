@@ -179,4 +179,10 @@ abstract class kolab_format
      */
     abstract public function to_array();
 
+    /**
+     * Load object data from Kolab2 format
+     *
+     * @param array Hash array with object properties (produced by Horde Kolab_Format classes)
+     */
+    abstract public function fromkolab2($object);
 }

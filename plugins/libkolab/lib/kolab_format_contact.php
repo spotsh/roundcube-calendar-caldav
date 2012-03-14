@@ -202,6 +202,21 @@ class kolab_format_contact extends kolab_format
         if ($object['anniversary'])
             $this->obj->setAnniversary(self::get_datetime($object['anniversary'], null, true));
 
+        if (!empty($object['photo'])) {
+            if (strlen($object['photo']) < 255 && ($att = $object['_attachments'][$object['photo']])) {
+                if ($att['content'])
+                    $this->obj->setPhoto($att['content'], $att['type']);
+                $object['_attachments'][$object['photo']] = false;
+            }
+            else if ($type = rc_image_content_type($object['photo'])) {
+                $this->obj->setPhoto($object['photo'], $type);
+                $object['_attachments']['photo.attachment'] = false;
+            }
+        }
+        else if (isset($object['photo'])) {
+            $this->obj->setPhoto('','');
+        }
+
         // handle spouse, children, profession, initials, pgppublickey, etc.
 
         // cache this data
@@ -292,12 +307,17 @@ class kolab_format_contact extends kolab_format
         if ($g = $this->obj->gender())
             $object['gender'] = $g == Contact::Female ? 'female' : 'male';
 
+        if ($this->obj->photoMimetype())
+            $object['photo'] = $this->obj->photo();
+
         $this->data = $object;
         return $this->data;
     }
 
     /**
      * Load data from old Kolab2 format
+     *
+     * @param array Hash array with object properties
      */
     public function fromkolab2($record)
     {

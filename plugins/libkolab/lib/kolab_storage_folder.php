@@ -314,6 +314,9 @@ class kolab_storage_folder
                 if (!isset($object['_attachments'][$name])) {
                     $object['_attachments'][$name] = $old['_attachments'][$name];
                 }
+                // load photo.attachment contents to be directly embedded in xcard block
+                if ($name == 'photo.attachment' && !$object['_attachments'][$name]['content'] && $att['key'])
+                    $object['_attachments'][$name]['content'] = $this->get_attachment($object['_msguid'], $att['key'], $object['_mailbox']);
             }
         }
 
