@@ -35,6 +35,9 @@ class libkolab extends rcube_plugin
         // load local config
         $this->load_config();
 
+        // require kolab_folders plugin for listing folders by type (annotation)
+        $this->require_plugin('kolab_folders');
+
         // extend include path to load bundled lib classes
         $include_path = $this->home . '/lib' . PATH_SEPARATOR . ini_get('include_path');
         set_include_path($include_path);

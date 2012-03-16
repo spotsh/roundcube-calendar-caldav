@@ -277,7 +277,7 @@ class kolab_storage_folder
                 'type' => 'php',
                 'file' => __FILE__,
                 'line' => __LINE__,
-                'message' => "Could not find Kolab data part in message " . $this->name . ':' . $uid,
+                'message' => "Could not find Kolab data part in message $msguid ($this->name).",
             ), true);
             return false;
         }
