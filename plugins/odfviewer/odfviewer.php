@@ -75,20 +75,19 @@ class odfviewer extends rcube_plugin
    */
   function get_part($args)
   {
-    global $IMAP, $MESSAGE;
-    
     if (!$args['download'] && $args['mimetype'] && in_array($args['mimetype'], $this->odf_mimetypes)) {
       if (empty($_GET['_load'])) {
         $suffix = preg_match('/(\.\w+)$/', $args['part']->filename, $m) ? $m[1] : '.odt';
         $fn = md5(session_id() . $_SERVER['REQUEST_URI']) . $suffix;
-        
+
         // FIXME: copy file to disk because only apache can send the file correctly
         $tempfn = $this->tempdir . $fn;
         if (!file_exists($tempfn)) {
           $fp = fopen($tempfn, 'w');
-          $IMAP->get_message_part($MESSAGE->uid, $args['part']->mime_id, $args['part'], false, $fp);
+          $imap = rcmail::get_instance()->get_storage();
+          $imap->get_message_part($args['uid'], $args['id'], $args['part'], false, $fp);
           fclose($fp);
-          
+
           // remember tempfiles in session to clean up on logout
           $_SESSION['odfviewer']['tempfiles'][] = $fn;
         }
