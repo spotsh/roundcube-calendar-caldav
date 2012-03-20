@@ -61,14 +61,21 @@ class kolab_format_distributionlist extends kolab_format
 
         $this->obj->setName($object['name']);
 
-        $members = new vectormember;
+        $seen = array();
+        $members = new vectorcontactref;
         foreach ($object['member'] as $member) {
-            $m = new Member;
+            if ($member['uid'])
+                $m = new ContactReference(ContactReference::UidReference, $member['uid']);
+            else if ($member['email'])
+                $m = new ContactReference(ContactReference::EmailReference, $member['email']);
+            else
+                continue;
+
             $m->setName($member['name']);
-            $m->setEmail($member['mailto']);
-            $m->setUid($member['uid']);
             $members->push($m);
+            $seen[$member['email']]++;
         }
+
         $this->obj->setMembers($members);
     }
 
@@ -91,7 +98,7 @@ class kolab_format_distributionlist extends kolab_format
 
         foreach ($record['member'] as $member) {
             $object['member'][] = array(
-                'mailto' => $member['smtp-address'],
+                'email' => $member['smtp-address'],
                 'name' => $member['display-name'],
                 'uid' => $member['uid'],
             );
@@ -122,11 +129,11 @@ class kolab_format_distributionlist extends kolab_format
         $members = $this->obj->members();
         for ($i=0; $i < $members->size(); $i++) {
             $member = $members->get($i);
-            if ($mailto = $member->email())
+#            if ($member->type() == ContactReference::UidReference && ($uid = $member->uid()))
                 $object['member'][] = array(
-                    'mailto' => $mailto,
-                    'name' => $member->name(),
                     'uid' => $member->uid(),
+                    'email' => $member->email(),
+                    'name' => $member->name(),
                 );
         }
 
