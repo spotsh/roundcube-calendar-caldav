@@ -406,7 +406,7 @@ class kolab_storage_folder
      */
     public function undelete($uid)
     {
-        if ($msguid = $this->uid2msguid($uid)) {
+        if ($msguid = $this->uid2msguid($uid, true)) {
             if ($this->imap->set_flag($msguid, 'UNDELETED', $this->name)) {
                 return $msguid;
             }
@@ -419,11 +419,11 @@ class kolab_storage_folder
     /**
      * Resolve an object UID into an IMAP message UID
      */
-    private function uid2msguid($uid)
+    private function uid2msguid($uid, $deleted = false)
     {
         if (!isset($this->uid2msg[$uid])) {
             // use IMAP SEARCH to get the right message
-            $index = $this->imap->search_once($this->name, 'HEADER SUBJECT ' . $uid);
+            $index = $this->imap->search_once($this->name, ($deleted ? '' : 'UNDELETED ') . 'HEADER SUBJECT ' . $uid);
             $results = $index->get();
             $this->uid2msg[$uid] = $results[0];
 
