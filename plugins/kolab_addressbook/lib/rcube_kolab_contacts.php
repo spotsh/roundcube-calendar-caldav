@@ -567,8 +567,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         if ($old = $this->storagefolder->get_object($this->_id2uid($id))) {
             $object = $this->_from_rcube_contact($save_data, $old);
 
-            $saved = $this->storagefolder->save($object, 'contact', $uid);
-            if (!$saved) {
+            if (!$this->storagefolder->save($object, 'contact', $old['uid'])) {
                 raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
@@ -1062,6 +1061,8 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         if (!$contact['uid'] && $contact['ID'])
             $contact['uid'] = $this->_id2uid($contact['ID']);
+        else if (!$contact['uid'] && $old['uid'])
+            $contact['uid'] = $old['uid'];
 
         $contact['email'] = array_filter($this->get_col_values('email', $contact, true));
         $contact['website'] = array_filter($this->get_col_values('website', $contact, true));
