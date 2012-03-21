@@ -289,12 +289,10 @@ class kolab_addressbook extends rcube_plugin
 
         // extend the list of contact fields to be displayed in the 'personal' section
         if (is_array($p['form']['personal'])) {
-            $p['form']['contact']['content']['officelocation'] = array('size' => 40);
-            $p['form']['personal']['content']['initials']      = array('size' => 6);
             $p['form']['personal']['content']['profession']    = array('size' => 40);
             $p['form']['personal']['content']['children']      = array('size' => 40);
-            $p['form']['personal']['content']['pgppublickey']  = array('size' => 40);
             $p['form']['personal']['content']['freebusyurl']   = array('size' => 40);
+            $p['form']['personal']['content']['pgppublickey']  = array('size' => 40);
 
             // re-order fields according to the coltypes list
             $p['form']['contact']['content']  = $this->_sort_form_fields($p['form']['contact']['content']);

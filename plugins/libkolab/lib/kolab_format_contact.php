@@ -264,7 +264,13 @@ class kolab_format_contact extends kolab_format
         }
         $this->obj->setRelateds($rels);
 
-        // TODO: handle language, pgppublickey, etc.
+        if (isset($object['pgppublickey'])) {
+            $crypto = new Crypto;
+            $crypto->setPGPKey($object['pgppublickey']);
+            $this->obj->setCrypto($crypto);
+        }
+
+        // TODO: handle language, gpslocation, etc.
 
 
         // cache this data
@@ -351,6 +357,11 @@ class kolab_format_contact extends kolab_format
 
         // relateds -> spouse, children
         $this->read_relateds($this->obj->relateds(), $object);
+
+        // crypto settings: currently only pgpkey is supported
+        $crypto = $this->obj->crypto();
+        if ($pgpkey = $crypto->pgpKey())
+            $object['pgppublickey'] = $pgpkey;
 
         $this->data = $object;
         return $this->data;

@@ -46,14 +46,10 @@ class rcube_kolab_contacts extends rcube_addressbook
       'department'   => array('limit' => 1),
       'email'        => array('subtypes' => null),
       'phone'        => array(),
-      'address'      => array('subtypes' => array('home','work')),
-//      'officelocation' => array('type' => 'text', 'size' => 40, 'maxlength' => 50, 'limit' => 1,
-//                                'label' => 'kolab_addressbook.officelocation', 'category' => 'main'),
+      'address'      => array('subtypes' => array('home','work','office')),
       'website'      => array('subtypes' => null),
       'im'           => array('subtypes' => null),
       'gender'       => array('limit' => 1),
-      'initials'     => array('type' => 'text', 'size' => 6, 'maxlength' => 10, 'limit' => 1,
-                                'label' => 'kolab_addressbook.initials', 'category' => 'personal'),
       'birthday'     => array('limit' => 1),
       'anniversary'  => array('limit' => 1),
       'profession'   => array('type' => 'text', 'size' => 40, 'maxlength' => 80, 'limit' => 1,
@@ -63,10 +59,10 @@ class rcube_kolab_contacts extends rcube_addressbook
       'spouse'       => array('limit' => 1),
       'children'     => array('type' => 'text', 'size' => 40, 'maxlength' => 80, 'limit' => null,
                                 'label' => 'kolab_addressbook.children', 'category' => 'personal'),
-      'pgppublickey' => array('type' => 'text', 'size' => 40, 'limit' => 1,
-                                'label' => 'kolab_addressbook.pgppublickey'),
       'freebusyurl'  => array('type' => 'text', 'size' => 40, 'limit' => 1,
                                 'label' => 'kolab_addressbook.freebusyurl'),
+      'pgppublickey' => array('type' => 'textarea', 'size' => 70, 'rows' => 10, 'limit' => 1,
+                                'label' => 'kolab_addressbook.pgppublickey'),
       'notes'        => array(),
       'photo'        => array(),
       // TODO: define more Kolab-specific fields such as: language, latitude, longitude
@@ -93,6 +89,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     private $result;
     private $namespace;
     private $imap_folder = 'INBOX/Contacts';
+    private $action;
 
 
     public function __construct($imap_folder = null)
@@ -132,6 +129,8 @@ class rcube_kolab_contacts extends rcube_addressbook
                 }
             }
         }
+
+        $this->action = rcmail::get_instance()->action;
     }
 
 
@@ -1046,9 +1045,13 @@ class rcube_kolab_contacts extends rcube_addressbook
         // photo is stored as separate attachment
         if ($record['photo'] && strlen($record['photo']) < 255 && ($att = $record['_attachments'][$record['photo']])) {
             // only fetch photo content if requested
-            if (rcmail::get_instance()->action == 'photo')
+            if ($this->action == 'photo')
                 $record['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['key']);
         }
+
+        // truncate publickey value for display
+        if ($record['pgppublickey'] && $this->action == 'show')
+            $record['pgppublickey'] = substr($record['pgppublickey'], 0, 140) . '...';
 
         // remove empty fields
         return array_filter($record);
