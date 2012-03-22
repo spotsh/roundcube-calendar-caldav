@@ -111,7 +111,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // fetch objects from the given IMAP folder
         $this->storagefolder = kolab_storage::get_folder($this->imap_folder);
-        $this->ready = !PEAR::isError($this->storagefolder);
+        $this->ready = $this->storagefolder && !PEAR::isError($this->storagefolder);
 
         // Set readonly and editable flags according to folder permissions
         if ($this->ready) {
@@ -164,7 +164,7 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function get_namespace()
     {
-        if ($this->namespace === null) {
+        if ($this->namespace === null && $this->ready) {
             $this->namespace = $this->storagefolder->get_namespace();
         }
 
