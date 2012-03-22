@@ -88,6 +88,31 @@ class kolab_storage_folder
 
 
     /**
+     * Returns IMAP metadata/annotations (GETMETADATA/GETANNOTATION)
+     *
+     * @param array List of metadata keys to read
+     * @return array Metadata entry-value hash array on success, NULL on error
+     */
+    public function get_metadata($keys)
+    {
+        $metadata = $this->imap->get_metadata($this->name, (array)$keys);
+        return $metadata[$this->name];
+    }
+
+
+    /**
+     * Sets IMAP metadata/annotations (SETMETADATA/SETANNOTATION)
+     *
+     * @param array  $entries Entry-value array (use NULL value as NIL)
+     * @return boolean True on success, False on failure
+     */
+    public function set_metadata($entries)
+    {
+        return $this->imap->get_metadata($this->name, $entries);
+    }
+
+
+    /**
      * Returns the owner of the folder.
      *
      * @return string  The owner of this folder.
@@ -146,6 +171,32 @@ class kolab_storage_folder
     {
         return join('', (array)$this->imap->get_acl($this->name));
     }
+
+
+    /**
+     * Check subscription status of this folder
+     *
+     * @param string Subscription type (kolab_storage::SERVERSIDE_SUBSCRIPTION or kolab_storage::CLIENTSIDE_SUBSCRIPTION)
+     * @return boolean True if subscribed, false if not
+     */
+    public function is_subscribed($type = 0)
+    {
+        static $subscribed;  // local cache
+
+        if ($type == kolab_storage::SERVERSIDE_SUBSCRIPTION) {
+            if (!$subscribed)
+                $subscribed = $this->imap->list_folders();
+
+            return in_array($this->name, $subscribed);
+        }
+        else if (kolab_storage::CLIENTSIDE_SUBSCRIPTION) {
+            // TODO: implement this
+            return true;
+        }
+
+        return false;
+    }
+
 
     /**
      * Get number of objects stored in this folder

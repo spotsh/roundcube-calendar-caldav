@@ -25,6 +25,8 @@
 class kolab_storage
 {
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
+    const SERVERSIDE_SUBSCRIPTION = 0;
+    const CLIENTSIDE_SUBSCRIPTION = 1;
 
     public static $last_error;
 
@@ -40,7 +42,7 @@ class kolab_storage
     public static function setup()
     {
         if (self::$ready)
-            return;
+            return true;
 
         $rcmail = rcmail::get_instance();
         self::$config = $rcmail->config;
@@ -56,6 +58,8 @@ class kolab_storage
             ));
             self::$imap->set_pagesize(9999);
         }
+
+        return self::$ready;
     }
 
 
@@ -68,10 +72,9 @@ class kolab_storage
      */
     public static function get_folders($type)
     {
-        self::setup();
         $folders = array();
 
-        if (self::$ready) {
+        if (self::setup()) {
             foreach ((array)self::$imap->list_folders('', '*', $type) as $foldername) {
                 $folders[$foldername] = new kolab_storage_folder($foldername, self::$imap);
             }
@@ -85,12 +88,11 @@ class kolab_storage
      * Getter for a specific storage folder
      *
      * @param string  IMAP folder to access (UTF7-IMAP)
-     * @return object Kolab_Folder  The folder object
+     * @return object kolab_storage_folder  The folder object
      */
     public static function get_folder($folder)
     {
-        self::setup();
-        return self::$ready ? new kolab_storage_folder($folder, null, self::$imap) : null;
+        return self::setup() ? new kolab_storage_folder($folder, null, self::$imap) : null;
     }
 
 
@@ -104,6 +106,7 @@ class kolab_storage
      */
     public static function get_object($uid, $type)
     {
+        self::setup();
         $folder = null;
         foreach ((array)self::$imap->list_folders('', '*', $type) as $foldername) {
             if (!$folder)
@@ -147,6 +150,70 @@ class kolab_storage
     public static function folder_id($folder)
     {
         return asciiwords(strtr($folder, '/.-', '___'));
+    }
+
+
+    /**
+     * Deletes IMAP folder
+     *
+     * @param string $name Folder name (UTF7-IMAP)
+     *
+     * @return bool True on success, false on failure
+     */
+    public static function folder_delete($name)
+    {
+        self::setup();
+
+        $success = self::$imap->delete_folder($name);
+        self::$last_error = self::$imap->get_error_str();
+
+        return $success;
+    }
+
+    /**
+     * Creates IMAP folder
+     *
+     * @param string $name    Folder name (UTF7-IMAP)
+     * @param string $type    Folder type
+     * @param bool   $default True if older is default (for specified type)
+     *
+     * @return bool True on success, false on failure
+     */
+    public static function folder_create($name, $type=null, $default=false)
+    {
+        self::setup();
+
+        if (self::$imap->create_folder($name)) {
+            // set metadata for folder type
+            $ctype = $type . ($default ? '.default' : '');
+            $saved = self::$imap->set_metadata($name, array(self::CTYPE_KEY => $ctype));
+
+            if ($saved)
+                return true;
+            else  // revert if metadata could not be set
+                self::$imap->delete_folder($name);
+        }
+
+        self::$last_error = self::$imap->get_error_str();
+        return false;
+    }
+
+    /**
+     * Renames IMAP folder
+     *
+     * @param string $oldname Old folder name (UTF7-IMAP)
+     * @param string $newname New folder name (UTF7-IMAP)
+     *
+     * @return bool True on success, false on failure
+     */
+    public static function folder_rename($oldname, $newname)
+    {
+        self::setup();
+
+        $success = self::$imap->rename_folder($oldname, $newname);
+        self::$last_error = self::$imap->get_error_str();
+
+        return $success;
     }
 
 
