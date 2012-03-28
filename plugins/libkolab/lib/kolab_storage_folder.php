@@ -108,7 +108,7 @@ class kolab_storage_folder
      */
     public function set_metadata($entries)
     {
-        return $this->imap->get_metadata($this->name, $entries);
+        return $this->imap->set_metadata($this->name, $entries);
     }
 
 
@@ -378,7 +378,7 @@ class kolab_storage_folder
      * @param string $uid       The UID of the old object if it existed before
      * @return boolean          True on success, false on error
      */
-    public function save(&$object, $type, $uid = null)
+    public function save(&$object, $type = null, $uid = null)
     {
         if (!$type)
             $type = $this->type;
@@ -574,8 +574,8 @@ class kolab_storage_folder
 
         $result = $this->trigger_url($url);
         if (is_a($result, 'PEAR_Error')) {
-            return PEAR::raiseError(sprintf("Failed triggering folder %s. Error was: %s"),
-                                            $this->name, $result->getMessage());
+            return PEAR::raiseError(sprintf("Failed triggering folder %s. Error was: %s",
+                                            $this->name, $result->getMessage()));
         }
         return $result;
     }
