@@ -77,6 +77,10 @@ class kolab_format_distributionlist extends kolab_format
         }
 
         $this->obj->setMembers($members);
+
+        // cache this data
+        unset($object['_formatobj']);
+        $this->data = $object;
     }
 
     public function is_valid()

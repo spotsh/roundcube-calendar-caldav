@@ -61,8 +61,11 @@ abstract class kolab_format
         if (!$tz) $tz = self::$timezone;
         $result = new cDateTime();
 
-        if (is_numeric($datetime))
-            $datetime = new DateTime('@'.$datetime, $tz);
+        // got a unix timestamp (in UTC)
+        if (is_numeric($datetime)) {
+            $datetime = new DateTime('@'.$datetime, new DateTimeZone('UTC'));
+            if ($tz) $datetime->setTimezone($tz);
+        }
         else if (is_string($datetime) && strlen($datetime))
             $datetime = new DateTime($datetime, $tz);
 
@@ -71,6 +74,7 @@ abstract class kolab_format
 
             if (!$dateonly)
                 $result->setTime($datetime->format('G'), $datetime->format('i'), $datetime->format('s'));
+
             if ($tz)
                 $result->setTimezone($tz->getName());
         }

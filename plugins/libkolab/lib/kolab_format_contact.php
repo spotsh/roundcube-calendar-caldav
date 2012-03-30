@@ -274,6 +274,7 @@ class kolab_format_contact extends kolab_format
 
 
         // cache this data
+        unset($object['_formatobj']);
         $this->data = $object;
     }
 
