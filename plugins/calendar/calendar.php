@@ -99,9 +99,9 @@ class calendar extends rcube_plugin
     // set user's timezone
     $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
     $now = new DateTime('now', $this->timezone);
-    $this->timezone_offset = $now->format('Z') / 3600;
-    $this->dst_active = $now->format('I');
     $this->gmt_offset = $now->getOffset();
+    $this->dst_active = $now->format('I');
+    $this->timezone_offset = $this->gmt_offset / 3600 - $this->dst_active;
 
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
