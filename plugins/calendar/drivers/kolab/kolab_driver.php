@@ -7,7 +7,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -64,7 +64,7 @@ class kolab_driver extends calendar_driver
       return $this->calendars;
 
     // get all folders that have "event" type
-    $folders = rcube_kolab::get_folders('event');
+    $folders = kolab_storage::get_folders('event');
     $this->calendars = array();
 
     if (PEAR::isError($folders)) {
@@ -134,7 +134,7 @@ class kolab_driver extends calendar_driver
           'readonly' => $cal->readonly,
           'showalarms' => $cal->alarms,
           'class_name' => $cal->get_namespace(),
-          'active'   => rcube_kolab::is_subscribed($cal->get_realname()),
+          'active'   => $cal->storage->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
         );
       }
     }
@@ -164,7 +164,7 @@ class kolab_driver extends calendar_driver
     $storage->subscribe($folder);
 
     // create ID
-    $id = rcube_kolab::folder_id($folder);
+    $id = kolab_storage::folder_id($folder);
 
     // save color in user prefs (temp. solution)
     $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
@@ -197,7 +197,7 @@ class kolab_driver extends calendar_driver
       }
 
       // create ID
-      $id = rcube_kolab::folder_id($newfolder);
+      $id = kolab_storage::folder_id($newfolder);
 
       // fallback to local prefs
       $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
@@ -302,24 +302,24 @@ class kolab_driver extends calendar_driver
     // update the folder name
     if (strlen($oldfolder)) {
       if ($oldfolder != $folder) {
-        if (!($result = rcube_kolab::folder_rename($oldfolder, $folder)))
-          $this->last_error = rcube_kolab::$last_error;
+        if (!($result = kolab_storage::folder_rename($oldfolder, $folder)))
+          $this->last_error = kolab_storage::$last_error;
       }
       else
         $result = true;
     }
     // create new folder
     else {
-      if (!($result = rcube_kolab::folder_create($folder, 'event', false)))
-        $this->last_error = rcube_kolab::$last_error;
+      if (!($result = kolab_storage::folder_create($folder, 'event', false)))
+        $this->last_error = kolab_storage::$last_error;
     }
 
     // save color in METADATA
     // TODO: also save 'showalarams' and other properties here
 
     if ($result && $prop['color']) {
-      if (!($meta_saved = $storage->set_metadata($folder, array('/shared/vendor/kolab/color' => $prop['color']))))  // try in shared namespace
-        $meta_saved = $storage->set_metadata($folder, array('/private/vendor/kolab/color' => $prop['color']));    // try in private namespace
+      if (!($meta_saved = $storage->set_metadata(array(kolab_calendar::COLOR_KEY_SHARED => $prop['color']))))  // try in shared namespace
+        $meta_saved = $storage->set_metadata(array(kolab_calendar::COLOR_KEY_PRIVATE => $prop['color']));    // try in private namespace
       if ($meta_saved)
         unset($prop['color']);  // unsetting will prevent fallback to local user prefs
     }
@@ -337,7 +337,7 @@ class kolab_driver extends calendar_driver
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
       $folder = $cal->get_realname();
-      if (rcube_kolab::folder_delete($folder)) {
+      if (kolab_storage::folder_delete($folder)) {
         // remove color in user prefs (temp. solution)
         $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
         unset($prefs['kolab_calendars'][$prop['id']]);
@@ -346,7 +346,7 @@ class kolab_driver extends calendar_driver
         return true;
       }
       else
-        $this->last_error = rcube_kolab::$last_error;
+        $this->last_error = kolab_storage::$last_error;
     }
 
     return false;
@@ -913,7 +913,7 @@ class kolab_driver extends calendar_driver
       'OOF' => calendar::FREEBUSY_OOF);
 
     // ask kolab server first
-    $fbdata = @file_get_contents(rcube_kolab::get_freebusy_url($email));
+    $fbdata = @file_get_contents(kolab_storage::get_freebusy_url($email));
 
     // get free-busy url from contacts
     if (!$fbdata) {
@@ -975,12 +975,11 @@ class kolab_driver extends calendar_driver
     ignore_user_abort(true);
 
     $cal = get_input_value('source', RCUBE_INPUT_GPC);
-    if (!($storage = $this->calendars[$cal]))
+    if (!($cal = $this->calendars[$cal]))
       return false;
 
     // trigger updates on folder
-    $folder = $storage->get_folder();
-    $trigger = $folder->trigger();
+    $trigger = $cal->storage->trigger();
     if (is_object($trigger) && is_a($trigger, 'PEAR_Error')) {
       raise_error(array(
         'code' => 900, 'type' => 'php',
@@ -1037,7 +1036,7 @@ class kolab_driver extends calendar_driver
     // Disable folder name input
     if (!empty($options) && ($options['norename'] || $options['protected'])) {
       $input_name = new html_hiddenfield(array('name' => 'name', 'id' => 'calendar-name'));
-      $formfields['name']['value'] = Q(str_replace($delimiter, ' &raquo; ', rcube_kolab::object_name($folder)))
+      $formfields['name']['value'] = Q(str_replace($delimiter, ' &raquo; ', kolab_storage::object_name($folder)))
         . $input_name->show($folder);
     }
 
@@ -1054,7 +1053,7 @@ class kolab_driver extends calendar_driver
       $hidden_fields[] = array('name' => 'parent', 'value' => $path_imap);
     }
     else {
-      $select = rcube_kolab::folder_selector('event', array('name' => 'parent'), $folder);
+      $select = kolab_storage::folder_selector('event', array('name' => 'parent'), $folder);
       $form['props']['fieldsets']['location']['content']['path'] = array(
         'label' => $this->cal->gettext('parentcalendar'),
         'value' => $select->show(strlen($folder) ? $path_imap : ''),

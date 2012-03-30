@@ -205,7 +205,7 @@ class calendar extends rcube_plugin
 
     switch ($driver_name) {
       case "kolab":
-        $this->require_plugin('kolab_core');
+        $this->require_plugin('libkolab');
       default:
         $this->driver = new $driver_class($this);
         break;
