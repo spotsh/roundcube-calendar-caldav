@@ -337,7 +337,7 @@ function rcube_calendar_ui(settings)
       var $dialog = $("#eventshow").dialog('close').removeClass().addClass('uidialog');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       me.selected_event = event;
-      
+
       $dialog.find('div.event-section, div.event-line').hide();
       $('#event-title').html(Q(event.title)).show();
       
@@ -363,9 +363,10 @@ function rcube_calendar_ui(settings)
       if (event.free_busy)
         $('#event-free-busy').show().children('.event-text').html(Q(rcmail.gettext(event.free_busy, 'calendar')));
       if (event.priority > 0) {
-        var priolabels = [ '', rcmail.gettext('high'), rcmail.gettext('highest'), '', '', rcmail.gettext('normal'), '', '', rcmail.gettext('low'), rcmail.gettext('lowest') ];
+        var priolabels = [ '', rcmail.gettext('highest'), rcmail.gettext('high'), '', '', rcmail.gettext('normal'), '', '', rcmail.gettext('low'), rcmail.gettext('lowest') ];
         $('#event-priority').show().children('.event-text').html(Q(event.priority+' '+priolabels[event.priority]));
       }
+
       if (event.sensitivity != 0) {
         var sensitivityclasses = { 0:'public', 1:'private', 2:'confidential' };
         $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
@@ -415,7 +416,7 @@ function rcube_calendar_ui(settings)
         $('#event-rsvp')[(rsvp?'show':'hide')]();
         $('#event-rsvp .rsvp-buttons input').prop('disabled', false).filter('input[rel='+rsvp+']').prop('disabled', true);
       }
-      
+
       var buttons = {};
       if (calendar.editable && event.editable !== false) {
         buttons[rcmail.gettext('edit', 'calendar')] = function() {
@@ -2407,7 +2408,7 @@ function rcube_calendar_ui(settings)
         }
       },
       viewRender: function(view) {
-        if (view.name == 'month')
+        if (fc && view.name == 'month')
           fc.fullCalendar('option', 'maxHeight', Math.floor((view.element.parent().height()-18) / 6) - 35);
       }
     });
