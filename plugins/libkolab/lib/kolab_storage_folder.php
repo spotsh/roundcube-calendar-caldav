@@ -185,7 +185,7 @@ class kolab_storage_folder
 
         if ($type == kolab_storage::SERVERSIDE_SUBSCRIPTION) {
             if (!$subscribed)
-                $subscribed = $this->imap->list_folders();
+                $subscribed = $this->imap->list_folders_subscribed();
 
             return in_array($this->name, $subscribed);
         }
