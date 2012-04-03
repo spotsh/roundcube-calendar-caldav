@@ -2437,7 +2437,7 @@ function rcube_calendar_ui(settings)
       /* Time completions */
       var result = [];
       var now = new Date();
-      var st, start = (this.element.attr('id').indexOf('endtime') > 0
+      var st, start = (String(this.element.attr('id')).indexOf('endtime') > 0
         && (st = $('#edit-starttime').val())
         && $('#edit-startdate').val() == $('#edit-enddate').val())
         ? parse_datetime(st, '') : null;

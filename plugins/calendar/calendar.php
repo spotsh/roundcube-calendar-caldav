@@ -1278,7 +1278,7 @@ class calendar extends rcube_plugin
         case 'EXDATE':
           foreach ((array)$val as $i => $ex)
             $val[$i] = gmdate('Ymd\THis', $ex);
-          $val = join(',', $val);
+          $val = join(',', (array)$val);
           break;
       }
       $rrule .= $k . '=' . $val . ';';
