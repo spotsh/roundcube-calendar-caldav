@@ -33,6 +33,7 @@ class kolab_driver extends calendar_driver
   public $freebusy = true;
   public $attachments = true;
   public $undelete = true;
+  public $alarm_types = array('DISPLAY','EMAIL');
   public $categoriesimmutable = true;
 
   private $rc;
