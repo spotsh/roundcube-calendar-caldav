@@ -567,7 +567,6 @@ class kolab_driver extends calendar_driver
           return false;
 
         $fromcalendar = $storage;
-        $storage->storage->synchronize();
       }
     }
     else
