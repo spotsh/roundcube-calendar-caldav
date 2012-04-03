@@ -513,95 +513,6 @@ class kolab_calendar
   {
     $object = &$event;
 
-/*
-    //recurr object/array
-    if (count($event['recurrence']) > 1) {
-      $ra = $event['recurrence'];
-      
-      //Frequency abd interval
-      $object['recurrence']['cycle'] = strtolower($ra['FREQ']);
-      $object['recurrence']['interval'] = intval($ra['INTERVAL']);
-
-      //Range Type
-      if ($ra['UNTIL']) {
-        $object['recurrence']['range-type'] = 'date';
-        $object['recurrence']['range'] = $ra['UNTIL'];
-      }
-      if ($ra['COUNT']) {
-        $object['recurrence']['range-type'] = 'number';
-        $object['recurrence']['range'] = $ra['COUNT'];
-      }
-      
-      //weekly
-      if ($ra['FREQ'] == 'WEEKLY') {
-        if ($ra['BYDAY']) {
-          foreach (split(",", $ra['BYDAY']) as $day)
-            $object['recurrence']['day'][] = $this->weekday_map[$day];
-        }
-        else {
-          // use weekday of start date if empty
-          $object['recurrence']['day'][] = strtolower(gmdate('l', $event['start'] + $tz_offset));
-        }
-      }
-      
-      //monthly (temporary hack to follow current Horde logic)
-      if ($ra['FREQ'] == 'MONTHLY') {
-        if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
-          $object['recurrence']['daynumber'] = $m[1];
-          $object['recurrence']['day'] = array($this->weekday_map[$m[2]]);
-          $object['recurrence']['cycle'] = 'monthly';
-          $object['recurrence']['type']  = 'weekday';
-        }
-        else {
-          $object['recurrence']['daynumber'] = date('j', $event['start']);
-          $object['recurrence']['cycle'] = 'monthly';
-          $object['recurrence']['type']  = 'daynumber';
-        }
-      }
-      
-      //yearly
-      if ($ra['FREQ'] == 'YEARLY') {
-        if (!$ra['BYMONTH'])
-          $ra['BYMONTH'] = gmdate('n', $event['start'] + $tz_offset);
-        
-        $object['recurrence']['cycle'] = 'yearly';
-        $object['recurrence']['month'] = $this->month_map[intval($ra['BYMONTH'])];
-        
-        if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
-          $object['recurrence']['type'] = 'weekday';
-          $object['recurrence']['daynumber'] = $m[1];
-          $object['recurrence']['day'] = array($this->weekday_map[$m[2]]);
-        }
-        else {
-          $object['recurrence']['type'] = 'monthday';
-          $object['recurrence']['daynumber'] = gmdate('j', $event['start'] + $tz_offset);
-        }
-      }
-      
-      //exclusions
-      foreach ((array)$ra['EXDATE'] as $excl) {
-        $object['recurrence']['exclusion'][] = gmdate('Y-m-d', $excl + $tz_offset);
-      }
-    }
-    
-    // whole day event
-    if ($event['allday']) {
-      $object['end-date'] += 12 * 3600;  // end is at 13:00 => jump to the next day
-      $object['end-date'] += $tz_offset - date('Z');   // shift 00 times from user's timezone to server's timezone 
-      $object['start-date'] += $tz_offset - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
-      
-      // create timestamps at exactly 00:00. This is also needed for proper re-interpretation in _to_rcube_event() after updating an event
-      $object['start-date'] = mktime(0,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date']));
-      $object['end-date']   = mktime(0,0,0, date('n', $object['end-date']),   date('j', $object['end-date']),   date('Y', $object['end-date']));
-      
-      // sanity check: end date is same or smaller than start
-      if (date('Y-m-d', $object['end-date']) <= date('Y-m-d', $object['start-date']))
-        $object['end-date'] = mktime(13,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date'])) + 86400;
-      
-      $object['_is_all_day'] = 1;
-    }
-*/
-
     // in Horde attachments are indexed by name
     $object['_attachments'] = array();
     if (!empty($event['attachments'])) {
@@ -632,8 +543,11 @@ class kolab_calendar
     $event['sensitivity'] = $this->sensitivity_map[$event['sensitivity']];
 
     // set current user as ORGANIZER
-    if (empty($event['attendees']) && ($identity = $this->cal->rc->user->get_identity()) && $identity['email'])
+    $identity = $this->cal->rc->user->get_identity();
+    if (empty($event['attendees']) && $identity['email'])
       $event['attendees'] = array(array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email']));
+
+    $event['_owner'] = $identity['email'];
 
     // copy meta data (starting with _) from old object
     foreach ((array)$old as $key => $val) {
