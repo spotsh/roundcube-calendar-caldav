@@ -2349,7 +2349,7 @@ function rcube_calendar_ui(settings)
           event.end = new Date(event.start.getTime() + (allDay ? DAY_MS : HOUR_MS));
         }
         // moved to all-day section: set times to 12:00 - 13:00
-        if (allDay && !event.allday) {
+        if (allDay && !event.allDay) {
           event.start.setHours(12);
           event.start.setMinutes(0);
           event.start.setSeconds(0);
@@ -2358,7 +2358,7 @@ function rcube_calendar_ui(settings)
           event.end.setSeconds(0);
         }
         // moved from all-day section: set times to working hours
-        else if (event.allday && !allDay) {
+        else if (event.allDay && !allDay) {
           var newstart = event.start.getTime();
           revertFunc();  // revert to get original duration
           var numdays = Math.max(1, Math.round((event.end.getTime() - event.start.getTime()) / DAY_MS)) - 1;
