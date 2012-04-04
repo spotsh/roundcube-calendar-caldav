@@ -161,8 +161,8 @@ class kolab_driver extends calendar_driver
     }
     
     // subscribe to new calendar by default
-    $storage = $this->rc->get_storage();
-    $storage->subscribe($folder);
+    $storage = kolab_storage::get_folder($folder);
+    $storage->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
 
     // create ID
     $id = kolab_storage::folder_id($folder);
@@ -227,13 +227,9 @@ class kolab_driver extends calendar_driver
   public function subscribe_calendar($prop)
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
-      $storage = $this->rc->get_storage();
-      if ($prop['active'])
-        return $storage->subscribe($cal->get_realname());
-      else
-        return $storage->unsubscribe($cal->get_realname());
+      return $cal->storage->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
     }
-    
+
     return false;
   }
 
