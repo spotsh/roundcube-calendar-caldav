@@ -60,7 +60,7 @@ class kolab_calendar
 
     // fetch objects from the given IMAP folder
     $this->storage = kolab_storage::get_folder($this->imap_folder);
-    $this->ready = !PEAR::isError($this->storage);
+    $this->ready = $this->storage && !PEAR::isError($this->storage);
 
     // Set readonly and alarms flags according to folder permissions
     if ($this->ready) {
@@ -70,7 +70,7 @@ class kolab_calendar
       }
       else {
         $rights = $this->storage->get_acl();
-        if (!PEAR::isError($rights)) {
+        if ($rights && !PEAR::isError($rights)) {
           if (strpos($rights, 'i') !== false)
             $this->readonly = false;
         }
@@ -271,7 +271,7 @@ class kolab_calendar
     $object = $this->_from_rcube_event($event);
     $saved = $this->storage->save($object, 'event');
     
-    if (PEAR::isError($saved)) {
+    if (!$saved || PEAR::isError($saved)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
@@ -297,15 +297,15 @@ class kolab_calendar
   public function update_event($event)
   {
     $updated = false;
-    $old = $this->storage->getObject($event['id']);
-    if (PEAR::isError($old))
+    $old = $this->storage->get_object($event['id']);
+    if (!$old || PEAR::isError($old))
       return false;
 
     $old['recurrence'] = '';  # clear old field, could have been removed in new, too
     $object = $this->_from_rcube_event($event, $old);
     $saved = $this->storage->save($object, 'event', $event['id']);
 
-    if (PEAR::isError($saved)) {
+    if (!$saved || PEAR::isError($saved)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
@@ -328,28 +328,14 @@ class kolab_calendar
    */
   public function delete_event($event, $force = true)
   {
-    $deleted  = false;
+    $deleted = $this->storage->delete($event['id'], $force);
 
-    if (!$force) {
-      // Get IMAP object ID
-      $imap_uid = $this->storage->_getStorageId($event['id']);
-    }
-
-    $deleteme = $this->storage->delete($event['id'], $force);
-
-    if (PEAR::isError($deleteme)) {
+    if (!$deleted || PEAR::isError($deleted)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error deleting event object from Kolab server:" . $deleteme->getMessage()),
+        'message' => "Error deleting event object from Kolab server"),
         true, false);
-    }
-    else {
-      // Save IMAP object ID in session, will be used for restore action
-      if ($imap_uid)
-        $_SESSION['kolab_delete_uids'][$event['id']] = $imap_uid;
-
-      $deleted = true;
     }
 
     return $deleted;
@@ -363,48 +349,8 @@ class kolab_calendar
    */
   public function restore_event($event)
   {
-    $imap_uid = $_SESSION['kolab_delete_uids'][$event['id']];
-
-    if (!$imap_uid)
-      return false;
-
-    $session = &Horde_Kolab_Session::singleton();
-    $imap    = &$session->getImap();
-
-    if (is_object($imap) && is_a($imap, 'PEAR_Error')) {
-      $error = $imap;
-    }
-    else {
-      $result = $imap->select($this->imap_folder);
-      if (is_object($result) && is_a($result, 'PEAR_Error')) {
-        $error = $result;
-      }
-      else {
-        $result = $imap->undeleteMessages($imap_uid);
-        if (is_object($result) && is_a($result, 'PEAR_Error')) {
-          $error = $result;
-        }
-        else {
-          // re-sync the cache
-          $this->storage->synchronize();
-        }
-      }
-    }
-
-    if ($error) {
-      raise_error(array(
-        'code' => 600, 'type' => 'php',
-        'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error undeleting an event object(s) from the Kolab server:" . $error->getMessage()),
-        true, false);
-
-      return false;
-    }
-
-    $rcmail = rcmail::get_instance();
-    $rcmail->session->remove('kolab_delete_uids');
-
-    return true;
+    // TODO: re-implement this with new kolab_storege backend
+    return false;
   }
 
   /**

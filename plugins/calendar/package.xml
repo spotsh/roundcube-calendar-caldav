@@ -157,6 +157,7 @@
 
 			<file name="config.inc.php.dist" role="data"></file>
 			<file name="LICENSE" role="data"></file>
+			<file name="README" role="data"></file>
 			<file name="TODO" role="data"></file>
 
 			<file name="localization/bg_BG.inc" role="data"></file>
