@@ -262,7 +262,7 @@ class kolab_format_event extends kolab_format
             }
 
             if (preg_match('/^@(\d+)/', $offset, $d)) {
-                $alarm->setStart(self::get_datetime($d[1]));
+                $alarm->setStart(self::get_datetime($d[1], new DateTimeZone('UTC')));
             }
             else if (preg_match('/^([-+]?)(\d+)([SMHDW])/', $offset, $d)) {
                 $days = $hours = $minutes = $seconds = 0;

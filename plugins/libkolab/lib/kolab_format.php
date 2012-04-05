@@ -75,7 +75,9 @@ abstract class kolab_format
             if (!$dateonly)
                 $result->setTime($datetime->format('G'), $datetime->format('i'), $datetime->format('s'));
 
-            if ($tz)
+            if ($tz && $tz->getName() == 'UTC')
+                $result->setUTC(true);
+            else if ($tz)
                 $result->setTimezone($tz->getName());
         }
 
@@ -100,6 +102,9 @@ abstract class kolab_format
             if ($tzs = $cdt->timezone()) {
                 $tz = new DateTimeZone($tzs);
                 $d->setTimezone($tz);
+            }
+            else if ($cdt->isUTC()) {
+                $d->setTimezone(new DateTimeZone('UTC'));
             }
         }
         catch (Exception $e) { }
