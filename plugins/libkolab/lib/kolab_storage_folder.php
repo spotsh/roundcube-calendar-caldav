@@ -487,6 +487,33 @@ class kolab_storage_folder
 
 
     /**
+     * Move a Kolab object message to another IMAP folder
+     *
+     * @param string Object UID
+     * @param string IMAP folder to move object to
+     * @return boolean True on success, false on failure
+     */
+    public function move($uid, $target_folder)
+    {
+        if ($msguid = $this->uid2msguid($uid)) {
+            if ($success = $this->imap->move_message($msguid, $target_folder, $this->name)) {
+                // TODO: update cache
+                return true;
+            }
+            else {
+                raise_error(array(
+                    'code' => 600, 'type' => 'php',
+                    'file' => __FILE__, 'line' => __LINE__,
+                    'message' => "Failed to move message $msguid to $target_folder: " . $this->imap->get_error_str(),
+                ), true);
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
      * Resolve an object UID into an IMAP message UID
      */
     private function uid2msguid($uid, $deleted = false)
