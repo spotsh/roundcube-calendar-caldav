@@ -467,7 +467,7 @@ class kolab_addressbook extends rcube_plugin
                 $this->rc->imap_connect();
                 $parent_opts = $this->rc->imap->mailbox_info($path);
                 if ($parent_opts['namespace'] != 'personal'
-                    && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+                    && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
                 ) {
                     $error = rcube_label('parentnotwritable');
                 }

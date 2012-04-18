@@ -294,7 +294,7 @@ class kolab_driver extends calendar_driver
       $this->rc->imap_connect();
       $parent_opts = $this->rc->imap->mailbox_info($parent);
       if ($parent_opts['namespace'] != 'personal'
-        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
       ) {
         $this->last_error = 'No permission to create folder';
         return false;
