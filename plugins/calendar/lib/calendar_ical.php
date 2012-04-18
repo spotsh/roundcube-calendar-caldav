@@ -40,8 +40,7 @@ class calendar_ical
   
   private $rc;
   private $cal;
-  private $timezone = 'Z';
-  
+
   public $method;
   public $events = array();
 
@@ -49,12 +48,6 @@ class calendar_ical
   {
     $this->cal = $cal;
     $this->rc = $cal->rc;
-    
-    // compose timezone string
-    if ($cal->timezone) {
-      $hours = floor($cal->timezone + $cal->dst_active);
-      $this->timezone = sprintf('%s%02d:%02d', ($hours >= 0 ? '+' : ''), $hours, ($cal->timezone - $hours) * 60);
-    }
   }
 
   /**
@@ -313,7 +306,12 @@ class calendar_ical
   private function _date2time($prop)
   {
     // create timestamp at 12:00 in user's timezone
-    return is_array($prop) ? strtotime(sprintf('%04d%02d%02dT120000%s', $prop['year'], $prop['month'], $prop['mday'], $this->timezone)) : $prop;
+    if (is_array($prop)) {
+      $date = new DateTime(sprintf('%04d%02d%02dT120000', $prop['year'], $prop['month'], $prop['mday']), $this->cal->timezone);
+      console($prop, $date->format('r'));
+      return $date->getTimestamp();
+    }
+    return $prop;
   }
 
 

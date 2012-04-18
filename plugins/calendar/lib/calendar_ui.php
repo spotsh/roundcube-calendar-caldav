@@ -48,11 +48,11 @@ class calendar_ui
       
     // add taskbar button
     $this->cal->add_button(array(
-      'name'    => 'calendar',
+      'command' => 'calendar',
       'class'   => 'button-calendar',
+      'classsel' => 'button-calendar button-selected',
+      'innerclass' => 'button-inner',
       'label'   => 'calendar.calendar',
-      'href'    => './?_task=calendar',
-      'onclick' => sprintf("%s.command('plugin.calendar');return false", JS_OBJECT_NAME),
       ), 'taskbar');
     
     // load basic client script (which - unfortunately - requires fullcalendar)
@@ -168,6 +168,7 @@ class calendar_ui
         $css .= " border-color: #$color;";
         $css .= "}\n";
       }
+      $css .= ".$class .handle { background-color: #$color; }";
     }
     
     return html::tag('style', array('type' => 'text/css'), $css);
@@ -191,6 +192,7 @@ class calendar_ui
       $prop['freebusy'] = $this->cal->driver->freebusy;
       $prop['attachments'] = $this->cal->driver->attachments;
       $prop['undelete'] = $this->cal->driver->undelete;
+      $prop['feedurl'] = $this->cal->get_url(array('_cal' => $this->cal->ical_feed_hash($id) . '.ics', 'action' => 'feed'));
       $jsenv[$id] = $prop;
 
       $html_id = html_identifier($id);
@@ -202,7 +204,9 @@ class calendar_ui
         $class .= ' '.$prop['class_name'];
 
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
-        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') . html::span(null, Q($prop['name'])));
+        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
+        html::span('handle', '&nbsp;') .
+        html::span('calname', Q($prop['name'])));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);

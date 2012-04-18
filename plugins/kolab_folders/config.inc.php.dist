@@ -26,9 +26,9 @@ $rcmail_config['kolab_folders_mail_drafts'] = '';
 // Sent folder
 $rcmail_config['kolab_folders_mail_sentitems'] = '';
 // Trash folder
-$rcmail_config['kolab_folders_mail_junkemail'] = '';
+$rcmail_config['kolab_folders_mail_wastebasket'] = '';
 // Others folders
 $rcmail_config['kolab_folders_mail_outbox'] = '';
-$rcmail_config['kolab_folders_mail_wastebasket'] = '';
+$rcmail_config['kolab_folders_mail_junkemail'] = '';
 
 ?>

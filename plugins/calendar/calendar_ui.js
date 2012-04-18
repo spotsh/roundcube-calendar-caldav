@@ -6,7 +6,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -276,10 +276,12 @@ function rcube_calendar_ui(settings)
     {
       var i, id, len, img, content, li, elem,
         ul = document.createElement('UL');
+      ul.className = 'attachmentslist';
 
       for (i=0, len=list.length; i<len; i++) {
-        li = document.createElement('LI');
         elem = list[i];
+        li = document.createElement('LI');
+        li.className = elem.classname;
 
         if (edit) {
           rcmail.env.attachments[elem.id] = elem;
@@ -287,6 +289,7 @@ function rcube_calendar_ui(settings)
           content = document.createElement('A');
           content.href = '#delete';
           content.title = rcmail.gettext('delete');
+          content.className = 'delete';
           $(content).click({id: elem.id}, function(e) { remove_attachment(this, e.data.id); return false; });
 
           if (!rcmail.env.deleteicon)
@@ -303,7 +306,8 @@ function rcube_calendar_ui(settings)
 
         // name/link
         content = document.createElement('A');
-        content.innerHTML = list[i].name;
+        content.innerHTML = elem.name;
+        content.className = 'file';
         content.href = '#load';
         $(content).click({event: event, att: elem}, function(e) {
           load_attachment(e.data.event, e.data.att); return false; });
@@ -343,7 +347,8 @@ function rcube_calendar_ui(settings)
         $('#event-description').show().children('.event-text').html(text2html(event.description, 300, 6));
       
       // render from-to in a nice human-readable way
-      $('#event-date').html(Q(me.event_date_text(event))).show();
+      // -> now shown in dialog title
+      // $('#event-date').html(Q(me.event_date_text(event))).show();
       
       if (event.recurrence && event.recurrence_text)
         $('#event-repeat').show().children('.event-text').html(Q(event.recurrence_text));
@@ -432,7 +437,7 @@ function rcube_calendar_ui(settings)
         modal: false,
         resizable: !bw.ie6,
         closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
-        title: null,
+        title: Q(me.event_date_text(event)),
         close: function() {
           $dialog.dialog('destroy').hide();
         },
@@ -1953,6 +1958,26 @@ function rcube_calendar_ui(settings)
         this.refresh(p);
     };
 
+    // show URL of the given calendar in a dialog box
+    this.showurl = function(calendar)
+    {
+      var $dialog = $('#calendarurlbox').dialog('close');
+
+      if (calendar.feedurl) {
+        $dialog.dialog({
+          resizable: true,
+          closeOnEscape: true,
+          title: rcmail.gettext('showurl', 'calendar'),
+          close: function() {
+            $dialog.dialog("destroy").hide();
+          },
+          width: 520
+        }).show();
+
+        $('#calfeedurl').val(calendar.feedurl).select();
+      }
+    };
+
     // refresh the calendar view after saving event data
     this.refresh = function(p)
     {
@@ -2126,15 +2151,15 @@ function rcube_calendar_ui(settings)
     this.dialog_resize = function(id, height, width)
     {
       var win = $(window), w = win.width(), h = win.height();
-      $(id).dialog('option', { height: Math.min(h-20, height+110), width: Math.min(w-20, width+50) })
+      $(id).dialog('option', { height: Math.min(h-20, height+130), width: Math.min(w-20, width+50) })
         .dialog('option', 'position', ['center', 'center']);  // only works in a separate call (!?)
     };
 
     // adjust calendar view size
     this.view_resize = function()
     {
-      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').height() + 2 : 0;
-      fc.fullCalendar('option', 'height', $('#main').height() - footer);
+      var footer = fc.fullCalendar('getView').name == 'table' ? $('#agendaoptions').outerHeight() : 0;
+      fc.fullCalendar('option', 'height', $('#calendar').height() - footer);
     };
 
 
@@ -2183,7 +2208,7 @@ function rcube_calendar_ui(settings)
           var id = $(this).data('id');
           rcmail.select_folder(id, 'rcmlical');
           rcmail.enable_command('calendar-edit', true);
-          rcmail.enable_command('calendar-remove', 'events-import', !me.calendars[id].readonly);
+          rcmail.enable_command('calendar-remove', 'events-import', 'calendar-showurl', true);
           me.selected_calendar = id;
         })
         .dblclick(function(){ me.calendar_edit_dialog(me.calendars[me.selected_calendar]); })
@@ -2216,7 +2241,7 @@ function rcube_calendar_ui(settings)
       month: viewdate.getMonth(),
       year: viewdate.getFullYear(),
       ignoreTimezone: true,  // will treat the given date strings as in local (browser's) timezone
-      height: $('#main').height(),
+      height: $('#calendar').height(),
       eventSources: event_sources,
       monthNames : settings['months'],
       monthNamesShort : settings['months_short'],
@@ -2673,6 +2698,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('events-import', function(){ cal.import_events(cal.calendars[cal.selected_calendar]); }, false);
+  rcmail.register_command('calendar-showurl', function(){ cal.showurl(cal.calendars[cal.selected_calendar]); }, false);
  
   // search and export events
   rcmail.register_command('export', function(){ rcmail.goto_url('export_events', { source:cal.selected_calendar }); }, true);

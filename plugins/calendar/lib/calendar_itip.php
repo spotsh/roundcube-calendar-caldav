@@ -96,8 +96,8 @@ class calendar_itip
     }
     
     $message->headers($headers, true);
-    $message->setTXTBody(rcube_message::format_flowed($mailbody, 79));
-    
+    $message->setTXTBody(rcube_mime::format_flowed($mailbody, 79));
+
     // finally send the message
     return rcmail_deliver_message($message, $headers['X-Sender'], $mailto, $smtp_error);
   }

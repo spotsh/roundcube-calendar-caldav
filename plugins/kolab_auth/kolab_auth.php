@@ -43,7 +43,7 @@ class kolab_auth extends rcube_plugin
 
         // Hooks related to "Login As" feature
         $this->add_hook('template_object_loginform', array($this, 'login_form'));
-        $this->add_hook('imap_connect', array($this, 'imap_connect'));
+        $this->add_hook('storage_connect', array($this, 'imap_connect'));
         $this->add_hook('managesieve_connect', array($this, 'imap_connect'));
         $this->add_hook('smtp_connect', array($this, 'smtp_connect'));
 
@@ -135,7 +135,7 @@ class kolab_auth extends rcube_plugin
                     } else {
                         $dont_override = $rcmail->config->get('dont_override');
                         if (in_array($setting_name, $dont_override)) {
-                            $_dont_override = Array();
+                            $_dont_override = array();
                             foreach ($dont_override as $_setting) {
                                 if ($_setting != $setting_name) {
                                     $_dont_override[] = $_setting;
@@ -346,6 +346,9 @@ class kolab_auth extends rcube_plugin
 
         // Set credentials
         if ($record) {
+            // Store UID in session for use by other plugins
+            $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
+
             if ($login_attr)
                 $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
             if ($alias_attr)
@@ -405,8 +408,9 @@ class kolab_auth extends rcube_plugin
      */
     private function init_ldap()
     {
-        if ($this->ldap)
+        if ($this->ldap) {
             return $this->ldap->ready;
+        }
 
         $rcmail = rcmail::get_instance();
 
@@ -447,8 +451,9 @@ class kolab_auth extends rcube_plugin
         $this->ldap->set_filter($filter);
         $results = $this->ldap->list_records();
 
-        if (count($results->records) == 1)
+        if (count($results->records) == 1) {
             return $results->records[0];
+        }
     }
 
     /**
@@ -480,9 +485,16 @@ class kolab_auth extends rcube_plugin
  */
 class kolab_auth_ldap_backend extends rcube_ldap
 {
+    function __construct($p, $debug=false, $mail_domain=null)
+    {
+        parent::__construct($p, $debug, $mail_domain);
+        $this->fieldmap['uid'] = 'uid';
+    }
+
     function set_filter($filter)
     {
-        if ($filter)
+        if ($filter) {
             $this->prop['filter'] = $filter;
+        }
     }
 }

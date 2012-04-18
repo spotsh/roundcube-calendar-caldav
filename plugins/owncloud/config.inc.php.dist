@@ -1,0 +1,4 @@
+<?php
+
+// ownCloud URL
+$rcmail_config['owncloud_url'] = 'https://owncloud.webmail.tld';

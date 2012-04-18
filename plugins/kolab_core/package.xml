@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_core</name>
-	<uri>http://kolabsys.com</uri>
+	<uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
 	<summary>Kolab API</summary>
 	<description>
 	    Plugin to setup a basic environment for interaction with a Kolab server.

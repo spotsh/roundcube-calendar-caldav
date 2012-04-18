@@ -131,7 +131,7 @@ class kolab_addressbook extends rcube_plugin
                 'editable' => $abook->editable,
                 'groups'   => $abook->groups,
                 'undelete' => $abook->undelete && $undelete,
-                'realname' => rcube_charset_convert($abook->get_realname(), 'UTF7-IMAP'), // IMAP folder name
+                'realname' => rcube_charset::convert($abook->get_realname(), 'UTF7-IMAP'), // IMAP folder name
                 'class_name' => $abook->get_namespace(),
                 'kolab'    => true,
             );
@@ -258,7 +258,7 @@ class kolab_addressbook extends rcube_plugin
             // convert to UTF8 and sort
             $names = array();
             foreach ($this->folders as $c_folder)
-                $names[$c_folder->name] = rcube_charset_convert($c_folder->name, 'UTF7-IMAP');
+                $names[$c_folder->name] = rcube_charset::convert($c_folder->name, 'UTF7-IMAP');
 
             asort($names, SORT_LOCALE_STRING);
 
@@ -420,14 +420,14 @@ class kolab_addressbook extends rcube_plugin
      */
     public function book_save()
     {
+        $storage   = $this->rc->get_storage();
         $folder    = trim(get_input_value('_name', RCUBE_INPUT_POST, true, 'UTF7-IMAP'));
         $oldfolder = trim(get_input_value('_oldname', RCUBE_INPUT_POST, true)); // UTF7-IMAP
         $path      = trim(get_input_value('_parent', RCUBE_INPUT_POST, true)); // UTF7-IMAP
-        $delimiter = $_SESSION['imap_delimiter'];
+        $delimiter = $storage->get_hierarchy_delimiter();
 
         if (strlen($oldfolder)) {
-            $this->rc->imap_connect();
-            $options = $this->rc->imap->mailbox_info($oldfolder);
+            $options = $storage->folder_info($oldfolder);
         }
 
         if (!empty($options) && ($options['norename'] || $options['protected'])) {
@@ -458,14 +458,12 @@ class kolab_addressbook extends rcube_plugin
             }
             else {
                 // add namespace prefix (when needed)
-                $this->rc->imap_init();
-                $folder = $this->rc->imap->mod_mailbox($folder, 'in');
+                $folder = $storage->mod_folder($folder, 'in');
             }
 
             // Check access rights to the parent folder
             if (strlen($path) && (!strlen($oldfolder) || $oldfolder != $folder)) {
-                $this->rc->imap_connect();
-                $parent_opts = $this->rc->imap->mailbox_info($path);
+                $parent_opts = $storage->folder_info($path);
                 if ($parent_opts['namespace'] != 'personal'
                     && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
                 ) {
@@ -552,7 +550,7 @@ class kolab_addressbook extends rcube_plugin
                 'readonly' => false,
                 'editable' => true,
                 'groups'   => true,
-                'realname' => rcube_charset_convert($folder, 'UTF7-IMAP'), // IMAP folder name
+                'realname' => rcube_charset::convert($folder, 'UTF7-IMAP'), // IMAP folder name
                 'class_name' => $kolab_folder->get_namespace(),
                 'kolab'    => true,
             ), rcube_kolab::folder_id($oldfolder));

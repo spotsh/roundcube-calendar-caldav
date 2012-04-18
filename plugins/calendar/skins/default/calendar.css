@@ -22,7 +22,7 @@ body.calendarmain {
 	bottom: 10px;
 }
 
-#sidebar {
+#calendarsidebar {
 	position: absolute;
 	top: 37px;
 	left: 10px;
@@ -58,7 +58,7 @@ body.calendarmain {
 	cursor: pointer;
 }
 
-#sidebartoggle {
+#calendarsidebartoggle {
 	position: absolute;
 	left: 244px;
 	width: 8px;
@@ -72,7 +72,7 @@ div.sidebarclosed {
 	background-position: -8px 48% !important;
 }
 
-#sidebartoggle:hover {
+#calendarsidebartoggle:hover {
 	background-color: #ddd;
 }
 
@@ -123,10 +123,11 @@ pre {
 	display: block;
 }
 
-#calendarslist li span {
+#calendarslist li span.handle {
 	cursor: default;
 	background: url(images/calendars.png) 0 -2px no-repeat;
-	padding-left: 18px;
+	display: inline-block;
+	width: 20px;
 }
 
 #calendarslist li input {
@@ -142,24 +143,32 @@ pre {
 	font-weight: bold;
 }
 
-#calendarslist li.readonly span {
+#calendarslist li.readonly span.handle {
     background-position: 0 -20px;
 }
 
-#calendarslist li.other span {
+#calendarslist li.other span.handle {
     background-position: 0 -38px;
 }
 
-#calendarslist li.other.readonly span {
+#calendarslist li.other.readonly span.handle {
     background-position: 0 -56px;
 }
 
-#calendarslist li.shared span {
+#calendarslist li.shared span.handle {
     background-position: 0 -74px;
 }
 
-#calendarslist li.shared.readonly span {
+#calendarslist li.shared.readonly span.handle {
     background-position: 0 -92px;
+}
+
+#calfeedurl {
+	width: 98%;
+	background: #fbfbfb;
+	padding: 4px;
+	margin-bottom: 1em;
+	resize: none;
 }
 
 #agendalist {
@@ -1164,7 +1173,9 @@ fieldset #calendarcategories div {
 /* Invitation UI in mail */
 
 #messagemenu li a.calendarlink {
-	background: url(images/calendars.png) 7px -109px no-repeat;
+	background-image: url(images/calendars.png);
+	background-position: 7px -109px;
+	background-repeat: no-repeat;
 }
 
 div.calendar-invitebox {

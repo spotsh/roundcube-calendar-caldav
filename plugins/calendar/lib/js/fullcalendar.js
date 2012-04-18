@@ -1,17 +1,18 @@
 /**
  * @preserve
- * FullCalendar v1.5.2
- * http://arshaw.com/fullcalendar/
+ * FullCalendar v1.5.3-rcube-0.7.1
+ * https://github.com/roundcube/fullcalendar
  *
  * Use fullcalendar.css for basic styling.
  * For event drag & drop, requires jQuery UI draggable.
  * For event resizing, requires jQuery UI resizable.
  *
  * Copyright (c) 2011 Adam Shaw
+ * Copyright (c) 2011, Kolab Systems AG
  * Dual licensed under the MIT and GPL licenses, located in
  * MIT-LICENSE.txt and GPL-LICENSE.txt respectively.
  *
- * Date: Sun Aug 21 22:06:09 2011 -0700
+ * Date: Mon Feb 13 23:00:46 2012 +0100
  *
  */
  
@@ -57,7 +58,7 @@ var defaults = {
 		week: 'ddd M/d',
 		day: 'dddd M/d',
 		list: 'dddd, MMM d, yyyy',
-		table: 'dddd, MMM d, yyyy'
+		table: 'MMM d, yyyy'
 	},
 	timeFormat: { // for event elements
 		'': 'h(:mm)t' // default
@@ -136,7 +137,7 @@ var rtlDefaults = {
 
 
 
-var fc = $.fullCalendar = { version: "1.5.2" };
+var fc = $.fullCalendar = { version: "1.5.3-rcube-0.7.1" };
 var fcViews = fc.views = {};
 
 
@@ -662,8 +663,7 @@ function Calendar(element, options, eventSources) {
 		} else if (name.indexOf('list') == 0 || name == 'tableCols') {
 			options[name] = value;
 			currentView.start = null; // force re-render
-		}
-		else if (name == 'maxHeight') {
+		} else if (name == 'maxHeight') {
 			options[name] = value;
 		}
 	}
@@ -933,6 +933,7 @@ function EventManager(options, _sources) {
 	function fetchEvents(start, end, src) {
 		rangeStart = start;
 		rangeEnd = end;
+		// partially clear cache if refreshing one source only (issue #1061)
 		cache = typeof src != 'undefined' ? $.grep(cache, function(e) { return !isSourcesEqual(e.source, src); }) : [];
 		var fetchID = ++currentFetchID;
 		var len = sources.length;
@@ -942,6 +943,7 @@ function EventManager(options, _sources) {
 				fetchEventSource(sources[i], fetchID);
 		}
 	}
+
 	
 	
 	function fetchEventSource(source, fetchID) {
@@ -1127,7 +1129,7 @@ function EventManager(options, _sources) {
 				event.source = stickySource;
 			}
 		}
-		
+		// always push event to cache (issue #1112:)
 		cache.push(event);
 		reportEvents(cache);
 	}
@@ -1616,7 +1618,7 @@ var dateFormatters = {
 			return 'th';
 		}
 		return ['st', 'nd', 'rd'][date%10-1] || 'th';
-	},
+	}	,
 	W	: function(d)	{ return iso8601Week(d); }
 };
 
@@ -3702,6 +3704,7 @@ function AgendaEventRenderer() {
 	var timeLineInterval;
 	
 	
+	
 	/* Rendering
 	----------------------------------------------------------------------------*/
 	
@@ -4011,7 +4014,7 @@ function AgendaEventRenderer() {
 	}
 	
 	
-	// draw a horizontal line across the agenda view indicating the current time (#143)
+	// draw a horizontal line indicating the current time (#143)
 	function setTimeIndicator()
 	{
 		var container = getBodyContent();
@@ -4941,7 +4944,7 @@ function DayEventRenderer() {
 				}
 				seg.outerHeight = element[0].offsetHeight + val;
 			}
-			else
+			else  // always set a value (issue #1108 )
 				seg.outerHeight = 0;
 		}
 	}
@@ -5296,6 +5299,7 @@ function HoverListener(coordinateGrid) {
 	
 	
 	function mouse(ev) {
+		_fixUIEvent(ev); // see below
 		var newCell = coordinateGrid.cell(ev.pageX, ev.pageY);
 		if (!newCell != !cell || newCell && (newCell.row != cell.row || newCell.col != cell.col)) {
 			if (newCell) {
@@ -5319,6 +5323,19 @@ function HoverListener(coordinateGrid) {
 	
 }
 
+
+
+// this fix was only necessary for jQuery UI 1.8.16 (and jQuery 1.7 or 1.7.1)
+// upgrading to jQuery UI 1.8.17 (and using either jQuery 1.7 or 1.7.1) fixed the problem
+// but keep this in here for 1.8.16 users
+// and maybe remove it down the line
+
+function _fixUIEvent(event) { // for issue 1168
+	if (event.pageX === undefined) {
+		event.pageX = event.originalEvent.pageX;
+		event.pageY = event.originalEvent.pageY;
+	}
+}
 function HorizontalPositionCache(getElement) {
 
 	var t = this,
@@ -5345,7 +5362,6 @@ function HorizontalPositionCache(getElement) {
 	};
 	
 }
-
 
 /* Additional view: list (by bruederli@kolabsys.com)
 ---------------------------------------------------------------------------------*/
@@ -5464,7 +5480,7 @@ function ListEventRenderer() {
 		var tm = opt('theme') ? 'ui' : 'fc';
 		var headerClass = tm + "-widget-header";
 		var contentClass = tm + "-widget-content";
-		var i, j, seg, event, times, s, skinCss, skinCssAttr, classes, segContainer, eventElements;
+		var i, j, seg, event, times, s, skinCss, skinCssAttr, classes, segContainer, eventElement, eventElements, triggerRes;
 
 		for (j=0; j < segs.length; j++) {
 			seg = segs[j];
@@ -5669,7 +5685,6 @@ function ListView(element, calendar) {
 
 }
 
-
 /* Additional view: table (by bruederli@kolabsys.com)
 ---------------------------------------------------------------------------------*/
 
@@ -5722,7 +5737,7 @@ function TableEventRenderer() {
 		var contentClass = tm + "-widget-content";
 		var tableCols = opt('tableCols');
 		var timecol = $.inArray('time', tableCols) >= 0;
-		var i, j, seg, event, times, s, skinCss, skinCssAttr, skinClasses, rowClasses, segContainer, eventElements;
+		var i, j, seg, event, times, s, skinCss, skinCssAttr, skinClasses, rowClasses, segContainer, eventElements, eventElement, triggerRes;
 
 		for (j=0; j < segs.length; j++) {
 			seg = segs[j];
@@ -5900,6 +5915,5 @@ function TableView(element, calendar) {
 	}
 
 }
-
 
 })(jQuery);

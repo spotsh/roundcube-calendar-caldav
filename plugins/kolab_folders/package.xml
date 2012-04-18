@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_folders</name>
-	<uri>http://kolabsys.com</uri>
+	<uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
 	<summary>Type-aware folder management/listing for Kolab</summary>
 	<description>
 	    The plugin extends folders handling with features of the Kolab Suite

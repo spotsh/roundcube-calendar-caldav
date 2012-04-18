@@ -131,8 +131,9 @@ class rcube_kolab_contacts extends rcube_addressbook
 
     public function __construct($imap_folder = null)
     {
-        if ($imap_folder)
+        if ($imap_folder) {
             $this->imap_folder = $imap_folder;
+        }
 
         // extend coltypes configuration 
         $format = rcube_kolab::get_format('contact');
@@ -653,8 +654,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         // store IMAP uids for undelete()
-        if (!$force)
+        if (!$force) {
             $_SESSION['kolab_delete_uids'] = $imap_uids;
+        }
 
         return $count;
     }
@@ -1015,32 +1017,39 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     private function _sort_contacts_comp($a, $b)
     {
-        $a_name = $a['name'];
-        $b_name = $b['name'];
+        $a_value = $b_value = '';
 
-        if (!$a_name) {
-            $a_name = join(' ', array_filter(array($a['prefix'], $a['firstname'],
-                $a['middlename'], $a['surname'], $a['suffix'])));
-            if (!$a_name) {
-                $a_name = is_array($a['email']) ? $a['email'][0] : $a['email'];
-            }
-        }
-        if (!$b_name) {
-            $b_name = join(' ', array_filter(array($b['prefix'], $b['firstname'],
-                $b['middlename'], $b['surname'], $b['suffix'])));
-            if (!$b_name) {
-                $b_name = is_array($b['email']) ? $b['email'][0] : $b['email'];
-            }
+        switch ($this->sort_col) {
+        case 'name':
+            $a_value = $a['name'] . $a['prefix'];
+            $b_value = $b['name'] . $b['prefix'];
+        case 'firstname':
+            $a_value .= $a['firstname'] . $a['middlename'] . $a['surname'];
+            $b_value .= $b['firstname'] . $b['middlename'] . $b['surname'];
+            break;
+
+        case 'surname':
+            $a_value = $a['surname'] . $a['firstname'] . $a['middlename'];
+            $b_value = $b['surname'] . $b['firstname'] . $b['middlename'];
+            break;
+
+        default:
+            $a_value = $a[$this->sort_col];
+            $b_value = $b[$this->sort_col];
+            break;
         }
 
-        // return strcasecmp($a_name, $b_name);
+        $a_value .= is_array($a['email']) ? $a['email'][0] : $a['email'];
+        $b_value .= is_array($b['email']) ? $b['email'][0] : $b['email'];
+
+        // return strcasecmp($a_value, $b_value);
         // make sorting unicode-safe and locale-dependent
-        if ($a_name == $b_name)
+        if ($a_value == $b_value)
             return 0;
 
-        $arr = array($a_name, $b_name);
+        $arr = array($a_value, $b_value);
         sort($arr, SORT_LOCALE_STRING);
-        return $a_name == $arr[0] ? -1 : 1;
+        return $a_value == $arr[0] ? -1 : 1;
     }
 
     /**

@@ -41,7 +41,7 @@ class kolab_folders extends rcube_plugin
         $this->rc = rcmail::get_instance();
 
         // Folder listing hooks
-        $this->add_hook('mailboxes_list', array($this, 'mailboxes_list'));
+        $this->add_hook('storage_folders', array($this, 'mailboxes_list'));
 
         // Folder manager hooks
         $this->add_hook('folder_form', array($this, 'folder_form'));
@@ -72,7 +72,6 @@ class kolab_folders extends rcube_plugin
         $folderdata = $this->get_folder_type_list($args['root'].$args['name'], true);
 
         if (!is_array($folderdata)) {
-            $args['folders'] = false;
             return $args;
         }
 
@@ -91,9 +90,14 @@ class kolab_folders extends rcube_plugin
             return $args;
         }
 
+        $storage = $this->rc->get_storage();
+
         // Get folders list
         if ($args['mode'] == 'LIST') {
-            $args['folders'] = $this->rc->imap->conn->listMailboxes($args['root'], $args['name']);
+            if (!$storage->check_connection()) {
+                return $args;        
+            }
+            $args['folders'] = $storage->conn->listMailboxes($args['root'], $args['name']);
         }
         else {
             $args['folders'] = $this->list_subscribed($args['root'], $args['name']);
@@ -200,16 +204,21 @@ class kolab_folders extends rcube_plugin
             $ctype = 'mail';
         }
 
+        $storage = $this->rc->get_storage();
+
         // Don't allow changing type of shared folder, according to ACL
         if (strlen($mbox)) {
-            $options = $this->rc->imap->mailbox_info($mbox);
+            $options = $storage->folder_info($mbox);
             if ($options['namespace'] != 'personal' && !in_array('a', $options['rights'])) {
-                if (in_array($ctype, $this->types))
+                if (in_array($ctype, $this->types)) {
                     $value = $this->gettext('foldertype'.$ctype);
-                else
+                }
+                else {
                     $value = $ctype;
-                if ($subtype)
+                }
+                if ($subtype) {
                     $value .= ' ('. ($subtype == 'default' ? $this->gettext('default') : $subtype) .')';
+                }
 
                 $args['form']['props']['fieldsets']['settings']['content']['foldertype'] = array(
                     'label' => $this->gettext('folderctype'),
@@ -298,13 +307,15 @@ class kolab_folders extends rcube_plugin
 
         $ctype .= $subtype ? '.'.$subtype : '';
 
+        $storage = $this->rc->get_storage();
+
         // Create folder
         if (!strlen($old_mbox)) {
             // By default don't subscribe to non-mail folders
             if ($subscribe)
                 $subscribe = (bool) preg_match('/^mail/', $ctype);
 
-            $result = $this->rc->imap->create_mailbox($mbox, $subscribe);
+            $result = $storage->create_folder($mbox, $subscribe);
             // Set folder type
             if ($result) {
                 $this->set_folder_type($mbox, $ctype);
@@ -313,7 +324,7 @@ class kolab_folders extends rcube_plugin
         // Rename folder
         else {
             if ($old_mbox != $mbox) {
-                $result = $this->rc->imap->rename_mailbox($old_mbox, $mbox);
+                $result = $storage->rename_folder($old_mbox, $mbox);
             }
             else {
                 $result = true;
@@ -348,9 +359,11 @@ class kolab_folders extends rcube_plugin
      */
     function metadata_support()
     {
-        return $this->rc->imap->get_capability('METADATA') ||
-            $this->rc->imap->get_capability('ANNOTATEMORE') ||
-            $this->rc->imap->get_capability('ANNOTATEMORE2');
+        $storage = $this->rc->get_storage();
+
+        return $storage->get_capability('METADATA') ||
+            $storage->get_capability('ANNOTATEMORE') ||
+            $storage->get_capability('ANNOTATEMORE2');
     }
 
     /**
@@ -362,7 +375,8 @@ class kolab_folders extends rcube_plugin
      */
     function get_folder_type($folder)
     {
-        $folderdata = $this->rc->imap->get_metadata($folder, array(kolab_folders::CTYPE_KEY));
+        $storage    = $this->rc->get_storage();
+        $folderdata = $storage->get_metadata($folder, array(kolab_folders::CTYPE_KEY));
 
         return explode('.', $folderdata[$folder][kolab_folders::CTYPE_KEY]);
     }
@@ -377,7 +391,9 @@ class kolab_folders extends rcube_plugin
      */
     function set_folder_type($folder, $type='mail')
     {
-        return $this->rc->imap->set_metadata($folder, array(kolab_folders::CTYPE_KEY => $type));
+        $storage = $this->rc->get_storage();
+
+        return $storage->set_metadata($folder, array(kolab_folders::CTYPE_KEY => $type));
     }
 
     /**
@@ -390,23 +406,27 @@ class kolab_folders extends rcube_plugin
      */
     private function list_subscribed($root='', $name='*')
     {
-        $imap = $this->rc->imap;
+        $storage = $this->rc->get_storage();
+
+        if (!$storage->check_connection()) {
+            return null;
+        }
 
         // Code copied from rcube_imap::_list_mailboxes()
         // Server supports LIST-EXTENDED, we can use selection options
         // #1486225: Some dovecot versions returns wrong result using LIST-EXTENDED
         if (!$this->rc->config->get('imap_force_lsub') && $imap->get_capability('LIST-EXTENDED')) {
             // This will also set mailbox options, LSUB doesn't do that
-            $a_folders = $imap->conn->listMailboxes($root, $name,
+            $a_folders = $storage->conn->listMailboxes($root, $name,
                 NULL, array('SUBSCRIBED'));
 
             // remove non-existent folders
-            if (is_array($a_folders) && $name = '*') {
+            if (is_array($a_folders) && $name = '*' && !empty($storage->conn->data['LIST'])) {
                 foreach ($a_folders as $idx => $folder) {
-                    if ($imap->conn->data['LIST'] && ($opts = $imap->conn->data['LIST'][$folder])
+                    if (($opts = $storage->conn->data['LIST'][$folder])
                         && in_array('\\NonExistent', $opts)
                     ) {
-                        $imap->conn->unsubscribe($folder);
+                        $storage->conn->unsubscribe($folder);
                         unset($a_folders[$idx]);
                     }
                 }
@@ -414,17 +434,17 @@ class kolab_folders extends rcube_plugin
         }
         // retrieve list of folders from IMAP server using LSUB
         else {
-            $a_folders = $imap->conn->listSubscribed($root, $name);
+            $a_folders = $storage->conn->listSubscribed($root, $name);
 
             // unsubscribe non-existent folders, remove from the list
-            if (is_array($a_folders) && $name == '*') {
+            if (is_array($a_folders) && $name == '*' && !empty($storage->conn->data['LIST'])) {
                 foreach ($a_folders as $idx => $folder) {
-                    if ($imap->conn->data['LIST'] && ($opts = $imap->conn->data['LIST'][$folder])
-                        && in_array('\\Noselect', $opts)
+                    if (!isset($storage->conn->data['LIST'][$folder])
+                        || in_array('\\Noselect', $storage->conn->data['LIST'][$folder])
                     ) {
                         // Some servers returns \Noselect for existing folders
-                        if (!$imap->mailbox_exists($folder)) {
-                            $imap->conn->unsubscribe($folder);
+                        if (!$storage->folder_exists($folder)) {
+                            $storage->conn->unsubscribe($folder);
                             unset($a_folders[$idx]);
                         }
                     }
@@ -445,15 +465,17 @@ class kolab_folders extends rcube_plugin
      */
     function get_folder_type_list($mbox, $create_defaults = false)
     {
+        $storage = $this->rc->get_storage();
+
         // Use mailboxes. prefix so the cache will be cleared by core
         // together with other mailboxes-related cache data
         $cache_key = 'mailboxes.folder-type.'.$mbox;
 
         // get cached metadata
-        $metadata = $this->rc->imap->get_cache($cache_key);
+        $metadata = $storage->get_cache($cache_key);
 
         if (!is_array($metadata)) {
-            $metadata = $this->rc->imap->get_metadata($mbox, kolab_folders::CTYPE_KEY);
+            $metadata = $storage->get_metadata($mbox, kolab_folders::CTYPE_KEY);
             $need_update = true;
         }
 
@@ -473,7 +495,7 @@ class kolab_folders extends rcube_plugin
 
         // write mailboxlist to cache
         if ($need_update) {
-            $this->rc->imap->update_cache($cache_key, $metadata);
+            $storage->update_cache($cache_key, $metadata);
         }
 
         return $metadata;
@@ -488,6 +510,7 @@ class kolab_folders extends rcube_plugin
      */
     function get_default_folder($type)
     {
+        $storage    = $this->rc->get_storage();
         $folderdata = $this->get_folder_type_list('*');
 
         if (!is_array($folderdata)) {
@@ -495,7 +518,7 @@ class kolab_folders extends rcube_plugin
         }
 
         $type     .= '.default';
-        $namespace = $this->rc->imap->get_namespace();
+        $namespace = $storage->get_namespace();
 
         // get all folders of specified type
         $folderdata = array_intersect($folderdata, array($type)); 
@@ -552,7 +575,8 @@ class kolab_folders extends rcube_plugin
      */
     private function create_default_folders(&$folderdata, $cache_key = null)
     {
-        $namespace   = $this->rc->imap->get_namespace();
+        $storage     = $this->rc->get_storage();
+        $namespace   = $storage->get_namespace();
         $defaults    = array();
         $need_update = false;
 
@@ -573,7 +597,7 @@ class kolab_folders extends rcube_plugin
                 $opt_name = 'kolab_folders_' . $type . '_' . $subtype;
                 if ($folder = $this->rc->config->get($opt_name)) {
                     // convert configuration value to UTF7-IMAP charset
-                    $folder = rcube_charset_convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
+                    $folder = rcube_charset::convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
                     // and namespace prefix if needed
                     if ($prefix && strpos($folder, $prefix) === false && $folder != 'INBOX') {
                         $folder = $prefix . $folder;
@@ -621,8 +645,8 @@ class kolab_folders extends rcube_plugin
             list($type1, $type2) = explode('.', $type);
 
             // create folder
-            if ($type1 != 'mail' || !$this->rc->imap->mailbox_exists($foldername)) {
-                $this->rc->imap->create_mailbox($foldername, $type1 == 'mail');
+            if ($type1 != 'mail' || !$storage->folder_exists($foldername)) {
+                $storage->create_folder($foldername, $type1 == 'mail');
             }
 
             // set type
@@ -637,7 +661,8 @@ class kolab_folders extends rcube_plugin
 
         // update cache
         if ($need_update && $cache_key) {
-            $this->rc->imap->update_cache($cache_key, $folderdata);
+            $storage->update_cache($cache_key, $folderdata);
         }
     }
+
 }
