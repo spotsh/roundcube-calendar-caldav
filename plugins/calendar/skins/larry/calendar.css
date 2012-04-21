@@ -1242,11 +1242,7 @@ fieldset #calendarcategories div {
 /* Invitation UI in mail */
 
 #messagemenu li a.calendarlink span.calendar {
-<<<<<<< HEAD
-	background-position: 0 -1949px;
-=======
 	background-position: 0px -1948px;
->>>>>>> e666187312ca04384a28a77bf1836db79a97ca52
 }
 
 div.calendar-invitebox {
