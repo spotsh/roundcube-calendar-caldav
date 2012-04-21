@@ -167,9 +167,14 @@ class kolab_storage_folder
      *
      * @return string  Permissions as string
      */
-    public function get_acl()
+    public function get_myrights()
     {
-        return join('', (array)$this->imap->get_acl($this->name));
+        $rights = $this->info['rights'];
+
+        if (!is_array($rights))
+            $rights = $this->imap->my_rights($this->name);
+
+        return join('', (array)$rights);
     }
 
 
@@ -225,12 +230,17 @@ class kolab_storage_folder
     {
         if (!$type) $type = $this->type;
 
-        // search by object type
         $ctype  = self::KTYPE_PREFIX . $type;
-        $search = 'UNDELETED HEADER X-Kolab-Type ' . $ctype;
-
-        $index = $this->imap->search_once($this->name, $search);
         $results = array();
+
+        // use 'list' for folder's default objects
+        if ($type == $this->type) {
+            $index = $this->imap->index($this->name);
+        }
+        else {  // search by object type
+            $search = 'UNDELETED HEADER X-Kolab-Type ' . $ctype;
+            $index = $this->imap->search_once($this->name, $search);
+        }
 
         // fetch all messages from IMAP
         foreach ($index->get() as $msguid) {
@@ -298,13 +308,19 @@ class kolab_storage_folder
     {
         if (!$type) $type = $this->type;
         if (!$folder) $folder = $this->name;
-        $ctype= self::KTYPE_PREFIX . $type;
+        $ctype = self::KTYPE_PREFIX . $type;
 
-        // requested message not in local cache
+        // requested message in local cache
         if ($this->objcache[$msguid])
             return $this->objcache[$msguid];
 
         $this->imap->set_folder($folder);
+
+        // check ctype header and abort on mismatch
+        $headers = $this->imap->get_message_headers($msguid);
+        if ($headers->others['x-kolab-type'] != $ctype)
+            return false;
+
         $message = new rcube_message($msguid);
         $attachments = array();
 
@@ -636,7 +652,7 @@ class kolab_storage_folder
      */
     public function getMyRights()
     {
-        return $this->get_acl();
+        return $this->get_myrights();
     }
 
     /**

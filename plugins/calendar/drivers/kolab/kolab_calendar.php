@@ -69,7 +69,7 @@ class kolab_calendar
         $this->alarms = true;
       }
       else {
-        $rights = $this->storage->get_acl();
+        $rights = $this->storage->get_myrights();
         if ($rights && !PEAR::isError($rights)) {
           if (strpos($rights, 'i') !== false)
             $this->readonly = false;
