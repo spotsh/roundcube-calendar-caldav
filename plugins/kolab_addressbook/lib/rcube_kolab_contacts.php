@@ -47,7 +47,7 @@ class rcube_kolab_contacts extends rcube_addressbook
       'email'        => array('subtypes' => null),
       'phone'        => array(),
       'address'      => array('subtypes' => array('home','work','office')),
-      'website'      => array('subtypes' => null),
+      'website'      => array('subtypes' => array('homepage','blog')),
       'im'           => array('subtypes' => null),
       'gender'       => array('limit' => 1),
       'birthday'     => array('limit' => 1),
@@ -120,7 +120,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $this->readonly = false;
             }
             else {
-                $rights = $this->storagefolder->get_acl();
+                $rights = $this->storagefolder->get_myrights();
                 if (!PEAR::isError($rights)) {
                     if (strpos($rights, 'i') !== false)
                         $this->readonly = false;
@@ -1027,6 +1027,15 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
 
+        if (is_array($record['website'])) {
+            $urls = $record['website'];
+            unset($record['website']);
+            foreach ((array)$urls as $i => $url) {
+                $key = 'website' . ($url['type'] ? ':' . $url['type'] : '');
+                $record[$key][] = $url['url'];
+            }
+        }
+
         if (is_array($record['address'])) {
             $addresses = $record['address'];
             unset($record['address']);
@@ -1068,8 +1077,15 @@ class rcube_kolab_contacts extends rcube_addressbook
             $contact['uid'] = $old['uid'];
 
         $contact['email'] = array_filter($this->get_col_values('email', $contact, true));
-        $contact['website'] = array_filter($this->get_col_values('website', $contact, true));
         $contact['im'] = array_filter($this->get_col_values('im', $contact, true));
+        
+        foreach ($this->get_col_values('website', $contact) as $type => $values) {
+            foreach ((array)$values as $url) {
+                if (!empty($url)) {
+                    $contact['website'][] = array('url' => $url, 'type' => $type);
+                }
+            }
+        }
 
         foreach ($this->get_col_values('phone', $contact) as $type => $values) {
             foreach ((array)$values as $phone) {

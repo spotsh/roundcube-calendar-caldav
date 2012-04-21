@@ -188,7 +188,13 @@ class kolab_format_contact extends kolab_format
         // email, im, url
         $this->obj->setEmailAddresses(self::array2vector($object['email']));
         $this->obj->setIMaddresses(self::array2vector($object['im']));
-        $this->obj->setUrls(self::array2vector($object['website']));
+
+        $vurls = new vectorurl;
+        foreach ((array)$object['website'] as $url) {
+            $type = $url['type'] == 'blog' ? Url::Blog : Url::None;
+            $vurls->push(new Url($url['url'], $type));
+        }
+        $this->obj->setUrls($vurls);
 
         // addresses
         $adrs = new vectoraddress;
@@ -265,9 +271,27 @@ class kolab_format_contact extends kolab_format
         $this->obj->setRelateds($rels);
 
         if (isset($object['pgppublickey'])) {
-            $crypto = new Crypto;
-            $crypto->setPGPKey($object['pgppublickey']);
-            $this->obj->setCrypto($crypto);
+            $replace = -1;
+            $keys = $this->obj->keys();
+            if (!is_object($keys))
+                $keys = new vectorkey;
+
+            for ($i=0; $i < $keys->size(); $i++) {
+                $key = $keys->get($i);
+                if ($key->type() == Key::PGP) {
+                    $replace = $i;
+                    break;
+                }
+            }
+
+            // insert/replace pgp key entry
+            $key = new Key($object['pgppublickey'], Key::PGP);
+            if ($replace >= 0)
+                $keys->set($replace, $key);
+            else
+                $keys->push($key);
+            
+            $this->obj->setKeys($keys);
         }
 
         // TODO: handle language, gpslocation, etc.
@@ -325,7 +349,13 @@ class kolab_format_contact extends kolab_format
 
         $object['email']   = self::vector2array($this->obj->emailAddresses());
         $object['im']      = self::vector2array($this->obj->imAddresses());
-        $object['website'] = self::vector2array($this->obj->urls());
+
+        $urls = $this->obj->urls();
+        for ($i=0; $i < $urls->size(); $i++) {
+            $url = $urls->get($i);
+            $subtype = $url->type() == Url::Blog ? 'blog' : 'homepage';
+            $object['website'][] = array('url' => $url->url(), 'type' => $subtype);
+        }
 
         // addresses
         $this->read_addresses($this->obj->addresses(), $object);
@@ -360,9 +390,13 @@ class kolab_format_contact extends kolab_format
         $this->read_relateds($this->obj->relateds(), $object);
 
         // crypto settings: currently only pgpkey is supported
-        $crypto = $this->obj->crypto();
-        if ($pgpkey = $crypto->pgpKey())
-            $object['pgppublickey'] = $pgpkey;
+        $keys = $this->obj->keys();
+        for ($i=0; is_object($keys) && $i < $keys->size(); $i++) {
+            $key = $keys->get($i);
+            if ($key->type() == Key::PGP) {
+                $object['pgppublickey'] = $key->key();
+            }
+        }
 
         $this->data = $object;
         return $this->data;
