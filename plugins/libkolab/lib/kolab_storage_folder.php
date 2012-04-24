@@ -605,34 +605,53 @@ class kolab_storage_folder
     public function trigger()
     {
         $owner = $this->get_owner();
+        $result = false;
 
         switch($this->type) {
         case 'event':
-            $url = sprintf('%s/trigger/%s/%s.pfb', kolab_storage::get_freebusy_server(), $owner, $this->subpath);
+            if ($this->get_namespace() == 'personal') {
+                $result = $this->trigger_url(
+                    sprintf('%s/trigger/%s/%s.pfb', kolab_storage::get_freebusy_server(), $owner, $this->imap->mod_folder($this->name)),
+                    $this->imap->options['user'],
+                    $this->imap->options['password']
+                );
+            }
             break;
 
         default:
             return true;
         }
 
-        $result = $this->trigger_url($url);
-        if (is_a($result, 'PEAR_Error')) {
+        if ($result && is_a($result, 'PEAR_Error')) {
             return PEAR::raiseError(sprintf("Failed triggering folder %s. Error was: %s",
                                             $this->name, $result->getMessage()));
         }
+
         return $result;
     }
 
     /**
      * Triggers a URL.
      *
-     * @param string $url The URL to be triggered.
-     * @return boolean|PEAR_Error True if successfull.
+     * @param string $url          The URL to be triggered.
+     * @param string $auth_user    Username to authenticate with
+     * @param string $auth_passwd  Password for basic auth
+     * @return boolean|PEAR_Error  True if successfull.
      */
-    private function trigger_url($url)
+    private function trigger_url($url, $auth_user = null, $auth_passwd = null)
     {
-        // TBD.
-        return PEAR::raiseError("Feature not implemented.");
+        require_once('HTTP/Request.php');
+
+        $request = new HTTP_Request($url);
+
+        // set authentication credentials
+        if ($auth_user && $auth_passwd)
+            $request->setBasicAuth($auth_user, $auth_passwd);
+
+        $result = $request->sendRequest(true);
+        // rcube::write_log('trigger', $request->getResponseBody());
+
+        return $result;
     }
 
 
@@ -652,6 +671,7 @@ class kolab_storage_folder
      */
     public function getMyRights()
     {
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::getMyRights()");
         return $this->get_myrights();
     }
 
@@ -660,6 +680,7 @@ class kolab_storage_folder
      */
     public function getData()
     {
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::getData()");
         return $this;
     }
 
@@ -668,6 +689,7 @@ class kolab_storage_folder
      */
     public function getObjects($type = null)
     {
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::getObjects()");
         return $this->get_objects($type);
     }
 
@@ -676,6 +698,7 @@ class kolab_storage_folder
      */
     public function getObject($uid)
     {
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::getObject()");
         return $this->get_object($uid);
     }
 
@@ -693,6 +716,7 @@ class kolab_storage_folder
      */
     public function deleteMessage($id, $trigger = true, $expunge = true)
     {
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::deleteMessage()");
         return $this->delete(array('_msguid' => $id), $trigger, $expunge);
     }
 
@@ -701,6 +725,7 @@ class kolab_storage_folder
      */
     public function deleteAll()
     {
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::deleteAll()");
         return $this->delete_all();
     }
 
