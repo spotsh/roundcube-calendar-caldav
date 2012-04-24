@@ -202,6 +202,25 @@ class kolab_storage_folder
         return false;
     }
 
+    /**
+     * Change subscription status of this folder
+     *
+     * @param boolean The desired subscription status: true = subscribed, false = not subscribed
+     * @param string  Subscription type (kolab_storage::SERVERSIDE_SUBSCRIPTION or kolab_storage::CLIENTSIDE_SUBSCRIPTION)
+     * @return True on success, false on error
+     */
+    public function subscribe($subscribed, $type = 0)
+    {
+        if ($type == kolab_storage::SERVERSIDE_SUBSCRIPTION) {
+            return $subscribed ? $this->imap->subscribe($this->name) : $this->imap->unsubscribe($this->name);
+        }
+        else {
+          // TODO: implement this
+        }
+
+        return false;
+    }
+
 
     /**
      * Get number of objects stored in this folder

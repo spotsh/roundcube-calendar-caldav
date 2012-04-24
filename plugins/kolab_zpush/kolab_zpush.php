@@ -177,7 +177,6 @@ class kolab_zpush extends rcube_plugin
             break;
 
         case 'delete':
-            $this->init_imap();
             $devices = $this->list_devices();
             
             if ($device = $devices[$imei]) {
@@ -264,6 +263,7 @@ class kolab_zpush extends rcube_plugin
     public function list_devices()
     {
         if (!isset($this->devices)) {
+            $this->init_imap();
             $this->devices = (array)$this->root_meta['DEVICE'];
         }
         
