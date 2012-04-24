@@ -821,15 +821,18 @@ class kolab_driver extends calendar_driver
    */
   public function dismiss_alarm($event_id, $snooze = 0)
   {
+    // delete old alarm entry
+    $this->rc->db->query("DELETE FROM kolab_alarms WHERE event_id=?", $event_id);
+
     // set new notifyat time or unset if not snoozed
     $notifyat = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
-    
+
     $query = $this->rc->db->query(
-      "REPLACE INTO kolab_alarms
+      "INSERT INTO kolab_alarms
        (event_id, dismissed, notifyat)
        VALUES(?, ?, ?)",
       $event_id,
-      $snooze > 0 ? 0 : 1, 
+      $snooze > 0 ? 0 : 1,
       $notifyat
     );
     
