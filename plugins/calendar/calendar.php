@@ -1552,19 +1552,29 @@ class calendar extends rcube_plugin
     }
 
     if ($attachment) {
-      $mimetype = strtolower($attachment['mimetype']);
+      // allow post-processing of the attachment body
+      $part = new rcube_message_part;
+      $part->filename  = $attachment['name'];
+      $part->size      = $attachment['size'];
+      $part->mimetype  = $attachment['mimetype'];
+
+      $plugin = $this->rc->plugins->exec_hook('message_part_get', array(
+        'body' => $this->driver->get_attachment_body($id, $event),
+        'mimetype' => strtolower($attachment['mimetype']),
+        'download' => !empty($_GET['_download']),
+        'part' => $part,
+      ));
+
+      if ($plugin['abort'])
+        exit;
+
+      $mimetype = $plugin['mimetype'];
       list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
-
-      $body = $this->driver->get_attachment_body($id, $event);
-
-      // TODO: allow post-processing of the attachment body
-      //$plugin = $RCMAIL->plugins->exec_hook('message_part_get',
-      //  array('uid' => $MESSAGE->uid, 'id' => $part->mime_id, 'mimetype' => $mimetype, 'part' => $part, 'download' => !empty($_GET['_download'])));
 
       $browser = $this->rc->output->browser;
 
       // send download headers
-      if ($_GET['_download']) {
+      if ($plugin['download']) {
         header("Content-Type: application/octet-stream");
         if ($browser->ie)
           header("Content-Type: application/force-download");
@@ -1582,7 +1592,7 @@ class calendar extends rcube_plugin
       if ($mimetype == 'text/html' && empty($_GET['_download'])) {
         $OUTPUT = new rcube_html_page();
         // @TODO: use washtml on $body
-        $OUTPUT->write($body);
+        $OUTPUT->write($plugin['body']);
       }
       else {
         // don't kill the connection if download takes more than 30 sec.
@@ -1601,7 +1611,7 @@ class calendar extends rcube_plugin
         $disposition = !empty($_GET['_download']) ? 'attachment' : 'inline';
         header("Content-Disposition: $disposition; filename=\"$filename\"");
 
-        echo $body;
+        echo $plugin['body'];
       }
 
       exit;
