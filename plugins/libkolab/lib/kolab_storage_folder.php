@@ -53,7 +53,7 @@ class kolab_storage_folder
      */
     function __construct($name, $imap = null)
     {
-        $this->imap = is_object($imap) ? $imap : rcmail::get_instance()->get_storage();
+        $this->imap = is_object($imap) ? $imap : rcube::get_instance()->get_storage();
         $this->imap->set_options(array('skip_deleted' => false));
         $this->set_folder($name);
     }
@@ -124,7 +124,7 @@ class kolab_storage_folder
             return $this->owner;
 
         $info = $this->get_folder_info();
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         switch ($info['namespace']) {
         case 'personal':
@@ -571,7 +571,7 @@ class kolab_storage_folder
         }
 
         $mime = new Mail_mime("\r\n");
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         $headers = array();
 
         if ($ident = $rcmail->user->get_identity()) {
@@ -581,7 +581,7 @@ class kolab_storage_folder
         $headers['Date'] = date('r');
         $headers['X-Kolab-Type'] = self::KTYPE_PREFIX . $type;
         $headers['Subject'] = $object['uid'];
-//        $headers['Message-ID'] = rcmail_gen_message_id();
+//        $headers['Message-ID'] = $rcmail->gen_message_id();
         $headers['User-Agent'] = $rcmail->config->get('useragent');
 
         $mime->headers($headers);
