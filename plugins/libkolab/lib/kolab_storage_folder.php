@@ -350,8 +350,8 @@ class kolab_storage_folder
             }
             else if ($part->filename) {
                 $attachments[$part->filename] = array(
-                    'key' => $part->mime_id,
-                    'type' => $part->mimetype,
+                    'id' => $part->mime_id,
+                    'mimetype' => $part->mimetype,
                     'size' => $part->size,
                 );
             }
@@ -388,13 +388,10 @@ class kolab_storage_folder
         }
 
         if ($format->is_valid()) {
-            if ($formatobj)
-                return $format;
-
             $object = $format->to_array();
             $object['_msguid'] = $msguid;
             $object['_mailbox'] = $this->name;
-            $object['_attachments'] = $attachments;
+            $object['_attachments'] = array_merge((array)$object['_attachments'], $attachments);
             $object['_formatobj'] = $format;
 
             $this->objcache[$msguid] = $object;
@@ -425,8 +422,8 @@ class kolab_storage_folder
                     $object['_attachments'][$name] = $old['_attachments'][$name];
                 }
                 // load photo.attachment from old Kolab2 format to be directly embedded in xcard block
-                if ($name == 'photo.attachment' && !isset($object['photo']) && !$object['_attachments'][$name]['content'] && $att['key']) {
-                    $object['photo'] = $this->get_attachment($object['_msguid'], $att['key'], $object['_mailbox']);
+                if ($name == 'photo.attachment' && !isset($object['photo']) && !$object['_attachments'][$name]['content'] && $att['id']) {
+                    $object['photo'] = $this->get_attachment($object['_msguid'], $att['id'], $object['_mailbox']);
                     unset($object['_attachments'][$name]);
                 }
             }
@@ -601,12 +598,15 @@ class kolab_storage_folder
         // save object attachments as separate parts
         // TODO: optimize memory consumption by using tempfiles for transfer
         foreach ((array)$object['_attachments'] as $name => $att) {
-            if (empty($att['content']) && !empty($att['key'])) {
+            if (empty($att['content']) && !empty($att['id'])) {
                 $msguid = !empty($object['_msguid']) ? $object['_msguid'] : $object['uid'];
-                $att['content'] = $this->get_attachment($msguid, $att['key'], $object['_mailbox']);
+                $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox']);
             }
             if (!empty($att['content'])) {
-                $mime->addAttachment($att['content'], $att['type'], $name, false);
+                $mime->addAttachment($att['content'], $att['mimetype'], $name, false);
+            }
+            else if (!empty($att['path'])) {
+                $mime->addAttachment($att['path'], $att['mimetype'], $name, true);
             }
         }
 
@@ -681,7 +681,7 @@ class kolab_storage_folder
      */
     public function getOwner()
     {
-        console("Call to deprecated method kolab_storage_folder::getOwner()");
+        PEAR::raiseError("Call to deprecated method kolab_storage_folder::getOwner()");
         return $this->get_owner();
     }
 

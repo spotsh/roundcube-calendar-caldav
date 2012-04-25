@@ -260,13 +260,15 @@ function rcube_calendar_ui(settings)
       var qstring = '_id='+urlencode(att.id)+'&_event='+urlencode(event.recurrence_id||event.id)+'&_cal='+urlencode(event.calendar);
 
       // open attachment in frame if it's of a supported mimetype
-      if (id && att.mimetype && $.inArray(att.mimetype, rcmail.mimetypes)>=0) {
+      if (id && att.mimetype && $.inArray(att.mimetype, settings.mimetypes)>=0) {
         rcmail.attachment_win = window.open(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', 'rcubeeventattachment');
         if (rcmail.attachment_win) {
           window.setTimeout(function() { rcmail.attachment_win.focus(); }, 10);
           return;
         }
       }
+
+      return;
 
       rcmail.goto_url('get-attachment', qstring+'&_download=1', false);
     };

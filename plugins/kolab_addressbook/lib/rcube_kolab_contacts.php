@@ -1057,7 +1057,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         if ($record['photo'] && strlen($record['photo']) < 255 && ($att = $record['_attachments'][$record['photo']])) {
             // only fetch photo content if requested
             if ($this->action == 'photo')
-                $record['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['key']);
+                $record['photo'] = $att['content'] ? $att['content'] : $this->storagefolder->get_attachment($record['uid'], $att['id']);
         }
 
         // truncate publickey value for display
@@ -1123,7 +1123,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         if ($contact['photo']) {
           $attkey = 'photo.attachment';
           $contact['_attachments'][$attkey] = array(
-            'type' => rc_image_content_type($contact['photo']),
+            'mimetype' => rc_image_content_type($contact['photo']),
             'content' => preg_match('![^a-z0-9/=+-]!i', $contact['photo']) ? $contact['photo'] : base64_decode($contact['photo']),
           );
           $contact['photo'] = $attkey;

@@ -169,14 +169,6 @@ class kolab_calendar
     return $this->storage;
   }
 
-  /**
-   * Getter for the attachment body
-   */
-  public function get_attachment_body($id)
-  {
-    return $this->storage->getAttachment($id);
-  }
-
 
   /**
    * Getter for a single event object
@@ -427,15 +419,15 @@ class kolab_calendar
     if ($record['end'] <= $record['start'] && $record['allday'])
       $record['end'] = $record['start'] + 3600;
 
-    if (!empty($rec['_attachments'])) {
-      foreach ($rec['_attachments'] as $name => $attachment) {
-        // @TODO: 'type' and 'key' are the only supported (no 'size')
-        $attachments[] = array(
-          'id' => $attachment['key'],
-          'mimetype' => $attachment['type'],
-          'name' => $name,
-        );
+    if (!empty($record['_attachments'])) {
+      foreach ($record['_attachments'] as $name => $attachment) {
+        if ($attachment !== false) {
+          $attachment['name'] = $name;
+          $attachments[] = $attachment;
+        }
       }
+
+      $record['attachments'] = $attachments;
     }
 
     $sensitivity_map = array_flip($this->sensitivity_map);
@@ -461,28 +453,31 @@ class kolab_calendar
 
     // in Horde attachments are indexed by name
     $object['_attachments'] = array();
-    if (!empty($event['attachments'])) {
+    if (is_array($event['attachments'])) {
       $collisions = array();
       foreach ($event['attachments'] as $idx => $attachment) {
         // Roundcube ID has nothing to do with Horde ID, remove it
         if ($attachment['content'])
           unset($attachment['id']);
 
-        // Horde code assumes that there will be no more than
-        // one file with the same name: make filenames unique
-        $filename = $attachment['name'];
-        if ($collisions[$filename]++) {
-          $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
-          $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
+        // flagged for deletion => set to false
+        if ($attachment['_deleted']) {
+          $object['_attachments'][$attachment['name']] = false;
         }
+        else {
+          // Horde code assumes that there will be no more than
+          // one file with the same name: make filenames unique
+          $filename = $attachment['name'];
+          if ($collisions[$filename]++) {
+            $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
+            $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
+          }
 
-        // set type parameter
-        if ($attachment['mimetype'])
-          $attachment['type'] = $attachment['mimetype'];
-
-        $object['_attachments'][$attachment['name']] = $attachment;
-        unset($event['attachments'][$idx]);
+          $object['_attachments'][$attachment['name']] = $attachment;
+        }
       }
+
+      unset($event['attachments']);
     }
 
     // translate sensitivity property

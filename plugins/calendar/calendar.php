@@ -1069,6 +1069,11 @@ class calendar extends rcube_plugin
       $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
     }
 
+    // define list of file types which can be displayed inline
+    // same as in program/steps/mail/show.inc
+    $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
+    $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
+
     return $settings;
   }
   
@@ -1534,12 +1539,8 @@ class calendar extends rcube_plugin
     }
 
     ob_end_clean();
-    send_nocacheing_headers();
 
-    if (isset($_SESSION['calendar_attachment']))
-      $attachment = $_SESSION['calendar_attachment'];
-    else
-      $attachment = $_SESSION['calendar_attachment'] = $this->driver->get_attachment($id, $event);
+    $attachment = $GLOBALS['calendar_attachment'] = $this->driver->get_attachment($id, $event);
 
     // show part page
     if (!empty($_GET['_frame'])) {
@@ -1550,11 +1551,15 @@ class calendar extends rcube_plugin
       exit;
     }
 
-    $this->rc->session->remove('calendar_attachment');
-
     if ($attachment) {
       $mimetype = strtolower($attachment['mimetype']);
       list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
+
+      $body = $this->driver->get_attachment_body($id, $event);
+
+      // TODO: allow post-processing of the attachment body
+      //$plugin = $RCMAIL->plugins->exec_hook('message_part_get',
+      //  array('uid' => $MESSAGE->uid, 'id' => $part->mime_id, 'mimetype' => $mimetype, 'part' => $part, 'download' => !empty($_GET['_download'])));
 
       $browser = $this->rc->output->browser;
 
@@ -1572,8 +1577,6 @@ class calendar extends rcube_plugin
         header("Content-Type: $mimetype");
         header("Content-Transfer-Encoding: binary");
       }
-
-      $body = $this->driver->get_attachment_body($id, $event);
 
       // display page, @TODO: support text/plain (and maybe some other text formats)
       if ($mimetype == 'text/html' && empty($_GET['_download'])) {
@@ -1614,7 +1617,7 @@ class calendar extends rcube_plugin
    */
   public function attachment_frame($attrib)
   {
-    $attachment = $_SESSION['calendar_attachment'];
+    $attachment = $GLOBALS['calendar_attachment'];
 
     $mimetype = strtolower($attachment['mimetype']);
     list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);

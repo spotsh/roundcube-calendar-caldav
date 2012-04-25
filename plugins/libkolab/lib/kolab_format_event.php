@@ -280,7 +280,17 @@ class kolab_format_event extends kolab_format
         }
         $this->obj->setAlarms($valarms);
 
-        // TODO: save attachments
+        // save attachments
+        $vattach = new vectorattachment;
+        foreach ((array)$object['_attachments'] as $name => $attr) {
+            if (empty($attr))
+                continue;
+            $attach = new Attachment;
+            $attach->setLabel($name);
+            $attach->setUri('cid:' . $name, $attr['mimetype']);
+            $vattach->push($attach);
+        }
+        $this->obj->setAttachments($vattach);
 
         // cache this data
         unset($object['_formatobj']);
@@ -425,7 +435,22 @@ class kolab_format_event extends kolab_format
             }
         }
 
-        // TODO: handle attachments
+        // handle attachments
+        $vattach = $this->obj->attachments();
+        for ($i=0; $i < $vattach->size(); $i++) {
+            $attach = $vattach->get($i);
+
+            // skip cid: attachments which are mime message parts handled by kolab_storage_folder
+            if (substr($attach->uri(), 0, 4) != 'cid') {
+                $name = $attach->label();
+                $data = $attach->data();
+                $object['_attachments'][$name] = array(
+                    'mimetype' => $attach->mimetype(),
+                    'size' => strlen($data),
+                    'content' => $data,
+                );
+            }
+        }
 
         $this->data = $object;
         return $this->data;

@@ -657,13 +657,13 @@ class calendar_ui
 
     if (!empty($this->cal->attachment['name'])) {
       $table->add('title', Q(rcube_label('filename')));
-      $table->add(null, Q($this->cal->attachment['name']));
-      $table->add(null, '[' . html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))) . ']');
+      $table->add('header', Q($this->cal->attachment['name']));
+      $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))));
     }
 
     if (!empty($this->cal->attachment['size'])) {
       $table->add('title', Q(rcube_label('filesize')));
-      $table->add(null, Q(show_bytes($this->cal->attachment['size'])));
+      $table->add('header', Q(show_bytes($this->cal->attachment['size'])));
     }
 
     return $table->show($attrib);

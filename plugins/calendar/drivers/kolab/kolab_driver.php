@@ -579,7 +579,7 @@ class kolab_driver extends calendar_driver
         if (!empty($old['attachments'])) {
           foreach ($old['attachments'] as $idx => $att) {
             if ($att['id'] == $attachment) {
-              unset($old['attachments'][$idx]);
+              $old['attachments'][$idx]['_deleted'] = true;
             }
           }
         }
@@ -592,12 +592,12 @@ class kolab_driver extends calendar_driver
         // skip entries without content (could be existing ones)
         if (!$attachment['data'] && !$attachment['path'])
           continue;
-        // we'll read file contacts into memory, Horde/Kolab classes does the same
-        // So we cannot save memory, rcube_imap class can do this better
+
         $attachments[] = array(
           'name' => $attachment['name'],
-          'type' => $attachment['mimetype'],
-          'content' => $attachment['data'] ? $attachment['data'] : file_get_contents($attachment['path']),
+          'mimetype' => $attachment['mimetype'],
+          'content' => $attachment['data'],
+          'path' => $attachment['path'],
         );
       }
     }
@@ -625,7 +625,7 @@ class kolab_driver extends calendar_driver
         // copy attachment data to new event
         foreach ((array)$event['attachments'] as $idx => $attachment) {
           if (!$attachment['data'])
-            $attachment['data'] = $fromcalendar->get_attachment_body($attachment['id']);
+            $attachment['data'] = $fromcalendar->get_attachment_body($attachment['id'], $event);
         }
         
         $success = $storage->insert_event($event);
@@ -875,13 +875,14 @@ class kolab_driver extends calendar_driver
 
   /**
    * Get attachment body
+   * @see calendar_driver::get_attachment_body()
    */
   public function get_attachment_body($id, $event)
   {
-    if (!($storage = $this->calendars[$event['calendar']]))
+    if (!($cal = $this->calendars[$event['calendar']]))
       return false;
 
-    return $storage->get_attachment_body($id);
+    return $cal->storage->get_attachment($event['id'], $id);
   }
 
   /**
