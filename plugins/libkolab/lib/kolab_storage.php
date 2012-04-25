@@ -44,10 +44,10 @@ class kolab_storage
         if (self::$ready)
             return true;
 
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         self::$config = $rcmail->config;
         self::$imap = $rcmail->get_storage();
-        self::$ready = class_exists('kolabformat') && $rcmail->storage_connect() &&
+        self::$ready = class_exists('kolabformat') &&
             (self::$imap->get_capability('METADATA') || self::$imap->get_capability('ANNOTATEMORE') || self::$imap->get_capability('ANNOTATEMORE2'));
 
         if (self::$ready) {
