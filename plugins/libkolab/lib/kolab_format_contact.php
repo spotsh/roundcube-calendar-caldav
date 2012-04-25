@@ -270,29 +270,30 @@ class kolab_format_contact extends kolab_format
         }
         $this->obj->setRelateds($rels);
 
-        if (isset($object['pgppublickey'])) {
-            $replace = -1;
-            $keys = $this->obj->keys();
-            if (!is_object($keys))
-                $keys = new vectorkey;
-
-            for ($i=0; $i < $keys->size(); $i++) {
-                $key = $keys->get($i);
-                if ($key->type() == Key::PGP) {
-                    $replace = $i;
-                    break;
-                }
-            }
-
-            // insert/replace pgp key entry
-            $key = new Key($object['pgppublickey'], Key::PGP);
-            if ($replace >= 0)
-                $keys->set($replace, $key);
-            else
-                $keys->push($key);
-            
-            $this->obj->setKeys($keys);
+        // insert/replace crypto keys
+        $pgp_index = $pkcs7_index = -1;
+        $keys = $this->obj->keys();
+        for ($i=0; $i < $keys->size(); $i++) {
+            $key = $keys->get($i);
+            if ($pgp_index < 0 && $key->type() == Key::PGP)
+                $pgp_index = $i;
+            else if ($pkcs7_index < 0 && $key->type() == Key::PKCS7_MIME)
+                $pkcs7_index = $i;
         }
+
+        $pgpkey   = $object['pgppublickey']   ? new Key($object['pgppublickey'], Key::PGP) : new Key();
+        $pkcs7key = $object['pkcs7publickey'] ? new Key($object['pkcs7publickey'], Key::PKCS7_MIME) : new Key();
+
+        if ($pgp_index >= 0)
+            $keys->set($pgp_index, $pgpkey);
+        else if (!empty($object['pgppublickey']))
+            $keys->push($pgpkey);
+        if ($pkcs7_index >= 0)
+            $keys->set($pkcs7_index, $pkcs7key);
+        else if (!empty($object['pkcs7publickey']))
+            $keys->push($pkcs7key);
+
+        $this->obj->setKeys($keys);
 
         // TODO: handle language, gpslocation, etc.
 
@@ -389,13 +390,14 @@ class kolab_format_contact extends kolab_format
         // relateds -> spouse, children
         $this->read_relateds($this->obj->relateds(), $object);
 
-        // crypto settings: currently only pgpkey is supported
+        // crypto settings: currently only key values are supported
         $keys = $this->obj->keys();
         for ($i=0; is_object($keys) && $i < $keys->size(); $i++) {
             $key = $keys->get($i);
-            if ($key->type() == Key::PGP) {
+            if ($key->type() == Key::PGP)
                 $object['pgppublickey'] = $key->key();
-            }
+            else if ($key->type() == Key::PKCS7_MIME)
+                $object['pkcs7publickey'] = $key->key();
         }
 
         $this->data = $object;

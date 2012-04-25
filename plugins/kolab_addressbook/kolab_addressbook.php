@@ -292,7 +292,8 @@ class kolab_addressbook extends rcube_plugin
             $p['form']['personal']['content']['profession']    = array('size' => 40);
             $p['form']['personal']['content']['children']      = array('size' => 40);
             $p['form']['personal']['content']['freebusyurl']   = array('size' => 40);
-            $p['form']['personal']['content']['pgppublickey']  = array('size' => 40);
+            $p['form']['personal']['content']['pgppublickey']  = array('size' => 70);
+            $p['form']['personal']['content']['pkcs7publickey'] = array('size' => 70);
 
             // re-order fields according to the coltypes list
             $p['form']['contact']['content']  = $this->_sort_form_fields($p['form']['contact']['content']);
@@ -302,8 +303,9 @@ class kolab_addressbook extends rcube_plugin
             $p['form']['settings'] = array(
                 'name'    => $this->gettext('settings'),
                 'content' => array(
-                    'pgppublickey' => array('size' => 40, 'visible' => true),
                     'freebusyurl'  => array('size' => 40, 'visible' => true),
+                    'pgppublickey' => array('size' => 70, 'visible' => true),
+                    'pkcs7publickey' => array('size' => 70, 'visible' => false),
                 )
             );
             */
