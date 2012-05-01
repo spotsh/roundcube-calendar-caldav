@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_auth</name>
-    <uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
+    <uri>http://git.kolab.org/roundcubemail-plugins-kolab/</uri>
 	<summary>Kolab Authentication</summary>
 	<description>
         Authenticates on LDAP server, finds canonized authentication ID for IMAP

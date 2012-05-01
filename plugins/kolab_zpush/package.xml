@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_zpush</name>
-    <uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
+    <uri>http://git.kolab.org/roundcubemail-plugins-kolab/</uri>
 	<summary>Z-Push configuration utility for Kolab accounts</summary>
 	<description></description>
 	<lead>
