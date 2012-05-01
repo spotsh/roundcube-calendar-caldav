@@ -1,8 +1,7 @@
 <?php
 
 /**
- * This is a concatenated copy of the following files:
- *   Horde/Date.php, PEAR/Date/Calc.php, Horde/Date/Recurrence.php
+ * This is a copy of the Horde/Date.php class from the Horde framework
  */
 
 define('HORDE_DATE_SUNDAY',    0);

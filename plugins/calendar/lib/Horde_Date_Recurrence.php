@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * This is a concatenated copy of the following files:
+ *   PEAR/Date/Calc.php, Horde/Date/Recurrence.php
+ */
+
 require_once(dirname(__FILE__) . '/Horde_Date.php');
 
 // {{{ Header

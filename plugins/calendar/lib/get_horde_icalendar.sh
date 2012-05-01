@@ -11,8 +11,14 @@ if [ ! -d "$SRCDIR" ]; then
   exit 1
 fi
 
-echo "<?php\n"
-echo "require_once(dirname(__FILE__) . '/Horde_Date.php');"
+echo "<?php
+
+/**
+ * This is a concatenated copy of the following files:
+ *   Horde/String.php, Horde/iCalendar.php, Horde/iCalendar/*.php
+ */
+
+require_once(dirname(__FILE__) . '/Horde_Date.php');"
 
 sed 's/<?php//; s/?>//' $SRCDIR/String.php
 echo "\n"
