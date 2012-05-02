@@ -1087,6 +1087,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                     $contact['website'][] = array('url' => $url, 'type' => $type);
                 }
             }
+            unset($contact['website:'.$type]);
         }
 
         foreach ($this->get_col_values('phone', $contact) as $type => $values) {
@@ -1095,6 +1096,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                     $contact['phone'][] = array('number' => $phone, 'type' => $type);
                 }
             }
+            unset($contact['phone:'.$type]);
         }
 
         $addresses = array();
@@ -1119,20 +1121,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
         $contact['address'] = $addresses;
 
-        // save new photo as attachment
-        if ($contact['photo']) {
-          $attkey = 'photo.attachment';
-          $contact['_attachments'][$attkey] = array(
-            'mimetype' => rc_image_content_type($contact['photo']),
-            'content' => preg_match('![^a-z0-9/=+-]!i', $contact['photo']) ? $contact['photo'] : base64_decode($contact['photo']),
-          );
-          $contact['photo'] = $attkey;
-        }
-        else if (isset($contact['photo']) && empty($contact['photo'])) {
-            // unset photo attachment
-            $contact['_attachments']['photo.attachment'] = false;
-        }
-
         // copy meta data (starting with _) from old object
         foreach ((array)$old as $key => $val) {
             if (!isset($contact[$key]) && $key[0] == '_')
@@ -1140,7 +1128,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         // add empty values for some fields which can be removed in the UI
-        return $contact + array('nickname' => '', 'birthday' => '', 'anniversary' => '', 'freebusyurl' => '');
+        return array_filter($contact) + array('nickname' => '', 'birthday' => '', 'anniversary' => '', 'freebusyurl' => '');
     }
 
 }
