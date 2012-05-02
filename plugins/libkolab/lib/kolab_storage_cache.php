@@ -388,7 +388,7 @@ class kolab_storage_cache
             }
             else if ($key == '_attachments') {
                 foreach ($val as $k => $att) {
-                    unset($att['content']);
+                    unset($att['content'], $att['path']);
                     if ($att['id'])
                         $data[$key][$k] = $att;
                 }

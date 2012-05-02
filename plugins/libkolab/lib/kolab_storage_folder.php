@@ -574,6 +574,7 @@ class kolab_storage_folder
         $mime = new Mail_mime("\r\n");
         $rcmail = rcube::get_instance();
         $headers = array();
+        $part_id = 1;
 
         if ($ident = $rcmail->user->get_identity()) {
             $headers['From'] = $ident['email'];
@@ -598,6 +599,7 @@ class kolab_storage_folder
             $rcmail->config->get('mime_param_folding') == 2 ? 'quoted-printable' : null,
             '', RCMAIL_CHARSET
         );
+        $part_id++;
 
         // save object attachments as separate parts
         // TODO: optimize memory consumption by using tempfiles for transfer
@@ -608,10 +610,14 @@ class kolab_storage_folder
             }
             if (!empty($att['content'])) {
                 $mime->addAttachment($att['content'], $att['mimetype'], $name, false);
+                $part_id++;
             }
             else if (!empty($att['path'])) {
                 $mime->addAttachment($att['path'], $att['mimetype'], $name, true);
+                $part_id++;
             }
+
+            $object['_attachments'][$name]['id'] = $part_id;
         }
 
         return $mime->getMessage();
