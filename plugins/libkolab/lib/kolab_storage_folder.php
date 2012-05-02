@@ -40,11 +40,10 @@ class kolab_storage_folder
     public $type;
 
     private $type_annotation;
-    private $subpath;
     private $imap;
     private $info;
     private $owner;
-    private $objcache = array();
+    private $cache;
     private $uid2msg = array();
 
 
@@ -54,7 +53,8 @@ class kolab_storage_folder
     function __construct($name, $imap = null)
     {
         $this->imap = is_object($imap) ? $imap : rcube::get_instance()->get_storage();
-        $this->imap->set_options(array('skip_deleted' => false));
+        $this->imap->set_options(array('skip_deleted' => true));
+        $this->cache = new kolab_storage_cache($this);
         $this->set_folder($name);
     }
 
@@ -72,6 +72,8 @@ class kolab_storage_folder
         $metadata = $this->imap->get_metadata($this->name, array(kolab_storage::CTYPE_KEY));
         $this->type_annotation = $metadata[$this->name][kolab_storage::CTYPE_KEY];
         $this->type = reset(explode('.', $this->type_annotation));
+
+        $this->cache->set_folder($this);
     }
 
 
@@ -232,12 +234,11 @@ class kolab_storage_folder
     {
         if (!$type) $type = $this->type;
 
-        // search by object type
-        $ctype  = self::KTYPE_PREFIX . $type;
-        $index = $this->imap->search_once($this->name, 'UNDELETED HEADER X-Kolab-Type ' . $ctype);
+        // TODO: synchronize cache first?
 
-        return $index->count();
+        return $this->cache->count(array(array('type','=',$type)));
     }
+
 
     /**
      * List all Kolab objects of the given type
@@ -249,8 +250,15 @@ class kolab_storage_folder
     {
         if (!$type) $type = $this->type;
 
-        $ctype  = self::KTYPE_PREFIX . $type;
+        // synchronize caches
+        $this->cache->synchronize();
+
+        // fetch objects from cache
+        return $this->cache->select(array(array('type','=',$type)));
+
+/*
         $results = array();
+        $ctype  = self::KTYPE_PREFIX . $type;
 
         // use 'list' for folder's default objects
         if ($type == $this->type) {
@@ -272,6 +280,7 @@ class kolab_storage_folder
         // TODO: write $this->uid2msg to cache
 
         return $results;
+*/
     }
 
 
@@ -283,8 +292,11 @@ class kolab_storage_folder
      */
     public function get_object($uid)
     {
-        $msguid = $this->uid2msguid($uid);
-        if ($msguid && ($object = $this->read_object($msguid)))
+        // synchronize caches
+        $this->cache->synchronize();
+
+        $msguid = $this->cache->uid2msguid($uid);
+        if ($msguid && ($object = $this->cache->get($msguid)))
             return $object;
 
         return false;
@@ -303,10 +315,8 @@ class kolab_storage_folder
      */
     public function get_attachment($uid, $part, $mailbox = null)
     {
-        if ($msguid = ($mailbox ? $uid : $this->uid2msguid($uid))) {
-            if ($mailbox)
-                $this->imap->set_folder($mailbox);
-
+        if ($msguid = ($mailbox ? $uid : $this->cache->uid2msguid($uid))) {
+            $this->imap->set_folder($mailbox ? $mailbox : $this->name);
             return $this->imap->get_message_part($msguid, $part);
         }
 
@@ -319,25 +329,23 @@ class kolab_storage_folder
      * the Kolab groupware object from it
      *
      * @param string The IMAP message UID to fetch
-     * @param string The object type expected
+     * @param string The object type expected (use wildcard '*' to accept all types)
      * @param string The folder name where the message is stored
      * @return mixed Hash array representing the Kolab object, a kolab_format instance or false if not found
      */
-    private function read_object($msguid, $type = null, $folder = null)
+    public function read_object($msguid, $type = null, $folder = null)
     {
         if (!$type) $type = $this->type;
         if (!$folder) $folder = $this->name;
-        $ctype = self::KTYPE_PREFIX . $type;
-
-        // requested message in local cache
-        if ($this->objcache[$msguid])
-            return $this->objcache[$msguid];
 
         $this->imap->set_folder($folder);
 
-        // check ctype header and abort on mismatch
         $headers = $this->imap->get_message_headers($msguid);
-        if ($headers->others['x-kolab-type'] != $ctype)
+        $object_type = substr($headers->others['x-kolab-type'], strlen(self::KTYPE_PREFIX));
+        $content_type  = self::KTYPE_PREFIX . $object_type;
+
+        // check object type header and abort on mismatch
+        if ($type != '*' && $object_type != $type)
             return false;
 
         $message = new rcube_message($msguid);
@@ -345,7 +353,7 @@ class kolab_storage_folder
 
         // get XML part
         foreach ((array)$message->attachments as $part) {
-            if (!$xml && ($part->mimetype == $ctype || preg_match('!application/([a-z]+\+)?xml!', $part->mimetype))) {
+            if (!$xml && ($part->mimetype == $content_type || preg_match('!application/([a-z]+\+)?xml!', $part->mimetype))) {
                 $xml = $part->body ? $part->body : $message->get_part_content($part->mime_id);
             }
             else if ($part->filename) {
@@ -368,14 +376,17 @@ class kolab_storage_folder
             return false;
         }
 
-        $format = kolab_format::factory($type);
+        $format = kolab_format::factory($object_type);
+
+        if (is_a($format, 'PEAR_Error'))
+            return false;
 
         // check kolab format version
-        if (strpos($xml, '<' . $type) !== false) {
+        if (strpos($xml, '<' . $object_type) !== false) {
             // old Kolab 2.0 format detected
-            $handler = Horde_Kolab_Format::factory('XML', $type);
-            if (is_object($handler) && is_a($handler, 'PEAR_Error')) {
-                continue;
+            $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $object_type) : null;
+            if (!is_object($handler) || is_a($handler, 'PEAR_Error')) {
+                return false;
             }
 
             // XML-to-array
@@ -389,12 +400,12 @@ class kolab_storage_folder
 
         if ($format->is_valid()) {
             $object = $format->to_array();
+            $object['_type'] = $object_type;
             $object['_msguid'] = $msguid;
             $object['_mailbox'] = $this->name;
             $object['_attachments'] = array_merge((array)$object['_attachments'], $attachments);
             $object['_formatobj'] = $format;
 
-            $this->objcache[$msguid] = $object;
             return $object;
         }
 
@@ -416,8 +427,8 @@ class kolab_storage_folder
             $type = $this->type;
 
         // copy attachments from old message
-        if (!empty($object['_msguid']) && ($old = $this->read_object($object['_msguid'], $type, $object['_mailbox']))) {
-            foreach ($old['_attachments'] as $name => $att) {
+        if (!empty($object['_msguid']) && ($old = $this->cache->get($object['_msguid'], $type, $object['_mailbox']))) {
+            foreach ((array)$old['_attachments'] as $name => $att) {
                 if (!isset($object['_attachments'][$name])) {
                     $object['_attachments'][$name] = $old['_attachments'][$name];
                 }
@@ -435,13 +446,18 @@ class kolab_storage_folder
             // delete old message
             if ($result && !empty($object['_msguid']) && !empty($object['_mailbox'])) {
                 $this->imap->delete_message($object['_msguid'], $object['_mailbox']);
+                $this->cache->set($object['_msguid'], false, $object['_mailbox']);
             }
-            else if ($result && $uid && ($msguid = $this->uid2msguid($uid))) {
+            else if ($result && $uid && ($msguid = $this->cache->uid2msguid($uid))) {
                 $this->imap->delete_message($msguid, $this->name);
+                $this->cache->set($object['_msguid'], false);
             }
 
-            // TODO: update cache with new UID
-            $this->uid2msg[$object['uid']] = $result;
+            // update cache with new UID
+            if ($result) {
+                $object['_msguid'] = $result;
+                $this->cache->set($result, $object);
+            }
         }
         
         return $result;
@@ -459,16 +475,21 @@ class kolab_storage_folder
      */
     public function delete($object, $expunge = true, $trigger = true)
     {
-        $msguid = is_array($object) ? $object['_msguid'] : $this->uid2msguid($object);
+        $msguid = is_array($object) ? $object['_msguid'] : $this->cache->uid2msguid($object);
+        $success = false;
 
         if ($msguid && $expunge) {
-            return $this->imap->delete_message($msguid, $this->name);
+            $success = $this->imap->delete_message($msguid, $this->name);
         }
         else if ($msguid) {
-            return $this->imap->set_flag($msguid, 'DELETED', $this->name);
+            $success = $this->imap->set_flag($msguid, 'DELETED', $this->name);
         }
 
-        return false;
+        if ($success) {
+            $this->cache->set($result, false);
+        }
+
+        return $success;
     }
 
 
@@ -477,6 +498,7 @@ class kolab_storage_folder
      */
     public function delete_all()
     {
+        $this->cache->purge();
         return $this->imap->clear_folder($this->name);
     }
 
@@ -489,7 +511,7 @@ class kolab_storage_folder
      */
     public function undelete($uid)
     {
-        if ($msguid = $this->uid2msguid($uid, true)) {
+        if ($msguid = $this->cache->uid2msguid($uid, true)) {
             if ($this->imap->set_flag($msguid, 'UNDELETED', $this->name)) {
                 return $msguid;
             }
@@ -508,7 +530,7 @@ class kolab_storage_folder
      */
     public function move($uid, $target_folder)
     {
-        if ($msguid = $this->uid2msguid($uid)) {
+        if ($msguid = $this->cache->uid2msguid($uid)) {
             if ($success = $this->imap->move_message($msguid, $target_folder, $this->name)) {
                 // TODO: update cache
                 return true;
@@ -527,24 +549,6 @@ class kolab_storage_folder
 
 
     /**
-     * Resolve an object UID into an IMAP message UID
-     */
-    private function uid2msguid($uid, $deleted = false)
-    {
-        if (!isset($this->uid2msg[$uid])) {
-            // use IMAP SEARCH to get the right message
-            $index = $this->imap->search_once($this->name, ($deleted ? '' : 'UNDELETED ') . 'HEADER SUBJECT ' . $uid);
-            $results = $index->get();
-            $this->uid2msg[$uid] = $results[0];
-
-            // TODO: cache this lookup
-        }
-
-        return $this->uid2msg[$uid];
-    }
-
-
-    /**
      * Creates source of the configuration object message
      */
     private function build_message(&$object, $type)
@@ -552,7 +556,7 @@ class kolab_storage_folder
         // load old object to preserve data we don't understand/process
         if (is_object($object['_formatobj']))
             $format = $object['_formatobj'];
-        else if ($object['_msguid'] && ($old = $this->read_object($object['_msguid'], $type, $object['_mailbox'])))
+        else if ($object['_msguid'] && ($old = $this->cache->get($object['_msguid'], $type, $object['_mailbox'])))
             $format = $old['_formatobj'];
 
         // create new kolab_format instance

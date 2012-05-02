@@ -101,9 +101,10 @@ class kolab_format_contact extends kolab_format
     /**
      * Default constructor
      */
-    function __construct()
+    function __construct($xmldata = null)
     {
         $this->obj = new Contact;
+        $this->xmldata = $xmldata;
 
         // complete phone types
         $this->phonetypes['homefax'] |= Telephone::Home;
@@ -118,6 +119,7 @@ class kolab_format_contact extends kolab_format
     public function load($xml)
     {
         $this->obj = kolabformat::readContact($xml, false);
+        $this->loaded = true;
     }
 
     /**
@@ -127,9 +129,14 @@ class kolab_format_contact extends kolab_format
      */
     public function write()
     {
-        $xml = kolabformat::writeContact($this->obj);
-        parent::update_uid();
-        return $xml;
+        $this->init();
+
+        if ($this->obj->isValid()) {
+            $this->xmldata = kolabformat::writeContact($this->obj);
+            parent::update_uid();
+        }
+
+        return $this->xmldata;
     }
 
     /**
@@ -139,6 +146,8 @@ class kolab_format_contact extends kolab_format
      */
     public function set(&$object)
     {
+        $this->init();
+
         // set some automatic values if missing
         if (false && !$this->obj->created()) {
             if (!empty($object['created']))
@@ -255,9 +264,10 @@ class kolab_format_contact extends kolab_format
             if ($type = rc_image_content_type($object['photo']))
                 $this->obj->setPhoto($object['photo'], $type);
         }
-        else if (isset($object['photo'])) {
+        else if (isset($object['photo']))
             $this->obj->setPhoto('','');
-        }
+        else if ($this->obj->photoMimetype())  // load saved photo for caching
+            $object['photo'] = $this->obj->photo();
 
         // spouse and children are relateds
         $rels = new vectorrelated;
@@ -299,8 +309,8 @@ class kolab_format_contact extends kolab_format
 
 
         // cache this data
-        unset($object['_formatobj']);
         $this->data = $object;
+        unset($this->data['_formatobj']);
     }
 
     /**
@@ -308,7 +318,7 @@ class kolab_format_contact extends kolab_format
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && true /*$this->obj->isValid()*/);
+        return $this->data || (is_object($this->obj) && $this->obj->uid() /*$this->obj->isValid()*/);
     }
 
     /**
@@ -321,6 +331,8 @@ class kolab_format_contact extends kolab_format
         // return cached result
         if (!empty($this->data))
             return $this->data;
+
+        $this->init();
 
         // read object properties into local data object
         $object = array(

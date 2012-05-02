@@ -31,11 +31,17 @@ abstract class kolab_format
 
     protected $obj;
     protected $data;
+    protected $xmldata;
+    protected $loaded = false;
 
     /**
      * Factory method to instantiate a kolab_format object of the given type
+     *
+     * @param string Object type to instantiate
+     * @param string Cached xml data to initialize with
+     * @return object kolab_format
      */
-    public static function factory($type)
+    public static function factory($type, $xmldata = null)
     {
         if (!isset(self::$timezone))
             self::$timezone = new DateTimeZone('UTC');
@@ -43,7 +49,7 @@ abstract class kolab_format
         $suffix = preg_replace('/[^a-z]+/', '', $type);
         $classname = 'kolab_format_' . $suffix;
         if (class_exists($classname))
-            return new $classname();
+            return new $classname($xmldata);
 
         return PEAR::raiseError(sprintf("Failed to load Kolab Format wrapper for type %s", $type));
     }
@@ -166,9 +172,23 @@ abstract class kolab_format
     }
 
     /**
+     * Initialize libkolabxml object with cached xml data
+     */
+    protected function init()
+    {
+        if (!$this->loaded) {
+            if ($this->xmldata) {
+                $this->load($this->xmldata);
+                $this->xmldata = null;
+            }
+            $this->loaded = true;
+        }
+    }
+
+    /**
      * Direct getter for object properties
      */
-    function __get($var)
+    public function __get($var)
     {
         return $this->data[$var];
     }

@@ -91,9 +91,10 @@ class kolab_format_event extends kolab_format
     /**
      * Default constructor
      */
-    function __construct()
+    function __construct($xmldata = null)
     {
         $this->obj = new Event;
+        $this->xmldata = $xmldata;
     }
 
     /**
@@ -104,6 +105,7 @@ class kolab_format_event extends kolab_format
     public function load($xml)
     {
         $this->obj = kolabformat::readEvent($xml, false);
+        $this->loaded = true;
     }
 
     /**
@@ -113,9 +115,14 @@ class kolab_format_event extends kolab_format
      */
     public function write()
     {
-        $xml = kolabformat::writeEvent($this->obj);
-        parent::update_uid();
-        return $xml;
+        $this->init();
+
+        if ($this->obj->isValid()) {
+            $this->xmldata = kolabformat::writeEvent($this->obj);
+            parent::update_uid();
+        }
+
+        return $this->xmldata;
     }
 
     /**
@@ -125,6 +132,8 @@ class kolab_format_event extends kolab_format
      */
     public function set(&$object)
     {
+        $this->init();
+
         // set some automatic values if missing
         if (!$this->obj->created()) {
             if (!empty($object['created']))
@@ -293,8 +302,8 @@ class kolab_format_event extends kolab_format
         $this->obj->setAttachments($vattach);
 
         // cache this data
-        unset($object['_formatobj']);
         $this->data = $object;
+        unset($this->data['_formatobj']);
     }
 
     /**
@@ -302,7 +311,7 @@ class kolab_format_event extends kolab_format
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && $this->obj->isValid());
+        return $this->data || (is_object($this->obj) && $this->obj->isValid() && $this->obj->uid());
     }
 
     /**
@@ -315,6 +324,8 @@ class kolab_format_event extends kolab_format
         // return cached result
         if (!empty($this->data))
             return $this->data;
+
+        $this->init();
 
         $sensitivity_map = array_flip($this->sensitivity_map);
 

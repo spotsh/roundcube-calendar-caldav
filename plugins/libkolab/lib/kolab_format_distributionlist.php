@@ -26,9 +26,10 @@ class kolab_format_distributionlist extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
 
-    function __construct()
+    function __construct($xmldata = null)
     {
         $this->obj = new DistList;
+        $this->xmldata = $xmldata;
     }
 
     /**
@@ -39,6 +40,7 @@ class kolab_format_distributionlist extends kolab_format
     public function load($xml)
     {
         $this->obj = kolabformat::readDistlist($xml, false);
+        $this->loaded = true;
     }
 
     /**
@@ -48,13 +50,20 @@ class kolab_format_distributionlist extends kolab_format
      */
     public function write()
     {
-        $xml = kolabformat::writeDistlist($this->obj);
-        parent::update_uid();
-        return $xml;
+        $this->init();
+
+        if ($this->obj->isValid()) {
+            $this->xmldata = kolabformat::writeDistlist($this->obj);
+            parent::update_uid();
+        }
+
+        return $this->xmldata;
     }
 
     public function set(&$object)
     {
+        $this->init();
+
         // set some automatic values if missing
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
@@ -79,8 +88,8 @@ class kolab_format_distributionlist extends kolab_format
         $this->obj->setMembers($members);
 
         // cache this data
-        unset($object['_formatobj']);
         $this->data = $object;
+        unset($this->data['_formatobj']);
     }
 
     public function is_valid()
@@ -121,6 +130,8 @@ class kolab_format_distributionlist extends kolab_format
         // return cached result
         if (!empty($this->data))
             return $this->data;
+
+        $this->init();
 
         // read object properties
         $object = array(
