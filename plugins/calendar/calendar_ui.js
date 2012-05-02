@@ -268,8 +268,6 @@ function rcube_calendar_ui(settings)
         }
       }
 
-      return;
-
       rcmail.goto_url('get-attachment', qstring+'&_download=1', false);
     };
 
