@@ -441,6 +441,19 @@ class kolab_storage_folder
 
             return $object;
         }
+        else {
+            // try to extract object UID from XML block
+            if (preg_match('!<uid>(.+)</uid>!Uims', $xml, $m))
+                $msgadd = " UID = " . trim(strip_tags($m[1]));
+
+            raise_error(array(
+                'code' => 600,
+                'type' => 'php',
+                'file' => __FILE__,
+                'line' => __LINE__,
+                'message' => "Could not parse Kolab object data in message $msguid ($this->name)." . $msgadd,
+            ), true);
+        }
 
         return false;
     }
