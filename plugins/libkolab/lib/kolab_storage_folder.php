@@ -27,23 +27,27 @@ class kolab_storage_folder
 
     /**
      * The folder name.
-     *
      * @var string
      */
     public $name;
 
     /**
      * The type of this folder.
-     *
      * @var string
      */
     public $type;
+
+    /**
+    * The attached cache object
+    * @var kolab_storage_cache
+     */
+    public $cache;
 
     private $type_annotation;
     private $imap;
     private $info;
     private $owner;
-    private $cache;
+    private $resource_uri;
     private $uid2msg = array();
 
 
@@ -72,6 +76,7 @@ class kolab_storage_folder
         $metadata = $this->imap->get_metadata($this->name, array(kolab_storage::CTYPE_KEY));
         $this->type_annotation = $metadata[$this->name][kolab_storage::CTYPE_KEY];
         $this->type = reset(explode('.', $this->type_annotation));
+        $this->resource_uri = null;
 
         $this->cache->set_folder($this);
     }
@@ -177,6 +182,34 @@ class kolab_storage_folder
             $rights = $this->imap->my_rights($this->name);
 
         return join('', (array)$rights);
+    }
+
+
+    /**
+     * Compose a unique resource URI for this IMAP folder
+     */
+    public function get_resource_uri()
+    {
+        if (!empty($this->resource_uri))
+            return $this->resource_uri;
+
+        // strip namespace prefix from folder name
+        $ns = $this->get_namespace();
+        $nsdata = $this->imap->get_namespace($ns);
+        if (is_array($nsdata[0]) && strpos($this->name, $nsdata[0][0]) === 0) {
+            $subpath = substr($this->name, strlen($nsdata[0][0]));
+            if ($ns == 'other') {
+                list($user, $suffix) = explode($nsdata[0][1], $subpath);
+                $subpath = $suffix;
+            }
+        }
+        else {
+            $subpath = $this->name;
+        }
+
+        // compose fully qualified ressource uri for this instance
+        $this->resource_uri = 'imap://' . urlencode($this->get_owner()) . '@' . $this->imap->options['host'] . '/' . $subpath;
+        return $this->resource_uri;
     }
 
 
@@ -532,7 +565,7 @@ class kolab_storage_folder
     {
         if ($msguid = $this->cache->uid2msguid($uid)) {
             if ($success = $this->imap->move_message($msguid, $target_folder, $this->name)) {
-                // TODO: update cache
+                $this->cache->move($msguid, $uid, $target_folder);
                 return true;
             }
             else {

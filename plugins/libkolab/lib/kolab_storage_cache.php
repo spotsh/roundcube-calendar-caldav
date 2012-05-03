@@ -66,22 +66,8 @@ class kolab_storage_cache
             return;
         }
 
-        // strip namespace prefix from folder name
-        $ns = $this->folder->get_namespace();
-        $nsdata = $this->imap->get_namespace($ns);
-        if (is_array($nsdata[0]) && strpos($this->folder->name, $nsdata[0][0]) === 0) {
-            $subpath = substr($this->folder->name, strlen($nsdata[0][0]));
-            if ($ns == 'other') {
-                list($user, $suffix) = explode($nsdata[0][1], $subpath);
-                $subpath = $suffix;
-            }
-        }
-        else {
-            $subpath = $this->folder->name;
-        }
-
         // compose fully qualified ressource uri for this instance
-        $this->resource_uri = 'imap://' . urlencode($this->folder->get_owner()) . '@' . $this->imap->options['host'] . '/' . $subpath;
+        $this->resource_uri = $this->folder->get_resource_uri();
         $this->ready = $this->enabled;
     }
 
@@ -140,14 +126,22 @@ class kolab_storage_cache
 
     /**
      * Read a single entry from cache or
+     *
+     * @param string Related IMAP message UID
+     * @param string Object type to read
+     * @param string IMAP folder name the entry relates to
+     * @param array  Hash array with object properties or null if not found
      */
-    public function get($msguid, $type = null, $folder = null)
+    public function get($msguid, $type = null, $foldername = null)
     {
+        // delegate to another cache instance
+        if ($foldername && $foldername != $this->folder->name) {
+            return kolab_storage::get_folder($foldername)->cache->get($msguid, $object);
+        }
+
         // load object if not in memory
         if (!isset($this->objects[$msguid])) {
             if ($this->ready) {
-                // TODO: handle $folder != $this->folder->name situations
-                
                 $sql_result = $this->db->query(
                     "SELECT * FROM kolab_cache ".
                     "WHERE resource=? AND msguid=?",
@@ -162,7 +156,7 @@ class kolab_storage_cache
 
             // fetch from IMAP if not present in cache
             if (empty($this->objects[$msguid])) {
-                $result = $this->_fetch(array($msguid), $type, $folder);
+                $result = $this->_fetch(array($msguid), $type, $foldername);
                 $this->objects[$msguid] = $result[0];
             }
         }
@@ -172,14 +166,22 @@ class kolab_storage_cache
 
 
     /**
+     * Insert/Update a cache entry
      *
+     * @param string Related IMAP message UID
+     * @param mixed  Hash array with object properties to save or false to delete the cache entry
+     * @param string IMAP folder name the entry relates to
      */
-    public function set($msguid, $object, $folder = null)
+    public function set($msguid, $object, $foldername = null)
     {
+        // delegate to another cache instance
+        if ($foldername && $foldername != $this->folder->name) {
+            kolab_storage::get_folder($foldername)->cache->set($msguid, $object);
+            return;
+        }
+        
         // write to cache
         if ($this->ready) {
-            // TODO: handle $folder != $this->folder->name situations
-
             // remove old entry
             $this->db->query("DELETE FROM kolab_cache WHERE resource=? AND msguid=?",
                 $this->resource_uri, $msguid);
@@ -217,6 +219,36 @@ class kolab_storage_cache
 
         if ($object)
             $this->uid2msg[$object['uid']] = $msguid;
+    }
+
+    /**
+     * Move an existing cache entry to a new resource
+     *
+     * @param string Entry's IMAP message UID
+     * @param string Entry's Object UID
+     * @param string Target IMAP folder to move it to
+     */
+    public function move($msguid, $objuid, $target_folder)
+    {
+        $target = kolab_storage::get_folder($target_folder);
+
+        // resolve new message UID in target folder
+        if ($new_msguid = $target->cache->uid2msguid($objuid)) {
+            $this->db->query(
+                "UPDATE kolab_cache SET resource=?, msguid=? ".
+                "WHERE resource=? AND msguid=?",
+                $target->get_resource_uri(),
+                $new_msguid,
+                $this->resource_uri,
+                $msguid
+            );
+        }
+        else {
+            // just clear cache entry
+            $this->set($msguid, false);
+        }
+
+        unset($this->uid2msg[$uid]);
     }
 
 
@@ -365,7 +397,7 @@ class kolab_storage_cache
 
         // set type specific values
         if ($this->folder->type == 'event') {
-            // database runs in server's timetone so using date() is safe
+            // database runs in server's timezone so using date() is what we want
             $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
             $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
         }
