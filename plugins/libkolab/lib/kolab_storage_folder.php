@@ -196,7 +196,7 @@ class kolab_storage_folder
         // strip namespace prefix from folder name
         $ns = $this->get_namespace();
         $nsdata = $this->imap->get_namespace($ns);
-        if (is_array($nsdata[0]) && strpos($this->name, $nsdata[0][0]) === 0) {
+        if (is_array($nsdata[0]) && strlen($nsdata[0][0]) && strpos($this->name, $nsdata[0][0]) === 0) {
             $subpath = substr($this->name, strlen($nsdata[0][0]));
             if ($ns == 'other') {
                 list($user, $suffix) = explode($nsdata[0][1], $subpath);
