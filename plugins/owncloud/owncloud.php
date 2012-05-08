@@ -39,17 +39,12 @@ class owncloud extends rcube_plugin
 
         // add taskbar button
         $this->add_button(array(
-	        'name' 	=> 'owncloud',
+	        'command' => 'owncloud',
 	        'class'	=> 'button-owncloud',
+	        'classsel' => 'button-owncloud button-selected',                                                                                                               
+	        'innerclass' => 'button-inner',                                                                                                                                
 	        'label'	=> 'owncloud.owncloud',
-	        'href'	=> './?_task=owncloud',
-            'onclick' => sprintf("return %s.command('owncloud')", JS_OBJECT_NAME)
             ), 'taskbar');
-
-        $rcmail->output->add_script(
-            JS_OBJECT_NAME . ".enable_command('owncloud', true);\n" .
-            JS_OBJECT_NAME . ".owncloud = function () { location.href = './?_task=owncloud'; }",
-            'head');
 
         $skin = $rcmail->config->get('skin');
         if (!file_exists($this->home."/skins/$skin/owncloud.css")) {

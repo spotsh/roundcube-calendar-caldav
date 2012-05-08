@@ -292,7 +292,7 @@ class kolab_driver extends calendar_driver
     if (strlen($parent) && (!strlen($oldfolder) || $oldfolder != $folder)) {
       $parent_opts = $storage->folder_info($parent);
       if ($parent_opts['namespace'] != 'personal'
-        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
       ) {
         $this->last_error = 'No permission to create folder';
         return false;

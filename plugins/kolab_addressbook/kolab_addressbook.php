@@ -465,7 +465,7 @@ class kolab_addressbook extends rcube_plugin
             if (strlen($path) && (!strlen($oldfolder) || $oldfolder != $folder)) {
                 $parent_opts = $storage->folder_info($path);
                 if ($parent_opts['namespace'] != 'personal'
-                    && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts)))
+                    && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
                 ) {
                     $error = rcube_label('parentnotwritable');
                 }

@@ -2403,7 +2403,7 @@ class calendar extends rcube_plugin
     $default_port = 80;
     if (rcube_https_check()) {
       $schema = 'https';
-      $default_port = 143;
+      $default_port = 443;
     }
     $url = $schema . '://' . $_SERVER['HTTP_HOST'];
     if ($_SERVER['SERVER_PORT'] != $default_port)

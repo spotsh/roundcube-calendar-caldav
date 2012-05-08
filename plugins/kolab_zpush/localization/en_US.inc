@@ -18,6 +18,7 @@ $labels['contact'] = 'Address Books';
 $labels['event'] = 'Calendars';
 $labels['task'] = 'Tasks';
 $labels['note'] = 'Notes';
+$labels['configuration'] = 'Configuration';
 $labels['deletedevice'] = 'Delete device';
 $labels['imageformat'] = 'Image format';
 $labels['laxpiclabel'] = 'Allow PNG and GIF images';
