@@ -901,6 +901,7 @@ class kolab_driver extends calendar_driver
   public function get_freebusy_list($email, $start, $end)
   {
     require_once('Horde/iCalendar.php');
+    require_once('HTTP/Request.php');
 
     if (empty($email)/* || $end < time()*/)
       return false;
@@ -913,7 +914,17 @@ class kolab_driver extends calendar_driver
       'OOF' => calendar::FREEBUSY_OOF);
 
     // ask kolab server first
-    $fbdata = @file_get_contents(rcube_kolab::get_freebusy_url($email));
+    $request = new HTTP_Request($url = rcube_kolab::get_freebusy_url($email));
+    $result = $request->sendRequest(true);
+
+    // authentication required
+    if (!PEAR::isError($result) && $request->getResponseCode() == 401) {
+        $request->setBasicAuth($this->rc->user->get_username(), $this->rc->decrypt($_SESSION['password']));
+        $result = $request->sendRequest(true);
+    }
+
+    if (!PEAR::isError($result) && $request->getResponseCode() == 200)
+        $fbdata = $request->getResponseBody();
 
     // get free-busy url from contacts
     if (!$fbdata) {
