@@ -38,8 +38,7 @@ class kolab_calendar
   public $storage;
 
   private $cal;
-  private $events;
-  private $id2uid;
+  private $events = array();
   private $imap_folder = 'INBOX/Calendar';
   private $search_fields = array('title', 'description', 'location', '_attendees');
   private $sensitivity_map = array('public', 'private', 'confidential');
@@ -175,17 +174,21 @@ class kolab_calendar
    */
   public function get_event($id)
   {
-    $this->_fetch_events();
-    
+    // directly access storage object
+    if (!$this->events[$id] && ($record = $this->storage->get_object($id)))
+        $this->events[$id] = $this->_to_rcube_event($record);
+
     // event not found, maybe a recurring instance is requested
     if (!$this->events[$id]) {
       $master_id = preg_replace('/-\d+$/', '', $id);
-      if ($this->events[$master_id] && $this->events[$master_id]['recurrence']) {
-        $master = $this->events[$master_id];
+      if ($record = $this->storage->get_object($master_id))
+        $this->events[$master_id] = $this->_to_rcube_event($record);
+
+      if (($master = $this->events[$master_id]) && $master['recurrence']) {
         $this->_get_recurring_events($master, $master['start'], $master['start'] + 86400 * 365 * 10, $id);
       }
     }
-    
+
     return $this->events[$id];
   }
 
@@ -199,8 +202,16 @@ class kolab_calendar
    */
   public function list_events($start, $end, $search = null, $virtual = 1)
   {
-    $this->_fetch_events();
-    
+    // query Kolab storage
+    $query = array(
+      array('dtstart', '<=', $end),
+      array('dtend',   '>=', $start),
+    );
+    foreach ((array)$this->storage->select($query) as $record) {
+      $event = $this->_to_rcube_event($record);
+      $this->events[$event['id']] = $event;
+    }
+
     if (!empty($search))
       $search =  mb_strtolower($search);
     
@@ -343,22 +354,6 @@ class kolab_calendar
   {
     // TODO: re-implement this with new kolab_storege backend
     return false;
-  }
-
-  /**
-   * Simply fetch all records and store them in private member vars
-   * We thereby rely on cahcing done by the Horde classes
-   */
-  private function _fetch_events()
-  {
-    if (!isset($this->events)) {
-      $this->events = array();
-
-      foreach ((array)$this->storage->get_objects() as $record) {
-        $event = $this->_to_rcube_event($record);
-        $this->events[$event['id']] = $event;
-      }
-    }
   }
 
 
