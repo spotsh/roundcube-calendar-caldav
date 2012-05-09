@@ -288,32 +288,6 @@ class kolab_storage_folder
 
         // fetch objects from cache
         return $this->cache->select(array(array('type','=',$type)));
-
-/*
-        $results = array();
-        $ctype  = self::KTYPE_PREFIX . $type;
-
-        // use 'list' for folder's default objects
-        if ($type == $this->type) {
-            $index = $this->imap->index($this->name);
-        }
-        else {  // search by object type
-            $search = 'UNDELETED HEADER X-Kolab-Type ' . $ctype;
-            $index = $this->imap->search_once($this->name, $search);
-        }
-
-        // fetch all messages from IMAP
-        foreach ($index->get() as $msguid) {
-            if ($object = $this->read_object($msguid, $type)) {
-                $results[] = $object;
-                $this->uid2msg[$object['uid']] = $msguid;
-            }
-        }
-
-        // TODO: write $this->uid2msg to cache
-
-        return $results;
-*/
     }
 
 

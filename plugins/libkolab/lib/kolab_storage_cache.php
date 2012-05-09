@@ -301,7 +301,18 @@ class kolab_storage_cache
         else {
             // extract object type from query parameter
             $filter = $this->_query2assoc($query);
-            $result = $this->_fetch($this->index, $filter['type']);
+
+            // use 'list' for folder's default objects
+            if ($filter['type'] == $this->type) {
+                $index = $this->index;
+            }
+            else {  // search by object type
+                $search = 'UNDELETED HEADER X-Kolab-Type ' . kolab_storage_folder::KTYPE_PREFIX . $filter['type'];
+                $index = $this->imap->search_once($this->folder->name, $search)->get();
+            }
+
+            // fetch all messages in $index from IMAP
+            $result = $this->_fetch($index, $filter['type']);
 
             // TODO: post-filter result according to query
         }
