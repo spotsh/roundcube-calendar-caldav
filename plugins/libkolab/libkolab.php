@@ -63,9 +63,7 @@ class libkolab extends rcube_plugin
      */
     function storage_init($p)
     {
-        $rcmail = rcmail::get_instance();
         $p['fetch_headers'] = trim($p['fetch_headers'] .' X-KOLAB-TYPE');
-
         return $p;
     }
 

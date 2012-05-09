@@ -318,6 +318,41 @@ class kolab_storage_folder
 
 
     /**
+     * Select *some* Kolab objects matching the given query
+     *
+     * @param array Pseudo-SQL query as list of filter parameter triplets
+     *   triplet: array('<colname>', '<comparator>', '<value>')
+     * @return array List of Kolab data objects (each represented as hash array)
+     */
+    public function select($query = array())
+    {
+        // check query argument
+        if (empty($query))
+            return $this->get_objects();
+
+        $type = null;
+        foreach ($query as $i => $param) {
+            if ($param[0] == 'type') {
+                $type = $param[2];
+            }
+            else if (($param[0] == 'dtstart' || $param[0] == 'dtend') && is_numeric($param[2])) {
+              $query[$i][2] = date('Y-m-d H:i:s', $param[2]);
+            }
+        }
+
+        // add type selector if not in $query
+        if (!$type)
+            $query[] = array('type','=',$this->type);
+
+        // synchronize caches
+        $this->cache->synchronize();
+
+        // fetch objects from cache
+        return $this->cache->select($query);
+    }
+
+
+    /**
      * Getter for a single Kolab object, identified by its UID
      *
      * @param string Object UID

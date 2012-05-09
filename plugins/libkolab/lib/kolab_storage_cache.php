@@ -81,6 +81,9 @@ class kolab_storage_cache
         if ($this->synched)
             return;
 
+        // lock synchronization for this folder or wait if locked
+        $this->_sync_lock();
+
         // synchronize IMAP mailbox cache
         $this->imap->folder_sync($this->folder->name);
 
@@ -92,8 +95,9 @@ class kolab_storage_cache
         if ($this->ready) {
             // read cache index
             $sql_result = $this->db->query(
-                "SELECT msguid, uid FROM kolab_cache WHERE resource=?",
-                $this->resource_uri
+                "SELECT msguid, uid FROM kolab_cache WHERE resource=? AND type<>?",
+                $this->resource_uri,
+                'lock'
             );
 
             $old_index = array();
@@ -119,6 +123,9 @@ class kolab_storage_cache
                 );
             }
         }
+
+        // remove lock
+        $this->_sync_unlock();
 
         $this->synched = time();
     }
@@ -349,6 +356,7 @@ class kolab_storage_cache
                 $this->db->quote($param[2])
             );
         }
+
         return $sql_where;
     }
 
@@ -400,6 +408,11 @@ class kolab_storage_cache
             // database runs in server's timezone so using date() is what we want
             $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
             $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
+
+            // extend date range for recurring events
+            if ($object['recurrence']) {
+                $sql_data['dtend'] = date('Y-m-d H:i:s', $object['recurrence']['UNTIL'] ?: strtotime('now + 2 years'));
+            }
         }
 
         if ($object['_formatobj'])
@@ -451,6 +464,61 @@ class kolab_storage_cache
         $object['_formatobj'] = kolab_format::factory($sql_arr['type'], $sql_arr['xml']);
 
         return $object;
+    }
+
+    /**
+     * Check lock record for this folder and wait if locked or set lock
+     */
+    private function _sync_lock()
+    {
+        if (!$this->ready)
+            return;
+
+        $sql_arr = $this->db->fetch_assoc($this->db->query(
+            "SELECT msguid AS locked FROM kolab_cache ".
+            "WHERE resource=? AND type=?",
+            $this->resource_uri,
+            'lock'
+        ));
+
+        // create lock record if not exists
+        if (!$sql_arr) {
+            $this->db->query(
+                "INSERT INTO kolab_cache (resource, type, msguid, uid, data, xml)".
+                " VALUES (?, ?, ?, '', '', '')",
+                $this->resource_uri,
+                'lock',
+                time()
+            );
+        }
+        // wait if locked (expire locks after 10 minutes)
+        else if (intval($sql_arr['locked']) > 0 && (time() - $sql_arr['locked']) < 600) {
+            usleep(500000);
+            return $this->_sync_lock();
+        }
+        // set lock
+        else {
+            $this->db->query(
+                "UPDATE kolab_cache SET msguid=? ".
+                "WHERE resource=? AND type=?",
+                time(),
+                $this->resource_uri,
+                'lock'
+            );
+        }
+    }
+
+    /**
+     * Remove lock for this folder
+     */
+    private function _sync_unlock()
+    {
+        $this->db->query(
+            "UPDATE kolab_cache SET msguid=0 ".
+            "WHERE resource=? AND type=?",
+            $this->resource_uri,
+            'lock'
+        );
     }
 
     /**

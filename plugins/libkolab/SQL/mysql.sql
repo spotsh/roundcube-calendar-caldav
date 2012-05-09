@@ -6,7 +6,7 @@
  * @licence GNU AGPL
  **/
 
-CREATE TABLE `kolab_cache` (
+CREATE TABLE IF NOT EXISTS `kolab_cache` (
   `resource` VARCHAR(255) CHARACTER SET ascii NOT NULL,
   `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
   `msguid` BIGINT UNSIGNED NOT NULL,
