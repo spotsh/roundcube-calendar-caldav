@@ -61,16 +61,9 @@ class kolab_config extends rcube_plugin
         if ($this->config)
             return;
 
-        $this->require_plugin('kolab_folders');
+        return;  // CURRENTLY DISABLED until libkolabxml has support for config objects
 
-        // load dependencies
-        require_once 'Horde/Util.php';
-        require_once 'Horde/Kolab/Format.php';
-        require_once 'Horde/Kolab/Format/XML.php';
-        require_once $this->home . '/lib/configuration.php';
-        require_once $this->home . '/lib/kolab_configuration.php';
-
-        String::setDefaultCharset('UTF-8');
+        $this->require_plugin('libkolab');
 
         $this->config = new kolab_configuration();
 
