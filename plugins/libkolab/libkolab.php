@@ -47,14 +47,15 @@ class libkolab extends rcube_plugin
         $rcmail = rcmail::get_instance();
         kolab_format::$timezone = new DateTimeZone($rcmail->config->get('timezone', 'GMT'));
 
-        // load (old) dependencies
-        require_once 'Horde/Util.php';
-        require_once 'Horde/Kolab/Format.php';
-        require_once 'Horde/Kolab/Format/XML.php';
-        require_once 'Horde/Kolab/Format/XML/contact.php';
-        require_once 'Horde/Kolab/Format/XML/event.php';
+        // load (old) dependencies if available
+        if (@include_once('Horde/Util.php')) {
+            include_once 'Horde/Kolab/Format.php';
+            include_once 'Horde/Kolab/Format/XML.php';
+            include_once 'Horde/Kolab/Format/XML/contact.php';
+            include_once 'Horde/Kolab/Format/XML/event.php';
 
-        String::setDefaultCharset('UTF-8');
+            String::setDefaultCharset('UTF-8');
+        }
     }
 
     /**
