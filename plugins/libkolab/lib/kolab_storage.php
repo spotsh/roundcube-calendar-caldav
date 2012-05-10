@@ -306,13 +306,72 @@ class kolab_storage
      */
     public static function folder_selector($type, $attrs, $current = '')
     {
-        // TODO: implement this
+        // get all folders of specified type
+        $folders = self::get_folders($type);
 
+        $delim = self::$imap->get_hierarchy_delimiter();
+        $names = array();
+        $len   = strlen($current);
+
+        if ($len && ($rpos = strrpos($current, $delim))) {
+            $parent = substr($current, 0, $rpos);
+            $p_len  = strlen($parent);
+        }
+
+        // Filter folders list
+        foreach ($folders as $c_folder) {
+            $name = $c_folder->name;
+            // skip current folder and it's subfolders
+            if ($len && ($name == $current || strpos($name, $current.$delim) === 0)) {
+                continue;
+            }
+
+            // always show the parent of current folder
+            if ($p_len && $name == $parent) { }
+            // skip folders where user have no rights to create subfolders
+            else if ($c_folder->get_owner() != $_SESSION['username']) {
+                $rights = $c_folder->get_myrights();
+                if (!preg_match('/[ck]/', $rights)) {
+                    continue;
+                }
+            }
+
+            $names[$name] = rcube_charset::convert($name, 'UTF7-IMAP');
+        }
+
+        // Make sure parent folder is listed (might be skipped e.g. if it's namespace root)
+        if ($p_len && !isset($names[$parent])) {
+            $names[$parent] = rcube_charset::convert($parent, 'UTF7-IMAP');
+        }
+
+        // Sort folders list
+        asort($names, SORT_LOCALE_STRING);
+
+        $folders = array_keys($names);
+        $names   = array();
 
         // Build SELECT field of parent folder
         $select = new html_select($attrs);
         $select->add('---', '');
 
+        foreach ($folders as $name) {
+            $imap_name = $name;
+            $name      = $origname = self::object_name($name);
+
+            // find folder prefix to truncate
+            for ($i = count($names)-1; $i >= 0; $i--) {
+                if (strpos($name, $names[$i].' &raquo; ') === 0) {
+                    $length = strlen($names[$i].' &raquo; ');
+                    $prefix = substr($name, 0, $length);
+                    $count  = count(explode(' &raquo; ', $prefix));
+                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                    break;
+                }
+            }
+
+            $names[] = $origname;
+            $select->add($name, $imap_name);
+        }
 
         return $select;
     }
