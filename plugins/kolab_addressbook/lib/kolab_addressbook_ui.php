@@ -144,8 +144,8 @@ class kolab_addressbook_ui
         if (strlen($folder)) {
             $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
 
-            $this->rc->imap_connect();
-            $options = $this->rc->imap->mailbox_info($folder);
+            $this->rc->storage_connect();
+            $options = $this->rc->get_storage()->mailbox_info($folder);
         }
 
         $form   = array();
