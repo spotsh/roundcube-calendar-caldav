@@ -144,8 +144,8 @@ class kolab_format_event extends kolab_format
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
 
-        // TODO: increase sequence
-        // $this->obj->setSequence($this->obj->sequence()+1);
+        // increment sequence
+        $this->obj->setSequence($this->obj->sequence()+1);
 
         // do the hard work of setting object values
         $this->obj->setStart(self::get_datetime($object['start'], null, $object['allday']));
