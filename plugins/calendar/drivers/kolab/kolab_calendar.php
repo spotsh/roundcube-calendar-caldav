@@ -352,7 +352,17 @@ class kolab_calendar
    */
   public function restore_event($event)
   {
-    // TODO: re-implement this with new kolab_storege backend
+    if ($this->storage->undelete($event['id'])) {
+        return true;
+    }
+    else {
+        raise_error(array(
+          'code' => 600, 'type' => 'php',
+          'file' => __FILE__, 'line' => __LINE__,
+          'message' => "Error undeleting a contact object $uid from the Kolab server"),
+        true, false);
+    }
+
     return false;
   }
 

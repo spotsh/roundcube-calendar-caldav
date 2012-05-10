@@ -401,7 +401,6 @@ class kolab_driver extends calendar_driver
         }
       }
 
-      $GLOBALS['conf']['kolab']['no_triggering'] = true;
       $success = $storage->insert_event($event);
       
       if ($success)
@@ -472,7 +471,6 @@ class kolab_driver extends calendar_driver
       $master = $event;
 
       $this->rc->session->remove('calendar_restore_event_data');
-      $GLOBALS['conf']['kolab']['no_triggering'] = true;
 
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
@@ -613,8 +611,6 @@ class kolab_driver extends calendar_driver
     // keep saved exceptions (not submitted by the client)
     if ($old['recurrence']['EXDATE'])
       $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
-
-    $GLOBALS['conf']['kolab']['no_triggering'] = true;
 
     switch ($savemode) {
       case 'new':
