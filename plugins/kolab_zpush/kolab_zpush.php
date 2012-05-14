@@ -26,7 +26,7 @@ class kolab_zpush extends rcube_plugin
 {
     public $task = 'settings';
     public $urlbase;
-    
+
     private $rc;
     private $ui;
     private $cache;
@@ -34,7 +34,7 @@ class kolab_zpush extends rcube_plugin
     private $folders;
     private $folders_meta;
     private $root_meta;
-    
+
     const ROOT_MAILBOX = 'INBOX';
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
     const ACTIVESYNC_KEY = '/private/vendor/kolab/activesync';
@@ -45,17 +45,18 @@ class kolab_zpush extends rcube_plugin
     public function init()
     {
         $this->rc = rcmail::get_instance();
-        
+
         $this->require_plugin('jqueryui');
         $this->add_texts('localization/', true);
-        
+
         $this->include_script('kolab_zpush.js');
-        
+
         $this->register_action('plugin.zpushconfig', array($this, 'config_view'));
         $this->register_action('plugin.zpushjson', array($this, 'json_command'));
-        
-        if ($this->rc->action == 'plugin.zpushconfig')
-          $this->require_plugin('kolab_core');
+
+        if ($this->rc->action == 'plugin.zpushconfig') {
+            $this->require_plugin('libkolab');
+        }
     }
 
 
@@ -65,6 +66,8 @@ class kolab_zpush extends rcube_plugin
     public function init_imap()
     {
         $storage = $this->rc->get_storage();
+
+        // @TODO: Metadata is already cached by rcube storage, get rid of cache here
 
         $this->cache = $this->rc->get_cache('zpush', 'db', 900);
         $this->cache->expunge();
@@ -120,7 +123,7 @@ class kolab_zpush extends rcube_plugin
             $laxpic = intval(get_input_value('laxpic', RCUBE_INPUT_POST));
             $subsciptions = get_input_value('subscribed', RCUBE_INPUT_POST);
             $err = false;
-            
+
             if ($device = $devices[$imei]) {
                 // update device config if changed
                 if ($devicealias != $this->root_meta['DEVICE'][$imei]['ALIAS']  ||
@@ -146,12 +149,12 @@ class kolab_zpush extends rcube_plugin
                     // skip root folder (already handled above)
                     if ($folder == self::ROOT_MAILBOX)
                         continue;
-                    
+
                     if ($subsciptions[$folder] != $meta[$imei]['S']) {
                         $meta[$imei]['S'] = intval($subsciptions[$folder]);
                         $this->folders_meta[$folder] = $meta;
                         unset($meta['TYPE']);
-                        
+
                         // read metadata first
                         $folderdata = $storage->get_metadata($folder, array(self::ACTIVESYNC_KEY));
                         if ($asyncdata = $folderdata[$folder][self::ACTIVESYNC_KEY])
@@ -161,24 +164,24 @@ class kolab_zpush extends rcube_plugin
                         $err |= !$storage->set_metadata($folder, array(self::ACTIVESYNC_KEY => $this->serialize_metadata($metadata)));
                     }
                 }
-                
+
                 // update cache
                 $this->cache->remove('folders');
                 $this->cache->write('folders', $this->folders_meta);
-                
+
                 $this->rc->output->command('plugin.zpush_save_complete', array('success' => !$err, 'id' => $imei, 'devicealias' => Q($devicealias)));
             }
-            
+
             if ($err)
                 $this->rc->output->show_message($this->gettext('savingerror'), 'error');
             else
                 $this->rc->output->show_message($this->gettext('successfullysaved'), 'confirmation');
-            
+
             break;
 
         case 'delete':
             $devices = $this->list_devices();
-            
+
             if ($device = $devices[$imei]) {
                 unset($this->root_meta['DEVICE'][$imei], $this->root_meta['FOLDER'][$imei]);
 
@@ -236,20 +239,20 @@ class kolab_zpush extends rcube_plugin
     public function config_view()
     {
         require_once $this->home . '/kolab_zpush_ui.php';
-        
+
         $storage = $this->rc->get_storage();
-        
+
         // checks if IMAP server supports any of METADATA, ANNOTATEMORE, ANNOTATEMORE2
         if (!($storage->get_capability('METADATA') || $storage->get_capability('ANNOTATEMORE') || $storage->get_capability('ANNOTATEMORE2'))) {
             $this->rc->output->show_message($this->gettext('notsupported'), 'error');
         }
-        
+
         $this->ui = new kolab_zpush_ui($this);
-        
+
         $this->register_handler('plugin.devicelist', array($this->ui, 'device_list'));
         $this->register_handler('plugin.deviceconfigform', array($this->ui, 'device_config_form'));
         $this->register_handler('plugin.foldersubscriptions', array($this->ui, 'folder_subscriptions'));
-        
+
         $this->rc->output->set_env('devicecount', count($this->list_devices()));
         $this->rc->output->send('kolab_zpush.config');
     }
@@ -266,7 +269,7 @@ class kolab_zpush extends rcube_plugin
             $this->init_imap();
             $this->devices = (array)$this->root_meta['DEVICE'];
         }
-        
+
         return $this->devices;
     }
 
@@ -299,7 +302,7 @@ class kolab_zpush extends rcube_plugin
                     }
                     $this->folders_meta[$folder]['TYPE'] = !empty($foldertype[0]) ? $foldertype[0] : 'mail';
                 }
-                
+
                 // cache it!
                 $this->cache->write('folders', $this->folders_meta);
             }
@@ -317,7 +320,7 @@ class kolab_zpush extends rcube_plugin
     {
         if (!isset($this->folders_meta))
             $this->list_folders();
-        
+
         return $this->folders_meta;
     }
 

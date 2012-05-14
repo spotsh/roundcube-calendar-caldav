@@ -67,18 +67,18 @@ class kolab_zpush_ui
         $input = new html_inputfield(array('name' => 'devicealias', 'id' => $field_id, 'size' => 40));
         $table->add('title', html::label($field_id, $this->config->gettext('devicealias')));
         $table->add(null, $input->show());
-        
+
         $field_id = 'config-device-mode';
         $select = new html_select(array('name' => 'syncmode', 'id' => $field_id));
         $select->add(array($this->config->gettext('modeauto'), $this->config->gettext('modeflat'), $this->config->gettext('modefolder')), array('-1', '0', '1'));
         $table->add('title', html::label($field_id, $this->config->gettext('syncmode')));
         $table->add(null, $select->show('-1'));
-        
+
         $field_id = 'config-device-laxpic';
         $checkbox = new html_checkbox(array('name' => 'laxpic', 'value' => '1', 'id' => $field_id));
         $table->add('title', $this->config->gettext('imageformat'));
         $table->add(null, html::label($field_id, $checkbox->show() . ' ' . $this->config->gettext('laxpiclabel')));
-        
+
         if ($attrib['form'])
             $this->rc->output->add_gui_object('editform', $attrib['form']);
 
@@ -90,7 +90,7 @@ class kolab_zpush_ui
     {
         if (!$attrib['id'])
             $attrib['id'] = 'foldersubscriptions';
-        
+
         // group folders by type (show only known types)
         $folder_groups = array('mail' => array(), 'contact' => array(), 'event' => array(), 'task' => array());
         $folder_meta = $this->config->folders_meta();
@@ -99,7 +99,7 @@ class kolab_zpush_ui
             if (is_array($folder_groups[$type]))
                 $folder_groups[$type][] = $folder;
         }
-        
+
         // build block for every folder type
         foreach ($folder_groups as $type => $group) {
             if (empty($group))
@@ -111,14 +111,14 @@ class kolab_zpush_ui
         }
         
         $this->rc->output->add_gui_object('subscriptionslist', $attrib['id']);
-        
+
         return html::div($attrib, $html);
     }
 
     public function folder_subscriptions_block($a_folders, $attrib)
     {
         $alarms = ($attrib['type'] == 'event' || $attrib['type'] == 'task');
-        
+
         $table = new html_table(array('cellspacing' => 0));
         $table->add_header('subscription', $attrib['syncicon'] ? html::img(array('src' => $this->skin_path . $attrib['syncicon'], 'title' => $this->config->gettext('synchronize'))) : '');
         $table->add_header('alarm', $alarms && $attrib['alarmicon'] ? html::img(array('src' => $this->skin_path . $attrib['alarmicon'], 'title' => $this->config->gettext('withalarms'))) : '');
@@ -129,7 +129,7 @@ class kolab_zpush_ui
 
         $names = array();
         foreach ($a_folders as $folder) {
-            $foldername = $origname = preg_replace('/^INBOX &raquo;\s+/', '', rcube_kolab::object_name($folder));
+            $foldername = $origname = preg_replace('/^INBOX &raquo;\s+/', '', kolab_storage::object_name($folder));
 
             // find folder prefix to truncate (the same code as in kolab_addressbook plugin)
             for ($i = count($names)-1; $i >= 0; $i--) {
@@ -161,7 +161,7 @@ class kolab_zpush_ui
                 $table->add('alarm', $checkbox_alarm->show('', array('value' => $folder, 'id' => $folder_id.'_alarm')));
             else
                 $table->add('alarm', '');
-            
+
             $table->add(join(' ', $classes), html::label($folder_id, $padding . Q($foldername)));
         }
 
