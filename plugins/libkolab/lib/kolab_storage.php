@@ -75,7 +75,7 @@ class kolab_storage
         $folders = array();
 
         if (self::setup()) {
-            foreach ((array)self::$imap->list_folders('', '*', $type) as $foldername) {
+            foreach ((array)self::list_folders('', '*', $type) as $foldername) {
                 $folders[$foldername] = new kolab_storage_folder($foldername, self::$imap);
             }
         }
@@ -108,7 +108,7 @@ class kolab_storage
     {
         self::setup();
         $folder = null;
-        foreach ((array)self::$imap->list_folders('', '*', $type) as $foldername) {
+        foreach ((array)self::list_folders('', '*', $type) as $foldername) {
             if (!$folder)
                 $folder = new kolab_storage_folder($foldername, self::$imap);
             else
@@ -375,4 +375,82 @@ class kolab_storage
 
         return $select;
     }
+
+
+    /**
+     * Returns a list of folder names
+     *
+     * @param string  Optional root folder
+     * @param string  Optional name pattern
+     * @param string  Data type to list folders for (contact,distribution-list,event,task,note,mail)
+     * @param string  Enable to return subscribed folders only
+     *
+     * @return array List of folders
+     */
+    public static function list_folders($root = '', $mbox = '*', $filter = null, $subscribed = false)
+    {
+        if (!self::setup()) {
+            return null;
+        }
+
+        if (!$filter) {
+            // Get ALL folders list, standard way
+            if ($subscribed) {
+                return self::$imap->list_folders_subscribed($root, $mbox);
+            }
+            else {
+                return self::$imap->list_folders($root, $mbox);
+            }
+        }
+
+        $prefix = $root . $mbox;
+
+        // get folders types
+        $folderdata = self::$imap->get_metadata($prefix, self::CTYPE_KEY);
+
+        if (!is_array($folderdata)) {
+            return array();
+        }
+
+        $regexp = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
+
+        // In some conditions we can skip LIST command (?)
+        if ($subscribed == false && $filter != 'mail' && $prefix == '*') {
+            foreach ($folderdata as $idx => $folder) {
+                $type = $folder[self::CTYPE_KEY];
+                if (!preg_match($regexp, $type)) {
+                    unset($folderdata[$idx]);
+                }
+            }
+            return array_keys($folderdata);
+        }
+
+        // Get folders list
+        if ($subscribed) {
+            $folders = self::$imap->list_folders_subscribed_direct($root, $mbox);
+        }
+        else {
+            $folders = self::$imap->list_folders_direct($root, $mbox);
+        }
+
+        // In case of an error, return empty list (?)
+        if (!is_array($folders)) {
+            return array();
+        }
+
+        // Filter folders list
+        foreach ($folders as $idx => $folder) {
+            $type = !empty($folderdata[$folder]) ? $folderdata[$folder][self::CTYPE_KEY] : null;
+
+            if ($filter == 'mail' && empty($type)) {
+                continue;
+            }
+            if (empty($type) || !preg_match($regexp, $type)) {
+                unset($folders[$idx]);
+            }
+        }
+
+        return $folders;
+    }
+
 }
