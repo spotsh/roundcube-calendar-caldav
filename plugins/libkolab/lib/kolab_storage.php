@@ -92,7 +92,7 @@ class kolab_storage
      */
     public static function get_folder($folder)
     {
-        return self::setup() ? new kolab_storage_folder($folder, null, self::$imap) : null;
+        return self::setup() ? new kolab_storage_folder($folder, self::$imap) : null;
     }
 
 
