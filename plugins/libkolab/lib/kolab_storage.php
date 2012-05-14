@@ -72,11 +72,11 @@ class kolab_storage
      */
     public static function get_folders($type)
     {
-        $folders = array();
+        $folders = $folderdata = array();
 
         if (self::setup()) {
-            foreach ((array)self::list_folders('', '*', $type) as $foldername) {
-                $folders[$foldername] = new kolab_storage_folder($foldername, self::$imap);
+            foreach ((array)self::list_folders('', '*', $type, false, $folderdata) as $foldername) {
+                $folders[$foldername] = new kolab_storage_folder($foldername, $folderdata[$foldername]);
             }
         }
 
@@ -92,7 +92,7 @@ class kolab_storage
      */
     public static function get_folder($folder)
     {
-        return self::setup() ? new kolab_storage_folder($folder, self::$imap) : null;
+        return self::setup() ? new kolab_storage_folder($folder) : null;
     }
 
 
@@ -110,7 +110,7 @@ class kolab_storage
         $folder = null;
         foreach ((array)self::list_folders('', '*', $type) as $foldername) {
             if (!$folder)
-                $folder = new kolab_storage_folder($foldername, self::$imap);
+                $folder = new kolab_storage_folder($foldername);
             else
                 $folder->set_folder($foldername);
 
@@ -384,10 +384,11 @@ class kolab_storage
      * @param string  Optional name pattern
      * @param string  Data type to list folders for (contact,distribution-list,event,task,note,mail)
      * @param string  Enable to return subscribed folders only
+     * @param array   Will be filled with folder-types data
      *
      * @return array List of folders
      */
-    public static function list_folders($root = '', $mbox = '*', $filter = null, $subscribed = false)
+    public static function list_folders($root = '', $mbox = '*', $filter = null, $subscribed = false, &$folderdata = array())
     {
         if (!self::setup()) {
             return null;
@@ -412,14 +413,14 @@ class kolab_storage
             return array();
         }
 
-        $regexp = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
+        $folderdata = array_map('implode', $folderdata);
+        $regexp     = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // In some conditions we can skip LIST command (?)
         if ($subscribed == false && $filter != 'mail' && $prefix == '*') {
-            foreach ($folderdata as $idx => $folder) {
-                $type = $folder[self::CTYPE_KEY];
+            foreach ($folderdata as $folder => $type) {
                 if (!preg_match($regexp, $type)) {
-                    unset($folderdata[$idx]);
+                    unset($folderdata[$folder]);
                 }
             }
             return array_keys($folderdata);
@@ -440,7 +441,7 @@ class kolab_storage
 
         // Filter folders list
         foreach ($folders as $idx => $folder) {
-            $type = !empty($folderdata[$folder]) ? $folderdata[$folder][self::CTYPE_KEY] : null;
+            $type = $folderdata[$folder];
 
             if ($filter == 'mail' && empty($type)) {
                 continue;

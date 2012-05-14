@@ -54,30 +54,34 @@ class kolab_storage_folder
     /**
      * Default constructor
      */
-    function __construct($name, $imap = null)
+    function __construct($name, $type = null)
     {
-        $this->imap = is_object($imap) ? $imap : rcube::get_instance()->get_storage();
+        $this->imap = rcube::get_instance()->get_storage();
         $this->imap->set_options(array('skip_deleted' => true));
         $this->cache = new kolab_storage_cache($this);
-        $this->set_folder($name);
+        $this->set_folder($name, $type);
     }
 
 
     /**
-     * Set the IMAP folder name this instance connects to
+     * Set the IMAP folder this instance connects to
      *
      * @param string The folder name/path
+     * @param string Optional folder type if known
      */
-    public function set_folder($name)
+    public function set_folder($name, $type = null)
     {
-        $this->name = $name;
+        if (!$type) {
+            $metadata = $this->imap->get_metadata($name, array(kolab_storage::CTYPE_KEY));
+            $type     = $metadata[$this->name][kolab_storage::CTYPE_KEY];
+        }
+
+        $this->name            = $name;
+        $this->type_annotation = $type;
+        $this->type            = reset(explode('.', $type));
+        $this->resource_uri    = null;
+
         $this->imap->set_folder($this->name);
-
-        $metadata = $this->imap->get_metadata($this->name, array(kolab_storage::CTYPE_KEY));
-        $this->type_annotation = $metadata[$this->name][kolab_storage::CTYPE_KEY];
-        $this->type = reset(explode('.', $this->type_annotation));
-        $this->resource_uri = null;
-
         $this->cache->set_folder($this);
     }
 
