@@ -200,8 +200,8 @@ class kolab_storage_cache
 
                 $result = $this->db->query(
                     "INSERT INTO kolab_cache ".
-                    " (resource, type, msguid, uid, data, xml, dtstart, dtend)".
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    " (resource, type, msguid, uid, data, xml, dtstart, dtend, tags, words)".
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     $this->resource_uri,
                     $objtype,
                     $msguid,
@@ -209,7 +209,9 @@ class kolab_storage_cache
                     $sql_data['data'],
                     $sql_data['xml'],
                     $sql_data['dtstart'],
-                    $sql_data['dtend']
+                    $sql_data['dtend'],
+                    $sql_data['tags'],
+                    $sql_data['words']
                 );
 
                 if (!$this->db->affected_rows($result)) {
@@ -426,8 +428,11 @@ class kolab_storage_cache
             }
         }
 
-        if ($object['_formatobj'])
+        if ($object['_formatobj']) {
             $sql_data['xml'] = (string)$object['_formatobj']->write();
+            $sql_data['tags'] = join(' ', $object['_formatobj']->get_tags());
+            $sql_data['words'] = join(' ', $object['_formatobj']->get_words());
+        }
 
         // extract object data
         $data = array();
