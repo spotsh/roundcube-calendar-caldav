@@ -26,6 +26,8 @@ class kolab_format_contact extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
 
+    public static $fulltext_cols = array('name', 'firstname', 'surname', 'middlename', 'email');
+
     public $phonetypes = array(
         'home'    => Telephone::Home,
         'work'    => Telephone::Work,
@@ -207,7 +209,7 @@ class kolab_format_contact extends kolab_format
 
         // addresses
         $adrs = new vectoraddress;
-        foreach ($object['address'] as $address) {
+        foreach ((array)$object['address'] as $address) {
             $adr = new Address;
             $type = $this->addresstypes[$address['type']];
             if (isset($type))
@@ -414,6 +416,23 @@ class kolab_format_contact extends kolab_format
 
         $this->data = $object;
         return $this->data;
+    }
+
+    /**
+     * Callback for kolab_storage_cache to get words to index for fulltext search
+     *
+     * @return array List of words to save in cache
+     */
+    public function get_words()
+    {
+        $data = '';
+        foreach (self::$fulltext_cols as $col) {
+            $val = is_array($this->data[$col]) ? join(" ", $this->data[$col]) : $this->data[$col];
+            if (strlen($val))
+                $data .= $val . ' ';
+        }
+
+        return array_unique(rcube_utils::normalize_string($data, true));
     }
 
     /**

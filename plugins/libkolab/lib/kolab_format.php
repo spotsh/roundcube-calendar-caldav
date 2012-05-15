@@ -232,4 +232,24 @@ abstract class kolab_format
      * @param array Hash array with object properties (produced by Horde Kolab_Format classes)
      */
     abstract public function fromkolab2($object);
+
+    /**
+     * Callback for kolab_storage_cache to get object specific tags to cache
+     *
+     * @return array List of tags to save in cache
+     */
+    public function get_tags()
+    {
+        return array();
+    }
+
+    /**
+     * Callback for kolab_storage_cache to get words to index for fulltext search
+     *
+     * @return array List of words to save in cache
+     */
+    public function get_words()
+    {
+        return array();
+    }
 }
