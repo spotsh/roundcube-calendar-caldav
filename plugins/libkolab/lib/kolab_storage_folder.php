@@ -73,7 +73,7 @@ class kolab_storage_folder
     {
         if (!$type) {
             $metadata = $this->imap->get_metadata($name, array(kolab_storage::CTYPE_KEY));
-            $type     = $metadata[$this->name][kolab_storage::CTYPE_KEY];
+            $type     = $metadata[$name][kolab_storage::CTYPE_KEY];
         }
 
         $this->name            = $name;
