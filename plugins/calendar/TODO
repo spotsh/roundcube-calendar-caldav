@@ -13,7 +13,7 @@
 + View: 3.3: Display modes (agenda / day / week / month)
   + Day / Week / Month
   + List (Agenda) view
-    - Add selection for date range
+    + Add selection for date range
   - Individual days selection
 + Show list of calendars in a (hideable) drawer
   + View: 3.1: Folder list
@@ -39,6 +39,7 @@
 + Colors for calendars should be user-configurable
 + ICS parser/generator (http://code.google.com/p/qcal/)
 
+- Script to send event alarms by email (in cronjob)
 - Export *with* attachments
 - Remember last visited view
 - Create/manage invdividual views
