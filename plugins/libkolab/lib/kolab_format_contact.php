@@ -132,11 +132,12 @@ class kolab_format_contact extends kolab_format
     public function write()
     {
         $this->init();
+        $this->xmldata = kolabformat::writeContact($this->obj);
 
-        if ($this->obj->isValid()) {
-            $this->xmldata = kolabformat::writeContact($this->obj);
+        if (!parent::format_errors())
             parent::update_uid();
-        }
+        else
+            $this->xmldata = null;
 
         return $this->xmldata;
     }

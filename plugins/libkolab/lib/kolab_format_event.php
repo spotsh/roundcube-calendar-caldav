@@ -116,11 +116,12 @@ class kolab_format_event extends kolab_format
     public function write()
     {
         $this->init();
+        $this->xmldata = kolabformat::writeEvent($this->obj);
 
-        if ($this->obj->isValid()) {
-            $this->xmldata = kolabformat::writeEvent($this->obj);
+        if (!parent::format_errors())
             parent::update_uid();
-        }
+        else
+            $this->xmldata = null;
 
         return $this->xmldata;
     }

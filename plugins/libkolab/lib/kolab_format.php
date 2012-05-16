@@ -159,6 +159,40 @@ abstract class kolab_format
     }
 
     /**
+     * Check for format errors after calling kolabformat::write*()
+     *
+     * @return boolean True if there were errors, False if OK
+     */
+    protected function format_errors()
+    {
+        $ret = $log = false;
+        switch (kolabformat::error()) {
+            case kolabformat.NoError:
+                $ret = false;
+                break;
+            case kolabformat.Warning:
+                $ret = false;
+                $log = "Warning";
+                break;
+            default:
+                $ret = true;
+                $log = "Error";
+        }
+
+        if ($log) {
+            raise_error(array(
+                'code' => 660,
+                'type' => 'php',
+                'file' => __FILE__,
+                'line' => __LINE__,
+                'message' => "kolabformat write $log: " . kolabformat::errorMessage(),
+            ), true);
+        }
+
+        return $ret;
+    }
+
+    /**
      * Save the last generated UID to the object properties.
      * Should be called after kolabformat::writeXXXX();
      */

@@ -51,11 +51,12 @@ class kolab_format_distributionlist extends kolab_format
     public function write()
     {
         $this->init();
+        $this->xmldata = kolabformat::writeDistlist($this->obj);
 
-        if ($this->obj->isValid()) {
-            $this->xmldata = kolabformat::writeDistlist($this->obj);
+        if (!parent::format_errors())
             parent::update_uid();
-        }
+        else
+            $this->xmldata = null;
 
         return $this->xmldata;
     }
