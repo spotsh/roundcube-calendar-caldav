@@ -12,5 +12,9 @@ REQUIREMENTS
 * libkolabxml PHP bindings
   - kolabformat.so loaded into PHP
   - kolabformat.php placed somewhere in the include_path
-* Horde Kolab_Format package and all of its dependencies
+* PEAR: HTTP/Request2
+* PEAR: Net/URL2
 
+* Optional for old format support:
+  Horde Kolab_Format package and all of its dependencies
+  which are at least Horde_(Browser,DOM,NLS,String,Utils)
