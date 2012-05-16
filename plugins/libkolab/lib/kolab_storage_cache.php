@@ -29,6 +29,7 @@ class kolab_storage_cache
     private $folder;
     private $uid2msg;
     private $objects;
+    private $index = array();
     private $resource_uri;
     private $enabled = true;
     private $synched = false;
@@ -422,7 +423,7 @@ class kolab_storage_cache
     private function _serialize($object)
     {
         $bincols = array_flip($this->binary_cols);
-        $sql_data = array('dtstart' => null, 'dtend' => null, 'xml' => '');
+        $sql_data = array('dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
 
         // set type specific values
         if ($this->folder->type == 'event') {

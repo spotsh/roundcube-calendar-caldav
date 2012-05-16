@@ -271,7 +271,8 @@ class kolab_storage_folder
     {
         if (!$type) $type = $this->type;
 
-        // TODO: synchronize cache first?
+        // synchronize cache first
+        $this->cache->synchronize();
 
         return $this->cache->count(array(array('type','=',$type)));
     }
@@ -625,6 +626,7 @@ class kolab_storage_folder
         $format->set($object);
         $xml = $format->write();
         $object['uid'] = $format->uid;  // get read UID from format
+        $object['_formatobj'] = $format;
 
         if (!$format->is_valid() || empty($object['uid'])) {
             return false;
