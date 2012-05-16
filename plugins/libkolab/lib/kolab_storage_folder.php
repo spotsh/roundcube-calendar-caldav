@@ -710,7 +710,7 @@ class kolab_storage_folder
             return true;
         }
 
-        if ($result && is_a($result, 'PEAR_Error')) {
+        if ($result && is_object($result) && is_a($result, 'PEAR_Error')) {
             return PEAR::raiseError(sprintf("Failed triggering folder %s. Error was: %s",
                                             $this->name, $result->getMessage()));
         }
@@ -728,18 +728,23 @@ class kolab_storage_folder
      */
     private function trigger_url($url, $auth_user = null, $auth_passwd = null)
     {
-        require_once('HTTP/Request.php');
+        require_once('HTTP/Request2.php');
 
-        $request = new HTTP_Request($url);
+        try {
+            $request = new HTTP_Request2($url);
 
-        // set authentication credentials
-        if ($auth_user && $auth_passwd)
-            $request->setBasicAuth($auth_user, $auth_passwd);
+            // set authentication credentials
+            if ($auth_user && $auth_passwd)
+                $request->setAuth($auth_user, $auth_passwd);
 
-        $result = $request->sendRequest(true);
-        // rcube::write_log('trigger', $request->getResponseBody());
+            $result = $request->send();
+            // rcube::write_log('trigger', $result->getBody());
+        }
+        catch (Exception $e) {
+            return PEAR::raiseError($e->getMessage());
+        }
 
-        return $result;
+        return true;
     }
 
 
