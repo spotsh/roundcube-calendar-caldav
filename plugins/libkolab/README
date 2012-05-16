@@ -38,3 +38,6 @@ $rcmail_config['kolab_cache'] = true;
 // Defaults to https://<imap-server->/freebusy
 $rcmail_config['kolab_freebusy_server'] = 'https://<some-host>/<freebusy-path>';
 
+// Set this option to disable SSL certificate checks when triggering Free/Busy (enabled by default)
+$rcmail_config['kolab_ssl_verify_peer'] = false;
+
