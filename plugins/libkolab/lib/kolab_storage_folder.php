@@ -403,8 +403,9 @@ class kolab_storage_folder
             if (!$xml && ($part->mimetype == $content_type || preg_match('!application/([a-z]+\+)?xml!', $part->mimetype))) {
                 $xml = $part->body ? $part->body : $message->get_part_content($part->mime_id);
             }
-            else if ($part->filename) {
-                $attachments[$part->filename] = array(
+            else if ($part->filename || $part->content_id) {
+                $key = $part->content_id ? trim($part->content_id, '<>') : $part->filename;
+                $attachments[$key] = array(
                     'id' => $part->mime_id,
                     'mimetype' => $part->mimetype,
                     'size' => $part->size,
@@ -625,7 +626,7 @@ class kolab_storage_folder
 
         $format->set($object);
         $xml = $format->write();
-        $object['uid'] = $format->uid;  // get read UID from format
+        $object['uid'] = $format->uid;  // read UID from format
         $object['_formatobj'] = $format;
 
         if (!$format->is_valid() || empty($object['uid'])) {
@@ -652,13 +653,13 @@ class kolab_storage_folder
             . 'To view this object you will need an email client that understands the Kolab Groupware format. '
             . "For a list of such email clients please visit http://www.kolab.org/\n\n");
 
-        $mime->addAttachment($xml,
-            $format->CTYPE,
-            'kolab.xml',
-            false, '8bit', 'attachment', RCMAIL_CHARSET, '', '',
-            $rcmail->config->get('mime_param_folding') ? 'quoted-printable' : null,
-            $rcmail->config->get('mime_param_folding') == 2 ? 'quoted-printable' : null,
-            '', RCMAIL_CHARSET
+        $mime->addAttachment($xml,  // file
+            $format->CTYPE,         // content-type
+            'kolab.xml',            // filename
+            false,                  // is_file
+            '8bit',                 // encoding
+            'attachment',           // disposition
+            RCMAIL_CHARSET          // charset
         );
         $part_id++;
 
@@ -669,12 +670,15 @@ class kolab_storage_folder
                 $msguid = !empty($object['_msguid']) ? $object['_msguid'] : $object['uid'];
                 $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox']);
             }
+
+            $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $name . '>', RCMAIL_CHARSET, 'quoted-printable'));
+
             if (!empty($att['content'])) {
-                $mime->addAttachment($att['content'], $att['mimetype'], $name, false);
+                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, 'base64', 'attachment', '', '', '', null, null, '', null, $headers);
                 $part_id++;
             }
             else if (!empty($att['path'])) {
-                $mime->addAttachment($att['path'], $att['mimetype'], $name, true);
+                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, 'base64', 'attachment', '', '', '', null, null, '', null, $headers);
                 $part_id++;
             }
 
