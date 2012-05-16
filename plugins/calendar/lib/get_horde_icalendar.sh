@@ -16,6 +16,7 @@ echo "<?php
 /**
  * This is a concatenated copy of the following files:
  *   Horde/String.php, Horde/iCalendar.php, Horde/iCalendar/*.php
+ * Pull the latest version of these file from the PEAR channel of the Horde project at http://pear.horde.org
  */
 
 require_once(dirname(__FILE__) . '/Horde_Date.php');"

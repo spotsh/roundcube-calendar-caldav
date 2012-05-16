@@ -18,3 +18,23 @@ REQUIREMENTS
 * Optional for old format support:
   Horde Kolab_Format package and all of its dependencies
   which are at least Horde_(Browser,DOM,NLS,String,Utils)
+
+
+INSTALLATION
+------------
+To use local cache you need to create a dedicated table in Roundcube's database.
+To do so, execute the SQL commands in SQL/<yourdatabase>.sql
+
+
+CONFIGURATION
+-------------
+The following options can be configured in Roundcube's main config file
+or a local config file (config.inc.php) located in the plugin folder.
+
+// Enable caching of Kolab objects in local database
+$rcmail_config['kolab_cache'] = true;
+
+// Optional override of the URL to read and trigger Free/Busy information of Kolab users
+// Defaults to https://<imap-server->/freebusy
+$rcmail_config['kolab_freebusy_server'] = 'https://<some-host>/<freebusy-path>';
+
