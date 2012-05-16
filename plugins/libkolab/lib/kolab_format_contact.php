@@ -427,7 +427,7 @@ class kolab_format_contact extends kolab_format
     {
         $data = '';
         foreach (self::$fulltext_cols as $col) {
-            $val = is_array($this->data[$col]) ? join(" ", $this->data[$col]) : $this->data[$col];
+            $val = is_array($this->data[$col]) ? join(' ', $this->data[$col]) : $this->data[$col];
             if (strlen($val))
                 $data .= $val . ' ';
         }

@@ -364,7 +364,7 @@ class kolab_storage_cache
     {
         $sql_where = '';
         foreach ($query as $param) {
-            $sql_where .= sprintf(' AND %s%s%s',
+            $sql_where .= sprintf(' AND %s %s %s',
                 $this->db->quote_identifier($param[0]),
                 $param[1],
                 $this->db->quote($param[2])
@@ -431,8 +431,8 @@ class kolab_storage_cache
 
         if ($object['_formatobj']) {
             $sql_data['xml'] = (string)$object['_formatobj']->write();
-            $sql_data['tags'] = join(' ', $object['_formatobj']->get_tags());
-            $sql_data['words'] = join(' ', $object['_formatobj']->get_words());
+            $sql_data['tags'] = ' ' . join(' ', $object['_formatobj']->get_tags()) . ' ';  // pad with spaces for strict/prefix search
+            $sql_data['words'] = ' ' . join(' ', $object['_formatobj']->get_words()) . ' ';
         }
 
         // extract object data
@@ -492,7 +492,7 @@ class kolab_storage_cache
             return false;
 
         $sql_arr = $this->db->fetch_assoc($this->db->query(
-            "SELECT msguid AS locked FROM kolab_cache ".
+            "SELECT msguid AS locked, ".$this->db->unixtimestamp('created')." AS created FROM kolab_cache ".
             "WHERE resource=? AND type=?",
             $this->resource_uri,
             'lock'
@@ -501,24 +501,24 @@ class kolab_storage_cache
         // create lock record if not exists
         if (!$sql_arr) {
             $this->db->query(
-                "INSERT INTO kolab_cache (resource, type, msguid, uid, data, xml)".
-                " VALUES (?, ?, ?, '', '', '')",
+                "INSERT INTO kolab_cache (resource, type, msguid, created, uid, data, xml)".
+                " VALUES (?, ?, 1, ?, '', '', '')",
                 $this->resource_uri,
                 'lock',
-                time()
+                date('Y-m-d H:i:s')
             );
         }
         // wait if locked (expire locks after 10 minutes)
-        else if (intval($sql_arr['locked']) > 0 && (time() - $sql_arr['locked']) < 600) {
+        else if (intval($sql_arr['locked']) > 0 && (time() - $sql_arr['created']) < 600) {
             usleep(500000);
             return $this->_sync_lock();
         }
         // set lock
         else {
             $this->db->query(
-                "UPDATE kolab_cache SET msguid=? ".
+                "UPDATE kolab_cache SET msguid=1, created=? ".
                 "WHERE resource=? AND type=?",
-                time(),
+                date('Y-m-d H:i:s'),
                 $this->resource_uri,
                 'lock'
             );
@@ -533,7 +533,7 @@ class kolab_storage_cache
     private function _sync_unlock()
     {
         $this->db->query(
-            "UPDATE kolab_cache SET msguid=0 ".
+            "UPDATE kolab_cache SET msguid=0, created='' ".
             "WHERE resource=? AND type=?",
             $this->resource_uri,
             'lock'

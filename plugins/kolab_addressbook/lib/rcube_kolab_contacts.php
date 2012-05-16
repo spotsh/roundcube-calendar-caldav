@@ -314,8 +314,6 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function search($fields, $value, $mode=0, $select=true, $nocount=false, $required=array())
     {
-        $this->_fetch_contacts();
-
         // search by ID
         if ($fields == $this->primary_key) {
             $ids    = !is_array($value) ? explode(',', $value) : $value;
@@ -350,6 +348,25 @@ class rcube_kolab_contacts extends rcube_addressbook
         // build key name regexp
         $regexp = '/^(' . implode($fields, '|') . ')(?:.*)$/';
 
+        // pass query to storage if only indexed cols are involved
+        // NOTE: this is only some rough pre-filtering but probably includes false positives
+        $squery = array();
+        if (count(array_intersect(kolab_format_contact::$fulltext_cols, $fields)) == $scount) {
+            switch ($mode) {
+                case 1:  $prefix = ' '; $suffix = ' '; break;  // strict
+                case 2:  $prefix = ' '; $suffix = '';  break;  // prefix
+                default: $prefix = '';  $suffix = '';  break;  // substring
+            }
+
+            $search_string = is_array($value) ? join(' ', $value) : $value;
+            foreach (rcube_utils::normalize_string($search_string, true) as $word) {
+                $squery[] = array('words', 'LIKE', '%' . $prefix . $word . $suffix . '%');
+            }
+        }
+
+        // get all/matching records
+        $this->_fetch_contacts($squery);
+
         // save searching conditions
         $this->filter = array('fields' => $fields, 'value' => $value, 'mode' => $mode, 'ids' => array());
 
@@ -374,17 +391,19 @@ class rcube_kolab_contacts extends rcube_addressbook
                 }
 
                 foreach ((array)$contact[$col] as $val) {
-                    $val = mb_strtolower($val);
-                    switch ($mode) {
-                    case 1:
-                        $got = ($val == $search);
-                        break;
-                    case 2:
-                        $got = ($search == substr($val, 0, strlen($search)));
-                        break;
-                    default:
-                        $got = (strpos($val, $search) !== false);
-                        break;
+                    foreach ((array)$val as $str) {
+                        $str = mb_strtolower($str);
+                        switch ($mode) {
+                        case 1:
+                            $got = ($str == $search);
+                            break;
+                        case 2:
+                            $got = ($search == substr($str, 0, strlen($search)));
+                            break;
+                        default:
+                            $got = (strpos($str, $search) !== false);
+                            break;
+                        }
                     }
 
                     if ($got) {
@@ -916,17 +935,13 @@ class rcube_kolab_contacts extends rcube_addressbook
     }
 
     /**
-     * Simply fetch all records and store them in private member vars
+     * Query storage layer and store records in private member var
      */
-    private function _fetch_contacts()
+    private function _fetch_contacts($query = array())
     {
         if (!isset($this->contacts)) {
             $this->contacts = array();
-            foreach ((array)$this->storagefolder->get_objects() as $record) {
-                // Because of a bug, sometimes group records are returned
-                if ($record['__type'] == 'Group')
-                    continue;
-
+            foreach ((array)$this->storagefolder->select($query) as $record) {
                 $contact = $this->_to_rcube_contact($record);
                 $id = $contact['ID'];
                 $this->contacts[$id] = $contact;
