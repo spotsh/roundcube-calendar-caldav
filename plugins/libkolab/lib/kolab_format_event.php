@@ -26,6 +26,8 @@ class kolab_format_event extends kolab_format
 {
     public $CTYPE = 'application/calendar+xml';
 
+    public static $fulltext_cols = array('title', 'description', 'location', 'attendees:name', 'attendees:email');
+
     private $sensitivity_map = array(
         'public'       => kolabformat::ClassPublic,
         'private'      => kolabformat::ClassPrivate,
@@ -466,6 +468,54 @@ class kolab_format_event extends kolab_format
 
         $this->data = $object;
         return $this->data;
+    }
+
+    /**
+     * Callback for kolab_storage_cache to get object specific tags to cache
+     *
+     * @return array List of tags to save in cache
+     */
+    public function get_tags()
+    {
+        $tags = array();
+
+        foreach ((array)$this->data['categories'] as $cat) {
+            $tags[] = rcube_utils::normalize_string($cat);
+        }
+
+        if (!empty($this->data['alarms'])) {
+            $tags[] = 'x-has-alarms';
+        }
+
+        return $tags;
+    }
+
+    /**
+     * Callback for kolab_storage_cache to get words to index for fulltext search
+     *
+     * @return array List of words to save in cache
+     */
+    public function get_words()
+    {
+        $data = '';
+        foreach (self::$fulltext_cols as $colname) {
+            list($col, $field) = explode(':', $colname);
+
+            if ($field) {
+                $a = array();
+                foreach ((array)$this->data[$col] as $attr)
+                    $a[] = $attr[$field];
+                $val = join(' ', $a);
+            }
+            else {
+                $val = is_array($this->data[$col]) ? join(' ', $this->data[$col]) : $this->data[$col];
+            }
+
+            if (strlen($val))
+                $data .= $val . ' ';
+        }
+
+        return array_unique(rcube_utils::normalize_string($data, true));
     }
 
     /**
