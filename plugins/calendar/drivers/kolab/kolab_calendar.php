@@ -197,16 +197,16 @@ class kolab_calendar
    * @param  integer Event's new start (unix timestamp)
    * @param  integer Event's new end (unix timestamp)
    * @param  string  Search query (optional)
-   * @param  boolean Strip virtual events (optional)
+   * @param  boolean Include virtual events (optional)
+   * @param  array   Additional parameters to query storage
    * @return array A list of event records
    */
-  public function list_events($start, $end, $search = null, $virtual = 1)
+  public function list_events($start, $end, $search = null, $virtual = 1, $query = array())
   {
     // query Kolab storage
-    $query = array(
-      array('dtstart', '<=', $end),
-      array('dtend',   '>=', $start),
-    );
+    $query[] = array('dtstart', '<=', $end);
+    $query[] = array('dtend',   '>=', $start);
+
     foreach ((array)$this->storage->select($query) as $record) {
       $event = $this->_to_rcube_event($record);
       $this->events[$event['id']] = $event;

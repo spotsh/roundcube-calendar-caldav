@@ -765,17 +765,19 @@ class kolab_driver extends calendar_driver
     $time = $slot + $interval;
     
     $events = array();
+    $query = array(array('tags', 'LIKE', '% x-has-alarms %'));
     foreach ($this->calendars as $cid => $calendar) {
       // skip calendars with alarms disabled
       if (!$calendar->alarms || ($calendars && !in_array($cid, $calendars)))
         continue;
 
-      foreach ($calendar->list_events($time, $time + 86400 * 365) as $e) {
+      foreach ($calendar->list_events($time, $time + 86400 * 365, null, 1, $query) as $e) {
         // add to list if alarm is set
-        if ($e['_alarm'] && ($notifyat = $e['start'] - $e['_alarm'] * 60) <= $time) {
+        $alarm = calendar::get_next_alarm($e);
+        if ($alarm && $alarm['time'] && $alarm['time'] <= $time && $alarm['action'] == 'DISPLAY') {
           $id = $e['id'];
           $events[$id] = $e;
-          $events[$id]['notifyat'] = $notifyat;
+          $events[$id]['notifyat'] = $alarm['time'];
         }
       }
     }

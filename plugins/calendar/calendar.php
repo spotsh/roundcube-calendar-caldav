@@ -1264,7 +1264,47 @@ class calendar extends rcube_plugin
     
     return false;
   }
-  
+
+  /**
+   * Get the next alarm (time & action) for the given event
+   *
+   * @param array Event data
+   * @return array Hash array with alarm time/type or null if no alarms are configured
+   */
+  public static function get_next_alarm($event)
+  {
+      if (!$event['alarms'])
+        return null;
+
+      // TODO: handle multiple alarms (currently not supported)
+      list($trigger, $action) = explode(':', $event['alarms'], 2);
+
+      $notify = self::parse_alaram_value($trigger);
+      if (!empty($notify[1])){  // offset
+        $mult = 1;
+        switch ($notify[1]) {
+          case '-S': $mult =     -1; break;
+          case '+S': $mult =      1; break;
+          case '-M': $mult =    -60; break;
+          case '+M': $mult =     60; break;
+          case '-H': $mult =  -3600; break;
+          case '+H': $mult =   3600; break;
+          case '-D': $mult = -86400; break;
+          case '+D': $mult =  86400; break;
+          case '-W': $mult = -604800; break;
+          case '+W': $mult =  604800; break;
+        }
+        $offset = $notify[0] * $mult;
+        $refdate = $mult > 0 ? $event['end'] : $event['start'];
+        $notify_at = $refdate + $offset;
+      }
+      else {  // absolute timestamp
+        $notify_at = $notify[0];
+      }
+
+      return array('time' => $notify_at, 'action' => $action ? strtoupper($action) : 'DISPLAY');
+  }
+
   /**
    * Convert the internal structured data into a vcalendar rrule 2.0 string
    */
