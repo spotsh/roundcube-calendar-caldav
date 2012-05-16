@@ -326,7 +326,7 @@ class kolab_storage_cache
     /**
      * Get number of objects mathing the given query
      *
-     * @param string  $type Object type (e.g. contact, event, todo, journal, note, configuration)
+     * @param array  $query Pseudo-SQL query as list of filter parameter triplets
      * @return integer The number of objects of the given type
      */
     public function count($query = array())
@@ -363,10 +363,18 @@ class kolab_storage_cache
     {
         $sql_where = '';
         foreach ($query as $param) {
+            if ($param[1] == '=' && is_array($param[2])) {
+                $qvalue = '(' . join(',', array_map(array($this->db, 'quote'), $param[2])) . ')';
+                $param[1] = 'IN';
+            }
+            else {
+                $qvalue = $this->db->quote($param[2]);
+            }
+
             $sql_where .= sprintf(' AND %s %s %s',
                 $this->db->quote_identifier($param[0]),
                 $param[1],
-                $this->db->quote($param[2])
+                $qvalue
             );
         }
 

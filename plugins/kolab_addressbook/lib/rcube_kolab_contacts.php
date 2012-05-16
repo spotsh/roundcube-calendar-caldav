@@ -246,13 +246,12 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function list_records($cols=null, $subset=0)
     {
-        $this->result = $this->count();
+        $this->result = new rcube_result_set(0, ($this->list_page-1) * $this->page_size);;
 
         // list member of the selected group
         if ($this->gid) {
             $this->_fetch_groups();
             $seen = array();
-            $this->result->count = 0;
             foreach ((array)$this->distlists[$this->gid]['member'] as $member) {
                 // skip member that don't match the search filter
                 if (is_array($this->filter['ids']) && array_search($member['ID'], $this->filter['ids']) === false)
@@ -269,9 +268,15 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
             $ids = array_keys($seen);
         }
+        else if (is_array($this->filter['ids'])) {
+            $ids = $this->filter['ids'];
+            if ($this->result->count = count($ids))
+                $this->_fetch_contacts(array(array('uid', '=', $ids)));
+        }
         else {
             $this->_fetch_contacts();
-            $ids = is_array($this->filter['ids']) ? $this->filter['ids'] : array_keys($this->contacts);
+            $ids = array_keys($this->contacts);
+            $this->result->count = count($ids);
         }
 
         // sort data arrays according to desired list sorting
