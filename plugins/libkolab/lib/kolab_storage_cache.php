@@ -82,8 +82,7 @@ class kolab_storage_cache
             return;
 
         // lock synchronization for this folder or wait if locked
-        if (!$this->_sync_lock())
-            return;
+        $this->_sync_lock();
 
         // synchronize IMAP mailbox cache
         $this->imap->folder_sync($this->folder->name);
@@ -187,7 +186,7 @@ class kolab_storage_cache
             kolab_storage::get_folder($foldername)->cache->set($msguid, $object);
             return;
         }
-
+        
         // write to cache
         if ($this->ready) {
             // remove old entry
@@ -306,7 +305,7 @@ class kolab_storage_cache
             $filter = $this->_query2assoc($query);
 
             // use 'list' for folder's default objects
-            if ($filter['type'] == $this->type && !empty($this->index)) {
+            if ($filter['type'] == $this->type) {
                 $index = $this->index;
             }
             else {  // search by object type
@@ -489,7 +488,7 @@ class kolab_storage_cache
     private function _sync_lock()
     {
         if (!$this->ready)
-            return false;
+            return;
 
         $sql_arr = $this->db->fetch_assoc($this->db->query(
             "SELECT msguid AS locked, ".$this->db->unixtimestamp('created')." AS created FROM kolab_cache ".
@@ -523,8 +522,6 @@ class kolab_storage_cache
                 'lock'
             );
         }
-
-        return true;
     }
 
     /**
