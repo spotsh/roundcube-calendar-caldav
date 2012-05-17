@@ -173,25 +173,30 @@ class kolab_storage
     /**
      * Creates IMAP folder
      *
-     * @param string $name    Folder name (UTF7-IMAP)
-     * @param string $type    Folder type
-     * @param bool   $default True if older is default (for specified type)
+     * @param string $name        Folder name (UTF7-IMAP)
+     * @param string $type        Folder type
+     * @param bool   $subscribed  Sets folder subscription
      *
      * @return bool True on success, false on failure
      */
-    public static function folder_create($name, $type=null, $default=false)
+    public static function folder_create($name, $type = null, $subscribed = false)
     {
         self::setup();
 
-        if (self::$imap->create_folder($name)) {
+        if ($saved = self::$imap->create_folder($name, $subscribed)) {
             // set metadata for folder type
-            $ctype = $type . ($default ? '.default' : '');
-            $saved = self::$imap->set_metadata($name, array(self::CTYPE_KEY => $ctype));
+            if ($type) {
+                $saved = self::$imap->set_metadata($name, array(self::CTYPE_KEY => $type));
 
-            if ($saved)
-                return true;
-            else  // revert if metadata could not be set
-                self::$imap->delete_folder($name);
+                // revert if metadata could not be set
+                if (!$saved) {
+                    self::$imap->delete_folder($name);
+                }
+            }
+        }
+
+        if ($saved) {
+            return true;
         }
 
         self::$last_error = self::$imap->get_error_str();

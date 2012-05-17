@@ -307,7 +307,7 @@ class kolab_driver extends calendar_driver
     }
     // create new folder
     else {
-      if (!($result = kolab_storage::folder_create($folder, 'event', false)))
+      if (!($result = kolab_storage::folder_create($folder, 'event')))
         $this->last_error = kolab_storage::$last_error;
     }
 

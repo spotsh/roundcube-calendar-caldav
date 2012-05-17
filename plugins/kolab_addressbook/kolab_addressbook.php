@@ -497,7 +497,7 @@ class kolab_addressbook extends rcube_plugin
                 $folder = $plugin['name'];
 
                 if (!$plugin['abort']) {
-                    $result = kolab_storage::folder_create($folder, 'contact', false);
+                    $result = kolab_storage::folder_create($folder, 'contact');
                 }
                 else {
                     $result = $plugin['result'];
