@@ -2220,15 +2220,15 @@ class calendar extends rcube_plugin
     $charset = RCMAIL_CHARSET;
     
     // establish imap connection
-    $this->rc->imap_connect();
-    $this->rc->imap->set_mailbox($mbox);
+    $imap = $this->rc->get_storage();
+    $imap->set_mailbox($mbox);
 
     if ($uid && $mime_id) {
       list($mime_id, $index) = explode(':', $mime_id);
-      $part = $this->rc->imap->get_message_part($uid, $mime_id);
+      $part = $imap->get_message_part($uid, $mime_id);
       if ($part->ctype_parameters['charset'])
         $charset = $part->ctype_parameters['charset'];
-      $headers = $this->rc->imap->get_headers($uid);
+      $headers = $imap->get_message_headers($uid);
     }
 
     $events = $this->get_ical()->import($part, $charset);
@@ -2365,8 +2365,8 @@ class calendar extends rcube_plugin
     $event = array();
     
     // establish imap connection
-    $this->rc->imap_connect();
-    $this->rc->imap->set_mailbox($mbox);
+    $imap = $this->rc->get_storage();
+    $imap->set_mailbox($mbox);
     $message = new rcube_message($uid);
 
     if ($message->headers) {
@@ -2384,7 +2384,7 @@ class calendar extends rcube_plugin
 
         foreach ((array)$message->attachments as $part) {
           $attachment = array(
-            'data' => $this->rc->imap->get_message_part($uid, $part->mime_id, $part),
+            'data' => $imap->get_message_part($uid, $part->mime_id, $part),
             'size' => $part->size,
             'name' => $part->filename,
             'mimetype' => $part->mimetype,
