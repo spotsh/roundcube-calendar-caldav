@@ -506,6 +506,12 @@ class kolab_storage_cache
             'lock'
         ));
 
+        // abort if database is not set-up
+        if ($this->db->is_error()) {
+            $this->ready = false;
+            return;
+        }
+
         // create lock record if not exists
         if (!$sql_arr) {
             $this->db->query(
@@ -538,6 +544,9 @@ class kolab_storage_cache
      */
     private function _sync_unlock()
     {
+        if (!$this->ready)
+            return;
+
         $this->db->query(
             "UPDATE kolab_cache SET msguid=0, created='' ".
             "WHERE resource=? AND type=?",

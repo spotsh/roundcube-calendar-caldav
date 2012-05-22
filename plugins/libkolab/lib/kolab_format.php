@@ -29,6 +29,11 @@ abstract class kolab_format
 {
     public static $timezone;
 
+    public /*abstract*/ $CTYPE;
+
+    protected /*abstract*/ $read_func;
+    protected /*abstract*/ $write_func;
+
     protected $obj;
     protected $data;
     protected $xmldata;
@@ -232,7 +237,29 @@ abstract class kolab_format
      *
      * @param string XML data
      */
-    abstract public function load($xml);
+    public function load($xml)
+    {
+        $this->obj = call_user_func($this->read_func, $xml, false);
+        $this->loaded = !$this->format_errors();
+    }
+
+    /**
+     * Write object data to XML format
+     *
+     * @return string XML data
+     */
+    public function write()
+    {
+        $this->init();
+        $this->xmldata = call_user_func($this->write_func, $this->obj);
+
+        if (!$this->format_errors())
+            $this->update_uid();
+        else
+            $this->xmldata = null;
+
+        return $this->xmldata;
+    }
 
     /**
      * Set properties to the kolabformat object
@@ -245,13 +272,6 @@ abstract class kolab_format
      *
      */
     abstract public function is_valid();
-
-    /**
-     * Write object data to XML format
-     *
-     * @return string XML data
-     */
-    abstract public function write();
 
     /**
      * Convert the Kolab object into a hash array data structure
