@@ -7,7 +7,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -26,6 +26,9 @@
 
 class kolab_calendar
 {
+  const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
+  const COLOR_KEY_PRIVATE = '/shared/vendor/kolab/color';
+  
   public $id;
   public $ready = false;
   public $readonly = true;
@@ -35,17 +38,10 @@ class kolab_calendar
   public $storage;
 
   private $cal;
-  private $events;
-  private $id2uid;
+  private $events = array();
   private $imap_folder = 'INBOX/Calendar';
-  private $namespace;
   private $search_fields = array('title', 'description', 'location', '_attendees');
   private $sensitivity_map = array('public', 'private', 'confidential');
-  private $priority_map = array('low' => 9, 'normal' => 5, 'high' => 1);
-  private $role_map = array('REQ-PARTICIPANT' => 'required', 'OPT-PARTICIPANT' => 'optional', 'CHAIR' => 'resource');
-  private $status_map = array('NEEDS-ACTION' => 'none', 'TENTATIVE' => 'tentative', 'CONFIRMED' => 'accepted', 'ACCEPTED' => 'accepted', 'DECLINED' => 'declined');
-  private $month_map = array('', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
-  private $weekday_map = array('MO'=>'monday', 'TU'=>'tuesday', 'WE'=>'wednesday', 'TH'=>'thursday', 'FR'=>'friday', 'SA'=>'saturday', 'SU'=>'sunday');
 
 
   /**
@@ -59,12 +55,11 @@ class kolab_calendar
       $this->imap_folder = $imap_folder;
 
     // ID is derrived from folder name
-    $this->id = rcube_kolab::folder_id($this->imap_folder);
+    $this->id = kolab_storage::folder_id($this->imap_folder);
 
     // fetch objects from the given IMAP folder
-    $this->storage = rcube_kolab::get_storage($this->imap_folder);
-
-    $this->ready = !PEAR::isError($this->storage);
+    $this->storage = kolab_storage::get_folder($this->imap_folder);
+    $this->ready = $this->storage && !PEAR::isError($this->storage);
 
     // Set readonly and alarms flags according to folder permissions
     if ($this->ready) {
@@ -73,8 +68,8 @@ class kolab_calendar
         $this->alarms = true;
       }
       else {
-        $rights = $this->storage->_folder->getMyRights();
-        if (!PEAR::isError($rights)) {
+        $rights = $this->storage->get_myrights();
+        if ($rights && !PEAR::isError($rights)) {
           if (strpos($rights, 'i') !== false)
             $this->readonly = false;
         }
@@ -96,7 +91,7 @@ class kolab_calendar
    */
   public function get_name()
   {
-    $folder = rcube_kolab::object_name($this->imap_folder, $this->namespace);
+    $folder = kolab_storage::object_name($this->imap_folder, $this->namespace);
     return $folder;
   }
 
@@ -119,7 +114,7 @@ class kolab_calendar
    */
   public function get_owner()
   {
-    return $this->storage->_folder->getOwner();
+    return $this->storage->get_owner();
   }
 
 
@@ -130,10 +125,7 @@ class kolab_calendar
    */
   public function get_namespace()
   {
-    if ($this->namespace === null) {
-      $this->namespace = rcube_kolab::folder_namespace($this->imap_folder);
-    }
-    return $this->namespace;
+    return $this->storage->get_namespace();
   }
 
 
@@ -154,7 +146,8 @@ class kolab_calendar
   public function get_color()
   {
     // color is defined in folder METADATA
-    if ($color = $this->storage->_folder->getKolabAttribute('color', HORDE_ANNOT_READ_PRIVATE_SHARED)) {
+    $metadata = $this->storage->get_metadata(array(self::COLOR_KEY_PRIVATE, self::COLOR_KEY_SHARED));
+    if (($color = $metadata[self::COLOR_KEY_PRIVATE]) || ($color = $metadata[self::COLOR_KEY_SHARED])) {
       return $color;
     }
 
@@ -168,19 +161,11 @@ class kolab_calendar
   }
 
   /**
-   * Return the corresponding Kolab_Folder instance
+   * Return the corresponding kolab_storage_folder instance
    */
   public function get_folder()
   {
-    return $this->storage->_folder;
-  }
-
-  /**
-   * Getter for the attachment body
-   */
-  public function get_attachment_body($id)
-  {
-    return $this->storage->getAttachment($id);
+    return $this->storage;
   }
 
 
@@ -189,17 +174,21 @@ class kolab_calendar
    */
   public function get_event($id)
   {
-    $this->_fetch_events();
-    
+    // directly access storage object
+    if (!$this->events[$id] && ($record = $this->storage->get_object($id)))
+        $this->events[$id] = $this->_to_rcube_event($record);
+
     // event not found, maybe a recurring instance is requested
     if (!$this->events[$id]) {
       $master_id = preg_replace('/-\d+$/', '', $id);
-      if ($this->events[$master_id] && $this->events[$master_id]['recurrence']) {
-        $master = $this->events[$master_id];
+      if ($record = $this->storage->get_object($master_id))
+        $this->events[$master_id] = $this->_to_rcube_event($record);
+
+      if (($master = $this->events[$master_id]) && $master['recurrence']) {
         $this->_get_recurring_events($master, $master['start'], $master['start'] + 86400 * 365 * 10, $id);
       }
     }
-    
+
     return $this->events[$id];
   }
 
@@ -208,13 +197,21 @@ class kolab_calendar
    * @param  integer Event's new start (unix timestamp)
    * @param  integer Event's new end (unix timestamp)
    * @param  string  Search query (optional)
-   * @param  boolean Strip virtual events (optional)
+   * @param  boolean Include virtual events (optional)
+   * @param  array   Additional parameters to query storage
    * @return array A list of event records
    */
-  public function list_events($start, $end, $search = null, $virtual = 1)
+  public function list_events($start, $end, $search = null, $virtual = 1, $query = array())
   {
-    $this->_fetch_events();
-    
+    // query Kolab storage
+    $query[] = array('dtstart', '<=', $end);
+    $query[] = array('dtend',   '>=', $start);
+
+    foreach ((array)$this->storage->select($query) as $record) {
+      $event = $this->_to_rcube_event($record);
+      $this->events[$event['id']] = $event;
+    }
+
     if (!empty($search))
       $search =  mb_strtolower($search);
     
@@ -275,9 +272,9 @@ class kolab_calendar
 
     //generate new event from RC input
     $object = $this->_from_rcube_event($event);
-    $saved = $this->storage->save($object);
+    $saved = $this->storage->save($object, 'event');
     
-    if (PEAR::isError($saved)) {
+    if (!$saved || PEAR::isError($saved)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
@@ -303,15 +300,15 @@ class kolab_calendar
   public function update_event($event)
   {
     $updated = false;
-    $old = $this->storage->getObject($event['id']);
-    if (PEAR::isError($old))
+    $old = $this->storage->get_object($event['id']);
+    if (!$old || PEAR::isError($old))
       return false;
 
     $old['recurrence'] = '';  # clear old field, could have been removed in new, too
-    $object = array_merge($old, $this->_from_rcube_event($event));
-    $saved = $this->storage->save($object, $event['id']);
+    $object = $this->_from_rcube_event($event, $old);
+    $saved = $this->storage->save($object, 'event', $event['id']);
 
-    if (PEAR::isError($saved)) {
+    if (!$saved || PEAR::isError($saved)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
@@ -334,28 +331,14 @@ class kolab_calendar
    */
   public function delete_event($event, $force = true)
   {
-    $deleted  = false;
+    $deleted = $this->storage->delete($event['id'], $force);
 
-    if (!$force) {
-      // Get IMAP object ID
-      $imap_uid = $this->storage->_getStorageId($event['id']);
-    }
-
-    $deleteme = $this->storage->delete($event['id'], $force);
-
-    if (PEAR::isError($deleteme)) {
+    if (!$deleted || PEAR::isError($deleted)) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error deleting event object from Kolab server:" . $deleteme->getMessage()),
+        'message' => "Error deleting event object from Kolab server"),
         true, false);
-    }
-    else {
-      // Save IMAP object ID in session, will be used for restore action
-      if ($imap_uid)
-        $_SESSION['kolab_delete_uids'][$event['id']] = $imap_uid;
-
-      $deleted = true;
     }
 
     return $deleted;
@@ -369,63 +352,18 @@ class kolab_calendar
    */
   public function restore_event($event)
   {
-    $imap_uid = $_SESSION['kolab_delete_uids'][$event['id']];
-
-    if (!$imap_uid)
-      return false;
-
-    $session = &Horde_Kolab_Session::singleton();
-    $imap    = &$session->getImap();
-
-    if (is_object($imap) && is_a($imap, 'PEAR_Error')) {
-      $error = $imap;
+    if ($this->storage->undelete($event['id'])) {
+        return true;
     }
     else {
-      $result = $imap->select($this->imap_folder);
-      if (is_object($result) && is_a($result, 'PEAR_Error')) {
-        $error = $result;
-      }
-      else {
-        $result = $imap->undeleteMessages($imap_uid);
-        if (is_object($result) && is_a($result, 'PEAR_Error')) {
-          $error = $result;
-        }
-        else {
-          // re-sync the cache
-          $this->storage->synchronize();
-        }
-      }
-    }
-
-    if ($error) {
-      raise_error(array(
-        'code' => 600, 'type' => 'php',
-        'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error undeleting an event object(s) from the Kolab server:" . $error->getMessage()),
+        raise_error(array(
+          'code' => 600, 'type' => 'php',
+          'file' => __FILE__, 'line' => __LINE__,
+          'message' => "Error undeleting a contact object $uid from the Kolab server"),
         true, false);
-
-      return false;
     }
 
-    $rcmail = rcmail::get_instance();
-    $rcmail->session->remove('kolab_delete_uids');
-
-    return true;
-  }
-
-  /**
-   * Simply fetch all records and store them in private member vars
-   * We thereby rely on cahcing done by the Horde classes
-   */
-  private function _fetch_events()
-  {
-    if (!isset($this->events)) {
-      $this->events = array();
-      foreach ((array)$this->storage->getObjects() as $record) {
-        $event = $this->_to_rcube_event($record);
-        $this->events[$event['id']] = $event;
-      }
-    }
+    return false;
   }
 
 
@@ -471,308 +409,99 @@ class kolab_calendar
   /**
    * Convert from Kolab_Format to internal representation
    */
-  private function _to_rcube_event($rec)
+  private function _to_rcube_event($record)
   {
-    $start_time = date('H:i:s', $rec['start-date']);
-    $allday = $rec['_is_all_day'] || ($start_time == '00:00:00' && $start_time == date('H:i:s', $rec['end-date']));
-    if ($allday) {  // in Roundcube all-day events only go from 12:00 to 13:00
-      $rec['start-date'] += 12 * 3600;
-      $rec['end-date']   -= 11 * 3600;
-      $rec['end-date']   -= $this->cal->gmt_offset - date('Z', $rec['end-date']);    // shift times from server's timezone to user's timezone
-      $rec['start-date'] -= $this->cal->gmt_offset - date('Z', $rec['start-date']);  // because generated with mktime() in Horde_Kolab_Format_Date::decodeDate()
-      // sanity check
-      if ($rec['end-date'] <= $rec['start-date'])
-        $rec['end-date'] += 86400;
-    }
-    
-    // convert alarm time into internal format
-    if ($rec['alarm']) {
-      $alarm_value = $rec['alarm'];
-      $alarm_unit = 'M';
-      if ($rec['alarm'] % 1440 == 0) {
-        $alarm_value /= 1440;
-        $alarm_unit = 'D';
+    $record['id'] = $record['uid'];
+    $record['calendar'] = $this->id;
+
+    // convert from DateTime to unix timestamp
+    if (is_a($record['start'], 'DateTime'))
+      $record['start'] = $record['start']->format('U');
+    if (is_a($record['end'], 'DateTime'))
+      $record['end'] = $record['end']->format('U');
+
+    // all-day events go from 12:00 - 13:00
+    if ($record['end'] <= $record['start'] && $record['allday'])
+      $record['end'] = $record['start'] + 3600;
+
+    if (!empty($record['_attachments'])) {
+      foreach ($record['_attachments'] as $name => $attachment) {
+        if ($attachment !== false) {
+          $attachment['name'] = $name;
+          $attachments[] = $attachment;
+        }
       }
-      else if ($rec['alarm'] % 60 == 0) {
-        $alarm_value /= 60;
-        $alarm_unit = 'H';
-      }
-      $alarm_value *= -1;
-    }
-    
-    // convert recurrence rules into internal pseudo-vcalendar format
-    if ($recurrence = $rec['recurrence']) {
-      $rrule = array(
-        'FREQ' => strtoupper($recurrence['cycle']),
-        'INTERVAL' => intval($recurrence['interval']),
-      );
-      
-      if ($recurrence['range-type'] == 'number')
-        $rrule['COUNT'] = intval($recurrence['range']);
-      else if ($recurrence['range-type'] == 'date')
-        $rrule['UNTIL'] = $recurrence['range'];
-      
-      if ($recurrence['day']) {
-        $byday = array();
-        $prefix = ($rrule['FREQ'] == 'MONTHLY' || $rrule['FREQ'] == 'YEARLY') ? intval($recurrence['daynumber'] ? $recurrence['daynumber'] : 1) : '';
-        foreach ($recurrence['day'] as $day)
-          $byday[] = $prefix . substr(strtoupper($day), 0, 2);
-        $rrule['BYDAY'] = join(',', $byday);
-      }
-      if ($recurrence['daynumber']) {
-        if ($recurrence['type'] == 'monthday' || $recurrence['type'] == 'daynumber')
-          $rrule['BYMONTHDAY'] = $recurrence['daynumber'];
-        else if ($recurrence['type'] == 'yearday')
-          $rrule['BYYEARDAY'] = $recurrence['daynumber'];
-      }
-      if ($recurrence['month']) {
-        $monthmap = array_flip($this->month_map);
-        $rrule['BYMONTH'] = strtolower($monthmap[$recurrence['month']]);
-      }
-      
-      if ($recurrence['exclusion']) {
-        foreach ((array)$recurrence['exclusion'] as $excl)
-          $rrule['EXDATE'][] = strtotime($excl . date(' H:i:s', $rec['start-date']));  // use time of event start
-      }
+
+      $record['attachments'] = $attachments;
     }
 
     $sensitivity_map = array_flip($this->sensitivity_map);
-    $status_map = array_flip($this->status_map);
-    $role_map = array_flip($this->role_map);
+    $record['sensitivity'] = intval($sensitivity_map[$record['sensitivity']]);
 
-    if (!empty($rec['_attachments'])) {
-      foreach ($rec['_attachments'] as $name => $attachment) {
-        // @TODO: 'type' and 'key' are the only supported (no 'size')
-        $attachments[] = array(
-          'id' => $attachment['key'],
-          'mimetype' => $attachment['type'],
-          'name' => $name,
-        );
-      }
-    }
-    
-    if ($rec['organizer']) {
-      $attendees[] = array(
-        'role' => 'ORGANIZER',
-        'name' => $rec['organizer']['display-name'],
-        'email' => $rec['organizer']['smtp-address'],
-        'status' => 'ACCEPTED',
-      );
-      $_attendees .= $rec['organizer']['display-name'] . ' ' . $rec['organizer']['smtp-address'] . ' ';
-    }
-    
-    foreach ((array)$rec['attendee'] as $attendee) {
-      $attendees[] = array(
-        'role' => $role_map[$attendee['role']],
-        'name' => $attendee['display-name'],
-        'email' => $attendee['smtp-address'],
-        'status' => $status_map[$attendee['status']],
-        'rsvp' => $attendee['request-response'],
-      );
-      $_attendees .= $rec['organizer']['display-name'] . ' ' . $rec['organizer']['smtp-address'] . ' ';
-    }
-    
     // Roundcube only supports one category assignment
-    $categories = explode(',', $rec['categories']);
-    
-    return array(
-      'id' => $rec['uid'],
-      'uid' => $rec['uid'],
-      'title' => $rec['summary'],
-      'location' => $rec['location'],
-      'description' => $rec['body'],
-      'start' => $rec['start-date'],
-      'end' => $rec['end-date'],
-      'allday' => $allday,
-      'recurrence' => $rrule,
-      'alarms' => $alarm_value . $alarm_unit,
-      '_alarm' => intval($rec['alarm']),
-      'categories' => $categories[0],
-      'attachments' => $attachments,
-      'attendees' => $attendees,
-      '_attendees' => $_attendees,
-      'free_busy' => $rec['show-time-as'],
-      'priority' => is_numeric($rec['priority']) ? intval($rec['priority']) : (isset($this->priority_map[$rec['priority']]) ? $this->priority_map[$rec['priority']] : 0),
-      'sensitivity' => $sensitivity_map[$rec['sensitivity']],
-      'changed' => $rec['last-modification-date'],
-      'calendar' => $this->id,
-    );
+    if (is_array($record['categories']))
+      $record['categories'] = $record['categories'][0];
+
+    // remove internals
+    unset($record['_mailbox'], $record['_msguid'], $record['_formatobj'], $record['_attachments']);
+
+    return $record;
   }
 
    /**
    * Convert the given event record into a data structure that can be passed to Kolab_Storage backend for saving
    * (opposite of self::_to_rcube_event())
    */
-  private function _from_rcube_event($event)
+  private function _from_rcube_event($event, $old = array())
   {
-    $priority_map = $this->priority_map;
-    $tz_offset = $this->cal->gmt_offset;
-
-    $object = array(
-    // kolab         => roundcube
-      'uid'          => $event['uid'],
-      'summary'      => $event['title'],
-      'location'     => $event['location'],
-      'body'         => $event['description'],
-      'categories'   => $event['categories'],
-      'start-date'   => $event['start'],
-      'end-date'     => $event['end'],
-      'sensitivity'  =>$this->sensitivity_map[$event['sensitivity']],
-      'show-time-as' => $event['free_busy'],
-      'priority'     => $event['priority'],
-    );
-    
-    //handle alarms
-    if ($event['alarms']) {
-      //get the value
-      $alarmbase = explode(":", $event['alarms']);
-      
-      //get number only
-      $avalue = preg_replace('/[^0-9]/', '', $alarmbase[0]); 
-      
-      if (preg_match("/H/",$alarmbase[0])) {
-        $object['alarm'] = $avalue*60;
-      } else if (preg_match("/D/",$alarmbase[0])) {
-        $object['alarm'] = $avalue*24*60;
-      } else {
-        $object['alarm'] = $avalue;
-      }
-    }
-    
-    //recurr object/array
-    if (count($event['recurrence']) > 1) {
-      $ra = $event['recurrence'];
-      
-      //Frequency abd interval
-      $object['recurrence']['cycle'] = strtolower($ra['FREQ']);
-      $object['recurrence']['interval'] = intval($ra['INTERVAL']);
-
-      //Range Type
-      if ($ra['UNTIL']) {
-        $object['recurrence']['range-type'] = 'date';
-        $object['recurrence']['range'] = $ra['UNTIL'];
-      }
-      if ($ra['COUNT']) {
-        $object['recurrence']['range-type'] = 'number';
-        $object['recurrence']['range'] = $ra['COUNT'];
-      }
-      
-      //weekly
-      if ($ra['FREQ'] == 'WEEKLY') {
-        if ($ra['BYDAY']) {
-          foreach (split(",", $ra['BYDAY']) as $day)
-            $object['recurrence']['day'][] = $this->weekday_map[$day];
-        }
-        else {
-          // use weekday of start date if empty
-          $object['recurrence']['day'][] = strtolower(gmdate('l', $event['start'] + $tz_offset));
-        }
-      }
-      
-      //monthly (temporary hack to follow current Horde logic)
-      if ($ra['FREQ'] == 'MONTHLY') {
-        if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
-          $object['recurrence']['daynumber'] = $m[1];
-          $object['recurrence']['day'] = array($this->weekday_map[$m[2]]);
-          $object['recurrence']['cycle'] = 'monthly';
-          $object['recurrence']['type']  = 'weekday';
-        }
-        else {
-          $object['recurrence']['daynumber'] = date('j', $event['start']);
-          $object['recurrence']['cycle'] = 'monthly';
-          $object['recurrence']['type']  = 'daynumber';
-        }
-      }
-      
-      //yearly
-      if ($ra['FREQ'] == 'YEARLY') {
-        if (!$ra['BYMONTH'])
-          $ra['BYMONTH'] = gmdate('n', $event['start'] + $tz_offset);
-        
-        $object['recurrence']['cycle'] = 'yearly';
-        $object['recurrence']['month'] = $this->month_map[intval($ra['BYMONTH'])];
-        
-        if ($ra['BYDAY'] && preg_match('/(-?[1-4])([A-Z]+)/', $ra['BYDAY'], $m)) {
-          $object['recurrence']['type'] = 'weekday';
-          $object['recurrence']['daynumber'] = $m[1];
-          $object['recurrence']['day'] = array($this->weekday_map[$m[2]]);
-        }
-        else {
-          $object['recurrence']['type'] = 'monthday';
-          $object['recurrence']['daynumber'] = gmdate('j', $event['start'] + $tz_offset);
-        }
-      }
-      
-      //exclusions
-      foreach ((array)$ra['EXDATE'] as $excl) {
-        $object['recurrence']['exclusion'][] = gmdate('Y-m-d', $excl + $tz_offset);
-      }
-    }
-    
-    // whole day event
-    if ($event['allday']) {
-      $object['end-date'] += 12 * 3600;  // end is at 13:00 => jump to the next day
-      $object['end-date'] += $tz_offset - date('Z');   // shift 00 times from user's timezone to server's timezone 
-      $object['start-date'] += $tz_offset - date('Z');  // because Horde_Kolab_Format_Date::encodeDate() uses strftime()
-      
-      // create timestamps at exactly 00:00. This is also needed for proper re-interpretation in _to_rcube_event() after updating an event
-      $object['start-date'] = mktime(0,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date']));
-      $object['end-date']   = mktime(0,0,0, date('n', $object['end-date']),   date('j', $object['end-date']),   date('Y', $object['end-date']));
-      
-      // sanity check: end date is same or smaller than start
-      if (date('Y-m-d', $object['end-date']) <= date('Y-m-d', $object['start-date']))
-        $object['end-date'] = mktime(13,0,0, date('n', $object['start-date']), date('j', $object['start-date']), date('Y', $object['start-date'])) + 86400;
-      
-      $object['_is_all_day'] = 1;
-    }
+    $object = &$event;
 
     // in Horde attachments are indexed by name
     $object['_attachments'] = array();
-    if (!empty($event['attachments'])) {
+    if (is_array($event['attachments'])) {
       $collisions = array();
       foreach ($event['attachments'] as $idx => $attachment) {
         // Roundcube ID has nothing to do with Horde ID, remove it
         if ($attachment['content'])
           unset($attachment['id']);
 
-        // Horde code assumes that there will be no more than
-        // one file with the same name: make filenames unique
-        $filename = $attachment['name'];
-        if ($collisions[$filename]++) {
-          $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
-          $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
+        // flagged for deletion => set to false
+        if ($attachment['_deleted']) {
+          $object['_attachments'][$attachment['name']] = false;
         }
+        else {
+          // Horde code assumes that there will be no more than
+          // one file with the same name: make filenames unique
+          $filename = $attachment['name'];
+          if ($collisions[$filename]++) {
+            $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
+            $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
+          }
 
-        // set type parameter
-        if ($attachment['mimetype'])
-          $attachment['type'] = $attachment['mimetype'];
-
-        $object['_attachments'][$attachment['name']] = $attachment;
-        unset($event['attachments'][$idx]);
+          $object['_attachments'][$attachment['name']] = $attachment;
+        }
       }
+
+      unset($event['attachments']);
     }
 
-    // process event attendees
-    foreach ((array)$event['attendees'] as $attendee) {
-      $role = $attendee['role'];
-      if ($role == 'ORGANIZER') {
-        $object['organizer'] = array(
-          'display-name' => $attendee['name'],
-          'smtp-address' => $attendee['email'],
-        );
-      }
-      else {
-        $object['attendee'][] = array(
-          'display-name' => $attendee['name'],
-          'smtp-address' => $attendee['email'],
-          'status' => $this->status_map[$attendee['status']],
-          'role' => $this->role_map[$role],
-          'request-response' => $attendee['rsvp'],
-        );
-      }
+    // translate sensitivity property
+    $event['sensitivity'] = $this->sensitivity_map[$event['sensitivity']];
+
+    // set current user as ORGANIZER
+    $identity = $this->cal->rc->user->get_identity();
+    if (empty($event['attendees']) && $identity['email'])
+      $event['attendees'] = array(array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email']));
+
+    $event['_owner'] = $identity['email'];
+
+    // copy meta data (starting with _) from old object
+    foreach ((array)$old as $key => $val) {
+      if (!isset($event[$key]) && $key[0] == '_')
+        $event[$key] = $val;
     }
 
-    return $object;
+    return $event;
   }
 
 

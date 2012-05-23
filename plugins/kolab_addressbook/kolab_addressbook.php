@@ -51,7 +51,7 @@ class kolab_addressbook extends rcube_plugin
         $this->rc = rcmail::get_instance();
 
         // load required plugin
-        $this->require_plugin('kolab_core');
+        $this->require_plugin('libkolab');
 
         // register hooks
         $this->add_hook('addressbooks_list', array($this, 'address_sources'));
@@ -245,7 +245,7 @@ class kolab_addressbook extends rcube_plugin
         }
 
         // get all folders that have "contact" type
-        $this->folders = rcube_kolab::get_folders('contact');
+        $this->folders = kolab_storage::get_folders('contact');
 
         if (PEAR::isError($this->folders)) {
             raise_error(array(
@@ -264,7 +264,7 @@ class kolab_addressbook extends rcube_plugin
 
             foreach ($names as $utf7name => $name) {
                 // create instance of rcube_contacts
-                $abook_id = rcube_kolab::folder_id($utf7name);
+                $abook_id = kolab_storage::folder_id($utf7name);
                 $abook = new rcube_kolab_contacts($utf7name);
                 $this->sources[$abook_id] = $abook;
             }
@@ -289,12 +289,11 @@ class kolab_addressbook extends rcube_plugin
 
         // extend the list of contact fields to be displayed in the 'personal' section
         if (is_array($p['form']['personal'])) {
-            $p['form']['contact']['content']['officelocation'] = array('size' => 40);
-            $p['form']['personal']['content']['initials']      = array('size' => 6);
             $p['form']['personal']['content']['profession']    = array('size' => 40);
             $p['form']['personal']['content']['children']      = array('size' => 40);
-            $p['form']['personal']['content']['pgppublickey']  = array('size' => 40);
             $p['form']['personal']['content']['freebusyurl']   = array('size' => 40);
+            $p['form']['personal']['content']['pgppublickey']  = array('size' => 70);
+            $p['form']['personal']['content']['pkcs7publickey'] = array('size' => 70);
 
             // re-order fields according to the coltypes list
             $p['form']['contact']['content']  = $this->_sort_form_fields($p['form']['contact']['content']);
@@ -304,8 +303,9 @@ class kolab_addressbook extends rcube_plugin
             $p['form']['settings'] = array(
                 'name'    => $this->gettext('settings'),
                 'content' => array(
-                    'pgppublickey' => array('size' => 40, 'visible' => true),
                     'freebusyurl'  => array('size' => 40, 'visible' => true),
+                    'pgppublickey' => array('size' => 70, 'visible' => true),
+                    'pkcs7publickey' => array('size' => 70, 'visible' => false),
                 )
             );
             */
@@ -481,7 +481,7 @@ class kolab_addressbook extends rcube_plugin
 
                 if (!$plugin['abort']) {
                     if ($oldfolder != $folder)
-                        $result = rcube_kolab::folder_rename($oldfolder, $folder);
+                        $result = kolab_storage::folder_rename($oldfolder, $folder);
                     else
                         $result = true;
                 }
@@ -497,7 +497,7 @@ class kolab_addressbook extends rcube_plugin
                 $folder = $plugin['name'];
 
                 if (!$plugin['abort']) {
-                    $result = rcube_kolab::folder_create($folder, 'contact', false);
+                    $result = kolab_storage::folder_create($folder, 'contact');
                 }
                 else {
                     $result = $plugin['result'];
@@ -545,7 +545,7 @@ class kolab_addressbook extends rcube_plugin
             $this->rc->output->show_message('kolab_addressbook.book'.$type.'d', 'confirmation');
             $this->rc->output->command('set_env', 'delimiter', $delimiter);
             $this->rc->output->command('book_update', array(
-                'id'       => rcube_kolab::folder_id($folder),
+                'id'       => kolab_storage::folder_id($folder),
                 'name'     => $name,
                 'readonly' => false,
                 'editable' => true,
@@ -553,7 +553,7 @@ class kolab_addressbook extends rcube_plugin
                 'realname' => rcube_charset::convert($folder, 'UTF7-IMAP'), // IMAP folder name
                 'class_name' => $kolab_folder->get_namespace(),
                 'kolab'    => true,
-            ), rcube_kolab::folder_id($oldfolder));
+            ), kolab_storage::folder_id($oldfolder));
 
             $this->rc->output->send('iframe');
         }
@@ -574,12 +574,12 @@ class kolab_addressbook extends rcube_plugin
     {
         $folder = trim(get_input_value('_source', RCUBE_INPUT_GPC, true, 'UTF7-IMAP'));
 
-        if (rcube_kolab::folder_delete($folder)) {
+        if (kolab_storage::folder_delete($folder)) {
             $this->rc->output->show_message('kolab_addressbook.bookdeleted', 'confirmation');
             $this->rc->output->set_env('pagecount', 0);
             $this->rc->output->command('set_rowcount', rcmail_get_rowcount_text(new rcube_result_set()));
             $this->rc->output->command('list_contacts_clear');
-            $this->rc->output->command('book_delete_done', rcube_kolab::folder_id($folder));
+            $this->rc->output->command('book_delete_done', kolab_storage::folder_id($folder));
         }
         else {
             $this->rc->output->show_message('kolab_addressbook.bookdeleteerror', 'error');

@@ -26,7 +26,7 @@
  */
 class odfviewer extends rcube_plugin
 {
-  public $task = 'mail|logout';
+  public $task = 'mail|calendar|logout';
   
   private $tempdir  = 'plugins/odfviewer/files/';
   private $tempbase = 'plugins/odfviewer/files/';
@@ -56,10 +56,9 @@ class odfviewer extends rcube_plugin
     $ua = new rcube_browser;
     if ($ua->ie && $ua->ver < 9)
       return;
-
     // extend list of mimetypes that should open in preview
     $rcmail = rcmail::get_instance();
-    if ($rcmail->action == 'preview' || $rcmail->action == 'show') {
+    if ($rcmail->action == 'preview' || $rcmail->action == 'show' || $rcmail->task == 'calendar') {
       $mimetypes = $rcmail->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
       if (!is_array($mimetypes))
         $mimetypes = explode(',', $mimetypes);
@@ -75,20 +74,24 @@ class odfviewer extends rcube_plugin
    */
   function get_part($args)
   {
-    global $IMAP, $MESSAGE;
-    
     if (!$args['download'] && $args['mimetype'] && in_array($args['mimetype'], $this->odf_mimetypes)) {
       if (empty($_GET['_load'])) {
         $suffix = preg_match('/(\.\w+)$/', $args['part']->filename, $m) ? $m[1] : '.odt';
         $fn = md5(session_id() . $_SERVER['REQUEST_URI']) . $suffix;
-        
+
         // FIXME: copy file to disk because only apache can send the file correctly
         $tempfn = $this->tempdir . $fn;
         if (!file_exists($tempfn)) {
-          $fp = fopen($tempfn, 'w');
-          $IMAP->get_message_part($MESSAGE->uid, $args['part']->mime_id, $args['part'], false, $fp);
-          fclose($fp);
-          
+          if ($args['body']) {
+            file_put_contents($tempfn, $args['body']);
+          }
+          else {
+            $fp = fopen($tempfn, 'w');
+            $imap = rcmail::get_instance()->get_storage();
+            $imap->get_message_part($args['uid'], $args['id'], $args['part'], false, $fp);
+            fclose($fp);
+          }
+
           // remember tempfiles in session to clean up on logout
           $_SESSION['odfviewer']['tempfiles'][] = $fn;
         }

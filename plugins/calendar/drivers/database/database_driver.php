@@ -396,31 +396,13 @@ class database_driver extends calendar_driver
    */
   private function _get_notification($event)
   {
-    if ($event['alarms']) {
-      list($trigger, $action) = explode(':', $event['alarms']);
-      $notify = calendar::parse_alaram_value($trigger);
-      if (!empty($notify[1])){  // offset
-        $mult = 1;
-        switch ($notify[1]) {
-          case '-M': $mult =    -60; break;
-          case '+M': $mult =     60; break;
-          case '-H': $mult =  -3600; break;
-          case '+H': $mult =   3600; break;
-          case '-D': $mult = -86400; break;
-          case '+D': $mult =  86400; break;
-        }
-        $offset = $notify[0] * $mult;
-        $refdate = $mult > 0 ? $event['end'] : $event['start'];
-        $notify_at = $refdate + $offset;
-      }
-      else {  // absolute timestamp
-        $notify_at = $notify[0];
-      }
+    if ($event['alarms'] && $event['start'] > time()) {
+      $alarm = calendar::get_next_alarm($event);
 
-      if ($event['start'] > time())
-        return date('Y-m-d H:i:s', $notify_at);
+      if ($alarm['time'] && $alarm['action'] == 'DISPLAY')
+        return date('Y-m-d H:i:s', $alarm['time']);
     }
-    
+
     return null;
   }
 

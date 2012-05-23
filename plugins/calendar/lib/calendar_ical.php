@@ -124,7 +124,10 @@ class calendar_ical
   private function get_parser()
   {
     // use Horde:iCalendar to parse vcalendar file format
-    require_once 'Horde/iCalendar.php';
+    @include_once('Horde/iCalendar.php');
+
+    if (!class_exists('Horde_iCalendar'))
+      require_once($this->cal->home . '/lib/Horde_iCalendar.php');
 
     // set target charset for parsed events
     $GLOBALS['_HORDE_STRING_CHARSET'] = RCMAIL_CHARSET;

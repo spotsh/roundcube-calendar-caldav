@@ -7,7 +7,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -33,6 +33,7 @@ class kolab_driver extends calendar_driver
   public $freebusy = true;
   public $attachments = true;
   public $undelete = true;
+  public $alarm_types = array('DISPLAY','EMAIL');
   public $categoriesimmutable = true;
 
   private $rc;
@@ -64,7 +65,7 @@ class kolab_driver extends calendar_driver
       return $this->calendars;
 
     // get all folders that have "event" type
-    $folders = rcube_kolab::get_folders('event');
+    $folders = kolab_storage::get_folders('event');
     $this->calendars = array();
 
     if (PEAR::isError($folders)) {
@@ -134,7 +135,7 @@ class kolab_driver extends calendar_driver
           'readonly' => $cal->readonly,
           'showalarms' => $cal->alarms,
           'class_name' => $cal->get_namespace(),
-          'active'   => rcube_kolab::is_subscribed($cal->get_realname()),
+          'active'   => $cal->storage->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
         );
       }
     }
@@ -160,11 +161,11 @@ class kolab_driver extends calendar_driver
     }
     
     // subscribe to new calendar by default
-    $storage = $this->rc->get_storage();
-    $storage->subscribe($folder);
+    $storage = kolab_storage::get_folder($folder);
+    $storage->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
 
     // create ID
-    $id = rcube_kolab::folder_id($folder);
+    $id = kolab_storage::folder_id($folder);
 
     // save color in user prefs (temp. solution)
     $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
@@ -197,7 +198,7 @@ class kolab_driver extends calendar_driver
       }
 
       // create ID
-      $id = rcube_kolab::folder_id($newfolder);
+      $id = kolab_storage::folder_id($newfolder);
 
       // fallback to local prefs
       $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
@@ -226,13 +227,9 @@ class kolab_driver extends calendar_driver
   public function subscribe_calendar($prop)
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
-      $storage = $this->rc->get_storage();
-      if ($prop['active'])
-        return $storage->subscribe($cal->get_realname());
-      else
-        return $storage->unsubscribe($cal->get_realname());
+      return $cal->storage->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
     }
-    
+
     return false;
   }
 
@@ -302,24 +299,24 @@ class kolab_driver extends calendar_driver
     // update the folder name
     if (strlen($oldfolder)) {
       if ($oldfolder != $folder) {
-        if (!($result = rcube_kolab::folder_rename($oldfolder, $folder)))
-          $this->last_error = rcube_kolab::$last_error;
+        if (!($result = kolab_storage::folder_rename($oldfolder, $folder)))
+          $this->last_error = kolab_storage::$last_error;
       }
       else
         $result = true;
     }
     // create new folder
     else {
-      if (!($result = rcube_kolab::folder_create($folder, 'event', false)))
-        $this->last_error = rcube_kolab::$last_error;
+      if (!($result = kolab_storage::folder_create($folder, 'event')))
+        $this->last_error = kolab_storage::$last_error;
     }
 
     // save color in METADATA
     // TODO: also save 'showalarams' and other properties here
 
     if ($result && $prop['color']) {
-      if (!($meta_saved = $storage->set_metadata($folder, array('/shared/vendor/kolab/color' => $prop['color']))))  // try in shared namespace
-        $meta_saved = $storage->set_metadata($folder, array('/private/vendor/kolab/color' => $prop['color']));    // try in private namespace
+      if (!($meta_saved = $storage->set_metadata(array(kolab_calendar::COLOR_KEY_SHARED => $prop['color']))))  // try in shared namespace
+        $meta_saved = $storage->set_metadata(array(kolab_calendar::COLOR_KEY_PRIVATE => $prop['color']));    // try in private namespace
       if ($meta_saved)
         unset($prop['color']);  // unsetting will prevent fallback to local user prefs
     }
@@ -337,7 +334,7 @@ class kolab_driver extends calendar_driver
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
       $folder = $cal->get_realname();
-      if (rcube_kolab::folder_delete($folder)) {
+      if (kolab_storage::folder_delete($folder)) {
         // remove color in user prefs (temp. solution)
         $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', array());
         unset($prefs['kolab_calendars'][$prop['id']]);
@@ -346,7 +343,7 @@ class kolab_driver extends calendar_driver
         return true;
       }
       else
-        $this->last_error = rcube_kolab::$last_error;
+        $this->last_error = kolab_storage::$last_error;
     }
 
     return false;
@@ -404,7 +401,6 @@ class kolab_driver extends calendar_driver
         }
       }
 
-      $GLOBALS['conf']['kolab']['no_triggering'] = true;
       $success = $storage->insert_event($event);
       
       if ($success)
@@ -475,7 +471,6 @@ class kolab_driver extends calendar_driver
       $master = $event;
 
       $this->rc->session->remove('calendar_restore_event_data');
-      $GLOBALS['conf']['kolab']['no_triggering'] = true;
 
       // read master if deleting a recurring event
       if ($event['recurrence'] || $event['recurrence_id']) {
@@ -566,7 +561,6 @@ class kolab_driver extends calendar_driver
           return false;
 
         $fromcalendar = $storage;
-        $storage->storage->synchronize();
       }
     }
     else
@@ -583,7 +577,7 @@ class kolab_driver extends calendar_driver
         if (!empty($old['attachments'])) {
           foreach ($old['attachments'] as $idx => $att) {
             if ($att['id'] == $attachment) {
-              unset($old['attachments'][$idx]);
+              $old['attachments'][$idx]['_deleted'] = true;
             }
           }
         }
@@ -596,12 +590,12 @@ class kolab_driver extends calendar_driver
         // skip entries without content (could be existing ones)
         if (!$attachment['data'] && !$attachment['path'])
           continue;
-        // we'll read file contacts into memory, Horde/Kolab classes does the same
-        // So we cannot save memory, rcube_imap class can do this better
+
         $attachments[] = array(
           'name' => $attachment['name'],
-          'type' => $attachment['mimetype'],
-          'content' => $attachment['data'] ? $attachment['data'] : file_get_contents($attachment['path']),
+          'mimetype' => $attachment['mimetype'],
+          'content' => $attachment['data'],
+          'path' => $attachment['path'],
         );
       }
     }
@@ -618,8 +612,6 @@ class kolab_driver extends calendar_driver
     if ($old['recurrence']['EXDATE'])
       $event['recurrence']['EXDATE'] = $old['recurrence']['EXDATE'];
 
-    $GLOBALS['conf']['kolab']['no_triggering'] = true;
-
     switch ($savemode) {
       case 'new':
         // save submitted data as new (non-recurring) event
@@ -629,7 +621,7 @@ class kolab_driver extends calendar_driver
         // copy attachment data to new event
         foreach ((array)$event['attachments'] as $idx => $attachment) {
           if (!$attachment['data'])
-            $attachment['data'] = $fromcalendar->get_attachment_body($attachment['id']);
+            $attachment['data'] = $fromcalendar->get_attachment_body($attachment['id'], $event);
         }
         
         $success = $storage->insert_event($event);
@@ -773,17 +765,19 @@ class kolab_driver extends calendar_driver
     $time = $slot + $interval;
     
     $events = array();
+    $query = array(array('tags', 'LIKE', '% x-has-alarms %'));
     foreach ($this->calendars as $cid => $calendar) {
       // skip calendars with alarms disabled
       if (!$calendar->alarms || ($calendars && !in_array($cid, $calendars)))
         continue;
 
-      foreach ($calendar->list_events($time, $time + 86400 * 365) as $e) {
+      foreach ($calendar->list_events($time, $time + 86400 * 365, null, 1, $query) as $e) {
         // add to list if alarm is set
-        if ($e['_alarm'] && ($notifyat = $e['start'] - $e['_alarm'] * 60) <= $time) {
+        $alarm = calendar::get_next_alarm($e);
+        if ($alarm && $alarm['time'] && $alarm['time'] <= $time && $alarm['action'] == 'DISPLAY') {
           $id = $e['id'];
           $events[$id] = $e;
-          $events[$id]['notifyat'] = $notifyat;
+          $events[$id]['notifyat'] = $alarm['time'];
         }
       }
     }
@@ -792,11 +786,13 @@ class kolab_driver extends calendar_driver
     if (!empty($events)) {
       $event_ids = array_map(array($this->rc->db, 'quote'), array_keys($events));
       $result = $this->rc->db->query(sprintf(
-        "SELECT * FROM kolab_alarms
-         WHERE event_id IN (%s)",
-         join(',', $event_ids),
-         $this->rc->db->now()
-       ));
+          "SELECT * FROM kolab_alarms
+           WHERE event_id IN (%s) AND user_id=?",
+           join(',', $event_ids),
+           $this->rc->db->now()
+          ),
+          $this->rc->user->ID
+       );
 
       while ($result && ($e = $this->rc->db->fetch_assoc($result))) {
         $dbdata[$e['event_id']] = $e;
@@ -825,15 +821,24 @@ class kolab_driver extends calendar_driver
    */
   public function dismiss_alarm($event_id, $snooze = 0)
   {
+    // delete old alarm entry
+    $this->rc->db->query(
+      "DELETE FROM kolab_alarms
+       WHERE event_id=? AND user_id=?",
+       $event_id,
+       $this->rc->user->ID
+    );
+
     // set new notifyat time or unset if not snoozed
     $notifyat = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
-    
+
     $query = $this->rc->db->query(
-      "REPLACE INTO kolab_alarms
-       (event_id, dismissed, notifyat)
-       VALUES(?, ?, ?)",
+      "INSERT INTO kolab_alarms
+       (event_id, user_id, dismissed, notifyat)
+       VALUES(?, ?, ?, ?)",
       $event_id,
-      $snooze > 0 ? 0 : 1, 
+      $this->rc->user->ID,
+      $snooze > 0 ? 0 : 1,
       $notifyat
     );
     
@@ -876,13 +881,14 @@ class kolab_driver extends calendar_driver
 
   /**
    * Get attachment body
+   * @see calendar_driver::get_attachment_body()
    */
   public function get_attachment_body($id, $event)
   {
-    if (!($storage = $this->calendars[$event['calendar']]))
+    if (!($cal = $this->calendars[$event['calendar']]))
       return false;
 
-    return $storage->get_attachment_body($id);
+    return $cal->storage->get_attachment($event['id'], $id);
   }
 
   /**
@@ -986,12 +992,11 @@ class kolab_driver extends calendar_driver
     ignore_user_abort(true);
 
     $cal = get_input_value('source', RCUBE_INPUT_GPC);
-    if (!($storage = $this->calendars[$cal]))
+    if (!($cal = $this->calendars[$cal]))
       return false;
 
     // trigger updates on folder
-    $folder = $storage->get_folder();
-    $trigger = $folder->trigger();
+    $trigger = $cal->storage->trigger();
     if (is_object($trigger) && is_a($trigger, 'PEAR_Error')) {
       raise_error(array(
         'code' => 900, 'type' => 'php',
@@ -1048,7 +1053,7 @@ class kolab_driver extends calendar_driver
     // Disable folder name input
     if (!empty($options) && ($options['norename'] || $options['protected'])) {
       $input_name = new html_hiddenfield(array('name' => 'name', 'id' => 'calendar-name'));
-      $formfields['name']['value'] = Q(str_replace($delimiter, ' &raquo; ', rcube_kolab::object_name($folder)))
+      $formfields['name']['value'] = Q(str_replace($delimiter, ' &raquo; ', kolab_storage::object_name($folder)))
         . $input_name->show($folder);
     }
 
@@ -1065,7 +1070,7 @@ class kolab_driver extends calendar_driver
       $hidden_fields[] = array('name' => 'parent', 'value' => $path_imap);
     }
     else {
-      $select = rcube_kolab::folder_selector('event', array('name' => 'parent'), $folder);
+      $select = kolab_storage::folder_selector('event', array('name' => 'parent'), $folder);
       $form['props']['fieldsets']['location']['content']['path'] = array(
         'label' => $this->cal->gettext('parentcalendar'),
         'value' => $select->show(strlen($folder) ? $path_imap : ''),

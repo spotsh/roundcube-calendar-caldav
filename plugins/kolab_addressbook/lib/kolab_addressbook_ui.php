@@ -5,7 +5,7 @@
  *
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -144,8 +144,8 @@ class kolab_addressbook_ui
         if (strlen($folder)) {
             $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
 
-            $this->rc->imap_connect();
-            $options = $this->rc->imap->mailbox_info($folder);
+            $this->rc->storage_connect();
+            $options = $this->rc->get_storage()->mailbox_info($folder);
         }
 
         $form   = array();
@@ -156,7 +156,7 @@ class kolab_addressbook_ui
         );
 
         if (!empty($options) && ($options['norename'] || $options['protected'])) {
-            $foldername = Q(str_replace($delimiter, ' &raquo; ', rcube_kolab::object_name($folder)));
+            $foldername = Q(str_replace($delimiter, ' &raquo; ', kolab_storage::object_name($folder)));
         }
         else {
             $foldername = new html_inputfield(array('name' => '_name', 'id' => '_name', 'size' => 30));
@@ -178,7 +178,7 @@ class kolab_addressbook_ui
             $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
         }
         else {
-            $select = rcube_kolab::folder_selector('contact', array('name' => '_parent'), $folder);
+            $select = kolab_storage::folder_selector('contact', array('name' => '_parent'), $folder);
 
             $form['props']['fieldsets']['location']['content']['path'] = array(
                 'label' => $this->plugin->gettext('parentbook'),

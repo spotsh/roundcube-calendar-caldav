@@ -260,7 +260,7 @@ function rcube_calendar_ui(settings)
       var qstring = '_id='+urlencode(att.id)+'&_event='+urlencode(event.recurrence_id||event.id)+'&_cal='+urlencode(event.calendar);
 
       // open attachment in frame if it's of a supported mimetype
-      if (id && att.mimetype && $.inArray(att.mimetype, rcmail.mimetypes)>=0) {
+      if (id && att.mimetype && $.inArray(att.mimetype, settings.mimetypes)>=0) {
         rcmail.attachment_win = window.open(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', 'rcubeeventattachment');
         if (rcmail.attachment_win) {
           window.setTimeout(function() { rcmail.attachment_win.focus(); }, 10);
@@ -337,7 +337,7 @@ function rcube_calendar_ui(settings)
       var $dialog = $("#eventshow").dialog('close').removeClass().addClass('uidialog');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       me.selected_event = event;
-      
+
       $dialog.find('div.event-section, div.event-line').hide();
       $('#event-title').html(Q(event.title)).show();
       
@@ -363,9 +363,10 @@ function rcube_calendar_ui(settings)
       if (event.free_busy)
         $('#event-free-busy').show().children('.event-text').html(Q(rcmail.gettext(event.free_busy, 'calendar')));
       if (event.priority > 0) {
-        var priolabels = [ '', rcmail.gettext('high'), rcmail.gettext('highest'), '', '', rcmail.gettext('normal'), '', '', rcmail.gettext('low'), rcmail.gettext('lowest') ];
+        var priolabels = [ '', rcmail.gettext('highest'), rcmail.gettext('high'), '', '', rcmail.gettext('normal'), '', '', rcmail.gettext('low'), rcmail.gettext('lowest') ];
         $('#event-priority').show().children('.event-text').html(Q(event.priority+' '+priolabels[event.priority]));
       }
+
       if (event.sensitivity != 0) {
         var sensitivityclasses = { 0:'public', 1:'private', 2:'confidential' };
         $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
@@ -415,7 +416,7 @@ function rcube_calendar_ui(settings)
         $('#event-rsvp')[(rsvp?'show':'hide')]();
         $('#event-rsvp .rsvp-buttons input').prop('disabled', false).filter('input[rel='+rsvp+']').prop('disabled', true);
       }
-      
+
       var buttons = {};
       if (calendar.editable && event.editable !== false) {
         buttons[rcmail.gettext('edit', 'calendar')] = function() {
@@ -2348,7 +2349,7 @@ function rcube_calendar_ui(settings)
           event.end = new Date(event.start.getTime() + (allDay ? DAY_MS : HOUR_MS));
         }
         // moved to all-day section: set times to 12:00 - 13:00
-        if (allDay && !event.allday) {
+        if (allDay && !event.allDay) {
           event.start.setHours(12);
           event.start.setMinutes(0);
           event.start.setSeconds(0);
@@ -2357,7 +2358,7 @@ function rcube_calendar_ui(settings)
           event.end.setSeconds(0);
         }
         // moved from all-day section: set times to working hours
-        else if (event.allday && !allDay) {
+        else if (event.allDay && !allDay) {
           var newstart = event.start.getTime();
           revertFunc();  // revert to get original duration
           var numdays = Math.max(1, Math.round((event.end.getTime() - event.start.getTime()) / DAY_MS)) - 1;
@@ -2407,7 +2408,7 @@ function rcube_calendar_ui(settings)
         }
       },
       viewRender: function(view) {
-        if (view.name == 'month')
+        if (fc && view.name == 'month')
           fc.fullCalendar('option', 'maxHeight', Math.floor((view.element.parent().height()-18) / 6) - 35);
       }
     });
@@ -2436,7 +2437,7 @@ function rcube_calendar_ui(settings)
       /* Time completions */
       var result = [];
       var now = new Date();
-      var st, start = (this.element.attr('id').indexOf('endtime') > 0
+      var st, start = (String(this.element.attr('id')).indexOf('endtime') > 0
         && (st = $('#edit-starttime').val())
         && $('#edit-startdate').val() == $('#edit-enddate').val())
         ? parse_datetime(st, '') : null;

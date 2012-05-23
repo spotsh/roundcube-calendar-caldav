@@ -4,7 +4,7 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_addressbook</name>
-    <uri>http://git.kolab.org/roundcube-plugins-kolab/</uri>
+    <uri>http://git.kolab.org/roundcubemail-plugins-kolab/</uri>
 	<summary>Kolab addressbook</summary>
 	<description>
 	    Sample plugin to add a new address book source with data from Kolab storage.

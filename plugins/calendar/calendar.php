@@ -99,9 +99,9 @@ class calendar extends rcube_plugin
     // set user's timezone
     $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
     $now = new DateTime('now', $this->timezone);
-    $this->timezone_offset = $now->format('Z') / 3600;
-    $this->dst_active = $now->format('I');
     $this->gmt_offset = $now->getOffset();
+    $this->dst_active = $now->format('I');
+    $this->timezone_offset = $this->gmt_offset / 3600 - $this->dst_active;
 
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
@@ -205,7 +205,7 @@ class calendar extends rcube_plugin
 
     switch ($driver_name) {
       case "kolab":
-        $this->require_plugin('kolab_core');
+        $this->require_plugin('libkolab');
       default:
         $this->driver = new $driver_class($this);
         break;
@@ -1069,6 +1069,11 @@ class calendar extends rcube_plugin
       $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
     }
 
+    // define list of file types which can be displayed inline
+    // same as in program/steps/mail/show.inc
+    $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
+    $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
+
     return $settings;
   }
   
@@ -1259,7 +1264,47 @@ class calendar extends rcube_plugin
     
     return false;
   }
-  
+
+  /**
+   * Get the next alarm (time & action) for the given event
+   *
+   * @param array Event data
+   * @return array Hash array with alarm time/type or null if no alarms are configured
+   */
+  public static function get_next_alarm($event)
+  {
+      if (!$event['alarms'])
+        return null;
+
+      // TODO: handle multiple alarms (currently not supported)
+      list($trigger, $action) = explode(':', $event['alarms'], 2);
+
+      $notify = self::parse_alaram_value($trigger);
+      if (!empty($notify[1])){  // offset
+        $mult = 1;
+        switch ($notify[1]) {
+          case '-S': $mult =     -1; break;
+          case '+S': $mult =      1; break;
+          case '-M': $mult =    -60; break;
+          case '+M': $mult =     60; break;
+          case '-H': $mult =  -3600; break;
+          case '+H': $mult =   3600; break;
+          case '-D': $mult = -86400; break;
+          case '+D': $mult =  86400; break;
+          case '-W': $mult = -604800; break;
+          case '+W': $mult =  604800; break;
+        }
+        $offset = $notify[0] * $mult;
+        $refdate = $mult > 0 ? $event['end'] : $event['start'];
+        $notify_at = $refdate + $offset;
+      }
+      else {  // absolute timestamp
+        $notify_at = $notify[0];
+      }
+
+      return array('time' => $notify_at, 'action' => $action ? strtoupper($action) : 'DISPLAY');
+  }
+
   /**
    * Convert the internal structured data into a vcalendar rrule 2.0 string
    */
@@ -1278,7 +1323,7 @@ class calendar extends rcube_plugin
         case 'EXDATE':
           foreach ((array)$val as $i => $ex)
             $val[$i] = gmdate('Ymd\THis', $ex);
-          $val = join(',', $val);
+          $val = join(',', (array)$val);
           break;
       }
       $rrule .= $k . '=' . $val . ';';
@@ -1534,12 +1579,8 @@ class calendar extends rcube_plugin
     }
 
     ob_end_clean();
-    send_nocacheing_headers();
 
-    if (isset($_SESSION['calendar_attachment']))
-      $attachment = $_SESSION['calendar_attachment'];
-    else
-      $attachment = $_SESSION['calendar_attachment'] = $this->driver->get_attachment($id, $event);
+    $attachment = $GLOBALS['calendar_attachment'] = $this->driver->get_attachment($id, $event);
 
     // show part page
     if (!empty($_GET['_frame'])) {
@@ -1550,16 +1591,30 @@ class calendar extends rcube_plugin
       exit;
     }
 
-    $this->rc->session->remove('calendar_attachment');
-
     if ($attachment) {
-      $mimetype = strtolower($attachment['mimetype']);
+      // allow post-processing of the attachment body
+      $part = new rcube_message_part;
+      $part->filename  = $attachment['name'];
+      $part->size      = $attachment['size'];
+      $part->mimetype  = $attachment['mimetype'];
+
+      $plugin = $this->rc->plugins->exec_hook('message_part_get', array(
+        'body' => $this->driver->get_attachment_body($id, $event),
+        'mimetype' => strtolower($attachment['mimetype']),
+        'download' => !empty($_GET['_download']),
+        'part' => $part,
+      ));
+
+      if ($plugin['abort'])
+        exit;
+
+      $mimetype = $plugin['mimetype'];
       list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
 
       $browser = $this->rc->output->browser;
 
       // send download headers
-      if ($_GET['_download']) {
+      if ($plugin['download']) {
         header("Content-Type: application/octet-stream");
         if ($browser->ie)
           header("Content-Type: application/force-download");
@@ -1573,13 +1628,11 @@ class calendar extends rcube_plugin
         header("Content-Transfer-Encoding: binary");
       }
 
-      $body = $this->driver->get_attachment_body($id, $event);
-
       // display page, @TODO: support text/plain (and maybe some other text formats)
       if ($mimetype == 'text/html' && empty($_GET['_download'])) {
         $OUTPUT = new rcube_html_page();
         // @TODO: use washtml on $body
-        $OUTPUT->write($body);
+        $OUTPUT->write($plugin['body']);
       }
       else {
         // don't kill the connection if download takes more than 30 sec.
@@ -1598,7 +1651,7 @@ class calendar extends rcube_plugin
         $disposition = !empty($_GET['_download']) ? 'attachment' : 'inline';
         header("Content-Disposition: $disposition; filename=\"$filename\"");
 
-        echo $body;
+        echo $plugin['body'];
       }
 
       exit;
@@ -1614,7 +1667,7 @@ class calendar extends rcube_plugin
    */
   public function attachment_frame($attrib)
   {
-    $attachment = $_SESSION['calendar_attachment'];
+    $attachment = $GLOBALS['calendar_attachment'];
 
     $mimetype = strtolower($attachment['mimetype']);
     list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
@@ -2167,15 +2220,15 @@ class calendar extends rcube_plugin
     $charset = RCMAIL_CHARSET;
     
     // establish imap connection
-    $this->rc->imap_connect();
-    $this->rc->imap->set_mailbox($mbox);
+    $imap = $this->rc->get_storage();
+    $imap->set_mailbox($mbox);
 
     if ($uid && $mime_id) {
       list($mime_id, $index) = explode(':', $mime_id);
-      $part = $this->rc->imap->get_message_part($uid, $mime_id);
+      $part = $imap->get_message_part($uid, $mime_id);
       if ($part->ctype_parameters['charset'])
         $charset = $part->ctype_parameters['charset'];
-      $headers = $this->rc->imap->get_headers($uid);
+      $headers = $imap->get_message_headers($uid);
     }
 
     $events = $this->get_ical()->import($part, $charset);
@@ -2312,8 +2365,8 @@ class calendar extends rcube_plugin
     $event = array();
     
     // establish imap connection
-    $this->rc->imap_connect();
-    $this->rc->imap->set_mailbox($mbox);
+    $imap = $this->rc->get_storage();
+    $imap->set_mailbox($mbox);
     $message = new rcube_message($uid);
 
     if ($message->headers) {
@@ -2331,7 +2384,7 @@ class calendar extends rcube_plugin
 
         foreach ((array)$message->attachments as $part) {
           $attachment = array(
-            'data' => $this->rc->imap->get_message_part($uid, $part->mime_id, $part),
+            'data' => $imap->get_message_part($uid, $part->mime_id, $part),
             'size' => $part->size,
             'name' => $part->filename,
             'mimetype' => $part->mimetype,
