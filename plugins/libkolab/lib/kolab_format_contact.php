@@ -233,9 +233,9 @@ class kolab_format_contact extends kolab_format
         if (isset($object['freebusyurl']))
             $this->obj->setFreeBusyUrl($object['freebusyurl']);
         if (isset($object['birthday']))
-            $this->obj->setBDay(self::get_datetime($object['birthday'], null, true));
+            $this->obj->setBDay(self::get_datetime($object['birthday'], false, true));
         if (isset($object['anniversary']))
-            $this->obj->setAnniversary(self::get_datetime($object['anniversary'], null, true));
+            $this->obj->setAnniversary(self::get_datetime($object['anniversary'], false, true));
 
         if (!empty($object['photo'])) {
             if ($type = rc_image_content_type($object['photo']))

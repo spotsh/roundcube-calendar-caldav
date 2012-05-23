@@ -64,13 +64,13 @@ abstract class kolab_format
      * Convert the given date/time value into a cDateTime object
      *
      * @param mixed         Date/Time value either as unix timestamp, date string or PHP DateTime object
-     * @param DateTimeZone  The timezone the date/time is in. Use global default if empty
+     * @param DateTimeZone  The timezone the date/time is in. Use global default if Null, local time if False
      * @param boolean       True of the given date has no time component
      * @return object       The libkolabxml date/time object
      */
     public static function get_datetime($datetime, $tz = null, $dateonly = false)
     {
-        if (!$tz) $tz = self::$timezone;
+        if (!$tz && $tz !== false) $tz = self::$timezone;
         $result = new cDateTime();
 
         // got a unix timestamp (in UTC)
@@ -79,7 +79,7 @@ abstract class kolab_format
             if ($tz) $datetime->setTimezone($tz);
         }
         else if (is_string($datetime) && strlen($datetime))
-            $datetime = new DateTime($datetime, $tz);
+            $datetime = new DateTime($datetime, $tz ?: null);
 
         if (is_a($datetime, 'DateTime')) {
             $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
@@ -89,7 +89,7 @@ abstract class kolab_format
 
             if ($tz && $tz->getName() == 'UTC')
                 $result->setUTC(true);
-            else if ($tz)
+            else if ($tz !== false)
                 $result->setTimezone($tz->getName());
         }
 
