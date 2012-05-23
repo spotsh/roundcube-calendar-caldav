@@ -16,10 +16,10 @@
 		<email>machniak@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2011-11-01</date>
+	<date>2012-05-23</date>
 	<version>
-		<release>1.0</release>
-		<api>1.0</api>
+		<release>2.0</release>
+		<api>2.0</api>
 	</version>
 	<stability>
 		<release>stable</release>
@@ -34,8 +34,6 @@
 				<tasks:replace from="@package_version@" to="version" type="package-info"/>
 			</file>
 			<file name="LICENSE" role="data"></file>
-			<file name="lib/configuration.php" role="php"></file>
-			<file name="lib/kolab_configuration.php" role="php"></file>
 		</dir>
 		<!-- / -->
 	</contents>
@@ -48,7 +46,7 @@
 				<min>1.7.0</min>
 			</pearinstaller>
             <package>
-                <name>kolab_folders</name>
+                <name>libkolab</name>
                 <uri>http://kolabsys.com</uri>
             </package>
 		</required>

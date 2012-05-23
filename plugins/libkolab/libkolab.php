@@ -56,6 +56,7 @@ class libkolab extends rcube_plugin
             include_once 'Horde/Kolab/Format/XML.php';
             include_once 'Horde/Kolab/Format/XML/contact.php';
             include_once 'Horde/Kolab/Format/XML/event.php';
+            include_once 'Horde_Kolab_Format_XML_configuration.php';
 
             String::setDefaultCharset('UTF-8');
         }
