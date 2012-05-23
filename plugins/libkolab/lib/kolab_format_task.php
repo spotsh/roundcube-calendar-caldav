@@ -29,6 +29,12 @@ class kolab_format_task extends kolab_format
     protected $read_func = 'kolabformat::readTodo';
     protected $write_func = 'kolabformat::writeTodo';
 
+    private $status_map = array(
+        'NEEDS-ACTION' => kolabformat::StatusNeedsAction,
+        'IN-PROCESS'   => kolabformat::StatusInProcess,
+        'COMPLETED'    => kolabformat::StatusCompleted,
+        'CANCELLED'    => kolabformat::StatusCancelled,
+    );
 
     function __construct($xmldata = null)
     {
@@ -93,13 +99,28 @@ class kolab_format_task extends kolab_format
         $this->init();
 
         // read object properties
+        $status_map = array_flip($this->status_map);
         $object = array(
-            'uid'       => $this->obj->uid(),
-            'changed'   => $this->obj->lastModified(),
+            'uid'         => $this->obj->uid(),
+            'changed'     => $this->obj->lastModified(),
+            'summary'     => $this->obj->summary(),
+            'description' => $this->obj->description(),
+            'location'    => $this->obj->location(),
+            'status'      => $this->status_map[$this->obj->status()],
+            'complete'    => intval($this->obj->percentComplete()),
+            'priority'    => $this->obj->priority(),
         );
 
+        // if due date is set
+        if ($dtstart = $this->obj->start()) {
+            $object['start'] = self::php_datetime($dtstart);
+        }
+        // if due date is set
+        if ($due = $this->obj->due()) {
+            $object['due'] = self::php_datetime($due);
+        }
 
-        // TODO: read object properties
+        // TODO: map more properties
 
         $this->data = $object;
         return $this->data;
