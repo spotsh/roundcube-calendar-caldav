@@ -1149,6 +1149,7 @@ class calendar extends rcube_plugin
     return array(
       'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
       'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
+      'title'       => strval($event['title']),
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
       'className'   => ($addcss ? 'fc-event-cal-'.asciiwords($event['calendar'], true).' ' : '') . 'fc-event-cat-' . asciiwords(strtolower($event['categories']), true),
