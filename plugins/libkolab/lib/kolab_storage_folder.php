@@ -38,8 +38,14 @@ class kolab_storage_folder
     public $type;
 
     /**
-    * The attached cache object
-    * @var kolab_storage_cache
+     * Is this folder set to be the default for its type
+     * @var boolean
+     */
+    public $default = false;
+
+    /**
+     * Is this folder set to be default
+     * @var boolean
      */
     public $cache;
 
@@ -69,17 +75,20 @@ class kolab_storage_folder
      * @param string The folder name/path
      * @param string Optional folder type if known
      */
-    public function set_folder($name, $type = null)
+    public function set_folder($name, $ftype = null)
     {
-        if (!$type) {
+        if (!$ftype) {
             $metadata = $this->imap->get_metadata($name, array(kolab_storage::CTYPE_KEY));
-            $type     = $metadata[$name][kolab_storage::CTYPE_KEY];
+            $this->type_annotation = $metadata[$name][kolab_storage::CTYPE_KEY];
+        }
+        else {
+            $this->type_annotation = $ftype;
         }
 
-        $this->name            = $name;
-        $this->type_annotation = $type;
-        $this->type            = reset(explode('.', $type));
-        $this->resource_uri    = null;
+        list($this->type, $suffix) = explode('.', $this->type_annotation);
+        $this->default      = $suffix == 'default';
+        $this->name         = $name;
+        $this->resource_uri = null;
 
         $this->imap->set_folder($this->name);
         $this->cache->set_folder($this);
@@ -215,7 +224,6 @@ class kolab_storage_folder
         $this->resource_uri = 'imap://' . urlencode($this->get_owner()) . '@' . $this->imap->options['host'] . '/' . $subpath;
         return $this->resource_uri;
     }
-
 
     /**
      * Check subscription status of this folder
@@ -388,7 +396,7 @@ class kolab_storage_folder
         $this->imap->set_folder($folder);
 
         $headers = $this->imap->get_message_headers($msguid);
-        $object_type = substr($headers->others['x-kolab-type'], strlen(self::KTYPE_PREFIX));
+        $object_type = preg_replace('/dictionary.[a-z]+$/', 'dictionary', substr($headers->others['x-kolab-type'], strlen(self::KTYPE_PREFIX)));
         $content_type  = self::KTYPE_PREFIX . $object_type;
 
         // check object type header and abort on mismatch
@@ -430,9 +438,10 @@ class kolab_storage_folder
             return false;
 
         // check kolab format version
-        if (strpos($xml, '<' . $object_type) !== false) {
+        list($xmltype, $subtype) = explode('.', $object_type);
+        if (strpos($xml, '<' . $xmltype) !== false) {
             // old Kolab 2.0 format detected
-            $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $object_type) : null;
+            $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $xmltype, array('subtype' => $subtype)) : null;
             if (!is_object($handler) || is_a($handler, 'PEAR_Error')) {
                 return false;
             }

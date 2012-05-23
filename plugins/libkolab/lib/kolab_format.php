@@ -51,12 +51,13 @@ abstract class kolab_format
         if (!isset(self::$timezone))
             self::$timezone = new DateTimeZone('UTC');
 
+        $type = preg_replace('/configuration\.[a-z.]+$/', 'configuration', $type);
         $suffix = preg_replace('/[^a-z]+/', '', $type);
         $classname = 'kolab_format_' . $suffix;
         if (class_exists($classname))
             return new $classname($xmldata);
 
-        return PEAR::raiseError(sprintf("Failed to load Kolab Format wrapper for type %s", $type));
+        return PEAR::raiseError("Failed to load Kolab Format wrapper for type " . $type);
     }
 
     /**
