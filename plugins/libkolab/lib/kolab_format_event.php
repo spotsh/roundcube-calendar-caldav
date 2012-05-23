@@ -26,6 +26,9 @@ class kolab_format_event extends kolab_format
 {
     public $CTYPE = 'application/calendar+xml';
 
+    protected $read_func = 'kolabformat::readEvent';
+    protected $write_func = 'kolabformat::writeEvent';
+
     public static $fulltext_cols = array('title', 'description', 'location', 'attendees:name', 'attendees:email');
 
     private $sensitivity_map = array(
@@ -97,35 +100,6 @@ class kolab_format_event extends kolab_format
     {
         $this->obj = new Event;
         $this->xmldata = $xmldata;
-    }
-
-    /**
-     * Load Contact object data from the given XML block
-     *
-     * @param string XML data
-     */
-    public function load($xml)
-    {
-        $this->obj = kolabformat::readEvent($xml, false);
-        $this->loaded = true;
-    }
-
-    /**
-     * Write Contact object data to XML format
-     *
-     * @return string XML data
-     */
-    public function write()
-    {
-        $this->init();
-        $this->xmldata = kolabformat::writeEvent($this->obj);
-
-        if (!parent::format_errors())
-            parent::update_uid();
-        else
-            $this->xmldata = null;
-
-        return $this->xmldata;
     }
 
     /**

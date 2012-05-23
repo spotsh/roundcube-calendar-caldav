@@ -26,6 +26,10 @@ class kolab_format_distributionlist extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
 
+    protected $read_func = 'kolabformat::readDistlist';
+    protected $write_func = 'kolabformat::writeDistlist';
+
+
     function __construct($xmldata = null)
     {
         $this->obj = new DistList;
@@ -33,34 +37,10 @@ class kolab_format_distributionlist extends kolab_format
     }
 
     /**
-     * Load Kolab object data from the given XML block
+     * Set properties to the kolabformat object
      *
-     * @param string XML data
+     * @param array  Object data as hash array
      */
-    public function load($xml)
-    {
-        $this->obj = kolabformat::readDistlist($xml, false);
-        $this->loaded = true;
-    }
-
-    /**
-     * Write object data to XML format
-     *
-     * @return string XML data
-     */
-    public function write()
-    {
-        $this->init();
-        $this->xmldata = kolabformat::writeDistlist($this->obj);
-
-        if (!parent::format_errors())
-            parent::update_uid();
-        else
-            $this->xmldata = null;
-
-        return $this->xmldata;
-    }
-
     public function set(&$object)
     {
         $this->init();
@@ -137,7 +117,7 @@ class kolab_format_distributionlist extends kolab_format
         // read object properties
         $object = array(
             'uid'       => $this->obj->uid(),
-#           'changed'   => $this->obj->lastModified(),
+            'changed'   => $this->obj->lastModified(),
             'name'      => $this->obj->name(),
             'member'    => array(),
         );
