@@ -33,6 +33,7 @@ class kolab_storage_cache
     private $resource_uri;
     private $enabled = true;
     private $synched = false;
+    private $synclock = false;
     private $ready = false;
 
     private $binary_cols = array('photo','pgppublickey','pkcs7publickey');
@@ -47,6 +48,10 @@ class kolab_storage_cache
         $this->db = $rcmail->get_dbh();
         $this->imap = $rcmail->get_storage();
         $this->enabled = $rcmail->config->get('kolab_cache', false);
+
+        // remove sync-lock on script termination
+        if ($this->enabled)
+            $rcmail->add_shutdown_function(array($this, '_sync_unlock'));
 
         if ($storage_folder)
             $this->set_folder($storage_folder);
@@ -82,6 +87,9 @@ class kolab_storage_cache
         if ($this->synched)
             return;
 
+        // increase time limit
+        @set_time_limit(500);
+
         // lock synchronization for this folder or wait if locked
         $this->_sync_lock();
 
@@ -109,10 +117,7 @@ class kolab_storage_cache
 
             // fetch new objects from imap
             $fetch_index = array_diff($this->index, $old_index);
-            foreach ($this->_fetch($fetch_index, '*') as $object) {
-                $msguid = $object['_msguid'];
-                $this->set($msguid, $object);
-            }
+            $this->_fetch($fetch_index, '*');
 
             // delete invalid entries from local DB
             $del_index = array_diff($old_index, $this->index);
@@ -133,7 +138,7 @@ class kolab_storage_cache
 
 
     /**
-     * Read a single entry from cache or
+     * Read a single entry from cache or from IMAP directly
      *
      * @param string Related IMAP message UID
      * @param string Object type to read
@@ -152,8 +157,9 @@ class kolab_storage_cache
             if ($this->ready) {
                 $sql_result = $this->db->query(
                     "SELECT * FROM kolab_cache ".
-                    "WHERE resource=? AND msguid=?",
+                    "WHERE resource=? AND type=? AND msguid=?",
                     $this->resource_uri,
+                    $type ?: $this->folder->type,
                     $msguid
                 );
 
@@ -180,7 +186,7 @@ class kolab_storage_cache
      * @param mixed  Hash array with object properties to save or false to delete the cache entry
      * @param string IMAP folder name the entry relates to
      */
-    public function set($msguid, $object, $foldername = null)
+    public function set($msguid, $object, $foldername = null, $mcache = true)
     {
         // delegate to another cache instance
         if ($foldername && $foldername != $this->folder->name) {
@@ -225,7 +231,8 @@ class kolab_storage_cache
         }
 
         // keep a copy in memory for fast access
-        $this->objects[$msguid] = $object;
+        if ($mcache)
+            $this->objects[$msguid] = $object;
 
         if ($object)
             $this->uid2msg[$object['uid']] = $msguid;
@@ -409,7 +416,7 @@ class kolab_storage_cache
         foreach ((array)$index as $msguid) {
             if ($object = $this->folder->read_object($msguid, $type, $folder)) {
                 $results[] = $object;
-                $this->uid2msg[$object['uid']] = $msguid;
+                $this->set($msguid, $object, null, false);
             }
         }
 
@@ -512,6 +519,8 @@ class kolab_storage_cache
             return;
         }
 
+        $this->synclock = true;
+
         // create lock record if not exists
         if (!$sql_arr) {
             $this->db->query(
@@ -542,9 +551,9 @@ class kolab_storage_cache
     /**
      * Remove lock for this folder
      */
-    private function _sync_unlock()
+    public function _sync_unlock()
     {
-        if (!$this->ready)
+        if (!$this->ready || !$this->synclock)
             return;
 
         $this->db->query(
