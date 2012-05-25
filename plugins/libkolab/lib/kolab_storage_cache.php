@@ -557,7 +557,7 @@ class kolab_storage_cache
             return;
 
         $this->db->query(
-            "UPDATE kolab_cache SET msguid=0, created='' ".
+            "UPDATE kolab_cache SET msguid=0 ".
             "WHERE resource=? AND type=?",
             $this->resource_uri,
             'lock'
