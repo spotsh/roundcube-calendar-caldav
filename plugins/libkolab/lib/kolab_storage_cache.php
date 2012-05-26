@@ -190,19 +190,19 @@ class kolab_storage_cache
      * @param mixed  Hash array with object properties to save or false to delete the cache entry
      * @param string IMAP folder name the entry relates to
      */
-    public function set($msguid, $object, $foldername = null, $mcache = true)
+    public function set($msguid, $object, $foldername = null)
     {
         // delegate to another cache instance
         if ($foldername && $foldername != $this->folder->name) {
             kolab_storage::get_folder($foldername)->cache->set($msguid, $object);
             return;
         }
-        
+
         // write to cache
         if ($this->ready) {
             // remove old entry
-            $this->db->query("DELETE FROM kolab_cache WHERE resource=? AND msguid=?",
-                $this->resource_uri, $msguid);
+            $this->db->query("DELETE FROM kolab_cache WHERE resource=? AND msguid=? AND type<>?",
+                $this->resource_uri, $msguid, 'lock');
 
             // write new object data if not false (wich means deleted)
             if ($object) {
@@ -235,8 +235,7 @@ class kolab_storage_cache
         }
 
         // keep a copy in memory for fast access
-        if ($mcache)
-            $this->objects[$msguid] = $object;
+        $this->objects[$msguid] = $object;
 
         if ($object)
             $this->uid2msg[$object['uid']] = $msguid;
@@ -257,11 +256,12 @@ class kolab_storage_cache
         if ($new_msguid = $target->cache->uid2msguid($objuid)) {
             $this->db->query(
                 "UPDATE kolab_cache SET resource=?, msguid=? ".
-                "WHERE resource=? AND msguid=?",
+                "WHERE resource=? AND msguid=? AND type<>?",
                 $target->get_resource_uri(),
                 $new_msguid,
                 $this->resource_uri,
-                $msguid
+                $msguid,
+                'lock'
             );
         }
         else {
@@ -420,7 +420,7 @@ class kolab_storage_cache
         foreach ((array)$index as $msguid) {
             if ($object = $this->folder->read_object($msguid, $type, $folder)) {
                 $results[] = $object;
-                $this->set($msguid, $object, null, false);
+                $this->set($msguid, $object);
             }
         }
 
