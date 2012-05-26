@@ -49,9 +49,13 @@ class kolab_storage_cache
         $this->imap = $rcmail->get_storage();
         $this->enabled = $rcmail->config->get('kolab_cache', false);
 
-        // remove sync-lock on script termination
-        if ($this->enabled)
+        if ($this->enabled) {
+            // remove sync-lock on script termination
             $rcmail->add_shutdown_function(array($this, '_sync_unlock'));
+
+            // read max_allowed_packet from mysql config
+            $this->max_sql_packet = min($this->db->get_variable('max_allowed_packet', 1048500), 4*1024*1024) - 2000;  // mysql limit or max 4 MB
+        }
 
         if ($storage_folder)
             $this->set_folder($storage_folder);
