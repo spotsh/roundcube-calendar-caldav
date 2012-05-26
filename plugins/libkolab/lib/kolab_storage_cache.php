@@ -35,7 +35,7 @@ class kolab_storage_cache
     private $synched = false;
     private $synclock = false;
     private $ready = false;
-
+    private $max_sql_packet = 1046576;  // 1 MB - 2000 bytes
     private $binary_cols = array('photo','pgppublickey','pkcs7publickey');
 
 
@@ -116,8 +116,12 @@ class kolab_storage_cache
             }
 
             // fetch new objects from imap
-            $fetch_index = array_diff($this->index, $old_index);
-            $this->_fetch($fetch_index, '*');
+            foreach (array_diff($this->index, $old_index) as $msguid) {
+                if ($object = $this->folder->read_object($msguid, '*')) {
+                    $this->_extended_insert($msguid, $object);
+                }
+            }
+            $this->_extended_insert(0, null);
 
             // delete invalid entries from local DB
             $del_index = array_diff($old_index, $this->index);
@@ -496,6 +500,55 @@ class kolab_storage_cache
         $object['_formatobj'] = kolab_format::factory($sql_arr['type'], $sql_arr['xml']);
 
         return $object;
+    }
+
+    /**
+     * Write records into cache using extended inserts to reduce the number of queries to be executed
+     *
+     * @param int  Message UID. Set 0 to commit buffered inserts
+     * @param array Kolab object to cache
+     */
+    private function _extended_insert($msguid, $object)
+    {
+        static $buffer = '';
+
+        $line = '';
+        if ($object) {
+            $sql_data = $this->_serialize($object);
+            $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
+
+            $values = array(
+                $this->db->quote($this->resource_uri),
+                $this->db->quote($objtype),
+                $this->db->quote($msguid),
+                $this->db->quote($object['uid']),
+                $this->db->quote($sql_data['data']),
+                $this->db->quote($sql_data['xml']),
+                $this->db->quote($sql_data['dtstart']),
+                $this->db->quote($sql_data['dtend']),
+                $this->db->quote($sql_data['tags']),
+                $this->db->quote($sql_data['words']),
+            );
+            $line = '(' . join(',', $values) . ')';
+        }
+
+        if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet))) {
+            $result = $this->db->query(
+                "INSERT INTO kolab_cache ".
+                " (resource, type, msguid, uid, data, xml, dtstart, dtend, tags, words)".
+                " VALUES $buffer"
+            );
+            if (!$this->db->affected_rows($result)) {
+                rcmail::raise_error(array(
+                    'code' => 900, 'type' => 'php',
+                    'message' => "Failed to write to kolab cache"
+                ), true);
+            }
+
+            $buffer = '';
+        }
+
+        $buffer .= ($buffer ? ',' : '') . $line;
     }
 
     /**
