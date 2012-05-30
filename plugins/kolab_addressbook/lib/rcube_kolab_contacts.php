@@ -851,6 +851,8 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         if ($added)
             $saved = $this->storagefolder->save($list, 'distribution-list', $list['uid']);
+        else
+            $saved = true;
 
         if (!$saved) {
             raise_error(array(
@@ -859,6 +861,7 @@ class rcube_kolab_contacts extends rcube_addressbook
               'message' => "Error saving distribution-list to Kolab server"),
             true, false);
             $added = false;
+            $this->set_error(self::ERROR_SAVING, 'errorsaving');
         }
         else {
             $this->distlists[$gid] = $list;
