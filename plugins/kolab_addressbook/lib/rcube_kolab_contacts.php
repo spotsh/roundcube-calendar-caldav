@@ -358,14 +358,14 @@ class rcube_kolab_contacts extends rcube_addressbook
         $squery = array();
         if (count(array_intersect(kolab_format_contact::$fulltext_cols, $fields)) == $scount) {
             switch ($mode) {
-                case 1:  $prefix = ' '; $suffix = ' '; break;  // strict
-                case 2:  $prefix = ' '; $suffix = '';  break;  // prefix
+                case 1:  $prefix = '^'; $suffix = '$'; break;  // strict
+                case 2:  $prefix = '^'; $suffix = '';  break;  // prefix
                 default: $prefix = '';  $suffix = '';  break;  // substring
             }
 
             $search_string = is_array($value) ? join(' ', $value) : $value;
             foreach (rcube_utils::normalize_string($search_string, true) as $word) {
-                $squery[] = array('words', 'LIKE', '%' . $prefix . $word . $suffix . '%');
+                $squery[] = array('words', 'LIKE', $prefix . $word . $suffix);
             }
         }
 

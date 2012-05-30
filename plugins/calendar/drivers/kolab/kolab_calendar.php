@@ -207,14 +207,18 @@ class kolab_calendar
     $query[] = array('dtstart', '<=', $end);
     $query[] = array('dtend',   '>=', $start);
 
+    if (!empty($search)) {
+        $search = mb_strtolower($search);
+        foreach (rcube_utils::normalize_string($search, true) as $word) {
+            $query[] = array('words', 'LIKE', $word);
+        }
+    }
+
     foreach ((array)$this->storage->select($query) as $record) {
       $event = $this->_to_rcube_event($record);
       $this->events[$event['id']] = $event;
     }
 
-    if (!empty($search))
-      $search =  mb_strtolower($search);
-    
     $events = array();
     foreach ($this->events as $id => $event) {
       // remember seen categories

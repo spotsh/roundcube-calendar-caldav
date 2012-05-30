@@ -383,6 +383,14 @@ class kolab_storage_cache
                 $qvalue = '(' . join(',', array_map(array($this->db, 'quote'), $param[2])) . ')';
                 $param[1] = 'IN';
             }
+            else if ($param[1] == '~' || $param[1] == 'LIKE') {
+                $param[1] = 'LIKE';
+                $qvalue = $this->db->quote('%'.preg_replace('/(^\^|\$$)/', ' ', $param[2]).'%');
+            }
+            else if ($param[0] == 'tags') {
+                $param[1] = 'LIKE';
+                $qvalue = $this->db->quote('% '.$param[2].' %');
+            }
             else {
                 $qvalue = $this->db->quote($param[2]);
             }

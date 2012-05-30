@@ -765,7 +765,7 @@ class kolab_driver extends calendar_driver
     $time = $slot + $interval;
     
     $events = array();
-    $query = array(array('tags', 'LIKE', '% x-has-alarms %'));
+    $query = array(array('tags', '=', 'x-has-alarms'));
     foreach ($this->calendars as $cid => $calendar) {
       // skip calendars with alarms disabled
       if (!$calendar->alarms || ($calendars && !in_array($cid, $calendars)))
