@@ -461,7 +461,7 @@ class kolab_storage_cache
         }
 
         if ($object['_formatobj']) {
-            $sql_data['xml'] = (string)$object['_formatobj']->write();
+            $sql_data['xml'] = preg_replace('!(</?[a-z0-9:-]+>)[\n\r\t\s]+!ms', '$1', (string)$object['_formatobj']->write());
             $sql_data['tags'] = ' ' . join(' ', $object['_formatobj']->get_tags()) . ' ';  // pad with spaces for strict/prefix search
             $sql_data['words'] = ' ' . join(' ', $object['_formatobj']->get_words()) . ' ';
         }
