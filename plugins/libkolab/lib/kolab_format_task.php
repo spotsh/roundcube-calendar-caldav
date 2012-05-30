@@ -50,8 +50,6 @@ class kolab_format_task extends kolab_format_xcal
 
         if (isset($object['start']))
             $this->obj->setStart(self::get_datetime($object['start']));
-        if (isset($object['end']))
-            $this->obj->setEnd(self::get_datetime($object['end']));
 
         $this->obj->setDue(self::get_datetime($object['due'], null, $object['due']->_dateonly));
 
@@ -94,8 +92,6 @@ class kolab_format_task extends kolab_format_xcal
         // if start/end date is set
         if ($dtstart = $this->obj->start())
             $object['start'] = self::php_datetime($dtstart);
-        if ($dtend = $this->obj->end())
-            $object['end'] = self::php_datetime($dtend);
 
         // if due date is set
         if ($due = $this->obj->due())
