@@ -117,7 +117,7 @@ class kolab_format_distributionlist extends kolab_format
         // read object properties
         $object = array(
             'uid'       => $this->obj->uid(),
-            'changed'   => $this->obj->lastModified(),
+            'changed'   => self::php_datetime($this->obj->lastModified()),
             'name'      => $this->obj->name(),
             'member'    => array(),
         );

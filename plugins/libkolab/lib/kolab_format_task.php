@@ -22,19 +22,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class kolab_format_task extends kolab_format
+class kolab_format_task extends kolab_format_xcal
 {
-    public $CTYPE = 'application/calendar+xml';
-
     protected $read_func = 'kolabformat::readTodo';
     protected $write_func = 'kolabformat::writeTodo';
 
-    private $status_map = array(
-        'NEEDS-ACTION' => kolabformat::StatusNeedsAction,
-        'IN-PROCESS'   => kolabformat::StatusInProcess,
-        'COMPLETED'    => kolabformat::StatusCompleted,
-        'CANCELLED'    => kolabformat::StatusCancelled,
-    );
 
     function __construct($xmldata = null)
     {
@@ -51,11 +43,22 @@ class kolab_format_task extends kolab_format
     {
         $this->init();
 
-        // set some automatic values if missing
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
+        // set common xcal properties
+        parent::set($object);
 
-        // TODO: set object propeties
+        $this->obj->setPercentComplete(intval($object['complete']));
+
+        if (isset($object['start']))
+            $this->obj->setStart(self::get_datetime($object['start']));
+        if (isset($object['end']))
+            $this->obj->setEnd(self::get_datetime($object['end']));
+
+        $this->obj->setDue(self::get_datetime($object['due'], null, $object['due']->_dateonly));
+
+        $related = new vectors;
+        if (!empty($object['parent_id']))
+            $related->push($object['parent_id']);
+        $this->obj->setRelatedTo($related);
 
         // cache this data
         $this->data = $object;
@@ -71,21 +74,6 @@ class kolab_format_task extends kolab_format
     }
 
     /**
-     * Load data from old Kolab2 format
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-            'uid'     => $record['uid'],
-            'changed' => $record['last-modification-date'],
-        );
-
-        // TODO: implement this
-
-        $this->data = $object;
-    }
-
-    /**
      * Convert the Configuration object into a hash array data structure
      *
      * @return array  Config object data as hash array
@@ -98,32 +86,45 @@ class kolab_format_task extends kolab_format
 
         $this->init();
 
-        // read object properties
-        $status_map = array_flip($this->status_map);
-        $object = array(
-            'uid'         => $this->obj->uid(),
-            'changed'     => $this->obj->lastModified(),
-            'summary'     => $this->obj->summary(),
-            'description' => $this->obj->description(),
-            'location'    => $this->obj->location(),
-            'status'      => $this->status_map[$this->obj->status()],
-            'complete'    => intval($this->obj->percentComplete()),
-            'priority'    => $this->obj->priority(),
-        );
+        // read common xcal props
+        $object = parent::to_array();
+
+        $object['complete'] = intval($this->obj->percentComplete());
+
+        // if start/end date is set
+        if ($dtstart = $this->obj->start())
+            $object['start'] = self::php_datetime($dtstart);
+        if ($dtend = $this->obj->end())
+            $object['end'] = self::php_datetime($dtend);
 
         // if due date is set
-        if ($dtstart = $this->obj->start()) {
-            $object['start'] = self::php_datetime($dtstart);
-        }
-        // if due date is set
-        if ($due = $this->obj->due()) {
+        if ($due = $this->obj->due())
             $object['due'] = self::php_datetime($due);
-        }
+
+        // related-to points to parent taks; we only support one relation
+        $related = self::vector2array($this->obj->relatedTo());
+        if (count($related))
+            $object['parent_id'] = $related[0];
 
         // TODO: map more properties
 
         $this->data = $object;
         return $this->data;
+    }
+
+    /**
+     * Load data from old Kolab2 format
+     */
+    public function fromkolab2($record)
+    {
+        $object = array(
+            'uid'     => $record['uid'],
+            'changed' => $record['last-modification-date'],
+        );
+
+        // TODO: implement this
+
+        $this->data = $object;
     }
 
 }

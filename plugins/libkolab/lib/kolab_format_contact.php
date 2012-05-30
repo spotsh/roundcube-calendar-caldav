@@ -314,8 +314,8 @@ class kolab_format_contact extends kolab_format
         // read object properties into local data object
         $object = array(
             'uid'       => $this->obj->uid(),
-            # 'changed'   => $this->obj->lastModified(),
             'name'      => $this->obj->name(),
+            'changed'   => self::php_datetime($this->obj->lastModified()),
         );
 
         $nc = $this->obj->nameComponents();
