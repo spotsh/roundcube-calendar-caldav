@@ -987,6 +987,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         $a_value .= is_array($a['email']) ? $a['email'][0] : $a['email'];
         $b_value .= is_array($b['email']) ? $b['email'][0] : $b['email'];
 
+        $a_value = mb_strtolower($a_value);
+        $b_value = mb_strtolower($b_value);
+
         // return strcasecmp($a_value, $b_value);
         // make sorting unicode-safe and locale-dependent
         if ($a_value == $b_value)
