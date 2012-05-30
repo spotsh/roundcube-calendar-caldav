@@ -439,7 +439,7 @@ class kolab_storage_folder
 
         // check kolab format version
         list($xmltype, $subtype) = explode('.', $object_type);
-        if (strpos($xml, '<' . $xmltype) !== false) {
+        if (strpos($xml, '<' . $xmltype) !== false && strpos($xml, 'xmlns=') === false) {
             // old Kolab 2.0 format detected
             $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $xmltype, array('subtype' => $subtype)) : null;
             if (!is_object($handler) || is_a($handler, 'PEAR_Error')) {
