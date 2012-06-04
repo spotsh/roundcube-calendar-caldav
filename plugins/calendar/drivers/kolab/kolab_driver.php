@@ -907,7 +907,7 @@ class kolab_driver extends calendar_driver
   public function get_freebusy_list($email, $start, $end)
   {
     require_once('Horde/iCalendar.php');
-    require_once('HTTP/Request.php');
+    require_once('HTTP/Request2.php');
 
     if (empty($email)/* || $end < time()*/)
       return false;
@@ -920,17 +920,31 @@ class kolab_driver extends calendar_driver
       'OOF' => calendar::FREEBUSY_OOF);
 
     // ask kolab server first
-    $request = new HTTP_Request($url = rcube_kolab::get_freebusy_url($email));
-    $result = $request->sendRequest(true);
+    try {
+      $rcmail = rcube::get_instance();
+      $request = new HTTP_Request2(kolab_storage::get_freebusy_url($email));
+      $request->setConfig(array(
+        'store_body'       => true,
+        'follow_redirects' => true,
+        'ssl_verify_peer'  => $rcmail->config->get('kolab_ssl_verify_peer', true),
+      ));
 
-    // authentication required
-    if (!PEAR::isError($result) && $request->getResponseCode() == 401) {
-        $request->setBasicAuth($this->rc->user->get_username(), $this->rc->decrypt($_SESSION['password']));
-        $result = $request->sendRequest(true);
+      $response = $request->send();
+
+      // authentication required
+      if ($response->getStatus() == 401) {
+        $request->setAuth($this->rc->user->get_username(), $this->rc->decrypt($_SESSION['password']));
+        $response = $request->send();
+      }
+
+      if ($response->getStatus() == 200)
+        $fbdata = $response->getBody();
+
+      unset($request, $response);
     }
-
-    if (!PEAR::isError($result) && $request->getResponseCode() == 200)
-        $fbdata = $request->getResponseBody();
+    catch (Exception $e) {
+      PEAR::raiseError("Error fetching free/busy information: " . $e->getMessage());
+    }
 
     // get free-busy url from contacts
     if (!$fbdata) {
