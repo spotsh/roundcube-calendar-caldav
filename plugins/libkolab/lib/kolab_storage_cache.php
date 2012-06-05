@@ -230,7 +230,7 @@ class kolab_storage_cache
                 );
 
                 if (!$this->db->affected_rows($result)) {
-                    rcmail::raise_error(array(
+                    rcube::raise_error(array(
                         'code' => 900, 'type' => 'php',
                         'message' => "Failed to write to kolab cache"
                     ), true);
@@ -551,7 +551,7 @@ class kolab_storage_cache
                 " VALUES $buffer"
             );
             if (!$this->db->affected_rows($result)) {
-                rcmail::raise_error(array(
+                rcube::raise_error(array(
                     'code' => 900, 'type' => 'php',
                     'message' => "Failed to write to kolab cache"
                 ), true);

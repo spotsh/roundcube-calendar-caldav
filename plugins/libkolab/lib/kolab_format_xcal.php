@@ -249,7 +249,7 @@ abstract class kolab_format_xcal extends kolab_format
                     $attendees->push($att);
                 }
                 else {
-                    raise_error(array(
+                    rcube::raise_error(array(
                         'code' => 600, 'type' => 'php',
                         'file' => __FILE__, 'line' => __LINE__,
                         'message' => "Invalid event attendee: " . json_encode($attendee),
@@ -316,7 +316,7 @@ abstract class kolab_format_xcal extends kolab_format
                 $this->obj->setExceptionDates($exdates);
             }
             else {
-                raise_error(array(
+                rcube::raise_error(array(
                     'code' => 600, 'type' => 'php',
                     'file' => __FILE__, 'line' => __LINE__,
                     'message' => "Invalid event recurrence rule: " . json_encode($object['recurrence']),
