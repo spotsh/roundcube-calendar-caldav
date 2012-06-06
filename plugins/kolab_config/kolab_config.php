@@ -102,7 +102,7 @@ class kolab_config extends rcube_plugin
 
         $lang = $args['language'];
         $dict = $this->read_dictionary($lang, true);
-
+console($lang, $dict);
         $dict['type']     = 'dictionary';
         $dict['language'] = $args['language'];
         $dict['e']        = $args['dictionary'];
@@ -113,7 +113,7 @@ class kolab_config extends rcube_plugin
         }
         else {
             // Update the object
-            // $this->default->save($dict);
+            $this->default->save($dict, 'configuration.dictionary', $dict['uid']);
         }
 
         $args['abort'] = true;
@@ -160,7 +160,7 @@ class kolab_config extends rcube_plugin
         if (isset($this->dicts[$lang]))
             return $this->dicts[$lang];
 
-        $query = array(array('type','=','configuration.dictionary'), array('tags','=',' '.$lang.' '));
+        $query = array(array('type','=','configuration.dictionary'), array('tags','=',$lang));
 
         foreach ($this->folders as $folder) {
             // we only want to read from default folder

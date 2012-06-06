@@ -29,6 +29,11 @@ class kolab_format_configuration extends kolab_format
     protected $read_func = 'kolabformat::readConfiguration';
     protected $write_func = 'kolabformat::writeConfiguration';
 
+    private $type_map = array(
+        'dictionary' => Configuration::TypeDictionary,
+        'category' => Configuration::TypeCategoryColor,
+    );
+
 
     function __construct($xmldata = null)
     {
@@ -45,11 +50,31 @@ class kolab_format_configuration extends kolab_format
     {
         $this->init();
 
-        // set some automatic values if missing
-#        if (!empty($object['uid']))
-#            $this->obj->setUid($object['uid']);
+        // read type-specific properties
+        switch ($object['type']) {
+        case 'dictionary':
+            $dict = new Dictionary($object['language']);
+            $dict->setEntries(self::array2vector($object['e']));
+            $this->obj = new Configuration($dict);
+            break;
 
-        // TODO: set object propeties
+        case 'category':
+            // TODO: implement this
+            $categories = new vectorcategorycolor;
+            $this->obj = new Configuration($categories);
+            break;
+        default:
+            return false;
+        }
+
+        // set some automatic values if missing
+        if (!empty($object['uid']))
+            $this->obj->setUid($object['uid']);
+        if (!empty($object['created']))
+            $this->obj->setCreated(self::get_datetime($object['created']));
+
+        // adjust content-type string
+        $this->CTYPE = 'application/x-vnd.kolab.configuration.' . $object['type'];
 
         // cache this data
         $this->data = $object;
@@ -61,20 +86,7 @@ class kolab_format_configuration extends kolab_format
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj)/* && $this->obj->isValid()*/);
-    }
-
-    /**
-     * Load data from old Kolab2 format
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-            'uid'     => $record['uid'],
-            'changed' => $record['last-modification-date'],
-        );
-
-        $this->data = $object + $record;
+        return $this->data || (is_object($this->obj) && $this->obj->isValid());
     }
 
     /**
@@ -89,18 +101,48 @@ class kolab_format_configuration extends kolab_format
             return $this->data;
 
         $this->init();
+        $type_map = array_flip($this->type_map);
 
         // read object properties
         $object = array(
-#            'uid'       => $this->obj->uid(),
-#            'changed'   => $this->obj->lastModified(),
+            'uid'     => $this->obj->uid(),
+            'created' => self::php_datetime($this->obj->created()),
+            'changed' => self::php_datetime($this->obj->lastModified()),
+            'type'    => $type_map[$this->obj->type()],
         );
 
+        // read type-specific properties
+        switch ($object['type']) {
+        case 'dictionary':
+            $dict = $this->obj->dictionary();
+            $object['language'] = $dict->language();
+            $object['e'] = self::vector2array($dict->entries());
+            break;
 
-        // TODO: read object properties
+        case 'category':
+            // TODO: implement this
+            break;
+        }
+
+        // adjust content-type string
+        if ($object['type'])
+            $this->CTYPE = 'application/x-vnd.kolab.configuration.' . $object['type'];
 
         $this->data = $object;
         return $this->data;
+    }
+
+    /**
+     * Load data from old Kolab2 format
+     */
+    public function fromkolab2($record)
+    {
+        $object = array(
+            'uid'     => $record['uid'],
+            'changed' => $record['last-modification-date'],
+        );
+
+        $this->data = $object + $record;
     }
 
     /**
