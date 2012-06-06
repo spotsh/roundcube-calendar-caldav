@@ -148,7 +148,7 @@ class kolab_storage_folder
 
         switch ($info['namespace']) {
         case 'personal':
-            $this->owner = $rcmail->user->get_username();
+            $this->owner = $rcmail->get_user_name();
             break;
 
         case 'shared':
@@ -159,7 +159,7 @@ class kolab_storage_folder
             $owner = '';
             list($prefix, $user) = explode($this->imap->get_hierarchy_delimiter(), $info['name']);
             if (strpos($user, '@') === false) {
-                $domain = strstr($rcmail->user->get_username(), '@');
+                $domain = strstr($rcmail->get_user_name(), '@');
                 if (!empty($domain))
                     $user .= $domain;
             }
@@ -422,7 +422,7 @@ class kolab_storage_folder
         }
 
         if (!$xml) {
-            raise_error(array(
+            rcube::raise_error(array(
                 'code' => 600,
                 'type' => 'php',
                 'file' => __FILE__,
@@ -470,7 +470,7 @@ class kolab_storage_folder
             if (preg_match('!<uid>(.+)</uid>!Uims', $xml, $m))
                 $msgadd = " UID = " . trim(strip_tags($m[1]));
 
-            raise_error(array(
+            rcube::raise_error(array(
                 'code' => 600,
                 'type' => 'php',
                 'file' => __FILE__,
@@ -606,7 +606,7 @@ class kolab_storage_folder
                 return true;
             }
             else {
-                raise_error(array(
+                rcube::raise_error(array(
                     'code' => 600, 'type' => 'php',
                     'file' => __FILE__, 'line' => __LINE__,
                     'message' => "Failed to move message $msguid to $target_folder: " . $this->imap->get_error_str(),

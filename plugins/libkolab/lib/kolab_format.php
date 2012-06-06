@@ -186,7 +186,7 @@ abstract class kolab_format
         }
 
         if ($log) {
-            raise_error(array(
+            rcube::raise_error(array(
                 'code' => 660,
                 'type' => 'php',
                 'file' => __FILE__,
