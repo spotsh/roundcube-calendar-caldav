@@ -102,7 +102,7 @@ class kolab_config extends rcube_plugin
 
         $lang = $args['language'];
         $dict = $this->read_dictionary($lang, true);
-console($lang, $dict);
+
         $dict['type']     = 'dictionary';
         $dict['language'] = $args['language'];
         $dict['e']        = $args['dictionary'];
