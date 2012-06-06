@@ -173,10 +173,10 @@ abstract class kolab_format
     {
         $ret = $log = false;
         switch (kolabformat::error()) {
-            case kolabformat.NoError:
+            case kolabformat::NoError:
                 $ret = false;
                 break;
-            case kolabformat.Warning:
+            case kolabformat::Warning:
                 $ret = false;
                 $log = "Warning";
                 break;
