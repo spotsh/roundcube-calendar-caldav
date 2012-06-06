@@ -539,11 +539,10 @@ class kolab_storage_folder
      *
      * @param  mixed   $object  The Kolab object to delete or object UID
      * @param  boolean $expunge Should the folder be expunged?
-     * @param  boolean $trigger Should the folder update be triggered?
      *
      * @return boolean True if successful, false on error
      */
-    public function delete($object, $expunge = true, $trigger = true)
+    public function delete($object, $expunge = true)
     {
         $msguid = is_array($object) ? $object['_msguid'] : $this->cache->uid2msguid($object);
         $success = false;
