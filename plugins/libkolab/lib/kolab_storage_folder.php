@@ -652,6 +652,7 @@ class kolab_storage_folder
         }
         $headers['Date'] = date('r');
         $headers['X-Kolab-Type'] = self::KTYPE_PREFIX . $type;
+        $headers['X-Kolab-Mime-Version'] = kolab_format::VERSION;
         $headers['Subject'] = $object['uid'];
 //        $headers['Message-ID'] = $rcmail->gen_message_id();
         $headers['User-Agent'] = $rcmail->config->get('useragent');

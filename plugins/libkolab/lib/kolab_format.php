@@ -39,6 +39,8 @@ abstract class kolab_format
     protected $xmldata;
     protected $loaded = false;
 
+    const VERSION = '3.0';
+
     /**
      * Factory method to instantiate a kolab_format object of the given type
      *
