@@ -215,8 +215,8 @@ class kolab_storage_cache
 
                 $result = $this->db->query(
                     "INSERT INTO kolab_cache ".
-                    " (resource, type, msguid, uid, data, xml, dtstart, dtend, tags, words)".
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    " (resource, type, msguid, uid, created, data, xml, dtstart, dtend, tags, words)".
+                    " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?)",
                     $this->resource_uri,
                     $objtype,
                     $msguid,
@@ -542,6 +542,7 @@ class kolab_storage_cache
                 $this->db->quote($objtype),
                 $this->db->quote($msguid),
                 $this->db->quote($object['uid']),
+                $this->db->now(),
                 $this->db->quote($sql_data['data']),
                 $this->db->quote($sql_data['xml']),
                 $this->db->quote($sql_data['dtstart']),
@@ -555,7 +556,7 @@ class kolab_storage_cache
         if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet))) {
             $result = $this->db->query(
                 "INSERT INTO kolab_cache ".
-                " (resource, type, msguid, uid, data, xml, dtstart, dtend, tags, words)".
+                " (resource, type, msguid, uid, created, data, xml, dtstart, dtend, tags, words)".
                 " VALUES $buffer"
             );
             if (!$this->db->affected_rows($result)) {
