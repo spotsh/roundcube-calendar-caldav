@@ -448,9 +448,10 @@ class kolab_storage_cache
     {
         $bincols = array_flip($this->binary_cols);
         $sql_data = array('dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
+        $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
 
         // set type specific values
-        if ($this->folder->type == 'event') {
+        if ($objtype == 'event') {
             // database runs in server's timezone so using date() is what we want
             $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
             $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
@@ -459,6 +460,12 @@ class kolab_storage_cache
             if ($object['recurrence']) {
                 $sql_data['dtend'] = date('Y-m-d H:i:s', $object['recurrence']['UNTIL'] ?: strtotime('now + 2 years'));
             }
+        }
+        else if ($objtype == 'task') {
+            if ($object['start'])
+                $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
+            if ($object['due'])
+                $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['due'])   ? $object['due']->format('U')   : $object['due']);
         }
 
         if ($object['_formatobj']) {
