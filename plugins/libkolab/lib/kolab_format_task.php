@@ -123,4 +123,24 @@ class kolab_format_task extends kolab_format_xcal
         $this->data = $object;
     }
 
+    /**
+     * Callback for kolab_storage_cache to get object specific tags to cache
+     *
+     * @return array List of tags to save in cache
+     */
+    public function get_tags()
+    {
+        $tags = array();
+
+        if ($this->data['status'] == 'COMPLETED' || $this->data['complete'] == 100)
+            $tags[] = 'complete';
+
+        if ($this->data['priority'] == 1)
+            $tags[] = 'flagged';
+
+        if (!empty($this->data['alarms']))
+            $tags[] = 'x-has-alarms';
+
+        return $tags;
+    }
 }
