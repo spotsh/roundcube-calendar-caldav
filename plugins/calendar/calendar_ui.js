@@ -1453,7 +1453,7 @@ function rcube_calendar_ui(settings)
 
       // delete icon
       var icon = rcmail.env.deleteicon ? '<img src="' + rcmail.env.deleteicon + '" alt="" />' : rcmail.gettext('delete');
-      var dellink = '<a href="#delete" class="deletelink" title="' + Q(rcmail.gettext('delete')) + '">' + icon + '</a>';
+      var dellink = '<a href="#delete" class="iconlink delete deletelink" title="' + Q(rcmail.gettext('delete')) + '">' + icon + '</a>';
       
       var html = '<td class="role">' + select + '</td>' +
         '<td class="name">' + dispname + '</td>' +
