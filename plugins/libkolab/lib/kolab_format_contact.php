@@ -177,7 +177,7 @@ class kolab_format_contact extends kolab_format
 
         $vurls = new vectorurl;
         foreach ((array)$object['website'] as $url) {
-            $type = $url['type'] == 'blog' ? Url::Blog : Url::None;
+            $type = $url['type'] == 'blog' ? Url::Blog : Url::NoType;
             $vurls->push(new Url($url['url'], $type));
         }
         $this->obj->setUrls($vurls);
