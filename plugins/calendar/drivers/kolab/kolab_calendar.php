@@ -429,9 +429,10 @@ class kolab_calendar
       $record['end'] = $record['start'] + 3600;
 
     if (!empty($record['_attachments'])) {
-      foreach ($record['_attachments'] as $name => $attachment) {
+      foreach ($record['_attachments'] as $key => $attachment) {
         if ($attachment !== false) {
-          $attachment['name'] = $name;
+          if (!$attachment['name'])
+            $attachment['name'] = $key;
           $attachments[] = $attachment;
         }
       }
@@ -460,29 +461,34 @@ class kolab_calendar
   {
     $object = &$event;
 
-    // in Horde attachments are indexed by name
+    // in kolab_storage attachments are indexed by content-id
     $object['_attachments'] = array();
     if (is_array($event['attachments'])) {
       $collisions = array();
       foreach ($event['attachments'] as $idx => $attachment) {
-        // Roundcube ID has nothing to do with Horde ID, remove it
-        if ($attachment['content'])
+        $key = null;
+        // Roundcube ID has nothing to do with the storage ID, remove it
+        if ($attachment['content']) {
           unset($attachment['id']);
+        }
+        else {
+          foreach ((array)$old['_attachments'] as $cid => $oldatt) {
+            if ($attachment['id'] == $oldatt['id'])
+              $key = $cid;
+          }
+        }
 
         // flagged for deletion => set to false
         if ($attachment['_deleted']) {
-          $object['_attachments'][$attachment['name']] = false;
+          $object['_attachments'][$key] = false;
         }
+        // replace existing entry
+        else if ($key) {
+          $object['_attachments'][$key] = $attachment;
+        }
+        // append as new attachment
         else {
-          // Horde code assumes that there will be no more than
-          // one file with the same name: make filenames unique
-          $filename = $attachment['name'];
-          if ($collisions[$filename]++) {
-            $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $filename, $m) ? $m[1] : null;
-            $attachment['name'] = basename($filename, $ext) . '-' . $collisions[$filename] . $ext;
-          }
-
-          $object['_attachments'][$attachment['name']] = $attachment;
+          $object['_attachments'][] = $attachment;
         }
       }
 

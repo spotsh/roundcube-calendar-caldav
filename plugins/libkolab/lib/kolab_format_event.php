@@ -77,12 +77,12 @@ class kolab_format_event extends kolab_format_xcal
 
         // save attachments
         $vattach = new vectorattachment;
-        foreach ((array)$object['_attachments'] as $name => $attr) {
+        foreach ((array)$object['_attachments'] as $cid => $attr) {
             if (empty($attr))
                 continue;
             $attach = new Attachment;
-            $attach->setLabel($name);
-            $attach->setUri('cid:' . $name, $attr['mimetype']);
+            $attach->setLabel((string)$attr['name']);
+            $attach->setUri('cid:' . $cid, $attr['mimetype']);
             $vattach->push($attach);
         }
         $this->obj->setAttachments($vattach);
@@ -148,6 +148,7 @@ class kolab_format_event extends kolab_format_xcal
                 $name = $attach->label();
                 $data = $attach->data();
                 $object['_attachments'][$name] = array(
+                    'name' => $name,
                     'mimetype' => $attach->mimetype(),
                     'size' => strlen($data),
                     'content' => $data,

@@ -220,7 +220,7 @@ function rcube_calendar_ui(settings)
     // check if the event has 'real' attendees, excluding the current user
     var has_attendees = function(event)
     {
-      return (event.attendees && (event.attendees.length > 1 || event.attendees[0].email != settings.identity.email));
+      return (event.attendees && event.attendees.length && (event.attendees.length > 1 || event.attendees[0].email != settings.identity.email));
     };
     
     // check if the current user is an attendee of this event
