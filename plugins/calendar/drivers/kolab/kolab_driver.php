@@ -582,6 +582,7 @@ class kolab_driver extends calendar_driver
           }
         }
       }
+      unset($event['deleted_attachments']);
     }
 
     // handle attachments to add

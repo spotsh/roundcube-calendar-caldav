@@ -415,6 +415,7 @@ class kolab_storage_folder
                 $key = $part->content_id ? trim($part->content_id, '<>') : $part->filename;
                 $attachments[$key] = array(
                     'id' => $part->mime_id,
+                    'name' => $part->filename,
                     'mimetype' => $part->mimetype,
                     'size' => $part->size,
                 );
@@ -509,14 +510,35 @@ class kolab_storage_folder
 
         // copy attachments from old message
         if (!empty($object['_msguid']) && ($old = $this->cache->get($object['_msguid'], $type, $object['_mailbox']))) {
-            foreach ((array)$old['_attachments'] as $name => $att) {
-                if (!isset($object['_attachments'][$name])) {
-                    $object['_attachments'][$name] = $old['_attachments'][$name];
+            foreach ((array)$old['_attachments'] as $key => $att) {
+                if (!isset($object['_attachments'][$key])) {
+                    $object['_attachments'][$key] = $old['_attachments'][$key];
+                }
+                // unset deleted attachment entries
+                if ($object['_attachments'][$key] == false) {
+                    unset($object['_attachments'][$key]);
                 }
                 // load photo.attachment from old Kolab2 format to be directly embedded in xcard block
-                if ($name == 'photo.attachment' && !isset($object['photo']) && !$object['_attachments'][$name]['content'] && $att['id']) {
+                else if ($key == 'photo.attachment' && !isset($object['photo']) && !$object['_attachments'][$key]['content'] && $att['id']) {
                     $object['photo'] = $this->get_attachment($object['_msguid'], $att['id'], $object['_mailbox']);
-                    unset($object['_attachments'][$name]);
+                    unset($object['_attachments'][$key]);
+                }
+            }
+        }
+
+        // generate unique keys (used as content-id) for attachments
+        if (is_array($object['_attachments'])) {
+            $numatt = count($object['_attachments']);
+            foreach ($object['_attachments'] as $key => $attachment) {
+                if (is_numeric($key) && $key < $numatt) {
+                    // derrive content-id from attachment file name
+                    $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $attachment['name'], $m) ? $m[1] : null;
+                    $basename = preg_replace('/[^a-z0-9_.-]/i', '', basename($attachment['name'], $ext));  // to 7bit ascii
+                    if (!$basename) $basename = 'noname';
+                    $cid = $basename . '.' . microtime(true) . $ext;
+
+                    $object['_attachments'][$cid] = $attachment;
+                    unset($object['_attachments'][$key]);
                 }
             }
         }
@@ -685,24 +707,25 @@ class kolab_storage_folder
 
         // save object attachments as separate parts
         // TODO: optimize memory consumption by using tempfiles for transfer
-        foreach ((array)$object['_attachments'] as $name => $att) {
+        foreach ((array)$object['_attachments'] as $key => $att) {
             if (empty($att['content']) && !empty($att['id'])) {
                 $msguid = !empty($object['_msguid']) ? $object['_msguid'] : $object['uid'];
                 $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox']);
             }
 
-            $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $name . '>', RCMAIL_CHARSET, 'quoted-printable'));
+            $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $key . '>', RCMAIL_CHARSET, 'quoted-printable'));
+            $name = !empty($att['name']) ? $att['name'] : $key;
 
             if (!empty($att['content'])) {
-                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, 'base64', 'attachment', '', '', '', null, null, '', null, $headers);
+                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, 'base64', 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
                 $part_id++;
             }
             else if (!empty($att['path'])) {
-                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, 'base64', 'attachment', '', '', '', null, null, '', null, $headers);
+                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, 'base64', 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
                 $part_id++;
             }
 
-            $object['_attachments'][$name]['id'] = $part_id;
+            $object['_attachments'][$key]['id'] = $part_id;
         }
 
         return $mime->getMessage();

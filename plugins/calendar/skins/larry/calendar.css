@@ -575,6 +575,15 @@ td.topalign {
 	text-overflow: ellipsis;
 }
 
+#edit-attendees-table a.deletelink {
+	display: block;
+	width: 17px;
+	height: 17px;
+	padding: 0;
+	overflow: hidden;
+	text-indent: 1000px;
+}
+
 #edit-attendees-form {
 	position: relative;
 	margin-top: 1em;
