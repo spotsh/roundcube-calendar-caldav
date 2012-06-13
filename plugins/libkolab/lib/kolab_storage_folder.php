@@ -438,9 +438,20 @@ class kolab_storage_folder
             return false;
 
         // check kolab format version
-        list($xmltype, $subtype) = explode('.', $object_type);
-        if (strpos($xml, '<' . $xmltype) !== false && strpos($xml, 'xmlns=') === false) {
-            // old Kolab 2.0 format detected
+        $mime_version = $headers->others['x-kolab-mime-version'];
+        if (empty($mime_version)) {
+            list($xmltype, $subtype) = explode('.', $object_type);
+            $xmlhead = substr($xml, 0, 512);
+
+            // detect old Kolab 2.0 format
+            if (strpos($xmlhead, '<' . $xmltype) !== false && strpos($xmlhead, 'xmlns=') === false)
+                $mime_version = 2.0;
+            else
+                $mime_version = 3.0; // assume 3.0
+        }
+
+        if ($mime_version <= 2.0) {
+            // read Kolab 2.0 format
             $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $xmltype, array('subtype' => $subtype)) : null;
             if (!is_object($handler) || is_a($handler, 'PEAR_Error')) {
                 return false;
@@ -652,6 +663,7 @@ class kolab_storage_folder
         }
         $headers['Date'] = date('r');
         $headers['X-Kolab-Type'] = self::KTYPE_PREFIX . $type;
+        $headers['X-Kolab-Mime-Version'] = kolab_format::VERSION;
         $headers['Subject'] = $object['uid'];
 //        $headers['Message-ID'] = $rcmail->gen_message_id();
         $headers['User-Agent'] = $rcmail->config->get('useragent');
