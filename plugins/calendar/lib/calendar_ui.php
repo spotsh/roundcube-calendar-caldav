@@ -7,7 +7,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -82,6 +82,7 @@ class calendar_ui
     $this->cal->register_handler('plugin.recurrence_form', array($this, 'recurrence_form'));
     $this->cal->register_handler('plugin.attachments_form', array($this, 'attachments_form'));
     $this->cal->register_handler('plugin.attachments_list', array($this, 'attachments_list'));
+    $this->cal->register_handler('plugin.filedroparea', array($this, 'file_drop_area'));
     $this->cal->register_handler('plugin.attendees_list', array($this, 'attendees_list'));
     $this->cal->register_handler('plugin.attendees_form', array($this, 'attendees_form'));
     $this->cal->register_handler('plugin.attendees_freebusy_table', array($this, 'attendees_freebusy_table'));
@@ -626,6 +627,17 @@ class calendar_ui
         'onclick' => JS_OBJECT_NAME . ".upload_file(this.form)"))) .
       html::div('hint', rcube_label(array('name' => 'maxuploadsize', 'vars' => array('size' => $max_filesize))))
     );
+  }
+
+  /**
+   * Register UI object for HTML5 drag & drop file upload
+   */
+  function file_drop_area($attrib = array())
+  {
+      if ($attrib['id']) {
+          $this->rc->output->add_gui_object('filedrop', $attrib['id']);
+          $this->rc->output->set_env('filedrop', array('action' => 'upload', 'fieldname' => '_attachments'));
+      }
   }
 
   /**
