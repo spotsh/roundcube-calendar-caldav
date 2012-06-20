@@ -41,7 +41,7 @@ class libkolab extends rcube_plugin
         $include_path = $this->home . '/lib' . PATH_SEPARATOR . ini_get('include_path');
         set_include_path($include_path);
 
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         try {
             kolab_format::$timezone = new DateTimeZone($rcmail->config->get('timezone', 'GMT'));
         }
