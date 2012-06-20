@@ -665,6 +665,9 @@ class kolab_storage_folder
         if (!$format)
             $format = kolab_format::factory($type);
 
+        if (PEAR::isError($format))
+            return false;
+
         $format->set($object);
         $xml = $format->write();
         $object['uid'] = $format->uid;  // read UID from format
