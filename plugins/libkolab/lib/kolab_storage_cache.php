@@ -297,23 +297,29 @@ class kolab_storage_cache
      *
      * @param array Pseudo-SQL query as list of filter parameter triplets
      *   triplet: array('<colname>', '<comparator>', '<value>')
-     * @return array List of Kolab data objects (each represented as hash array)
+     * @param boolean Set true to only return UIDs instead of complete objects
+     * @return array List of Kolab data objects (each represented as hash array) or UIDs
      */
-    public function select($query = array())
+    public function select($query = array(), $uids = false)
     {
         $result = array();
 
         // read from local cache DB (assume it to be synchronized)
         if ($this->ready) {
             $sql_result = $this->db->query(
-                "SELECT * FROM kolab_cache ".
+                "SELECT " . ($uids ? 'msguid, uid' : '*') . " FROM kolab_cache ".
                 "WHERE resource=? " . $this->_sql_where($query),
                 $this->resource_uri
             );
 
             while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
-                if ($object = $this->_unserialize($sql_arr))
+                if ($uids) {
+                    $this->uid2msg[$sql_arr['uid']] = $sql_arr['msguid'];
+                    $result[] = $sql_arr['uid'];
+                }
+                else if ($object = $this->_unserialize($sql_arr)) {
                     $result[] = $object;
+                }
             }
         }
         else {
@@ -330,7 +336,7 @@ class kolab_storage_cache
             }
 
             // fetch all messages in $index from IMAP
-            $result = $this->_fetch($index, $filter['type']);
+            $result = $uids ? $this->_fetch_uids($index, $filter['type']) : $this->_fetch($index, $filter['type']);
 
             // TODO: post-filter result according to query
         }
@@ -424,7 +430,9 @@ class kolab_storage_cache
     /**
      * Fetch messages from IMAP
      *
-     * @param array List of message UIDs to fetch
+     * @param array  List of message UIDs to fetch
+     * @param string Requested object type or * for all
+     * @param string IMAP folder to read from
      * @return array List of parsed Kolab objects
      */
     private function _fetch($index, $type = null, $folder = null)
@@ -435,6 +443,36 @@ class kolab_storage_cache
                 $results[] = $object;
                 $this->set($msguid, $object);
             }
+        }
+
+        return $results;
+    }
+
+
+    /**
+     * Fetch object UIDs (aka message subjects) from IMAP
+     *
+     * @param array List of message UIDs to fetch
+     * @param string Requested object type or * for all
+     * @param string IMAP folder to read from
+     * @return array List of parsed Kolab objects
+     */
+    private function _fetch_uids($index, $type = null)
+    {
+        if (!$type)
+            $type = $this->folder->type;
+
+        $results = array();
+        foreach ((array)$this->imap->fetch_headers($this->folder->name, $index, false) as $msguid => $headers) {
+            $object_type = preg_replace('/dictionary.[a-z]+$/', 'dictionary', substr($headers->others['x-kolab-type'], strlen(kolab_storage_folder::KTYPE_PREFIX)));
+
+            // check object type header and abort on mismatch
+            if ($type != '*' && $object_type != $type)
+                return false;
+
+            $uid = $headers->subject;
+            $this->uid2msg[$uid] = $msguid;
+            $results[] = $uid;
         }
 
         return $results;

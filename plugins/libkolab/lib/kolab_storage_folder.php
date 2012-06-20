@@ -324,6 +324,35 @@ class kolab_storage_folder
         if (empty($query))
             return $this->get_objects();
 
+        // synchronize caches
+        $this->cache->synchronize();
+
+        // fetch objects from cache
+        return $this->cache->select($this->_prepare_query($query));
+    }
+
+
+    /**
+     * Getter for object UIDs only
+     *
+     * @param array Pseudo-SQL query as list of filter parameter triplets
+     * @return array List of Kolab object UIDs
+     */
+    public function get_uids($query = array())
+    {
+        // synchronize caches
+        $this->cache->synchronize();
+
+        // fetch UIDs from cache
+        return $this->cache->select($this->_prepare_query($query), true);
+    }
+
+
+    /**
+     * Helper method to sanitize query arguments
+     */
+    private function _prepare_query($query)
+    {
         $type = null;
         foreach ($query as $i => $param) {
             if ($param[0] == 'type') {
@@ -338,11 +367,7 @@ class kolab_storage_folder
         if (!$type)
             $query[] = array('type','=',$this->type);
 
-        // synchronize caches
-        $this->cache->synchronize();
-
-        // fetch objects from cache
-        return $this->cache->select($query);
+        return $query;
     }
 
 
