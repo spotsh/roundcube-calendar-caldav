@@ -352,13 +352,13 @@ class kolab_storage_cache
         // cache is in sync, we can count records in local DB
         if ($this->synched) {
             $sql_result = $this->db->query(
-                "SELECT COUNT(*) AS NUMROWS FROM kolab_cache ".
+                "SELECT COUNT(*) AS numrows FROM kolab_cache ".
                 "WHERE resource=? " . $this->_sql_where($query),
                 $this->resource_uri
             );
 
             $sql_arr = $this->db->fetch_assoc($sql_result);
-            $count = intval($sql_arr['NUMROWS']);
+            $count = intval($sql_arr['numrows']);
         }
         else {
             // search IMAP by object type

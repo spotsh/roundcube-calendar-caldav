@@ -272,17 +272,24 @@ class kolab_storage_folder
     /**
      * Get number of objects stored in this folder
      *
-     * @param string  $type Object type (e.g. contact, event, todo, journal, note, configuration)
+     * @param mixed  Pseudo-SQL query as list of filter parameter triplets
+     *    or string with object type (e.g. contact, event, todo, journal, note, configuration)
      * @return integer The number of objects of the given type
+     * @see self::select()
      */
-    public function count($type = null)
+    public function count($type_or_query = null)
     {
-        if (!$type) $type = $this->type;
+        if (!$type_or_query)
+            $query = array(array('type','=',$this->type));
+        else if (is_string($type_or_query))
+            $query = array(array('type','=',$type_or_query));
+        else
+            $query = (array)$type_or_query;
 
         // synchronize cache first
         $this->cache->synchronize();
 
-        return $this->cache->count(array(array('type','=',$type)));
+        return $this->cache->count($query);
     }
 
 
