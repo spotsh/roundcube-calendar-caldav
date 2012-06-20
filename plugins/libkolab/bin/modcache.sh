@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+#!/usr/bin/env php -d enable_dl=On
 <?php
 
 /**
@@ -33,10 +33,11 @@ require_once INSTALL_PATH . 'program/include/clisetup.php';
 
 function print_usage()
 {
-	print "Usage:  modcache.sh [OPTIONS] ACTION [ARGS...]\n";
+	print "Usage:  modcache.sh [OPTIONS] ACTION [USERNAME ARGS ...]\n";
+	print "Possible actions are: expunge, clear, prewarm\n";
 	print "-a, --all      Clear/expunge all caches\n";
 	print "-h, --host     IMAP host name\n";
-	print "-u, --user     IMAP user name\n";
+	print "-u, --user     IMAP user name to authenticate\n";
 	print "-t, --type     Object types to clear/expunge cache\n";
 	print "-l, --limit    Limit the number of records to be expunged\n";
 }
@@ -52,6 +53,7 @@ $opts = get_opt(array(
     'v' => 'verbose',
 ));
 
+$opts['username'] = !empty($opts[1]) ? $opts[1] : $opts['user'];
 $action = $opts[0];
 
 $rcmail = rcmail::get_instance();
@@ -66,7 +68,7 @@ switch (strtolower($action)) {
  * Clear/expunge all cache records
  */
 case 'expunge':
-    $expire = strtotime(!empty($opts[1]) ? $opts[1] : 'now - 10 days');
+    $expire = strtotime(!empty($opts[2]) ? $opts[2] : 'now - 10 days');
     $sql_add = " AND created <= '" . date('Y-m-d 00:00:00', $expire) . "'";
     if ($opts['limit']) {
         $sql_add .= ' LIMIT ' . intval($opts['limit']);
@@ -85,7 +87,7 @@ case 'clear':
     if ($opts['all']) {
         $sql_query = "DELETE FROM kolab_cache WHERE type IN (" . join(',', $folder_types_db) . ")";
     }
-    else if ($opts['user']) {
+    else if ($opts['username']) {
         $sql_query = "DELETE FROM kolab_cache WHERE type IN (" . join(',', $folder_types_db) . ") AND resource LIKE ?";
     }
 
@@ -100,7 +102,27 @@ case 'clear':
  * Prewarm cache by synchronizing objects for the given user
  */
 case 'prewarm':
-    // TODO: implement this
+    // make sure libkolab classes are loaded
+    $rcmail->plugins->load_plugin('libkolab');
+
+    if (authenticate($opts)) {
+        $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','event','task','configuration');
+        foreach ($folder_types as $type) {
+            // sync every folder of the given type
+            foreach (kolab_storage::get_folders($type) as $folder) {
+                echo "Synching " . $folder->name . " ($type) ... ";
+                echo $folder->count($type) . "\n";
+
+                // also sync distribution lists in contact folders
+                if ($type == 'contact') {
+                    echo "Synching " . $folder->name . " (distribution-list) ... ";
+                    echo $folder->count('distribution-list') . "\n";
+                }
+            }
+        }
+    }
+    else
+        die("Authentication failed for " . $opts['user']);
     break;
 
 
@@ -118,22 +140,29 @@ default:
  */
 function resource_prefix($opts)
 {
-    return 'imap://' . urlencode($opts['user']) . '@' . $opts['host'] . '/';
+    return 'imap://' . urlencode($opts['username']) . '@' . $opts['host'] . '/';
 }
 
 
 /**
- * 
+ * Authenticate to the IMAP server with the given user credentials
  */
 function authenticate(&$opts)
 {
     global $rcmail;
-    
+
     // prompt for password
-    if (empty($opts['password']) && $opts['user']) {
+    if (empty($opts['password']) && ($opts['username'] || $opts['user'])) {
         $opts['password'] = prompt_silent("Password: ");
     }
 
+    // simulate "login as" feature
+    if ($opts['user'] && $opts['user'] != $opts['username'])
+        $_POST['_loginas'] = $opts['username'];
+    else if (empty($opts['user']))
+        $opts['user'] = $opts['username'];
+
+    // let the kolab_auth plugin do its magic
     $auth = $rcmail->plugins->exec_hook('authenticate', array(
         'host' => trim($opts['host']),
         'user' => trim($opts['user']),
@@ -143,12 +172,15 @@ function authenticate(&$opts)
     ));
 
     if ($auth['valid']) {
-        if (!$rcmail->login($auth['user'], $auth['pass'], $auth['host'])) {
+        $storage = $rcmail->get_storage();
+        if ($storage->connect($auth['host'], $auth['user'], $auth['pass'], 143, false)) {
+            if ($opts['verbose'])
+                echo "IMAP login succeeded.\n";
+            if (($user = rcube_user::query($opts['username'], $auth['host'])) && $user->ID)
+                $rcmail->set_user($user);
+        }
+        else
             die("Login to IMAP server failed!\n");
-        }
-        else if ($opts['verbose']) {
-            echo "IMAP login succeeded.\n";
-        }
     }
     else {
         die("Invalid login credentials!\n");
