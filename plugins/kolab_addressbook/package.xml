@@ -4,12 +4,12 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
 	<name>kolab_addressbook</name>
-    <uri>http://git.kolab.org/roundcubemail-plugins-kolab/</uri>
+	<uri>http://git.kolab.org/roundcubemail-plugins-kolab/</uri>
 	<summary>Kolab addressbook</summary>
 	<description>
-	    Sample plugin to add a new address book source with data from Kolab storage.
-        It provides also a possibilities to manage contact folders
-        (create/rename/delete/acl) directly in Addressbook UI.
+		Sample plugin to add a new address book source with data from Kolab storage.
+		It provides also a possibilities to manage contact folders
+		(create/rename/delete/acl) directly in Addressbook UI.
 	</description>
 	<lead>
 		<name>Aleksander Machniak</name>
@@ -23,10 +23,10 @@
 		<email>bruederli@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2011-11-01</date>
+	<date>2012-06-21</date>
 	<version>
-		<release>0.6</release>
-		<api>0.6</api>
+		<release>0.9</release>
+		<api>0.9</api>
 	</version>
 	<stability>
 		<release>stable</release>
@@ -48,7 +48,10 @@
 			<file name="skins/default/kolab_folders.gif" role="data"></file>
 			<file name="skins/default/kolab_folders.png" role="data"></file>
 			<file name="skins/default/templates/bookedit.html" role="data"></file>
-
+			<file name="skins/larry/kolab_addressbook.css" role="data"></file>
+			<file name="skins/larry/templates/bookedit.html" role="data"></file>
+			<file name="localization/de_CH.inc" role="data"></file>
+			<file name="localization/de_DE.inc" role="data"></file>
 			<file name="localization/en_US.inc" role="data"></file>
 			<file name="localization/ja_JP.inc" role="data"></file>
 			<file name="localization/pl_PL.inc" role="data"></file>
@@ -64,10 +67,10 @@
 			<pearinstaller>
 				<min>1.7.0</min>
 			</pearinstaller>
-            <package>
-                <name>kolab_core</name>
-                <uri>http://kolabsys.com</uri>
-            </package>
+			<package>
+				<name>libkolab</name>
+				<uri>http://git.kolab.org/roundcubemail-plugins-kolab/tree/plugins/libkolab</uri>
+			</package>
 		</required>
 	</dependencies>
 	<phprelease/>
