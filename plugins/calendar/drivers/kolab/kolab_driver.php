@@ -112,20 +112,7 @@ class kolab_driver extends calendar_driver
 
     foreach ($this->calendars as $id => $cal) {
       if ($cal->ready) {
-        $name = $origname = $cal->get_name();
-
-        // find folder prefix to truncate (the same code as in kolab_addressbook plugin)
-        for ($i = count($names)-1; $i >= 0; $i--) {
-          if (strpos($name, $names[$i].' &raquo; ') === 0) {
-            $length = strlen($names[$i].' &raquo; ');
-            $prefix = substr($name, 0, $length);
-            $count  = count(explode(' &raquo; ', $prefix));
-            $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
-            break;
-          }
-        }
-
-        $names[] = $origname;
+        $name = kolab_storage::folder_displayname($cal->get_name(), $names);
 
         $calendars[$cal->id] = array(
           'id'       => $cal->id,
@@ -159,6 +146,7 @@ class kolab_driver extends calendar_driver
     $folder = kolab_storage::folder_update($prop);
 
     if ($folder === false) {
+      $this->last_error = $this->cal->gettext(kolab_storage::$last_error);
       return false;
     }
 
@@ -192,6 +180,7 @@ class kolab_driver extends calendar_driver
       $newfolder = kolab_storage::folder_update($prop);
 
       if ($newfolder === false) {
+        $this->last_error = $this->cal->gettext(kolab_storage::$last_error);
         return false;
       }
 

@@ -109,19 +109,7 @@ class kolab_addressbook extends rcube_plugin
         $names   = array();
 
         foreach ($this->_list_sources() as $abook_id => $abook) {
-            $name = $origname = $abook->get_name();
-
-            // find folder prefix to truncate
-            for ($i = count($names)-1; $i >= 0; $i--) {
-                if (strpos($name, $names[$i].' &raquo; ') === 0) {
-                    $length = strlen($names[$i].' &raquo; ');
-                    $prefix = substr($name, 0, $length);
-                    $count  = count(explode(' &raquo; ', $prefix));
-                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
-                    break;
-                }
-            }
-            $names[] = $origname;
+            $name = kolab_storage::folder_displayname($abook->get_name(), $names);
 
             // register this address source
             $sources[$abook_id] = array(
@@ -420,92 +408,34 @@ class kolab_addressbook extends rcube_plugin
      */
     public function book_save()
     {
-        $storage   = $this->rc->get_storage();
-        $folder    = trim(get_input_value('_name', RCUBE_INPUT_POST, true, 'UTF7-IMAP'));
-        $oldfolder = trim(get_input_value('_oldname', RCUBE_INPUT_POST, true)); // UTF7-IMAP
-        $path      = trim(get_input_value('_parent', RCUBE_INPUT_POST, true)); // UTF7-IMAP
-        $delimiter = $storage->get_hierarchy_delimiter();
+        $prop = array(
+            'name' => trim(get_input_value('_name', RCUBE_INPUT_POST)),
+            'oldname' => trim(get_input_value('_oldname', RCUBE_INPUT_POST, true)), // UTF7-IMAP
+            'parent' => trim(get_input_value('_parent', RCUBE_INPUT_POST, true)), // UTF7-IMAP
+            'type' => 'contact',
+        );
 
-        if (strlen($oldfolder)) {
-            $options = $storage->folder_info($oldfolder);
-        }
+        $result = $error = false;
+        $type = strlen($prop['oldname']) ? 'update' : 'create';
+        $prop = $this->rc->plugins->exec_hook('addressbook_'.$type, $prop);
 
-        if (!empty($options) && ($options['norename'] || $options['protected'])) {
-        }
-        // sanity checks (from steps/settings/save_folder.inc)
-        else if (!strlen($folder)) {
-            $error = rcube_label('cannotbeempty');
-        }
-        else if (strlen($folder) > 128) {
-            $error = rcube_label('nametoolong');
+        if (!$prop['abort']) {
+            if ($newfolder = kolab_storage::folder_update($prop)) {
+                $folder = $newfolder;
+                $result = true;
+            }
+            else {
+                $error = kolab_storage::$last_error;
+            }
         }
         else {
-            // these characters are problematic e.g. when used in LIST/LSUB
-            foreach (array($delimiter, '%', '*') as $char) {
-                if (strpos($folder, $delimiter) !== false) {
-                    $error = rcube_label('forbiddencharacter') . " ($char)";
-                    break;
-                }
-            }
-        }
-
-        if (!$error) {
-            if (!empty($options) && ($options['protected'] || $options['norename'])) {
-                $folder = $oldfolder;
-            }
-            else if (strlen($path)) {
-                $folder = $path . $delimiter . $folder;
-            }
-            else {
-                // add namespace prefix (when needed)
-                $folder = $storage->mod_folder($folder, 'in');
-            }
-
-            // Check access rights to the parent folder
-            if (strlen($path) && (!strlen($oldfolder) || $oldfolder != $folder)) {
-                $parent_opts = $storage->folder_info($path);
-                if ($parent_opts['namespace'] != 'personal'
-                    && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
-                ) {
-                    $error = rcube_label('parentnotwritable');
-                }
-            }
-        }
-
-        if (!$error) {
-            // update the folder name
-            if (strlen($oldfolder)) {
-                $type = 'update';
-                $plugin = $this->rc->plugins->exec_hook('addressbook_update', array(
-                    'name' => $folder, 'oldname' => $oldfolder));
-
-                if (!$plugin['abort']) {
-                    if ($oldfolder != $folder)
-                        $result = kolab_storage::folder_rename($oldfolder, $folder);
-                    else
-                        $result = true;
-                }
-                else {
-                    $result = $plugin['result'];
-                }
-            }
-            // create new folder
-            else {
-                $type = 'create';
-                $plugin = $this->rc->plugins->exec_hook('addressbook_create', array('name' => $folder));
-
-                $folder = $plugin['name'];
-
-                if (!$plugin['abort']) {
-                    $result = kolab_storage::folder_create($folder, 'contact');
-                }
-                else {
-                    $result = $plugin['result'];
-                }
-            }
+            $result = $prop['result'];
+            $folder = $prop['name'];
         }
 
         if ($result) {
+            $storage = $this->rc->get_storage();
+            $delimiter = $storage->get_hierarchy_delimiter();
             $kolab_folder = new rcube_kolab_contacts($folder);
 
             // create display name for the folder (see self::address_sources())
@@ -519,19 +449,7 @@ class kolab_addressbook extends rcube_plugin
                         $realname = $folder;
                     }
 
-                    $name = $origname = $abook->get_name();
-
-                    // find folder prefix to truncate
-                    for ($i = count($names)-1; $i >= 0; $i--) {
-                        if (strpos($name, $names[$i].' &raquo; ') === 0) {
-                            $length = strlen($names[$i].' &raquo; ');
-                            $prefix = substr($name, 0, $length);
-                            $count  = count(explode(' &raquo; ', $prefix));
-                            $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
-                            break;
-                        }
-                    }
-                    $names[] = $origname;
+                    $name = kolab_storage::folder_displayname($abook->get_name(), $names);
 
                     if ($realname == $folder) {
                         break;
@@ -553,7 +471,7 @@ class kolab_addressbook extends rcube_plugin
                 'realname' => rcube_charset::convert($folder, 'UTF7-IMAP'), // IMAP folder name
                 'class_name' => $kolab_folder->get_namespace(),
                 'kolab'    => true,
-            ), kolab_storage::folder_id($oldfolder));
+            ), kolab_storage::folder_id($prop['oldname']));
 
             $this->rc->output->send('iframe');
         }

@@ -253,18 +253,18 @@ class kolab_storage
         }
         // sanity checks (from steps/settings/save_folder.inc)
         else if (!strlen($folder)) {
-            self::$last_error = 'Invalid folder name';
+            self::$last_error = 'cannotbeempty';
             return false;
         }
         else if (strlen($folder) > 128) {
-            self::$last_error = 'Folder name too long';
+            self::$last_error = 'nametoolong';
             return false;
         }
         else {
             // these characters are problematic e.g. when used in LIST/LSUB
             foreach (array($delimiter, '%', '*') as $char) {
                 if (strpos($folder, $delimiter) !== false) {
-                    self::$last_error = 'Invalid folder name';
+                    self::$last_error = 'forbiddencharacter';
                     return false;
                 }
             }
@@ -397,6 +397,30 @@ class kolab_storage
 
         return $folder;
     }
+
+
+    /**
+     * Helper method to generate a truncated folder name to display
+     */
+    public static function folder_displayname($origname, &$names)
+    {
+        $name = $origname;
+
+        // find folder prefix to truncate
+        for ($i = count($names)-1; $i >= 0; $i--) {
+            if (strpos($name, $names[$i] . ' &raquo; ') === 0) {
+                $length = strlen($names[$i] . ' &raquo; ');
+                $prefix = substr($name, 0, $length);
+                $count  = count(explode(' &raquo; ', $prefix));
+                $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                break;
+            }
+        }
+        $names[] = $origname;
+
+        return $name;
+    }
+
 
     /**
      * Creates a SELECT field with folders list
