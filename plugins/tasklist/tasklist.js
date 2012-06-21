@@ -49,7 +49,6 @@ function rcube_tasklist(settings)
     var selector = 'all';
     var filtermask = FILTER_MASK_ALL;
     var idcount = 0;
-    var selected_list;
     var saving_lock;
     var ui_loading;
     var taskcounts = {};
@@ -77,6 +76,7 @@ function rcube_tasklist(settings)
     /*  public members  */
     this.tasklists = rcmail.env.tasklists;
     this.selected_task;
+    this.selected_list;
 
     /*  public methods  */
     this.init = init;
@@ -85,6 +85,8 @@ function rcube_tasklist(settings)
     this.add_childtask = add_childtask;
     this.quicksearch = quicksearch;
     this.reset_search = reset_search;
+    this.list_remove = list_remove;
+    this.list_edit_dialog = list_edit_dialog;
 
 
     /**
@@ -92,16 +94,25 @@ function rcube_tasklist(settings)
      */
     function init()
     {
-        // select the first task list
-        for (var s in me.tasklists) {
-            selected_list = s;
-            break;
-        };
+        // sinitialize task list selectors
+        for (var id in me.tasklists) {
+            if ((li = rcmail.get_folder_li(id, 'rcmlitasklist'))) {
+                init_tasklist_li(li, id);
+            }
+
+            if (!me.tasklists.readonly && !me.selected_list) {
+                me.selected_list = id;
+                rcmail.enable_command('addtask', true);
+                $(li).click();
+            }
+        }
 
         // register server callbacks
         rcmail.addEventListener('plugin.data_ready', data_ready);
         rcmail.addEventListener('plugin.refresh_task', update_taskitem);
         rcmail.addEventListener('plugin.update_counts', update_counts);
+        rcmail.addEventListener('plugin.insert_tasklist', insert_list);
+        rcmail.addEventListener('plugin.update_tasklist', update_list);
         rcmail.addEventListener('plugin.reload_data', function(){ list_tasks(null); });
         rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, saving_lock); });
 
@@ -121,7 +132,7 @@ function rcube_tasklist(settings)
             var tasktext = this.elements.text.value;
             var rec = { id:-(++idcount), title:tasktext, readonly:true, mask:0, complete:0 };
 
-            save_task({ tempid:rec.id, raw:tasktext, list:selected_list }, 'new');
+            save_task({ tempid:rec.id, raw:tasktext, list:me.selected_list }, 'new');
             render_task(rec);
 
             // clear form
@@ -255,7 +266,11 @@ function rcube_tasklist(settings)
      */
     function fetch_counts()
     {
-        rcmail.http_request('counts');
+        var active = active_lists();
+        if (active.length)
+            rcmail.http_request('counts', { lists:active.join(',') });
+        else
+            update_counts({});
     }
 
     /**
@@ -268,8 +283,13 @@ function rcube_tasklist(settings)
             selector = sel;
         }
 
-        ui_loading = rcmail.set_busy(true, 'loading');
-        rcmail.http_request('fetch', { filter:filtermask, q:search_query }, true);
+        var active = active_lists();
+        if (active.length) {
+            ui_loading = rcmail.set_busy(true, 'loading');
+            rcmail.http_request('fetch', { filter:filtermask, lists:active.join(','), q:search_query }, true);
+        }
+        else
+            data_ready([]);
 
         $('#taskselector li.selected').removeClass('selected');
         $('#taskselector li.'+selector).addClass('selected');
@@ -373,7 +393,7 @@ function rcube_tasklist(settings)
             div.addClass('nodate');
         if ((rec.mask & FILTER_MASK_OVERDUE))
             div.addClass('overdue');
-console.log(replace)
+
         var li, parent;
         if (replace && (li = $('li[rel="'+replace+'"]', rcmail.gui_objects.resultlist)) && li.length) {
             li.children('div.taskhead').first().replaceWith(div);
@@ -545,6 +565,7 @@ console.log(replace)
         me.selected_task = rec;
 
         // fill dialog data
+        $('#task-parent-title').html(Q(rec.parent_title || '')+' &raquo;').css('display', rec.parent_title ? 'block' : 'none');
         $('#task-title').html(Q(rec.title || ''));
         $('#task-description').html(text2html(rec.description || '', 300, 6))[(rec.description ? 'show' : 'hide')]();
         $('#task-date')[(rec.date ? 'show' : 'hide')]().children('.task-text').html(Q(rec.date || rcmail.gettext('nodate','tasklist')));
@@ -590,7 +611,7 @@ console.log(replace)
             $dialog = $('<div>'),
             editform = $('#taskedit'),
             list = rec.list && me.tasklists[rec.list] ? me.tasklists[rec.list] :
-                (selected_list ? me.tasklists[selected_list] : { editable: action=='new' });
+                (me.selected_list ? me.tasklists[me.selected_list] : { editable: action=='new' });
 
         if (list.readonly || (action == 'edit' && (!rec || rec.readonly || rec.temp)))
             return false;
@@ -604,7 +625,7 @@ console.log(replace)
         var rectime = $('#edit-time').val(rec.time || '');
         var complete = $('#edit-completeness').val((rec.complete || 0) * 100);
         completeness_slider.slider('value', complete.val());
-        var tasklist = $('#edit-tasklist').val(rec.list || 0);
+        var tasklist = $('#edit-tasklist').val(rec.list || 0); // .prop('disabled', rec.parent_id ? true : false);
 
         $('#edit-nodate').unbind('click').click(function(){
             recdate.val('');
@@ -695,6 +716,108 @@ console.log(replace)
     {
         // TBD.
         return true;
+    }
+
+    /**
+     *
+     */
+    function list_edit_dialog(id)
+    {
+        var list = me.tasklists[id],
+            $dialog = $('#tasklistform').dialog('close');
+            editform = $('#tasklisteditform');
+
+        if (!list)
+            list = { name:'', editable:true, showalarms:true };
+
+        // fill edit form
+        var name = $('#edit-tasklistame').prop('disabled', !list.editable).val(list.editname || list.name),
+            alarms = $('#edit-showalarms').prop('checked', list.showalarms).get(0),
+            parent = $('#edit-parentfolder').val(list.parentfolder);
+
+        // dialog buttons
+        var buttons = {};
+
+        buttons[rcmail.gettext('save','tasklist')] = function() {
+          // do some input validation
+          if (!name.val() || name.val().length < 2) {
+            alert(rcmail.gettext('invalidlistproperties', 'tasklist'));
+            name.select();
+            return;
+          }
+
+          // post data to server
+          var data = editform.serializeJSON();
+          if (list.id)
+            data.id = list.id;
+          if (alarms)
+            data.showalarms = alarms.checked ? 1 : 0;
+        if (parent.length)
+            data.parentfolder = $('option:selected', parent).val();
+
+          saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
+          rcmail.http_post('tasklist', { action:(list.id ? 'edit' : 'new'), l:data });
+          $dialog.dialog('close');
+        };
+
+        buttons[rcmail.gettext('cancel','tasklist')] = function() {
+          $dialog.dialog('close');
+        };
+
+        // open jquery UI dialog
+        $dialog.dialog({
+          modal: true,
+          resizable: true,
+          closeOnEscape: false,
+          title: rcmail.gettext((list.id ? 'editlist' : 'createlist'), 'tasklist'),
+          close: function() { $dialog.dialog('destroy').hide(); },
+          buttons: buttons,
+          minWidth: 400,
+          width: 420
+        }).show();
+    }
+
+    /**
+     *
+     */
+    function list_remove(id)
+    {
+        var list = me.tasklists[id];
+        if (list && !list.readonly) {
+            alert('To be implemented')
+        }
+    }
+
+    /**
+     *
+     */
+    function insert_list(prop)
+    {
+        console.log(prop)
+        var li = $('<li>').attr('id', 'rcmlitasklist'+prop.id)
+            .append('<input type="checkbox" name="_list[]" value="'+prop.id+'" checked="checked" />')
+            .append('<span class="handle">&nbsp;</span>')
+            .append('<span class="listname">'+Q(prop.name)+'</span>');
+        $(rcmail.gui_objects.folderlist).append(li);
+        init_tasklist_li(li.get(0), prop.id);
+        me.tasklists[prop.id] = prop;
+    }
+
+    /**
+     *
+     */
+    function update_list(prop)
+    {
+        var id = prop.oldid || prop.id,
+            li = rcmail.get_folder_li(id, 'rcmlitasklist');
+
+        if (me.tasklists[id] && li) {
+            delete me.tasklists[id];
+            me.tasklists[prop.id] = prop;
+            $(li).data('id', prop.id);
+            $('#'+li.id+' input').data('id', prop.id);
+            $('.listname', li).html(Q(prop.name));
+        }
     }
 
     /**
@@ -828,10 +951,13 @@ console.log(replace)
      */
     function clear_popups(e)
     {
-        var count = 0;
+        var count = 0, target = e.target;
+        if (target && target.className == 'inner')
+            target = e.target.parentNode;
+
         $('.popupmenu:visible').each(function(i, elem){
-            var menu = $(elem);
-            if (!menu.data('sticky') || !target_overlaps(e.target, elem)) {
+            var menu = $(elem), id = elem.id;
+            if (target.id != id+'link' && (!menu.data('sticky') || !target_overlaps(e.target, elem))) {
                 menu.hide();
                 count++;
             }
@@ -852,7 +978,56 @@ console.log(replace)
         return false;
     }
 
+    /**
+     *
+     */
+    function active_lists()
+    {
+        var active = [];
+        for (var id in me.tasklists) {
+            if (me.tasklists[id].active)
+                active.push(id);
+        }
+        return active;
+    }
+
+    /**
+     * Register event handlers on a tasklist (folder) item
+     */
+    function init_tasklist_li(li, id)
+    {
+        $('#'+li.id+' input').click(function(e){
+            var id = $(this).data('id');
+            if (me.tasklists[id]) {  // add or remove event source on click
+                me.tasklists[id].active = this.checked;
+                fetch_counts();
+                list_tasks(null);
+                rcmail.http_post('tasklist', { action:'subscribe', l:{ id:id, active:me.tasklists[id].active?1:0 } });
+            }
+        }).data('id', id).get(0).checked = me.tasklists[id].active || false;
+
+        $(li).click(function(e){
+            var id = $(this).data('id');
+            rcmail.select_folder(id, 'rcmlitasklist');
+            rcmail.enable_command('list-edit', 'list-remove', 'import', !me.tasklists[id].readonly);
+            me.selected_list = id;
+      })
+//              .dblclick(function(){ list_edit_dialog(me.selected_list); })
+      .data('id', id);
+    }
 }
+
+
+// extend jQuery
+(function($){
+  $.fn.serializeJSON = function(){
+    var json = {};
+    jQuery.map($(this).serializeArray(), function(n, i) {
+      json[n['name']] = n['value'];
+    });
+    return json;
+  };
+})(jQuery);
 
 
 /* tasklist plugin UI initialization */
@@ -862,8 +1037,12 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rctasks = new rcube_tasklist(rcmail.env.tasklist_settings);
 
   // register button commands
-  //rcmail.register_command('addtask', function(){ tasks.add_task(); }, true);
-  //rcmail.register_command('print', function(){ tasks.print_list(); }, true);
+  //rcmail.register_command('addtask', function(){ rctasks.add_task(); }, true);
+  //rcmail.register_command('print', function(){ rctasks.print_list(); }, true);
+
+  rcmail.register_command('list-create', function(){ rctasks.list_edit_dialog(null); }, true);
+  rcmail.register_command('list-edit', function(){ rctasks.list_edit_dialog(rctasks.selected_list); }, false);
+  rcmail.register_command('list-remove', function(){ rctasks.list_remove(rctasks.selected_list); }, false);
 
   rcmail.register_command('search', function(){ rctasks.quicksearch(); }, true);
   rcmail.register_command('reset-search', function(){ rctasks.reset_search(); }, true);

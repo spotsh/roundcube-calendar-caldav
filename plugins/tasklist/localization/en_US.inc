@@ -31,6 +31,13 @@ $labels['save'] = 'Save';
 $labels['cancel'] = 'Cancel';
 $labels['addsubtask'] = 'Add subtask';
 
+$labels['editlist'] = 'Edit resource';
+$labels['createlist'] = 'Add resource';
+$labels['listactions'] = 'Resource options...';
+$labels['listname'] = 'Name';
+$labels['showalarms'] = 'Show alarms';
+$labels['import'] = 'Import';
+
 // date words
 $labels['on'] = 'on';
 $labels['at'] = 'at';

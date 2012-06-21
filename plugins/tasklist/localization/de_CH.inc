@@ -31,6 +31,13 @@ $labels['save'] = 'Speichern';
 $labels['cancel'] = 'Abbrechen';
 $labels['addsubtask'] = 'Neue Teilaufgabe';
 
+$labels['editlist'] = 'Ressource bearbeiten';
+$labels['createlist'] = 'Neue Ressource';
+$labels['listactions'] = 'Ressourcenoptionen...';
+$labels['listname'] = 'Name';
+$labels['showalarms'] = 'Erinnerungen anzeigen';
+$labels['import'] = 'Importieren';
+
 // date words
 $labels['on'] = 'am';
 $labels['at'] = 'um';

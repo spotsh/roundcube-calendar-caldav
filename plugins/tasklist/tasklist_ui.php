@@ -66,6 +66,7 @@ class tasklist_ui
         $this->plugin->register_handler('plugin.category_select', array($this, 'category_select'));
         $this->plugin->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));
         $this->plugin->register_handler('plugin.quickaddform', array($this, 'quickadd_form'));
+        $this->plugin->register_handler('plugin.tasklist_editform', array($this, 'tasklist_editform'));
         $this->plugin->register_handler('plugin.tasks', array($this, 'tasks_resultview'));
 
         $this->plugin->include_script('tasklist.js');
@@ -108,7 +109,7 @@ class tasklist_ui
                 $class .= ' '.$prop['class_name'];
 
             $li .= html::tag('li', array('id' => 'rcmlitasklist' . $html_id, 'class' => $class),
-                html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active'], 'disabled' => true)) .
+                html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active'])) .
                 html::span('handle', '&nbsp;') .
                 html::span('listname', Q($prop['name'])));
         }
@@ -133,6 +134,34 @@ class tasklist_ui
         }
 
         return $select->show(null);
+    }
+
+
+    function tasklist_editform($attrib = array())
+    {
+        $fields = array(
+            'name' => array(
+                'id' => 'edit-tasklistame',
+                'label' => $this->plugin->gettext('listname'),
+                'value' => html::tag('input', array('id' => 'edit-tasklistame', 'name' => 'name', 'type' => 'text', 'class' => 'text', 'size' => 40)),
+            ),
+/*
+            'color' => array(
+                'id' => 'edit-color',
+                'label' => $this->plugin->gettext('color'),
+                'value' => html::tag('input', array('id' => 'edit-color', 'name' => 'color', 'type' => 'text', 'class' => 'text colorpicker', 'size' => 6)),
+            ),
+            'showalarms' => array(
+                'id' => 'edit-showalarms',
+                'label' => $this->plugin->gettext('showalarms'),
+                'value' => html::tag('input', array('id' => 'edit-showalarms', 'name' => 'color', 'type' => 'checkbox')),
+            ),
+*/
+        );
+
+        return html::tag('form', array('action' => "#", 'method' => "post", 'id' => 'tasklisteditform'),
+            $this->plugin->driver->tasklist_edit_form($fields)
+        );
     }
 
     /**

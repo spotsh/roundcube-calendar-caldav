@@ -64,10 +64,6 @@ body.tasklistview #searchmenulink {
 	border-radius: 0 0 4px 4px;
 }
 
-#taskselector li.selected {
-	background-color: #c7e3ef;
-}
-
 #taskselector li.overdue a {
 	color: #b72a2a;
 	font-weight: bold;
@@ -158,14 +154,6 @@ body.tasklistview #searchmenulink {
 	position: absolute;
 	top: 5px;
 	right: 5px;
-}
-
-#tasklists li.selected {
-	background-color: #c7e3ef;
-}
-
-#tasklists li.selected span.calname {
-	font-weight: bold;
 }
 
 #mainview-right {
@@ -459,6 +447,11 @@ ul.toolbarmenu li span.delete {
 
 #taskshow label {
 	color: #999;
+}
+
+#task-parent-title {
+	position: relative;
+	top: -0.6em;
 }
 
 a.morelink {

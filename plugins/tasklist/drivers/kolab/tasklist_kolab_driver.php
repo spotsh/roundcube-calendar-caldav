@@ -69,14 +69,27 @@ class tasklist_kolab_driver extends tasklist_driver
 
         asort($names, SORT_LOCALE_STRING);
 
+        $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
+        $listnames = array();
+
         foreach ($names as $utf7name => $name) {
             $folder = $this->folders[$utf7name];
+
+            $path_imap = explode($delim, $name);
+            $editname = array_pop($path_imap);  // pop off raw name part
+            $path_imap = join($delim, $path_imap);
+
+            $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);
+
             $tasklist = array(
                 'id' => kolab_storage::folder_id($utf7name),
-                'name' => kolab_storage::object_name($utf7name),
+                'name' => $name,
+                'editname' => $editname,
                 'color' => 'CC0000',
                 'showalarms' => false,
-                'active' => 1, #$folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
+                'editable' => true,
+                'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
+                'parentfolder' => $path_imap,
             );
             $this->lists[$tasklist['id']] = $tasklist;
             $this->folders[$tasklist['id']] = $folder;
@@ -108,7 +121,17 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function create_list($prop)
     {
-        return false;
+        $prop['type'] = 'task';
+        $prop['subscribed'] = kolab_storage::SERVERSIDE_SUBSCRIPTION; // subscribe to folder by default
+        $folder = kolab_storage::folder_update($prop);
+
+        if ($folder === false) {
+            $this->last_error = kolab_storage::$last_error;
+            return false;
+        }
+
+        // create ID
+        return kolab_storage::folder_id($folder);
     }
 
     /**
@@ -123,6 +146,20 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function edit_list($prop)
     {
+        if ($prop['id'] && ($folder = $this->folders[$prop['id']])) {
+            $prop['oldname'] = $folder->name;
+            $prop['type'] = 'task';
+            $newfolder = kolab_storage::folder_update($prop);
+
+            if ($newfolder === false) {
+                $this->last_error = kolab_storage::$last_error;
+                return false;
+            }
+
+            // create ID
+            return kolab_storage::folder_id($newfolder);
+        }
+
         return false;
     }
 
@@ -136,6 +173,9 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function subscribe_list($prop)
     {
+        if ($prop['id'] && ($folder = $this->folders[$prop['id']])) {
+            return $folder->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
+        }
         return false;
     }
 
@@ -148,6 +188,13 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function remove_list($prop)
     {
+        if ($prop['id'] && ($folder = $this->folders[$prop['id']])) {
+          if (kolab_storage::folder_delete($folder->name))
+              return true;
+          else
+              $this->last_error = kolab_storage::$last_error;
+        }
+
         return false;
     }
 
@@ -418,5 +465,20 @@ class tasklist_kolab_driver extends tasklist_driver
         return false;
     }
 
+
+    /**
+     * 
+     */
+    public function tasklist_edit_form($formfields)
+    {
+        $select = kolab_storage::folder_selector('task', array('name' => 'parent', 'id' => 'edit-parentfolder'), null);
+        $formfields['parent'] = array(
+            'id' => 'edit-parentfolder',
+            'label' => $this->plugin->gettext('parentfolder'),
+            'value' => $select->show(''),
+        );
+        
+        return parent::tasklist_edit_form($formfields);
+    }
 
 }

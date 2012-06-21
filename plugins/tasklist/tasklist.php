@@ -273,14 +273,39 @@ class tasklist extends rcube_plugin
         $list  = get_input_value('l', RCUBE_INPUT_POST, true);
         $success = false;
 
+        if (isset($list['showalarms']))
+          $list['showalarms'] = intval($list['showalarms']);
+
         switch ($action) {
-            
+        case 'new':
+            $list += array('showalarms' => true, 'active' => true);
+            if ($insert_id = $this->driver->create_list($list)) {
+                $list['id'] = $insert_id;
+                $this->rc->output->command('plugin.insert_tasklist', $list);
+                $success = true;
+            }
+            break;
+
+        case 'edit':
+            if ($newid = $this->driver->edit_list($list)) {
+                $list['oldid'] = $list['id'];
+                $list['id'] = $newid;
+                $this->rc->output->command('plugin.update_tasklist', $list);
+                $success = true;
+            }
+            break;
+
+        case 'subscribe':
+            $success = $this->driver->subscribe_list($list);
+            break;
         }
 
         if ($success)
             $this->rc->output->show_message('successfullysaved', 'confirmation');
         else
             $this->rc->output->show_message('tasklist.errorsaving', 'error');
+
+        $this->rc->output->command('plugin.unlock_saving');
     }
 
     /**
@@ -314,7 +339,7 @@ class tasklist extends rcube_plugin
         $f = intval(get_input_value('filter', RCUBE_INPUT_GPC));
         $search = get_input_value('q', RCUBE_INPUT_GPC);
         $filter = array('mask' => $f, 'search' => $search);
-        $lists = null;
+        $lists = get_input_value('lists', RCUBE_INPUT_GPC);;
 
         // convert magic date filters into a real date range
         switch ($f) {
@@ -347,10 +372,9 @@ class tasklist extends rcube_plugin
 
         }
 
-        $data = $this->task_tree = $this->tasks_childs = array();
+        $data = $this->task_tree = $this->task_titles = array();
         foreach ($this->driver->list_tasks($filter, $lists) as $rec) {
             if ($rec['parent_id']) {
-                $this->tasks_childs[$rec['parent_id']]++;
                 $this->task_tree[$rec['id']] = $rec['parent_id'];
             }
             $this->encode_task($rec);
@@ -391,17 +415,17 @@ class tasklist extends rcube_plugin
             $rec['_hasdate'] = 0;
         }
 
-        if ($this->tasks_childs[$rec['id']])
-            $rec['_haschilds'] = $this->tasks_childs[$rec['id']];
-
         if (!isset($rec['_depth'])) {
             $rec['_depth'] = 0;
             $parent_id = $this->task_tree[$rec['id']];
             while ($parent_id) {
                 $rec['_depth']++;
+                $rec['parent_title'] = $this->task_titles[$parent_id];
                 $parent_id = $this->task_tree[$parent_id];
             }
         }
+
+        $this->task_titles[$rec['id']] = $rec['title'];
     }
 
     /**

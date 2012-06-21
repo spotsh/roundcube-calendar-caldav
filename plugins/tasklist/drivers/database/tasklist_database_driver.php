@@ -75,6 +75,7 @@ class tasklist_database_driver extends tasklist_driver
         while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
           $arr['showalarms'] = intval($arr['showalarms']);
           $arr['active'] = !in_array($arr['id'], $hidden);
+          $arr['editable'] = true;
           $this->lists[$arr['id']] = $arr;
           $list_ids[] = $this->rc->db->quote($arr['id']);
         }
@@ -133,7 +134,7 @@ class tasklist_database_driver extends tasklist_driver
         $query = $this->rc->db->query(
             "UPDATE " . $this->db_lists . "
              SET   name=?, color=?, showalarms=?
-             WHERE calendar_id=?
+             WHERE tasklist_id=?
              AND   user_id=?",
             $prop['name'],
             $prop['color'],
@@ -288,7 +289,8 @@ class tasklist_database_driver extends tasklist_driver
                 "SELECT * FROM " . $this->db_tasks . "
                  WHERE tasklist_id IN (%s)
                  AND del=0
-                 %s",
+                 %s
+                 ORDER BY parent_id, task_id ASC",
                  join(',', $list_ids),
                  $sql_add
                 ),
@@ -407,6 +409,11 @@ class tasklist_database_driver extends tasklist_driver
         foreach (array('parent_id', 'date', 'time') as $col) {
             if (isset($prop[$col]))
                 $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . (empty($prop[$col]) ? 'NULL' : $this->rc->db->quote($prop[$col]));
+        }
+
+        // moved from another list
+        if ($prop['_fromlist'] && ($newlist = $prop['list'])) {
+            $sql_set[] = 'tasklist_id=' . $this->rc->db->quote($newlist);
         }
 
         $query = $this->rc->db->query(sprintf(

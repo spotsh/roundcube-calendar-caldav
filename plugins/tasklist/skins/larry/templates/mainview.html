@@ -74,7 +74,19 @@
 	</ul>
 </div>
 
+<div id="tasklistoptionsmenu" class="popupmenu">
+	<ul class="toolbarmenu">
+		<li><roundcube:button command="list-edit" label="edit" classAct="active" /></li>
+		<li><roundcube:button command="list-remove" label="delete" classAct="active" /></li>
+		<li><roundcube:button command="list-import" label="tasklist.import" classAct="active" /></li>
+		<roundcube:if condition="env:tasklist_driver == 'kolab'" />
+		<li><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
+		<roundcube:endif />
+	</ul>
+</div>
+
 <div id="taskshow">
+	<div class="form-section" id="task-parent-title"></div>
 	<div class="form-section">
 		<h2 id="task-title"></h2>
 	</div>
@@ -123,6 +135,10 @@
 			<roundcube:object name="plugin.tasklist_select" id="edit-tasklist" />
 		</div>
 	</form>
+</div>
+
+<div id="tasklistform" class="uidialog">
+	<roundcube:object name="plugin.tasklist_editform" />
 </div>
 
 <script type="text/javascript">

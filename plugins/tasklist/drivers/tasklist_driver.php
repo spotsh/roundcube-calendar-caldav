@@ -181,4 +181,23 @@ abstract class tasklist_driver
         return $rcmail->config->get('tasklist_categories', array());
     }
 
+    /**
+     * Build the edit/create form for lists.
+     * This gives the drivers the opportunity to add more list properties
+     *
+     * @param array List with form fields to be rendered
+     * @return string HTML content of the form
+     */
+    public function tasklist_edit_form($formfields)
+    {
+        $html = '';
+        foreach ($formfields as $prop => $field) {
+            $html .= html::div('form-section',
+                html::label($field['id'], $field['label']) .
+                $field['value']);
+        }
+
+        return $html;
+    }
+
 }
