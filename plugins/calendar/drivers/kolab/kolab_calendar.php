@@ -26,9 +26,6 @@
 
 class kolab_calendar
 {
-  const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
-  const COLOR_KEY_PRIVATE = '/shared/vendor/kolab/color';
-  
   public $id;
   public $ready = false;
   public $readonly = true;
@@ -146,8 +143,8 @@ class kolab_calendar
   public function get_color()
   {
     // color is defined in folder METADATA
-    $metadata = $this->storage->get_metadata(array(self::COLOR_KEY_PRIVATE, self::COLOR_KEY_SHARED));
-    if (($color = $metadata[self::COLOR_KEY_PRIVATE]) || ($color = $metadata[self::COLOR_KEY_SHARED])) {
+    $metadata = $this->storage->get_metadata(array(kolab_storage::COLOR_KEY_PRIVATE, kolab_storage::COLOR_KEY_SHARED));
+    if (($color = $metadata[kolab_storage::COLOR_KEY_PRIVATE]) || ($color = $metadata[kolab_storage::COLOR_KEY_SHARED])) {
       return $color;
     }
 

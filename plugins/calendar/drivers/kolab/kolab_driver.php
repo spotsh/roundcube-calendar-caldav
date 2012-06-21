@@ -154,15 +154,13 @@ class kolab_driver extends calendar_driver
    */
   public function create_calendar($prop)
   {
-    $folder = $this->folder_update($prop);
+    $prop['type'] = 'event';
+    $prop['subscribed'] = $prop['active'] ? kolab_storage::SERVERSIDE_SUBSCRIPTION : null;
+    $folder = kolab_storage::folder_update($prop);
 
     if ($folder === false) {
       return false;
     }
-    
-    // subscribe to new calendar by default
-    $storage = kolab_storage::get_folder($folder);
-    $storage->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
 
     // create ID
     $id = kolab_storage::folder_id($folder);
@@ -190,8 +188,8 @@ class kolab_driver extends calendar_driver
   public function edit_calendar($prop)
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
-      $oldfolder = $cal->get_realname();
-      $newfolder = $this->folder_update($prop);
+      $prop['oldname'] = $cal->get_realname();
+      $newfolder = kolab_storage::folder_update($prop);
 
       if ($newfolder === false) {
         return false;
@@ -231,97 +229,6 @@ class kolab_driver extends calendar_driver
     }
 
     return false;
-  }
-
-
-  /**
-   * Rename or Create a new IMAP folder
-   *
-   * @param array Hash array with calendar properties
-   *
-   * @return mixed New folder name or False on failure
-   */
-  private function folder_update(&$prop)
-  {
-    $folder    = rcube_charset::convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
-    $oldfolder = $prop['oldname']; // UTF7
-    $parent    = $prop['parent']; // UTF7
-    $storage   = $this->rc->get_storage();
-    $delimiter = $storage->get_hierarchy_delimiter();
-
-    if (strlen($oldfolder)) {
-        $options = $storage->folder_info($oldfolder);
-    }
-
-    if (!empty($options) && ($options['norename'] || $options['protected'])) {
-    }
-    // sanity checks (from steps/settings/save_folder.inc)
-    else if (!strlen($folder)) {
-      $this->last_error = 'Invalid folder name';
-      return false;
-    }
-    else if (strlen($folder) > 128) {
-      $this->last_error = 'Folder name too long';
-      return false;
-    }
-    else {
-      // these characters are problematic e.g. when used in LIST/LSUB
-      foreach (array($delimiter, '%', '*') as $char) {
-        if (strpos($folder, $delimiter) !== false) {
-          $this->last_error = 'Invalid folder name';
-          return false;
-        }
-      }
-    }
-
-    if (!empty($options) && ($options['protected'] || $options['norename'])) {
-      $folder = $oldfolder;
-    }
-    else if (strlen($parent)) {
-      $folder = $parent . $delimiter . $folder;
-    }
-    else {
-      // add namespace prefix (when needed)
-      $folder = $storage->mod_folder($folder, 'in');
-    }
-
-    // Check access rights to the parent folder
-    if (strlen($parent) && (!strlen($oldfolder) || $oldfolder != $folder)) {
-      $parent_opts = $storage->folder_info($parent);
-      if ($parent_opts['namespace'] != 'personal'
-        && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
-      ) {
-        $this->last_error = 'No permission to create folder';
-        return false;
-      }
-    }
-
-    // update the folder name
-    if (strlen($oldfolder)) {
-      if ($oldfolder != $folder) {
-        if (!($result = kolab_storage::folder_rename($oldfolder, $folder)))
-          $this->last_error = kolab_storage::$last_error;
-      }
-      else
-        $result = true;
-    }
-    // create new folder
-    else {
-      if (!($result = kolab_storage::folder_create($folder, 'event')))
-        $this->last_error = kolab_storage::$last_error;
-    }
-
-    // save color in METADATA
-    // TODO: also save 'showalarams' and other properties here
-
-    if ($result && $prop['color']) {
-      if (!($meta_saved = $storage->set_metadata(array(kolab_calendar::COLOR_KEY_SHARED => $prop['color']))))  // try in shared namespace
-        $meta_saved = $storage->set_metadata(array(kolab_calendar::COLOR_KEY_PRIVATE => $prop['color']));    // try in private namespace
-      if ($meta_saved)
-        unset($prop['color']);  // unsetting will prevent fallback to local user prefs
-    }
-
-    return $result ? $folder : false;
   }
 
 

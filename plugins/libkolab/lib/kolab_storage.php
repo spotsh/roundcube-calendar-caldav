@@ -25,6 +25,8 @@
 class kolab_storage
 {
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
+    const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
+    const COLOR_KEY_PRIVATE = '/shared/vendor/kolab/color';
     const SERVERSIDE_SUBSCRIPTION = 0;
     const CLIENTSIDE_SUBSCRIPTION = 1;
 
@@ -219,6 +221,102 @@ class kolab_storage
         self::$last_error = self::$imap->get_error_str();
 
         return $success;
+    }
+
+
+    /**
+     * Rename or Create a new IMAP folder.
+     *
+     * Does additional checks for permissions and folder name restrictions
+     *
+     * @param array Hash array with folder properties and metadata
+     *  - name: Folder name
+     *  - oldname: Old folder name when changed
+     *  - parent: Parent folder to create the new one in
+     *  - type: Folder type to create
+     * @return mixed New folder name or False on failure
+     */
+    public static function folder_update(&$prop)
+    {
+        self::setup();
+
+        $folder    = rcube_charset::convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+        $oldfolder = $prop['oldname']; // UTF7
+        $parent    = $prop['parent']; // UTF7
+        $delimiter = self::$imap->get_hierarchy_delimiter();
+
+        if (strlen($oldfolder)) {
+            $options = self::$imap->folder_info($oldfolder);
+        }
+
+        if (!empty($options) && ($options['norename'] || $options['protected'])) {
+        }
+        // sanity checks (from steps/settings/save_folder.inc)
+        else if (!strlen($folder)) {
+            self::$last_error = 'Invalid folder name';
+            return false;
+        }
+        else if (strlen($folder) > 128) {
+            self::$last_error = 'Folder name too long';
+            return false;
+        }
+        else {
+            // these characters are problematic e.g. when used in LIST/LSUB
+            foreach (array($delimiter, '%', '*') as $char) {
+                if (strpos($folder, $delimiter) !== false) {
+                    self::$last_error = 'Invalid folder name';
+                    return false;
+                }
+            }
+        }
+
+        if (!empty($options) && ($options['protected'] || $options['norename'])) {
+            $folder = $oldfolder;
+        }
+        else if (strlen($parent)) {
+            $folder = $parent . $delimiter . $folder;
+        }
+        else {
+            // add namespace prefix (when needed)
+            $folder = self::$imap->mod_folder($folder, 'in');
+        }
+
+        // Check access rights to the parent folder
+        if (strlen($parent) && (!strlen($oldfolder) || $oldfolder != $folder)) {
+            $parent_opts = self::$imap->folder_info($parent);
+            if ($parent_opts['namespace'] != 'personal'
+                && (empty($parent_opts['rights']) || !preg_match('/[ck]/', implode($parent_opts['rights'])))
+            ) {
+                self::$last_error = 'No permission to create folder';
+                return false;
+          }
+        }
+
+        // update the folder name
+        if (strlen($oldfolder)) {
+            if ($oldfolder != $folder) {
+                $result = self::folder_rename($oldfolder, $folder);
+          }
+          else
+              $result = true;
+        }
+        // create new folder
+        else {
+            $result = self::folder_create($folder, $prop['type'], $prop['subscribed'] === self::SERVERSIDE_SUBSCRIPTION);
+        }
+
+        // save color in METADATA
+        // TODO: also save 'showalarams' and other properties here
+        // TODO: change private/shared precedence depending on private or shared folder
+
+        if ($result && $prop['color']) {
+            if (!($meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_SHARED => $prop['color']))))  // try in shared namespace
+                $meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_PRIVATE => $prop['color']));    // try in private namespace
+            if ($meta_saved)
+                unset($prop['color']);  // unsetting will prevent fallback to local user prefs
+        }
+
+        return $result ? $folder : false;
     }
 
 
