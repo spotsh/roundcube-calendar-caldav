@@ -6,12 +6,15 @@
  * @licence GNU AGPL
  **/
 
-CREATE TABLE IF NOT EXISTS `kolab_cache` (
+DROP TABLE IF EXISTS `kolab_cache`;
+
+CREATE TABLE `kolab_cache` (
   `resource` VARCHAR(255) CHARACTER SET ascii NOT NULL,
   `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
   `msguid` BIGINT UNSIGNED NOT NULL,
   `uid` VARCHAR(128) CHARACTER SET ascii NOT NULL,
   `created` DATETIME DEFAULT NULL,
+  `changed` DATETIME DEFAULT NULL,
   `data` TEXT NOT NULL,
   `xml` TEXT NOT NULL,
   `dtstart` DATETIME,

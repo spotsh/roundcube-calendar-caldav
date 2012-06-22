@@ -23,8 +23,6 @@
  */
 class kolab_storage_folder
 {
-    const KTYPE_PREFIX = 'application/x-vnd.kolab.';
-
     /**
      * The folder name.
      * @var string
@@ -358,7 +356,7 @@ class kolab_storage_folder
             if ($param[0] == 'type') {
                 $type = $param[2];
             }
-            else if (($param[0] == 'dtstart' || $param[0] == 'dtend') && is_numeric($param[2])) {
+            else if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed') && is_numeric($param[2])) {
               $query[$i][2] = date('Y-m-d H:i:s', $param[2]);
             }
         }
@@ -428,8 +426,8 @@ class kolab_storage_folder
         $this->imap->set_folder($folder);
 
         $headers = $this->imap->get_message_headers($msguid);
-        $object_type = preg_replace('/dictionary.[a-z]+$/', 'dictionary', substr($headers->others['x-kolab-type'], strlen(self::KTYPE_PREFIX)));
-        $content_type  = self::KTYPE_PREFIX . $object_type;
+        $object_type = kolab_format::mime2object_type($headers->others['x-kolab-type']);
+        $content_type  = kolab_format::KTYPE_PREFIX . $object_type;
 
         // check object type header and abort on mismatch
         if ($type != '*' && $object_type != $type)
@@ -719,7 +717,7 @@ class kolab_storage_folder
             $headers['To'] = $ident['email'];
         }
         $headers['Date'] = date('r');
-        $headers['X-Kolab-Type'] = self::KTYPE_PREFIX . $type;
+        $headers['X-Kolab-Type'] = kolab_format::KTYPE_PREFIX . $type;
         $headers['X-Kolab-Mime-Version'] = kolab_format::VERSION;
         $headers['Subject'] = $object['uid'];
 //        $headers['Message-ID'] = $rcmail->gen_message_id();

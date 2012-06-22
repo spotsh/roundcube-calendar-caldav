@@ -40,6 +40,7 @@ abstract class kolab_format
     protected $loaded = false;
 
     const VERSION = '3.0';
+    const KTYPE_PREFIX = 'application/x-vnd.kolab.';
 
     /**
      * Factory method to instantiate a kolab_format object of the given type
@@ -164,6 +165,17 @@ abstract class kolab_format
                 $vec->push($val);
         }
         return $vec;
+    }
+
+    /**
+     * Parse the X-Kolab-Type header from MIME messages and return the object type in short form
+     *
+     * @param string X-Kolab-Type header value
+     * @return string Kolab object type (contact,event,task,note,etc.)
+     */
+    public static function mime2object_type($x_kolab_type)
+    {
+        return preg_replace('/dictionary.[a-z.]+$/', 'dictionary', substr($x_kolab_type, strlen(self::KTYPE_PREFIX)));
     }
 
     /**

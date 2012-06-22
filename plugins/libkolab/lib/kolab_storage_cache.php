@@ -215,12 +215,13 @@ class kolab_storage_cache
 
                 $result = $this->db->query(
                     "INSERT INTO kolab_cache ".
-                    " (resource, type, msguid, uid, created, data, xml, dtstart, dtend, tags, words)".
-                    " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?)",
+                    " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words)".
+                    " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?, ?)",
                     $this->resource_uri,
                     $objtype,
                     $msguid,
                     $object['uid'],
+                    $sql_data['changed'],
                     $sql_data['data'],
                     $sql_data['xml'],
                     $sql_data['dtstart'],
@@ -331,7 +332,7 @@ class kolab_storage_cache
                 $index = $this->index;
             }
             else {  // search by object type
-                $search = 'UNDELETED HEADER X-Kolab-Type ' . kolab_storage_folder::KTYPE_PREFIX . $filter['type'];
+                $search = 'UNDELETED HEADER X-Kolab-Type ' . kolab_format::KTYPE_PREFIX . $filter['type'];
                 $index = $this->imap->search_once($this->folder->name, $search)->get();
             }
 
@@ -369,7 +370,7 @@ class kolab_storage_cache
         else {
             // search IMAP by object type
             $filter = $this->_query2assoc($query);
-            $ctype  = kolab_storage_folder::KTYPE_PREFIX . $filter['type'];
+            $ctype  = kolab_format::KTYPE_PREFIX . $filter['type'];
             $index = $this->imap->search_once($this->folder->name, 'UNDELETED HEADER X-Kolab-Type ' . $ctype);
             $count = $index->count();
         }
@@ -464,7 +465,7 @@ class kolab_storage_cache
 
         $results = array();
         foreach ((array)$this->imap->fetch_headers($this->folder->name, $index, false) as $msguid => $headers) {
-            $object_type = preg_replace('/dictionary.[a-z]+$/', 'dictionary', substr($headers->others['x-kolab-type'], strlen(kolab_storage_folder::KTYPE_PREFIX)));
+            $object_type = kolab_format::mime2object_type($headers->others['x-kolab-type']);
 
             // check object type header and abort on mismatch
             if ($type != '*' && $object_type != $type)
@@ -485,7 +486,7 @@ class kolab_storage_cache
     private function _serialize($object)
     {
         $bincols = array_flip($this->binary_cols);
-        $sql_data = array('dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
+        $sql_data = array('changed' => null, 'dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
         $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
 
         // set type specific values
@@ -504,6 +505,10 @@ class kolab_storage_cache
                 $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
             if ($object['due'])
                 $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['due'])   ? $object['due']->format('U')   : $object['due']);
+        }
+
+        if ($object['changed']) {
+            $sql_data['changed'] = date('Y-m-d H:i:s', is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);
         }
 
         if ($object['_formatobj']) {
@@ -581,6 +586,7 @@ class kolab_storage_cache
                 $this->db->quote($msguid),
                 $this->db->quote($object['uid']),
                 $this->db->now(),
+                $this->db->quote($sql_data['changed']),
                 $this->db->quote($sql_data['data']),
                 $this->db->quote($sql_data['xml']),
                 $this->db->quote($sql_data['dtstart']),
@@ -594,7 +600,7 @@ class kolab_storage_cache
         if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet))) {
             $result = $this->db->query(
                 "INSERT INTO kolab_cache ".
-                " (resource, type, msguid, uid, created, data, xml, dtstart, dtend, tags, words)".
+                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words)".
                 " VALUES $buffer"
             );
             if (!$this->db->affected_rows($result)) {
