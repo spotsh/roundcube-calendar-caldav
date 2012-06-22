@@ -356,8 +356,11 @@ class kolab_storage_folder
             if ($param[0] == 'type') {
                 $type = $param[2];
             }
-            else if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed') && is_numeric($param[2])) {
-              $query[$i][2] = date('Y-m-d H:i:s', $param[2]);
+            else if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed')) {
+                if (is_object($param[2]) && is_a($param[2], 'DateTime'))
+                    $param[2] = $param[2]->format('U');
+                if (is_numeric($param[2]))
+                    $query[$i][2] = date('Y-m-d H:i:s', $param[2]);
             }
         }
 
