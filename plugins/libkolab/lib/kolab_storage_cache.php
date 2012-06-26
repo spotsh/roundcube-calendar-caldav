@@ -680,6 +680,8 @@ class kolab_storage_cache
             $this->resource_uri,
             'lock'
         );
+
+        $this->synclock = false;
     }
 
     /**
