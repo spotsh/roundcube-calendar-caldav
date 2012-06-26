@@ -135,6 +135,8 @@ class kolab_format_contact extends kolab_format
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
 
+        $object['changed'] = new DateTime('now', self::$timezone);
+
         // do the hard work of setting object values
         $nc = new NameComponents;
         $nc->setSurnames(self::array2vector($object['surname']));

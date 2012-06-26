@@ -49,6 +49,8 @@ class kolab_format_distributionlist extends kolab_format
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
 
+        $object['changed'] = new DateTime('now', self::$timezone);
+
         $this->obj->setName($object['name']);
 
         $seen = array();

@@ -221,6 +221,8 @@ abstract class kolab_format_xcal extends kolab_format
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
 
+        $object['changed'] = new DateTime('now', self::$timezone);
+
         // increment sequence
         $this->obj->setSequence($this->obj->sequence()+1);
 

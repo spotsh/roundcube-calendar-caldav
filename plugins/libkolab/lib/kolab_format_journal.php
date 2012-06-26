@@ -49,6 +49,8 @@ class kolab_format_journal extends kolab_format
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
 
+        $object['changed'] = new DateTime('now', self::$timezone);
+
         // TODO: set object propeties
 
         // cache this data
