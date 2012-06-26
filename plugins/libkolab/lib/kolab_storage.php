@@ -164,7 +164,9 @@ class kolab_storage
      */
     public static function folder_delete($name)
     {
-        self::setup();
+        // clear cached entries first
+        if ($folder = self::get_folder($name))
+            $folder->cache->purge();
 
         $success = self::$imap->delete_folder($name);
         self::$last_error = self::$imap->get_error_str();
