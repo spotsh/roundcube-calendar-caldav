@@ -70,7 +70,7 @@ class kolab_folders extends rcube_plugin
         $this->is_processing = true;
 
         // get folders
-        $folders = kolab_storage::list_folders($args['root'], $args['name'], $args['filter'], $args['mode'] == 'LSUB');
+        $folders = kolab_storage::list_folders($args['root'], $args['name'], $args['filter'], $args['mode'] == 'LSUB', $folderdata);
 
         $this->is_processing = false;
 
@@ -80,7 +80,7 @@ class kolab_folders extends rcube_plugin
 
         // Create default folders
         if ($args['root'] == '' && $args['name'] = '*') {
-            $this->create_default_folders($folders, $args['filter']);
+            $this->create_default_folders($folders, $args['filter'], $folderdata);
         }
 
         $args['folders'] = $folders;
@@ -420,20 +420,23 @@ class kolab_folders extends rcube_plugin
     /**
      * Creates default folders if they doesn't exist
      */
-    private function create_default_folders(&$folders, $filter)
+    private function create_default_folders(&$folders, $filter, $folderdata = null)
     {
         $storage     = $this->rc->get_storage();
         $namespace   = $storage->get_namespace();
-        $folderdata  = $storage->get_metadata('*', kolab_storage::CTYPE_KEY);
         $defaults    = array();
         $need_update = false;
 
         if (!is_array($folderdata)) {
-            return;
-        }
+            $folderdata = $storage->get_metadata('*', kolab_storage::CTYPE_KEY);
 
-        // "Flattenize" metadata array to become a name->type hash
-        $folderdata = array_map('implode', $folderdata);
+            if (!is_array($folderdata)) {
+                return;
+            }
+
+            // "Flattenize" metadata array to become a name->type hash
+            $folderdata = array_map('implode', $folderdata);
+        }
 
         // Find personal namespace prefix
         if (is_array($namespace['personal']) && count($namespace['personal']) == 1) {
