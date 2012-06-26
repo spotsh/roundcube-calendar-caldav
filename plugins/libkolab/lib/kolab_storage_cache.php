@@ -202,49 +202,66 @@ class kolab_storage_cache
             return;
         }
 
-        // write to cache
+        // remove old entry
         if ($this->ready) {
-            // remove old entry
             $this->db->query("DELETE FROM kolab_cache WHERE resource=? AND msguid=? AND type<>?",
                 $this->resource_uri, $msguid, 'lock');
+        }
 
-            // write new object data if not false (wich means deleted)
-            if ($object) {
-                $sql_data = $this->_serialize($object);
-                $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
+        if ($object) {
+            // insert new object data...
+            $this->insert($msguid, $object);
+        }
+        else {
+            // ...or set in-memory cache to false
+            $this->objects[$msguid] = $object;
+        }
+    }
 
-                $result = $this->db->query(
-                    "INSERT INTO kolab_cache ".
-                    " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words)".
-                    " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?, ?)",
-                    $this->resource_uri,
-                    $objtype,
-                    $msguid,
-                    $object['uid'],
-                    $sql_data['changed'],
-                    $sql_data['data'],
-                    $sql_data['xml'],
-                    $sql_data['dtstart'],
-                    $sql_data['dtend'],
-                    $sql_data['tags'],
-                    $sql_data['words']
-                );
 
-                if (!$this->db->affected_rows($result)) {
-                    rcube::raise_error(array(
-                        'code' => 900, 'type' => 'php',
-                        'message' => "Failed to write to kolab cache"
-                    ), true);
-                }
+    /**
+     * Insert a cache entry
+     *
+     * @param string Related IMAP message UID
+     * @param mixed  Hash array with object properties to save or false to delete the cache entry
+     */
+    public function insert($msguid, $object)
+    {
+        // write to cache
+        if ($this->ready) {
+            $sql_data = $this->_serialize($object);
+            $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
+
+            $result = $this->db->query(
+                "INSERT INTO kolab_cache ".
+                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words)".
+                " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?, ?)",
+                $this->resource_uri,
+                $objtype,
+                $msguid,
+                $object['uid'],
+                $sql_data['changed'],
+                $sql_data['data'],
+                $sql_data['xml'],
+                $sql_data['dtstart'],
+                $sql_data['dtend'],
+                $sql_data['tags'],
+                $sql_data['words']
+            );
+
+            if (!$this->db->affected_rows($result)) {
+                rcube::raise_error(array(
+                    'code' => 900, 'type' => 'php',
+                    'message' => "Failed to write to kolab cache"
+                ), true);
             }
         }
 
         // keep a copy in memory for fast access
         $this->objects[$msguid] = $object;
-
-        if ($object)
-            $this->uid2msg[$object['uid']] = $msguid;
+        $this->uid2msg[$object['uid']] = $msguid;
     }
+
 
     /**
      * Move an existing cache entry to a new resource

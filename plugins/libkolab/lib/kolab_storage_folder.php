@@ -592,7 +592,7 @@ class kolab_storage_folder
             // update cache with new UID
             if ($result) {
                 $object['_msguid'] = $result;
-                $this->cache->set($result, $object);
+                $this->cache->insert($result, $object);
             }
         }
         
