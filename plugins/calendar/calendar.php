@@ -352,7 +352,7 @@ class calendar extends rcube_plugin
       $select->add(rcube_label('saturday'), '6');
       $p['blocks']['view']['options']['first_day'] = array(
         'title' => html::label($field_id, Q($this->gettext('first_day'))),
-        'content' => $select->show($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day'])),
+        'content' => $select->show(strval($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']))),
       );
       
       $time_format = $this->rc->config->get('time_format', self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format'])));
