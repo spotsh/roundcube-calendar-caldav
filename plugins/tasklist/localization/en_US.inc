@@ -4,6 +4,7 @@ $labels = array();
 $labels['navtitle'] = 'Tasks';
 $labels['lists'] = 'Resources';
 $labels['list'] = 'Resource';
+$labels['tags'] = 'Tags';
 
 $labels['createnewtask'] = 'Create new Task';
 $labels['mark'] = 'Mark';
