@@ -373,7 +373,7 @@ class calendar extends rcube_plugin
         ' &mdash; ' . $select_hours->show($this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']), array('name' => '_work_end', 'id' => $field_id)),
       );
 
-      $field_id = 'rcmfd_coloing';
+      $field_id = 'rcmfd_coloring';
       $select_colors = new html_select(array('name' => '_event_coloring', 'id' => $field_id));
       $select_colors->add($this->gettext('coloringmode0'), 0);
       $select_colors->add($this->gettext('coloringmode1'), 1);
@@ -482,7 +482,7 @@ class calendar extends rcube_plugin
 
       // compose default alarm preset value
       $alarm_offset = get_input_value('_alarm_offset', RCUBE_INPUT_POST);
-      $default_alam = $alarm_offset[0] . intval(get_input_value('_alarm_value', RCUBE_INPUT_POST)) . $alarm_offset[1];
+      $default_alarm = $alarm_offset[0] . intval(get_input_value('_alarm_value', RCUBE_INPUT_POST)) . $alarm_offset[1];
 
       $p['prefs'] = array(
         'calendar_default_view' => get_input_value('_default_view', RCUBE_INPUT_POST),
@@ -493,7 +493,7 @@ class calendar extends rcube_plugin
         'calendar_work_end'     => intval(get_input_value('_work_end', RCUBE_INPUT_POST)),
         'calendar_event_coloring'       => intval(get_input_value('_event_coloring', RCUBE_INPUT_POST)),
         'calendar_default_alarm_type'   => get_input_value('_alarm_type', RCUBE_INPUT_POST),
-        'calendar_default_alarm_offset' => $default_alam,
+        'calendar_default_alarm_offset' => $default_alarm,
         'calendar_default_calendar'     => get_input_value('_default_calendar', RCUBE_INPUT_POST),
         'calendar_date_format' => null,  // clear previously saved values
         'calendar_time_format' => null,
