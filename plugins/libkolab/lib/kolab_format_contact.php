@@ -240,7 +240,7 @@ class kolab_format_contact extends kolab_format
             $this->obj->setAnniversary(self::get_datetime($object['anniversary'], false, true));
 
         if (!empty($object['photo'])) {
-            if ($type = rc_image_content_type($object['photo']))
+            if ($type = rcube_mime::image_content_type($object['photo']))
                 $this->obj->setPhoto($object['photo'], $type);
         }
         else if (isset($object['photo']))
