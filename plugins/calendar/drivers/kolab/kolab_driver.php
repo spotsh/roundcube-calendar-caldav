@@ -803,7 +803,6 @@ class kolab_driver extends calendar_driver
    */
   public function get_freebusy_list($email, $start, $end)
   {
-    require_once('Horde/iCalendar.php');
     require_once('HTTP/Request2.php');
 
     if (empty($email)/* || $end < time()*/)
@@ -865,7 +864,7 @@ class kolab_driver extends calendar_driver
 
     // parse free-busy information using Horde classes
     if ($fbdata) {
-      $fbcal = new Horde_iCalendar;
+      $fbcal = $this->cal->get_ical()->get_parser();
       $fbcal->parsevCalendar($fbdata);
       if ($fb = $fbcal->findComponent('vfreebusy')) {
         $result = array();
