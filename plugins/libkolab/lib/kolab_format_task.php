@@ -89,10 +89,6 @@ class kolab_format_task extends kolab_format_xcal
 
         $object['complete'] = intval($this->obj->percentComplete());
 
-        // if start/end date is set
-        if ($dtstart = $this->obj->start())
-            $object['start'] = self::php_datetime($dtstart);
-
         // if due date is set
         if ($due = $this->obj->due())
             $object['due'] = self::php_datetime($due);

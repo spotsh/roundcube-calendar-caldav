@@ -118,9 +118,8 @@ class kolab_format_event extends kolab_format_xcal
 
         // read object properties
         $object += array(
-            'allday'      => $this->obj->start()->isDateOnly(),
-            'start'       => self::php_datetime($this->obj->start()),
             'end'         => self::php_datetime($this->obj->end()),
+            'allday'      => $this->obj->start()->isDateOnly(),
             'free_busy'   => $this->obj->transparency() ? 'free' : 'busy',  // TODO: transparency is only boolean
             'attendees'   => array(),
         );

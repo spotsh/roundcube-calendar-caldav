@@ -105,6 +105,7 @@ abstract class kolab_format_xcal extends kolab_format
             'sensitivity' => $sensitivity_map[$this->obj->classification()],
             'priority'    => $this->obj->priority(),
             'categories'  => self::vector2array($this->obj->categories()),
+            'start'       => self::php_datetime($this->obj->start()),
         );
 
         // read organizer and attendees
