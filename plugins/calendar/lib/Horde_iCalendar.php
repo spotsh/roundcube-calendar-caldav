@@ -5,7 +5,8 @@
  *   Horde/String.php, Horde/iCalendar.php, Horde/iCalendar/*.php
  */
 
-require_once(dirname(__FILE__) . '/Horde_Date.php');
+if (!class_exists('Horde_Date'))
+    require_once(dirname(__FILE__) . '/Horde_Date.php');
 
 
 $GLOBALS['_HORDE_STRING_CHARSET'] = 'iso-8859-1';

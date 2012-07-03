@@ -5,7 +5,8 @@
  *   PEAR/Date/Calc.php, Horde/Date/Recurrence.php
  */
 
-require_once(dirname(__FILE__) . '/Horde_Date.php');
+if (!class_exists('Horde_Date'))
+    require_once(dirname(__FILE__) . '/Horde_Date.php');
 
 // {{{ Header
 
