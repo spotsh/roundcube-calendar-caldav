@@ -282,8 +282,8 @@ class kolab_format_event extends kolab_format_xcal
             'title' => $rec['summary'],
             'location' => $rec['location'],
             'description' => $rec['body'],
-            'start' => new DateTime('@'.$rec['start-date'], self::$timezone),
-            'end'   => new DateTime('@'.$rec['end-date'], self::$timezone),
+            'start' => new DateTime('@'.$rec['start-date']),
+            'end'   => new DateTime('@'.$rec['end-date']),
             'allday' => $allday,
             'recurrence' => $rrule,
             'alarms' => $alarm_value . $alarm_unit,
@@ -295,5 +295,9 @@ class kolab_format_event extends kolab_format_xcal
             'sensitivity' => $rec['sensitivity'],
             'changed' => $rec['last-modification-date'],
         );
+
+        // assign current timezone to event start/end
+        $this->data['start']->setTimezone(self::$timezone);
+        $this->data['end']->setTimezone(self::$timezone);
     }
 }
