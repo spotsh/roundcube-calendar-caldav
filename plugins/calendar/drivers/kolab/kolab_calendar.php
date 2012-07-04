@@ -360,7 +360,7 @@ class kolab_calendar
         raise_error(array(
           'code' => 600, 'type' => 'php',
           'file' => __FILE__, 'line' => __LINE__,
-          'message' => "Error undeleting a contact object $uid from the Kolab server"),
+          'message' => "Error undeleting the event object $uid from the Kolab server"),
         true, false);
     }
 
@@ -373,10 +373,7 @@ class kolab_calendar
    */
   public function _get_recurring_events($event, $start, $end, $event_id = null)
   {
-    // include library class
-    require_once($this->cal->home . '/lib/calendar_recurrence.php');
-    
-    $recurrence = new calendar_recurrence($this->cal, $event);
+    $recurrence = new kolab_date_recurrence($event);
     
     $events = array();
     $duration = $event['end'] - $event['start'];
