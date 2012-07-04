@@ -45,7 +45,7 @@ class kolab_date_recurrence
         $this->next = new Horde_Date($object['start'], kolab_format::$timezone->getName());
 
         if (is_object($object['start']) && is_object($object['end']))
-            $this->duration = $object['end']->diff($object['start']);
+            $this->duration = $object['start']->diff($object['end']);
         else
             $this->duration = new DateInterval('PT' . ($object['end'] - $object['start']) . 'S');
 
@@ -110,6 +110,32 @@ class kolab_date_recurrence
             unset($next['_formatobj']);
 
             return $next;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the end date of the occurence of this recurrence cycle
+     *
+     * @param string Date limit (where infinite recurrences should abort)
+     * @return mixed Timestamp with end date of the last event or False if recurrence exceeds limit
+     */
+    public function end($limit = 'now +1 year')
+    {
+        if ($this->object['recurrence']['UNTIL'])
+            return $this->object['recurrence']['UNTIL'];
+
+        $limit_time = strtotime($limit);
+        while ($next_start = $this->next_start(true)) {
+            if ($next_start > $limit_time)
+                break;
+        }
+
+        if ($this->next) {
+            $next_end = $this->next->toDateTime();
+            $next_end->add($this->duration);
+            return $next_end->format('U');
         }
 
         return false;
