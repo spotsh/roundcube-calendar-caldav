@@ -378,7 +378,7 @@ class kolab_calendar
     $events = array();
     $duration = $event['end'] - $event['start'];
     $i = 0;
-    while ($rec_start = $recurrence->next_start()) {
+    while ($rec_start = $recurrence->next_start(true)) {
       $rec_end = $rec_start + $duration;
       $rec_id = $event['id'] . '-' . ++$i;
       

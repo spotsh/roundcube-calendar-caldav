@@ -25,81 +25,121 @@
  */
 class kolab_date_recurrence
 {
-  private $engine;
-  private $tz_offset = 0;
-  private $allday = false;
-  private $hour = 0;
+    private $engine;
+    private $object;
+    private $next;
+    private $duration;
+    private $tz_offset = 0;
+    private $dst_start = 0;
+    private $allday = false;
+    private $hour = 0;
 
-  /**
-   * Default constructor
-   *
-   * @param array The Kolab object to operate on
-   */
-  function __construct($object)
-  {
-      // use (copied) Horde classes to compute recurring instances
-      // TODO: replace with something that has less than 6'000 lines of code
-      $this->engine = new Horde_Date_Recurrence($object['start']);
-      $this->engine->fromRRule20($this->to_rrule($object['recurrence']));  // TODO: get that string directly from libkolabxml
+    /**
+     * Default constructor
+     *
+     * @param array The Kolab object to operate on
+     */
+    function __construct($object)
+    {
+        $this->object = $object;
+        $this->next = new Horde_Date($object['start'], kolab_format::$timezone->getName());
 
-      foreach ((array)$object['recurrence']['EXDATE'] as $exdate)
-          $this->engine->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+        if (is_object($object['start']) && is_object($object['end']))
+            $this->duration = $object['end']->diff($object['start']);
+        else
+            $this->duration = new DateInterval('PT' . ($object['end'] - $object['start']) . 'S');
 
-      $now = new DateTime('now', kolab_format::$timezone);
-      $this->tz_offset = $object['allday'] ? $now->getOffset() - date('Z') : 0;
-      $this->next = new Horde_Date($object['start'] + $this->tz_offset);  # shift all-day times to server timezone because computation operates in local TZ
-      $this->dst_start = $this->next->format('I');
-      $this->allday = $object['allday'];
-      $this->hour = $this->next->hour;
-  }
+        // use (copied) Horde classes to compute recurring instances
+        // TODO: replace with something that has less than 6'000 lines of code
+        $this->engine = new Horde_Date_Recurrence($this->next);
+        $this->engine->fromRRule20($this->to_rrule($object['recurrence']));  // TODO: get that string directly from libkolabxml
 
-  /**
-   * Get timestamp of the next occurence of this event
-   *
-   * @return mixed Unix timestamp or False if recurrence ended
-   */
-  public function next_start()
-  {
-    $time = false;
-    if ($this->next && ($next = $this->engine->nextActiveRecurrence(array('year' => $this->next->year, 'month' => $this->next->month, 'mday' => $this->next->mday + 1, 'hour' => $this->next->hour, 'min' => $this->next->min, 'sec' => $this->next->sec)))) {
-      if ($this->allday) {
-        $next->hour = $this->hour;  # fix time for all-day events
-        $next->min = 0;
-      }
-      # consider difference in daylight saving between base event and recurring instance
-      $dst_diff = ($this->dst_start - $next->format('I')) * 3600;
-      $time = $next->timestamp() - $this->tz_offset - $dst_diff;
-      $this->next = $next;
+        foreach ((array)$object['recurrence']['EXDATE'] as $exdate)
+            $this->engine->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+
+        $now = new DateTime('now', kolab_format::$timezone);
+        $this->tz_offset = $object['allday'] ? $now->getOffset() - date('Z') : 0;
+        $this->dst_start = $this->next->format('I');
+        $this->allday = $object['allday'];
+        $this->hour = $this->next->hour;
     }
 
-    return $time;
-  }
+    /**
+     * Get date/time of the next occurence of this event
+     *
+     * @param boolean Return a Unix timestamp instead of a DateTime object
+     * @return mixed  DateTime object/unix timestamp or False if recurrence ended
+     */
+    public function next_start($timestamp = false)
+    {
+        $time = false;
+        if ($this->next && ($next = $this->engine->nextActiveRecurrence(array('year' => $this->next->year, 'month' => $this->next->month, 'mday' => $this->next->mday + 1, 'hour' => $this->next->hour, 'min' => $this->next->min, 'sec' => $this->next->sec)))) {
+            if ($this->allday) {
+                $next->hour = $this->hour;  # fix time for all-day events
+                $next->min = 0;
+            }
+            if ($timestamp) {
+                # consider difference in daylight saving between base event and recurring instance
+                $dst_diff = ($this->dst_start - $next->format('I')) * 3600;
+                $time = $next->timestamp() - $this->tz_offset - $dst_diff;
+            }
+            else {
+                $time = $next->toDateTime();
+            }
+            $this->next = $next;
+        }
 
-  /**
-   * Convert the internal structured data into a vcalendar RRULE 2.0 string
-   */
-  private function to_rrule($recurrence)
-  {
-    if (is_string($recurrence))
-        return $recurrence;
+        return $time;
+    }
 
-      $rrule = '';
-      foreach ((array)$recurrence as $k => $val) {
-          $k = strtoupper($k);
-          switch ($k) {
-          case 'UNTIL':
-              $val = gmdate('Ymd\THis', $val);
-              break;
-          case 'EXDATE':
-              foreach ((array)$val as $i => $ex)
-                  $val[$i] = gmdate('Ymd\THis', $ex);
-              $val = join(',', (array)$val);
-              break;
-          }
-          $rrule .= $k . '=' . $val . ';';
-      }
+    /**
+     * Get the next recurring instance of this event
+     *
+     * @return mixed Array with event properties or False if recurrence ended
+     */
+    public function next_instance()
+    {
+        if ($next_start = $this->next_start()) {
+            $next_end = clone $next_start;
+            $next_end->add($this->duration);
 
-    return $rrule;
-  }
+            $next = $this->object;
+            $next['recurrence_id'] = $next_start->format('Y-m-d');
+            $next['start'] = $next_start;
+            $next['end'] = $next_end;
+            unset($next['_formatobj']);
+
+            return $next;
+        }
+
+        return false;
+    }
+
+    /**
+     * Convert the internal structured data into a vcalendar RRULE 2.0 string
+     */
+    private function to_rrule($recurrence)
+    {
+      if (is_string($recurrence))
+          return $recurrence;
+
+        $rrule = '';
+        foreach ((array)$recurrence as $k => $val) {
+            $k = strtoupper($k);
+            switch ($k) {
+            case 'UNTIL':
+                $val = gmdate('Ymd\THis', $val);
+                break;
+            case 'EXDATE':
+                foreach ((array)$val as $i => $ex)
+                    $val[$i] = gmdate('Ymd\THis', $ex);
+                $val = join(',', (array)$val);
+                break;
+            }
+            $rrule .= $k . '=' . $val . ';';
+        }
+
+      return $rrule;
+    }
 
 }
