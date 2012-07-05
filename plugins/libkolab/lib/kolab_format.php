@@ -73,7 +73,13 @@ abstract class kolab_format
      */
     public static function get_datetime($datetime, $tz = null, $dateonly = false)
     {
-        if (!$tz && $tz !== false) $tz = self::$timezone;
+        // use timezone information from datetime of global setting
+        if (!$tz && $tz !== false) {
+            if ($datetime instanceof DateTime)
+                $tz = $datetime->getTimezone();
+            if (!$tz)
+                $tz = self::$timezone;
+        }
         $result = new cDateTime();
 
         // got a unix timestamp (in UTC)
@@ -84,7 +90,7 @@ abstract class kolab_format
         else if (is_string($datetime) && strlen($datetime))
             $datetime = new DateTime($datetime, $tz ?: null);
 
-        if (is_a($datetime, 'DateTime')) {
+        if ($datetime instanceof DateTime) {
             $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
 
             if (!$dateonly)
