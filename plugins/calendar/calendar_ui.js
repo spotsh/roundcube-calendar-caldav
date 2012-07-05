@@ -2492,6 +2492,13 @@ function rcube_calendar_ui(settings)
       event_times_changed();
     };
 
+    // Set as calculateWeek to determine the week of the year based on the ISO 8601 definition.
+    // Uses the default $.datepicker.iso8601Week() function but takes firstDay setting into account.
+    // This is a temporary fix until http://bugs.jqueryui.com/ticket/8420 is resolved.
+    var iso8601Week = datepicker_settings.calculateWeek = function(date) {
+      var mondayOffset = Math.abs(1 - datepicker_settings.firstDay);
+      return $.datepicker.iso8601Week(new Date(date.getTime() + mondayOffset * 86400000));
+    };
 
     var minical;
     var init_calendar_ui = function()
@@ -2525,11 +2532,11 @@ function rcube_calendar_ui(settings)
             if (minical.data('year'))
               base_date.setYear(minical.data('year'));
             base_date.setHours(12);
-            var day_off = base_date.getDay() - 1;
-            if (day_off < 0) day_off = 6;
-            var base_kw = $.datepicker.iso8601Week(base_date);
-            var kw = parseInt(cell.html());
-            var diff = (kw - base_kw) * 7 * DAY_MS;
+            base_date.setDate(base_date.getDate() - ((base_date.getDay() + 6) % 7) + datepicker_settings.firstDay);
+            var day_off = base_date.getDay() - datepicker_settings.firstDay;
+            var base_kw = iso8601Week(base_date);
+            var target_kw = parseInt(cell.html());
+            var diff = (target_kw - base_kw) * 7 * DAY_MS;
             // select monday of the chosen calendar week
             var date = new Date(base_date.getTime() - day_off * DAY_MS + diff);
             fc.fullCalendar('gotoDate', date).fullCalendar('setDate', date).fullCalendar('changeView', 'agendaWeek');
