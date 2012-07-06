@@ -55,7 +55,7 @@ class kolab_format_distributionlist extends kolab_format
 
         $seen = array();
         $members = new vectorcontactref;
-        foreach ($object['member'] as $member) {
+        foreach ((array)$object['member'] as $member) {
             if ($member['uid'])
                 $m = new ContactReference(ContactReference::UidReference, $member['uid']);
             else if ($member['email'])
@@ -92,7 +92,7 @@ class kolab_format_distributionlist extends kolab_format
             'member'  => array(),
         );
 
-        foreach ($record['member'] as $member) {
+        foreach ((array)$record['member'] as $member) {
             $object['member'][] = array(
                 'email' => $member['smtp-address'],
                 'name' => $member['display-name'],
