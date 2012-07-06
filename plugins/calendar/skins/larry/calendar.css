@@ -29,7 +29,9 @@ body.calendarmain #mainscreen {
 }
 
 #datepicker {
-	margin-top: 12px;
+	position: absolute;
+	top: 40px;
+	left: 0;
 	width: 100%;
 	min-height: 190px;
 }
@@ -89,7 +91,7 @@ body.calendarmain #mainscreen {
 	position: absolute;
 	left: 254px;
 	width: 8px;
-	top: 37px;
+	top: 40px;
 	bottom: 0;
 	background: url(images/toggle.gif) 0 48% no-repeat transparent;
 	cursor: pointer;
@@ -241,17 +243,18 @@ pre {
 #calendartoolbar {
 	position: absolute;
 	top: -6px;
-	right: 0;
+	left: 0;
 	height: 40px;
-	z-index: 200;
 }
 
 #calendartoolbar a {
 	padding-right: 10px;
 }
 
-#quicksearchbar {
-	right: 4px;
+body.calendarmain #quicksearchbar {
+	top: -7px;
+	right: 2px;
+	z-index: 200;
 }
 
 body.calendarmain #searchmenulink {
@@ -870,7 +873,6 @@ span.edit-alarm-set {
 }
 
 a.dropdown-link {
-	color: #CC0000;
 	font-size: 12px;
 	text-decoration: none;
 }
@@ -904,7 +906,6 @@ a.dropdown-link:after {
 }
 
 .alarm-item div.alarm-actions a {
-	color: #CC0000;
 	margin-right: 0.8em;
 	text-decoration: none;
 }
@@ -1019,7 +1020,7 @@ span.spacer {
 
 .fc-content {
 	position: absolute !important;
-	top: 38px;
+	top: 40px;
 	left: 0;
 	right: 0;
 	bottom: 28px;
@@ -1210,7 +1211,9 @@ div.fc-event-location {
 	background: -ms-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px ,#d6eaf3 100%);
 	background: linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
 	border: 0;
-	padding: 7px;
+	border-bottom: 1px solid #ccc;
+	height: 18px;
+	padding: 8px 7px 3px 7px;
 }
 
 .calendarmain .fc-view-table tr.fc-event td {

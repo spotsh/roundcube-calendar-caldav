@@ -11,10 +11,11 @@
 
 <div id="mainscreen">
 	<div id="calendarsidebar">
-		<div id="quicksearchbar">
-			<roundcube:object name="plugin.searchform" id="quicksearchbox" />
-			<a id="searchmenulink" class="iconbutton searchoptions" > </a>
-			<roundcube:button command="reset-search" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
+		<div id="calendartoolbar" class="toolbar">
+			<roundcube:button command="addevent" type="link" class="button addevent disabled" classAct="button addevent" classSel="button addevent pressed" label="calendar.new_event" title="calendar.new_event" />
+			<roundcube:button command="print" type="link" class="button print disabled" classAct="button print" classSel="button print pressed" label="calendar.print" title="calendar.printtitle" />
+			<roundcube:button command="export" type="link" class="button export disabled" classAct="button export" classSel="button export pressed" label="calendar.export" title="calendar.exporttitle" />
+			<roundcube:container name="toolbar" id="calendartoolbar" />
 		</div>
 
 		<div id="datepicker" class="uibox"></div>
@@ -30,12 +31,11 @@
 		</div>
 	</div>
 	<div id="calendarsidebartoggle"></div>
-	
-	<div id="calendartoolbar" class="toolbar">
-		<roundcube:button command="addevent" type="link" class="button addevent disabled" classAct="button addevent" classSel="button addevent pressed" label="calendar.new_event" title="calendar.new_event" />
-		<roundcube:button command="print" type="link" class="button print disabled" classAct="button print" classSel="button print pressed" label="calendar.print" title="calendar.printtitle" />
-		<roundcube:button command="export" type="link" class="button export disabled" classAct="button export" classSel="button export pressed" label="calendar.export" title="calendar.exporttitle" />
-		<roundcube:container name="toolbar" id="calendartoolbar" />
+
+	<div id="quicksearchbar">
+		<roundcube:object name="plugin.searchform" id="quicksearchbox" />
+		<a id="searchmenulink" class="iconbutton searchoptions" > </a>
+		<roundcube:button command="reset-search" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
 	</div>
 
 	<div id="calendar">
