@@ -8,7 +8,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -872,7 +872,7 @@ class calendar extends rcube_plugin
       $events = $this->get_ical()->import_from_file($_FILES['_data']['tmp_name']);
 
       $count = $errors = 0;
-      $rangestart = $_REQUEST['_range'] ? strtotime("now -" . intval($_REQUEST['_range']) . " months") : 0;
+      $rangestart = $_REQUEST['_range'] ? date_create("now -" . intval($_REQUEST['_range']) . " months") : 0;
       foreach ($events as $event) {
         // TODO: correctly handle recurring events which start before $rangestart
         if ($event['end'] < $rangestart && (!$event['recurrence'] || ($event['recurrence']['until'] && $event['recurrence']['until'] < $rangestart)))
@@ -1107,12 +1107,17 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Convert the given date string into a GMT-based time stamp
+   * Shift dates into user's current timezone
    */
-  function fromGMT($datetime)
+  private function adjust_timezone($dt)
   {
-    $ts = is_numeric($datetime) ? $datetime : strtotime($datetime);
-    return $ts + $this->gmt_offset;
+    if (is_numeric($dt))
+      $dt = new DateTime('@'.$td);
+    else if (is_string($dt))
+      $dt = new DateTime($dt);
+
+    $dt->setTimezone($this->timezone);
+    return $dt;
   }
 
   /**
@@ -1139,16 +1144,19 @@ class calendar extends rcube_plugin
     // compose a human readable strings for alarms_text and recurrence_text
     if ($event['alarms'])
       $event['alarms_text'] = $this->_alarms_text($event['alarms']);
-    if ($event['recurrence'])
+    if ($event['recurrence']) {
       $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
+      if ($event['recurrence']['UNTIL'])
+        $event['recurrence']['UNTIL'] = $this->adjust_timezone($event['recurrence']['UNTIL'])->format('c');
+    }
 
     foreach ((array)$event['attachments'] as $k => $attachment) {
       $event['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
     }
 
     return array(
-      'start' => gmdate('c', $this->fromGMT($event['start'])), // client treats date strings as they were in users's timezone
-      'end'   => gmdate('c', $this->fromGMT($event['end'])),   // so shift timestamps to users's timezone and render a date string
+      'start' => $this->adjust_timezone($event['start'])->format('c'),
+      'end'   => $this->adjust_timezone($event['end'])->format('c'),
       'title'       => strval($event['title']),
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
@@ -1167,8 +1175,8 @@ class calendar extends rcube_plugin
     foreach ($alarms as $alarm) {
       $out[] = array(
         'id'       => $alarm['id'],
-        'start'    => gmdate('c', $this->fromGMT($alarm['start'])),
-        'end'      => gmdate('c', $this->fromGMT($alarm['end'])),
+        'start'    => $this->adjust_timezone($alarm['start'])->format('c'),
+        'end'      => $this->adjust_timezone($alarm['end'])->format('c'),
         'allDay'   => ($event['allday'] == 1)?true:false,
         'title'    => $alarm['title'],
         'location' => $alarm['location'],
@@ -1297,7 +1305,7 @@ class calendar extends rcube_plugin
         }
         $offset = $notify[0] * $mult;
         $refdate = $mult > 0 ? $event['end'] : $event['start'];
-        $notify_at = $refdate + $offset;
+        $notify_at = $refdate->format('U') + $offset;
       }
       else {  // absolute timestamp
         $notify_at = $notify[0];
@@ -1319,11 +1327,11 @@ class calendar extends rcube_plugin
       $k = strtoupper($k);
       switch ($k) {
         case 'UNTIL':
-          $val = gmdate('Ymd\THis', $val);
+          $val = $val->format('Ymd\THis');
           break;
         case 'EXDATE':
           foreach ((array)$val as $i => $ex)
-            $val[$i] = gmdate('Ymd\THis', $ex);
+            $val[$i] = $ex->format('Ymd\THis');
           $val = join(',', (array)$val);
           break;
       }
@@ -1432,8 +1440,8 @@ class calendar extends rcube_plugin
       
       $this->driver->new_event(array(
         'uid' => $this->generate_uid(),
-        'start' => $start,
-        'end' => $start + $duration,
+        'start' => new DateTime('@'.$start),
+        'end' => new DateTime('@'.($start + $duration)),
         'allday' => $allday,
         'title' => rtrim($title),
         'free_busy' => $fb == 2 ? 'outofoffice' : ($fb ? 'busy' : 'free'),
@@ -1683,6 +1691,13 @@ class calendar extends rcube_plugin
    */
   private function prepare_event(&$event, $action)
   {
+    // convert dates into DateTime objects in user's current timezone
+    $event['start'] = new DateTime($event['start'], $this->timezone);
+    $event['end'] = new DateTime($event['end'], $this->timezone);
+
+    if ($event['recurrence']['UNTIL'])
+      $event['recurrence']['UNTIL'] = new DateTime($event['recurrence']['UNTIL'], $this->timezone);
+
     $attachments = array();
     $eventid = 'cal:'.$event['id'];
     if (is_array($_SESSION['event_session']) && $_SESSION['event_session']['id'] == $eventid) {
@@ -1785,7 +1800,7 @@ class calendar extends rcube_plugin
   public function event_date_text($event, $tzinfo = false)
   {
     $fromto = '';
-    $duration = $event['end'] - $event['start'];
+    $duration = $event['start']->diff($event['end'])->format('s');
     
     $this->date_format_defaults();
     $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
@@ -1796,7 +1811,7 @@ class calendar extends rcube_plugin
       if (($todate = format_date($event['end'], $date_format)) != $fromto)
         $fromto .= ' - ' . $todate;
     }
-    else if ($duration < 86400 && gmdate('d', $event['start']) == gmdate('d', $event['end'])) {
+    else if ($duration < 86400 && $event['start']->format('d') == $event['end']->format('d')) {
       $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
         ' - ' . format_date($event['end'], $time_format);
     }

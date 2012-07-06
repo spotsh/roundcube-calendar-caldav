@@ -8,7 +8,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -32,20 +32,20 @@
  *            'id' => 'Event ID used for editing',
  *           'uid' => 'Unique identifier of this event',
  *      'calendar' => 'Calendar identifier to add event to or where the event is stored',
- *         'start' => <unixtime>,  // Event start date/time as unix timestamp
- *           'end' => <unixtime>,  // Event end date/time as unix timestamp
+ *         'start' => DateTime,  // Event start date/time as DateTime object
+ *           'end' => DateTime,  // Event end date/time as DateTime object
  *        'allday' => true|false,  // Boolean flag if this is an all-day event
- *       'changed' => <unixtime>, // Last modification date of event
+ *       'changed' => DateTime,    // Last modification date of event
  *         'title' => 'Event title/summary',
  *      'location' => 'Location string',
  *   'description' => 'Event description',
  *    'recurrence' => array(   // Recurrence definition according to iCalendar (RFC 2445) specification as list of key-value pairs
  *            'FREQ' => 'DAILY|WEEKLY|MONTHLY|YEARLY',
  *        'INTERVAL' => 1...n,
- *           'UNTIL' => <unixtime>,
+ *           'UNTIL' => DateTime,
  *           'COUNT' => 1..n,   // number of times
  *                      // + more properties (see http://www.kanzaki.com/docs/ical/recur.html)
- *          'EXDATE' => array(),  // list of <unixtime>s of exception Dates/Times
+ *          'EXDATE' => array(),  // list of DateTime objects of exception Dates/Times
  *    ),
  * 'recurrence_id' => 'ID of the recurrence group',   // usually the ID of the starting event
  *    'categories' => 'Event category',
@@ -157,8 +157,8 @@ abstract class calendar_driver
    *
    * @param array Hash array with event properties:
    *      id: Event identifier
-   *   start: Event start date/time as unix timestamp
-   *     end: Event end date/time as unix timestamp
+   *   start: Event start date/time as DateTime object
+   *     end: Event end date/time as DateTime object
    *  allday: Boolean flag if this is an all-day event
    * @return boolean True on success, False on error
    */
@@ -169,8 +169,8 @@ abstract class calendar_driver
    *
    * @param array Hash array with event properties:
    *      id: Event identifier
-   *   start: Event start date/time as unix timestamp in user timezone
-   *     end: Event end date/time as unix timestamp in user timezone
+   *   start: Event start date/time as DateTime object with timezone
+   *     end: Event end date/time as DateTime object with timezone
    * @return boolean True on success, False on error
    */
   abstract function resize_event($event);
@@ -230,8 +230,8 @@ abstract class calendar_driver
    * @return array A list of alarms, each encoded as hash array:
    *         id: Event identifier
    *        uid: Unique identifier of this event
-   *      start: Event start date/time as unix timestamp
-   *        end: Event end date/time as unix timestamp
+   *      start: Event start date/time as DateTime object
+   *        end: Event end date/time as DateTime object
    *     allday: Boolean flag if this is an all-day event
    *      title: Event title/summary
    *   location: Location string
