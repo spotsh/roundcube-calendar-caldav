@@ -99,7 +99,7 @@ abstract class kolab_format
             if ($tz && $tz->getName() == 'UTC')
                 $result->setUTC(true);
             else if ($tz !== false)
-                $result->setTimezone($tz);
+                $result->setTimezone($tz->getName());
         }
 
         return $result;
