@@ -590,6 +590,11 @@ class kolab_driver extends calendar_driver
               unset($event['recurrence']['BYMONTH']);
           }
         }
+        // dates did not change, use the ones from master
+        else if ($event['start'] == $old['start'] && $event['end'] == $old['end']) {
+          $event['start'] = $master['start'];
+          $event['end'] = $master['end'];
+        }
 
         $success = $storage->update_event($event);
         break;
