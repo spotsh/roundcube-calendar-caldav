@@ -229,7 +229,7 @@ class kolab_format_event extends kolab_format_xcal
             if ($recurrence['range-type'] == 'number')
                 $rrule['COUNT'] = intval($recurrence['range']);
             else if ($recurrence['range-type'] == 'date')
-                $rrule['UNTIL'] = $recurrence['range'];
+                $rrule['UNTIL'] = date_create('@'.$recurrence['range']);
 
             if ($recurrence['day']) {
                 $byday = array();
@@ -251,7 +251,7 @@ class kolab_format_event extends kolab_format_xcal
 
             if ($recurrence['exclusion']) {
                 foreach ((array)$recurrence['exclusion'] as $excl)
-                    $rrule['EXDATE'][] = strtotime($excl . date(' H:i:s', $rec['start-date']));  // use time of event start
+                    $rrule['EXDATE'][] = date_create($excl . date(' H:i:s', $rec['start-date']));  // use time of event start
             }
         }
 

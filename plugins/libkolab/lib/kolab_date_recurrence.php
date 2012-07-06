@@ -55,7 +55,7 @@ class kolab_date_recurrence
         $this->engine->fromRRule20($this->to_rrule($object['recurrence']));  // TODO: get that string directly from libkolabxml
 
         foreach ((array)$object['recurrence']['EXDATE'] as $exdate)
-            $this->engine->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+            $this->engine->addException($exdate->format('Y'), $exdate->format('n'), $exdate->format('j'));
 
         $now = new DateTime('now', kolab_format::$timezone);
         $this->tz_offset = $object['allday'] ? $now->getOffset() - date('Z') : 0;
@@ -124,7 +124,7 @@ class kolab_date_recurrence
     public function end($limit = 'now +1 year')
     {
         if ($this->object['recurrence']['UNTIL'])
-            return $this->object['recurrence']['UNTIL'];
+            return $this->object['recurrence']['UNTIL']->format('U');
 
         $limit_time = strtotime($limit);
         while ($next_start = $this->next_start(true)) {
@@ -154,11 +154,11 @@ class kolab_date_recurrence
             $k = strtoupper($k);
             switch ($k) {
             case 'UNTIL':
-                $val = gmdate('Ymd\THis', $val);
+                $val = $val->format('Ymd\THis');
                 break;
             case 'EXDATE':
                 foreach ((array)$val as $i => $ex)
-                    $val[$i] = gmdate('Ymd\THis', $ex);
+                    $val[$i] = $ex->format('Ymd\THis');
                 $val = join(',', (array)$val);
                 break;
             }

@@ -136,6 +136,7 @@ class kolab_format_contact extends kolab_format
             $this->obj->setUid($object['uid']);
 
         $object['changed'] = new DateTime('now', self::$timezone);
+        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
         // do the hard work of setting object values
         $nc = new NameComponents;
