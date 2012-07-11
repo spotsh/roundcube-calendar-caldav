@@ -927,6 +927,8 @@ class calendar extends rcube_plugin
     
     if ($calendars[$calid]) {
       $calname = $calendars[$calid]['name'] ? $calendars[$calid]['name'] : $calid;
+      $calname = preg_replace('/[^a-z0-9_.-]/i', '', html_entity_decode($calname));  // to 7bit ascii
+      if (empty($calname)) $calname = $calid;
       $events = $this->driver->load_events($start, $end, null, $calid, 0);
     }
     else

@@ -427,9 +427,12 @@ class calendar_ical
       // fold lines to 75 chars
       return rcube_vcard::rfc2425_fold($ical);
   }
-  
+
   private function format_datetime($attr, $dt, $dateonly = false, $utc = false)
   {
+    if (is_numeric($dt))
+        $dt = new DateTime('@'.$dt);
+
     if ($utc)
       $dt->setTimezone(new DateTimeZone('UTC'));
 
@@ -443,7 +446,7 @@ class calendar_ical
       return $attr . $tzid . ':' . $dt->format('Ymd\THis' . ($tzid ? '' : 'Z'));
     }
   }
-  
+
   private function escpape($str)
   {
     return preg_replace('/(?<!\\\\)([\:\;\,\\n\\r])/', '\\\$1', $str);
