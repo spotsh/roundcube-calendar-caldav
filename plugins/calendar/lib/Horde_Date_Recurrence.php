@@ -1,9 +1,8 @@
 <?php
 
 /**
- * This is a concatenated copy of the following files:
- *   Horde/Date.php, Horde/Date/Utils.php, Horde/Date/Recurrence.php
- * Pull the latest version of these files from the PEAR channel of the Horde
+ * This is a modified copy of Horde/Date/Recurrence.php
+ * Pull the latest version of this file from the PEAR channel of the Horde
  * project at http://pear.horde.org by installing the Horde_Date package.
  */
 
@@ -16,182 +15,6 @@ class Horde_Date_Translation
 	function t($arg) { return $arg; }
 	function ngettext($sing, $plur, $num) { return ($num > 1 ? $plur : $sing); }
 }
-
-
-/**
- * @category Horde
- * @package  Date
- */
-
-/**
- * Horde Date wrapper/logic class, including some calculation
- * functions.
- *
- * @category Horde
- * @package  Date
- */
-class Horde_Date_Utils
-{
-    /**
-     * Returns whether a year is a leap year.
-     *
-     * @param integer $year  The year.
-     *
-     * @return boolean  True if the year is a leap year.
-     */
-    public static function isLeapYear($year)
-    {
-        if (strlen($year) != 4 || preg_match('/\D/', $year)) {
-            return false;
-        }
-
-        return (($year % 4 == 0 && $year % 100 != 0) || $year % 400 == 0);
-    }
-
-    /**
-     * Returns the date of the year that corresponds to the first day of the
-     * given week.
-     *
-     * @param integer $week  The week of the year to find the first day of.
-     * @param integer $year  The year to calculate for.
-     *
-     * @return Horde_Date  The date of the first day of the given week.
-     */
-    public static function firstDayOfWeek($week, $year)
-    {
-        return new Horde_Date(sprintf('%04dW%02d', $year, $week));
-    }
-
-    /**
-     * Returns the number of days in the specified month.
-     *
-     * @param integer $month  The month
-     * @param integer $year   The year.
-     *
-     * @return integer  The number of days in the month.
-     */
-    public static function daysInMonth($month, $year)
-    {
-        static $cache = array();
-        if (!isset($cache[$year][$month])) {
-            $date = new DateTime(sprintf('%04d-%02d-01', $year, $month));
-            $cache[$year][$month] = $date->format('t');
-        }
-        return $cache[$year][$month];
-    }
-
-    /**
-     * Returns a relative, natural language representation of a timestamp
-     *
-     * @todo Wider range of values ... maybe future time as well?
-     * @todo Support minimum resolution parameter.
-     *
-     * @param mixed $time          The time. Any format accepted by Horde_Date.
-     * @param string $date_format  Format to display date if timestamp is
-     *                             more then 1 day old.
-     * @param string $time_format  Format to display time if timestamp is 1
-     *                             day old.
-     *
-     * @return string  The relative time (i.e. 2 minutes ago)
-     */
-    public static function relativeDateTime($time, $date_format = '%x',
-                                            $time_format = '%X')
-    {
-        $date = new Horde_Date($time);
-
-        $delta = time() - $date->timestamp();
-        if ($delta < 60) {
-            return sprintf(Horde_Date_Translation::ngettext("%d second ago", "%d seconds ago", $delta), $delta);
-        }
-
-        $delta = round($delta / 60);
-        if ($delta < 60) {
-            return sprintf(Horde_Date_Translation::ngettext("%d minute ago", "%d minutes ago", $delta), $delta);
-        }
-
-        $delta = round($delta / 60);
-        if ($delta < 24) {
-            return sprintf(Horde_Date_Translation::ngettext("%d hour ago", "%d hours ago", $delta), $delta);
-        }
-
-        if ($delta > 24 && $delta < 48) {
-            $date = new Horde_Date($time);
-            return sprintf(Horde_Date_Translation::t("yesterday at %s"), $date->strftime($time_format));
-        }
-
-        $delta = round($delta / 24);
-        if ($delta < 7) {
-            return sprintf(Horde_Date_Translation::t("%d days ago"), $delta);
-        }
-
-        if (round($delta / 7) < 5) {
-            $delta = round($delta / 7);
-            return sprintf(Horde_Date_Translation::ngettext("%d week ago", "%d weeks ago", $delta), $delta);
-        }
-
-        // Default to the user specified date format.
-        return $date->strftime($date_format);
-    }
-
-    /**
-     * Tries to convert strftime() formatters to date() formatters.
-     *
-     * Unsupported formatters will be removed.
-     *
-     * @param string $format  A strftime() formatting string.
-     *
-     * @return string  A date() formatting string.
-     */
-    public static function strftime2date($format)
-    {
-        $replace = array(
-            '/%a/'  => 'D',
-            '/%A/'  => 'l',
-            '/%d/'  => 'd',
-            '/%e/'  => 'j',
-            '/%j/'  => 'z',
-            '/%u/'  => 'N',
-            '/%w/'  => 'w',
-            '/%U/'  => '',
-            '/%V/'  => 'W',
-            '/%W/'  => '',
-            '/%b/'  => 'M',
-            '/%B/'  => 'F',
-            '/%h/'  => 'M',
-            '/%m/'  => 'm',
-            '/%C/'  => '',
-            '/%g/'  => '',
-            '/%G/'  => 'o',
-            '/%y/'  => 'y',
-            '/%Y/'  => 'Y',
-            '/%H/'  => 'H',
-            '/%I/'  => 'h',
-            '/%i/'  => 'g',
-            '/%M/'  => 'i',
-            '/%p/'  => 'A',
-            '/%P/'  => 'a',
-            '/%r/'  => 'h:i:s A',
-            '/%R/'  => 'H:i',
-            '/%S/'  => 's',
-            '/%T/'  => 'H:i:s',
-            '/%X/e' => 'Horde_Date_Utils::strftime2date(Horde_Nls::getLangInfo(T_FMT))',
-            '/%z/'  => 'O',
-            '/%Z/'  => '',
-            '/%c/'  => '',
-            '/%D/'  => 'm/d/y',
-            '/%F/'  => 'Y-m-d',
-            '/%s/'  => 'U',
-            '/%x/e' => 'Horde_Date_Utils::strftime2date(Horde_Nls::getLangInfo(D_FMT))',
-            '/%n/'  => "\n",
-            '/%t/'  => "\t",
-            '/%%/'  => '%'
-        );
-
-        return preg_replace(array_keys($replace), array_values($replace), $format);
-    }
-
-}
-
 
 
 /**
@@ -290,6 +113,20 @@ class Horde_Date_Recurrence
     public $recurData = null;
 
     /**
+     * BYDAY recurrence number
+     *
+     * @var integer
+     */
+    public $recurNthDay = null;
+
+    /**
+     * BYMONTH recurrence data
+     *
+     * @var array
+     */
+    public $recurMonths = array();
+
+    /**
      * All the exceptions from recurrence for this event.
      *
      * @var array
@@ -349,6 +186,44 @@ class Horde_Date_Recurrence
     public function setRecurOnDay($dayMask)
     {
         $this->recurData = $dayMask;
+    }
+
+    /**
+     *
+     * @param integer $nthDay The nth weekday of month to repeat events on
+     */
+    public function setRecurNthWeekday($nth)
+    {
+        $this->recurNthDay = (int)$nth;
+    }
+
+    /**
+     *
+     * @return integer  The nth weekday of month to repeat events.
+     */
+    public function getRecurNthWeekday()
+    {
+        return isset($this->recurNthDay) ? $this->recurNthDay : ceil($this->start->mday / 7);
+    }
+
+    /**
+     * Specifies the months for yearly (weekday) recurrence
+     *
+     * @param array $months  List of months (integers) this event recurs on.
+     */
+    function setRecurByMonth($months)
+    {
+        $this->recurMonths = (array)$months;
+    }
+
+    /**
+     * Returns a list of months this yearly event recurs on
+     *
+     * @return array List of months (integers) this event recurs on.
+     */
+    function getRecurByMonth()
+    {
+        return $this->recurMonths;
     }
 
     /**
@@ -741,8 +616,13 @@ class Horde_Date_Recurrence
             $estart = clone $this->start;
 
             // What day of the week, and week of the month, do we recur on?
-            $nth = ceil($this->start->mday / 7);
-            $weekday = $estart->dayOfWeek();
+            if (isset($this->recurNthDay)) {
+                $nth = $this->recurNthDay;
+                $weekday = log($this->recurData, 2);
+            } else {
+                $nth = ceil($this->start->mday / 7);
+                $weekday = $estart->dayOfWeek();
+            }
 
             // Adjust $estart to be the first candidate.
             $offset = ($after->month - $estart->month) + ($after->year - $estart->year) * 12;
@@ -855,8 +735,13 @@ class Horde_Date_Recurrence
             $estart = clone $this->start;
 
             // What day of the week, and week of the month, do we recur on?
-            $nth = ceil($this->start->mday / 7);
-            $weekday = $estart->dayOfWeek();
+            if (isset($this->recurNthDay)) {
+                $nth = $this->recurNthDay;
+                $weekday = log($this->recurData, 2);
+            } else {
+                $nth = ceil($this->start->mday / 7);
+                $weekday = $estart->dayOfWeek();
+            }
 
             // Adjust $estart to be the first candidate.
             $offset = floor(($after->year - $estart->year + $this->recurInterval - 1) / $this->recurInterval) * $this->recurInterval;
@@ -1089,15 +974,6 @@ class Horde_Date_Recurrence
         case 'W':
             $this->setRecurType(self::RECUR_WEEKLY);
             if (!empty($remainder)) {
-                $maskdays = array(
-                    'SU' => Horde_Date::MASK_SUNDAY,
-                    'MO' => Horde_Date::MASK_MONDAY,
-                    'TU' => Horde_Date::MASK_TUESDAY,
-                    'WE' => Horde_Date::MASK_WEDNESDAY,
-                    'TH' => Horde_Date::MASK_THURSDAY,
-                    'FR' => Horde_Date::MASK_FRIDAY,
-                    'SA' => Horde_Date::MASK_SATURDAY,
-                );
                 $mask = 0;
                 while (preg_match('/^ ?[A-Z]{2} ?/', $remainder, $matches)) {
                     $day = trim($matches[0]);
@@ -1148,7 +1024,10 @@ class Horde_Date_Recurrence
                 list($year, $month, $mday) = sscanf($remainder, '%04d%02d%02d');
                 $this->setRecurEnd(new Horde_Date(array('year' => $year,
                                                         'month' => $month,
-                                                        'mday' => $mday)));
+                                                        'mday' => $mday,
+                                                        'hour' => 23,
+                                                        'min' => 59,
+                                                        'sec' => 59)));
             }
         }
     }
@@ -1244,6 +1123,16 @@ class Horde_Date_Recurrence
             // Always default the recurInterval to 1.
             $this->setRecurInterval(isset($rdata['INTERVAL']) ? $rdata['INTERVAL'] : 1);
 
+            $maskdays = array(
+                'SU' => Horde_Date::MASK_SUNDAY,
+                'MO' => Horde_Date::MASK_MONDAY,
+                'TU' => Horde_Date::MASK_TUESDAY,
+                'WE' => Horde_Date::MASK_WEDNESDAY,
+                'TH' => Horde_Date::MASK_THURSDAY,
+                'FR' => Horde_Date::MASK_FRIDAY,
+                'SA' => Horde_Date::MASK_SATURDAY,
+            );
+
             switch (strtoupper($rdata['FREQ'])) {
             case 'DAILY':
                 $this->setRecurType(self::RECUR_DAILY);
@@ -1252,15 +1141,6 @@ class Horde_Date_Recurrence
             case 'WEEKLY':
                 $this->setRecurType(self::RECUR_WEEKLY);
                 if (isset($rdata['BYDAY'])) {
-                    $maskdays = array(
-                        'SU' => Horde_Date::MASK_SUNDAY,
-                        'MO' => Horde_Date::MASK_MONDAY,
-                        'TU' => Horde_Date::MASK_TUESDAY,
-                        'WE' => Horde_Date::MASK_WEDNESDAY,
-                        'TH' => Horde_Date::MASK_THURSDAY,
-                        'FR' => Horde_Date::MASK_FRIDAY,
-                        'SA' => Horde_Date::MASK_SATURDAY,
-                    );
                     $days = explode(',', $rdata['BYDAY']);
                     $mask = 0;
                     foreach ($days as $day) {
@@ -1285,6 +1165,10 @@ class Horde_Date_Recurrence
             case 'MONTHLY':
                 if (isset($rdata['BYDAY'])) {
                     $this->setRecurType(self::RECUR_MONTHLY_WEEKDAY);
+                    if (preg_match('/(-?[1-4])([A-Z]+)/', $rdata['BYDAY'], $m)) {
+                        $this->setRecurOnDay($maskdays[$m[2]]);
+                        $this->setRecurNthWeekday($m[1]);
+                    }
                 } else {
                     $this->setRecurType(self::RECUR_MONTHLY_DATE);
                 }
@@ -1295,6 +1179,14 @@ class Horde_Date_Recurrence
                     $this->setRecurType(self::RECUR_YEARLY_DAY);
                 } elseif (isset($rdata['BYDAY'])) {
                     $this->setRecurType(self::RECUR_YEARLY_WEEKDAY);
+                    if (preg_match('/(-?[1-4])([A-Z]+)/', $rdata['BYDAY'], $m)) {
+                        $this->setRecurOnDay($maskdays[$m[2]]);
+                        $this->setRecurNthWeekday($m[1]);
+                    }
+                    if ($rdata['BYMONTH']) {
+                        $months = explode(',', $rdata['BYMONTH']);
+                        $this->setRecurByMonth($months);
+                    }
                 } else {
                     $this->setRecurType(self::RECUR_YEARLY_DATE);
                 }
@@ -1361,13 +1253,19 @@ class Horde_Date_Recurrence
             break;
 
         case self::RECUR_MONTHLY_WEEKDAY:
-            $nth_weekday = (int)($this->start->mday / 7);
-            if (($this->start->mday % 7) > 0) {
-                $nth_weekday++;
+            if (isset($this->recurNthDay)) {
+                $nth_weekday = $this->recurNthDay;
+                $day_of_week = log($this->recurData, 2);
+            } else {
+                $day_of_week = $this->start->dayOfWeek();
+                $nth_weekday = (int)($this->start->mday / 7);
+                if (($this->start->mday % 7) > 0) {
+                    $nth_weekday++;
+                }
             }
             $vcaldays = array('SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA');
             $rrule = 'FREQ=MONTHLY;INTERVAL=' . $this->recurInterval
-                . ';BYDAY=' . $nth_weekday . $vcaldays[$this->start->dayOfWeek()];
+                . ';BYDAY=' . $nth_weekday . $vcaldays[$day_of_week];
             break;
 
         case self::RECUR_YEARLY_DATE:
@@ -1380,15 +1278,22 @@ class Horde_Date_Recurrence
             break;
 
         case self::RECUR_YEARLY_WEEKDAY:
-            $nth_weekday = (int)($this->start->mday / 7);
-            if (($this->start->mday % 7) > 0) {
-                $nth_weekday++;
-            }
+            if (isset($this->recurNthDay)) {
+                $nth_weekday = $this->recurNthDay;
+                $day_of_week = log($this->recurData, 2);
+            } else {
+                $day_of_week = $this->start->dayOfWeek();
+                $nth_weekday = (int)($this->start->mday / 7);
+                if (($this->start->mday % 7) > 0) {
+                    $nth_weekday++;
+                }
+             }
+            $months = !empty($this->recurMonths) ? join(',', $this->recurMonths) : $this->start->month;
             $vcaldays = array('SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA');
             $rrule = 'FREQ=YEARLY;INTERVAL=' . $this->recurInterval
                 . ';BYDAY='
                 . $nth_weekday
-                . $vcaldays[$this->start->dayOfWeek()]
+                . $vcaldays[$day_of_week]
                 . ';BYMONTH=' . $this->start->month;
             break;
         }
@@ -1420,6 +1325,21 @@ class Horde_Date_Recurrence
         }
 
         $this->setRecurInterval((int)$hash['interval']);
+
+        $month2number = array(
+            'january'   => 1,
+            'february'  => 2,
+            'march'     => 3,
+            'april'     => 4,
+            'may'       => 5,
+            'june'      => 6,
+            'july'      => 7,
+            'august'    => 8,
+            'september' => 9,
+            'october'   => 10,
+            'november'  => 11,
+            'december'  => 12,
+        );
 
         $parse_day = false;
         $set_daymask = false;
@@ -1453,11 +1373,9 @@ class Horde_Date_Recurrence
 
             case 'weekday':
                 $this->setRecurType(self::RECUR_MONTHLY_WEEKDAY);
-                $nth_weekday = (int)$hash['daynumber'];
-                $hash['daynumber'] = 1;
+                $this->setRecurNthWeekday($hash['daynumber']);
                 $parse_day = true;
-                $update_daynumber = true;
-                $update_weekday = true;
+                $set_daymask = true;
                 break;
             }
             break;
@@ -1495,12 +1413,13 @@ class Horde_Date_Recurrence
                 }
 
                 $this->setRecurType(self::RECUR_YEARLY_WEEKDAY);
-                $nth_weekday = (int)$hash['daynumber'];
-                $hash['daynumber'] = 1;
+                $this->setRecurNthWeekday($hash['daynumber']);
                 $parse_day = true;
-                $update_month = true;
-                $update_daynumber = true;
-                $update_weekday = true;
+                $set_daymask = true;
+
+                if ($hash['month'] && isset($month2number[$hash['month']])) {
+                    $this->setRecurByMonth($month2number[$hash['month']]);
+                }
                 break;
             }
         }
@@ -1566,21 +1485,6 @@ class Horde_Date_Recurrence
 
         if ($update_month || $update_daynumber || $update_weekday) {
             if ($update_month) {
-                $month2number = array(
-                    'january'   => 1,
-                    'february'  => 2,
-                    'march'     => 3,
-                    'april'     => 4,
-                    'may'       => 5,
-                    'june'      => 6,
-                    'july'      => 7,
-                    'august'    => 8,
-                    'september' => 9,
-                    'october'   => 10,
-                    'november'  => 11,
-                    'december'  => 12,
-                );
-
                 if (isset($month2number[$hash['month']])) {
                     $this->start->month = $month2number[$hash['month']];
                 }
@@ -1596,7 +1500,7 @@ class Horde_Date_Recurrence
             }
 
             if ($update_weekday) {
-                $this->start->setNthWeekday($last_found_day, $nth_weekday);
+                $this->setNthWeekday($nth_weekday);
             }
         }
 
@@ -1767,5 +1671,3 @@ class Horde_Date_Recurrence
     }
 
 }
-
-
