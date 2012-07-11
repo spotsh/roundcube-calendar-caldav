@@ -10,12 +10,10 @@
 
 <div id="mainscreen">
 	<div id="sidebar">
-		<div id="quicksearchbar">
-			<roundcube:object name="plugin.searchform" id="quicksearchbox" />
-			<a id="searchmenulink" class="iconbutton searchoptions" > </a>
-			<roundcube:button command="reset-search" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
+		<div id="taskstoolbar" class="toolbar">
+			<roundcube:container name="toolbar" id="taskstoolbar" />
 		</div>
-		
+
 		<div id="selectorbox" class="uibox listbox">
 			<div class="scroller">
 				<h2 class="boxtitle"><roundcube:label name="tasklist.tags" /></h2>
@@ -39,8 +37,10 @@
 		<roundcube:object name="plugin.quickaddform" />
 	</div>
 
-	<div id="taskstoolbar" class="toolbar">
-		<roundcube:container name="toolbar" id="taskstoolbar" />
+	<div id="quicksearchbar">
+		<roundcube:object name="plugin.searchform" id="quicksearchbox" />
+		<a id="searchmenulink" class="iconbutton searchoptions" > </a>
+		<roundcube:button command="reset-search" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
 	</div>
 
 	<div id="tasksview" class="uibox">

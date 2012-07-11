@@ -6,7 +6,7 @@ $labels['lists'] = 'Resources';
 $labels['list'] = 'Resource';
 $labels['tags'] = 'Tags';
 
-$labels['createnewtask'] = 'Create new Task';
+$labels['createnewtask'] = 'Create new Task (e.g. Saturday, Mow the lawn)';
 $labels['mark'] = 'Mark';
 $labels['unmark'] = 'Unmark';
 $labels['edit'] = 'Edit';
