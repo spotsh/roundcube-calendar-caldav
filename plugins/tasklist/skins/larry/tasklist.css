@@ -34,12 +34,25 @@
 	width: 15px;
 }
 
-#selectorbox {
+#tagsbox {
 	position: absolute;
 	top: 42px;
 	left: 0;
 	width: 100%;
 	height: 242px;
+}
+
+#tagslist {
+	padding: 0;
+	margin: 6px 8px;
+	list-style: none;
+}
+
+#tagslist li {
+	display: inline-block;
+	color: #004458;
+	padding: 0.2em 1em 0.2em 0;
+	cursor: pointer;
 }
 
 #tasklistsbox {

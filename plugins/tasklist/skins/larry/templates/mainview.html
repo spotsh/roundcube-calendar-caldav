@@ -14,9 +14,10 @@
 			<roundcube:container name="toolbar" id="taskstoolbar" />
 		</div>
 
-		<div id="selectorbox" class="uibox listbox">
+		<div id="tagsbox" class="uibox listbox">
+			<h2 class="boxtitle"><roundcube:label name="tasklist.tags" id="taglist" /></h2>
 			<div class="scroller">
-				<h2 class="boxtitle"><roundcube:label name="tasklist.tags" /></h2>
+				<roundcube:object name="plugin.tagslist" id="tagslist" />
 			</div>
 		</div>
 

@@ -54,6 +54,7 @@ function rcube_tasklist(settings)
     var ui_loading;
     var taskcounts = {};
     var listdata = {};
+    var tags = [];
     var draghelper;
     var completeness_slider;
     var search_request;
@@ -140,7 +141,18 @@ function rcube_tasklist(settings)
             this.reset();
             return false;
         });
-        
+
+        // click-handler on tags list
+        $(rcmail.gui_objects.tagslist).click(function(e){
+            if (e.target.nodeName != 'LI')
+                return;
+
+            var item = $(e.target),
+                tag = item.data('value');
+
+            alert(tag);
+        });
+
         // click-handler on task list items (delegate)
         $(rcmail.gui_objects.resultlist).click(function(e){
             var item = $(e.target);
@@ -315,6 +327,20 @@ function rcube_tasklist(settings)
         for (var i=0; i < response.data.length; i++) {
             listdata[response.data[i].id] = response.data[i];
         }
+
+        // find new tags
+        var newtags = [];
+        for (var i=0; i < response.tags.length; i++) {
+            if (tags.indexOf(response.tags[i]) < 0)
+                newtags.push(response.tags[i]);
+        }
+        tags = tags.concat(newtags);
+
+        // append new tags to tag cloud
+        var taglist = $(rcmail.gui_objects.tagslist);
+        $.each(newtags, function(i, tag){
+            $('<li>').attr('rel', tag).data('value', tag).html(Q(tag)).appendTo(taglist);
+        });
 
         render_tasklist();
         rcmail.set_busy(false, 'loading', ui_loading);

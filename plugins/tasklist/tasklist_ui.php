@@ -68,6 +68,7 @@ class tasklist_ui
         $this->plugin->register_handler('plugin.quickaddform', array($this, 'quickadd_form'));
         $this->plugin->register_handler('plugin.tasklist_editform', array($this, 'tasklist_editform'));
         $this->plugin->register_handler('plugin.tasks', array($this, 'tasks_resultview'));
+        $this->plugin->register_handler('plugin.tagslist', array($this, 'tagslist'));
 
         $this->plugin->include_script('tasklist.js');
 
@@ -206,5 +207,13 @@ class tasklist_ui
         return html::tag('ul', $attrib, '');
     }
 
+    function tagslist($attrib)
+    {
+        $attrib += array('id' => 'rcmtagslist');
+        unset($attrib['name']);
+
+        $this->rc->output->add_gui_object('tagslist', $attrib['id']);
+        return html::tag('ul', $attrib, '');
+    }
 
 }
