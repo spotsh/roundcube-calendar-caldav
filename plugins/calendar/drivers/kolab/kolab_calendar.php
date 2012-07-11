@@ -182,7 +182,9 @@ class kolab_calendar
         $this->events[$master_id] = $this->_to_rcube_event($record);
 
       if (($master = $this->events[$master_id]) && $master['recurrence']) {
-        $this->_get_recurring_events($master, $master['start'], $master['start'] + 86400 * 365 * 10, $id);
+        $limit = clone $master['start'];
+        $limit->add(new DateInterval('P10Y'));
+        $this->_get_recurring_events($record, $master['start'], $limit, $id);
       }
     }
 
@@ -200,6 +202,10 @@ class kolab_calendar
    */
   public function list_events($start, $end, $search = null, $virtual = 1, $query = array())
   {
+    // convert to DateTime for comparisons
+    $start = new DateTime('@'.$start);
+    $end = new DateTime('@'.$end);
+
     // query Kolab storage
     $query[] = array('dtstart', '<=', $end);
     $query[] = array('dtend',   '>=', $start);
@@ -211,13 +217,11 @@ class kolab_calendar
         }
     }
 
+    $events = array();
     foreach ((array)$this->storage->select($query) as $record) {
       $event = $this->_to_rcube_event($record);
       $this->events[$event['id']] = $event;
-    }
 
-    $events = array();
-    foreach ($this->events as $id => $event) {
       // remember seen categories
       if ($event['categories'])
         $this->categories[$event['categories']]++;
@@ -249,9 +253,8 @@ class kolab_calendar
       }
       
       // resolve recurring events
-      if ($event['recurrence'] && $virtual == 1) {
-        unset($event['_attendees']);
-        $events = array_merge($events, $this->_get_recurring_events($event, $start, $end));
+      if ($record['recurrence'] && $virtual == 1) {
+        $events = array_merge($events, $this->_get_recurring_events($record, $start, $end));
       }
     }
 
@@ -374,30 +377,29 @@ class kolab_calendar
   public function _get_recurring_events($event, $start, $end, $event_id = null)
   {
     $recurrence = new kolab_date_recurrence($event);
-    
-    $events = array();
-    $duration = $event['end'] - $event['start'];
+
     $i = 0;
-    while ($rec_start = $recurrence->next_start(true)) {
-      $rec_end = $rec_start + $duration;
-      $rec_id = $event['id'] . '-' . ++$i;
-      
+    $events = array();
+    while ($next_event = $recurrence->next_instance()) {
+      $rec_start = $next_event['start']->format('U');
+      $rec_end = $next_event['end']->format('U');
+      $rec_id = $event['uid'] . '-' . ++$i;
+
       // add to output if in range
-      if (($rec_start <= $end && $rec_end >= $start) || ($event_id && $rec_id == $event_id)) {
-        $rec_event = $event;
+      if (($next_event['start'] <= $end && $next_event['end'] >= $start) || ($event_id && $rec_id == $event_id)) {
+        $rec_event = $this->_to_rcube_event($next_event);
         $rec_event['id'] = $rec_id;
-        $rec_event['recurrence_id'] = $event['id'];
-        $rec_event['start'] = $rec_start;
-        $rec_event['end'] = $rec_end;
+        $rec_event['recurrence_id'] = $event['uid'];
         $rec_event['_instance'] = $i;
+        unset($rec_event['_attendees']);
         $events[] = $rec_event;
-        
+
         if ($rec_id == $event_id) {
           $this->events[$rec_id] = $rec_event;
           break;
         }
       }
-      else if ($rec_start > $end)  // stop loop if out of range
+      else if ($next_event['start'] > $end)  // stop loop if out of range
         break;
     }
     
@@ -411,16 +413,18 @@ class kolab_calendar
   {
     $record['id'] = $record['uid'];
     $record['calendar'] = $this->id;
-
+/*
     // convert from DateTime to unix timestamp
     if (is_a($record['start'], 'DateTime'))
       $record['start'] = $record['start']->format('U');
     if (is_a($record['end'], 'DateTime'))
       $record['end'] = $record['end']->format('U');
-
+*/
     // all-day events go from 12:00 - 13:00
-    if ($record['end'] <= $record['start'] && $record['allday'])
-      $record['end'] = $record['start'] + 3600;
+    if ($record['end'] <= $record['start'] && $record['allday']) {
+      $record['end'] = clone $record['start'];
+      $record['end']->add(new DateTimeInterval('PT1H'));
+  }
 
     if (!empty($record['_attachments'])) {
       foreach ($record['_attachments'] as $key => $attachment) {

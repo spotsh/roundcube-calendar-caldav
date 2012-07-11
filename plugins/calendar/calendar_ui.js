@@ -186,6 +186,13 @@ function rcube_calendar_ui(settings)
       return d;
     };
 
+    // turn the given date into an ISO 8601 date string understandable by PHPs strtotime()
+    var date2servertime = function(date)
+    {
+      return date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()
+          + 'T'+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds();
+    }
+
     // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
     var date2unixtime = function(date)
     {
@@ -545,7 +552,7 @@ function rcube_calendar_ui(settings)
         recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();
         interval = $('select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
         rrtimes = $('#edit-recurrence-repeat-times').val(event.recurrence ? event.recurrence.COUNT : 1);
-        rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate(new Date(event.recurrence.UNTIL*1000), settings['date_format']) : '');
+        rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate($.fullCalendar.parseISO8601(event.recurrence.UNTIL), settings['date_format']) : '');
         $('input.edit-recurrence-until:checked').prop('checked', false);
       
         var weekdays = ['SU','MO','TU','WE','TH','FR','SA'];
@@ -642,8 +649,8 @@ function rcube_calendar_ui(settings)
         // post data to server
         var data = {
           calendar: event.calendar,
-          start: date2unixtime(start),
-          end: date2unixtime(end),
+          start: date2servertime(start),
+          end: date2servertime(end),
           allday: allday.checked?1:0,
           title: title.val(),
           description: description.val(),
@@ -702,7 +709,7 @@ function rcube_calendar_ui(settings)
           if (until == 'count')
             data.recurrence.COUNT = rrtimes.val();
           else if (until == 'until')
-            data.recurrence.UNTIL = date2unixtime(parse_datetime(endtime.val(), rrenddate.val()));
+            data.recurrence.UNTIL = date2servertime(parse_datetime(endtime.val(), rrenddate.val()));
           
           if (freq == 'WEEKLY') {
             var byday = [];
@@ -2233,9 +2240,9 @@ function rcube_calendar_ui(settings)
     // initalize the fullCalendar plugin
     var fc = $('#calendar').fullCalendar({
       header: {
-        left: 'prev,next today',
+        right: 'prev,next today',
         center: 'title',
-        right: 'agendaDay,agendaWeek,month,table'
+        left: 'agendaDay,agendaWeek,month,table'
       },
       aspectRatio: 1,
       date: viewdate.getDate(),
@@ -2375,8 +2382,8 @@ function rcube_calendar_ui(settings)
         var data = {
           id: event.id,
           calendar: event.calendar,
-          start: date2unixtime(event.start),
-          end: date2unixtime(event.end),
+          start: date2servertime(event.start),
+          end: date2servertime(event.end),
           allday: allDay?1:0
         };
         update_event_confirm('move', event, data);
@@ -2393,8 +2400,8 @@ function rcube_calendar_ui(settings)
         var data = {
           id: event.id,
           calendar: event.calendar,
-          start: date2unixtime(event.start),
-          end: date2unixtime(event.end)
+          start: date2servertime(event.start),
+          end: date2servertime(event.end)
         };
         update_event_confirm('resize', event, data);
       },

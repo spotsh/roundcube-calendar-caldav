@@ -380,7 +380,9 @@ class kolab_driver extends calendar_driver
           
           // removing the first instance => just move to next occurence
           if ($master['id'] == $event['id']) {
-            $recurring = reset($storage->_get_recurring_events($event, $event['start'], $event['end'] + 86400 * 370, $event['id'].'-1'));
+            $limit = clone $event['end'];
+            $limit->add(new DateInterval('P370D'));
+            $recurring = reset($storage->_get_recurring_events($event, $event['start'], $limit, $event['id'].'-1'));
             $master['start'] = $recurring['start'];
             $master['end'] = $recurring['end'];
             if ($master['recurrence']['COUNT'])
@@ -397,7 +399,8 @@ class kolab_driver extends calendar_driver
             $_SESSION['calendar_restore_event_data'] = $master;
             
             // set until-date on master event
-            $master['recurrence']['UNTIL'] = $event['start'] - 86400;
+            $master['recurrence']['UNTIL'] = clone $event['start'];
+            $master['recurrence']['UNTIL']->sub(new DateInterval('P1D'));
             unset($master['recurrence']['COUNT']);
             $success = $storage->update_event($master);
             break;
@@ -539,7 +542,8 @@ class kolab_driver extends calendar_driver
       case 'future':
         if ($master['id'] != $event['id']) {
           // set until-date on master event
-          $master['recurrence']['UNTIL'] = $old['start'] - 86400;
+          $master['recurrence']['UNTIL'] = clone $old['start'];
+          $master['recurrence']['UNTIL']->sub(new DateInterval('P1D'));
           unset($master['recurrence']['COUNT']);
           $storage->update_event($master);
           
@@ -555,7 +559,7 @@ class kolab_driver extends calendar_driver
           // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::insert_event()
           if (strlen($event['recurrence']['BYDAY']) == 2)
             unset($event['recurrence']['BYDAY']);
-          if ($master['recurrence']['BYMONTH'] == gmdate('n', $master['start']))
+          if ($master['recurrence']['BYMONTH'] == $master['start']->format('n'))
             unset($event['recurrence']['BYMONTH']);
           
           $success = $storage->insert_event($event);
@@ -567,26 +571,27 @@ class kolab_driver extends calendar_driver
         $event['uid'] = $master['uid'];
 
         // use start date from master but try to be smart on time or duration changes
-        $old_start_date = date('Y-m-d', $old['start']);
-        $old_start_time = date('H:i', $old['start']);
-        $old_duration = $old['end'] - $old['start'];
+        $old_start_date = $old['start']->format('Y-m-d');
+        $old_start_time = $old['start']->format('H:i');
+        $old_duration = $old['end']->format('U') - $old['start']->format('U');
         
-        $new_start_date = date('Y-m-d', $event['start']);
-        $new_start_time = date('H:i', $event['start']);
-        $new_duration = $event['end'] - $event['start'];
+        $new_start_date = $event['start']->format('Y-m-d');
+        $new_start_time = $event['start']->format('H:i');
+        $new_duration = $event['end']->format('U') - $event['start']->format('U');
         
         $diff = $old_start_date != $new_start_date || $old_start_time != $new_start_time || $old_duration != $new_duration;
         
         // shifted or resized
         if ($diff && ($old_start_date == $new_start_date || $old_duration == $new_duration)) {
-          $event['start'] = $master['start'] + ($event['start'] - $old['start']);
-          $event['end'] = $event['start'] + $new_duration;
+          $event['start'] = $master['start']->add($old['start']->diff($event['start']));
+          $event['end'] = clone $event['start'];
+          $event['end']->add(new DateInterval('PT'.$new_duration.'S'));
           
           // remove fixed weekday, will be re-set to the new weekday in kolab_calendar::update_event()
           if ($old_start_date != $new_start_date) {
             if (strlen($event['recurrence']['BYDAY']) == 2)
               unset($event['recurrence']['BYDAY']);
-            if ($old['recurrence']['BYMONTH'] == gmdate('n', $old['start']))
+            if ($old['recurrence']['BYMONTH'] == $old['start']->format('n'))
               unset($event['recurrence']['BYMONTH']);
           }
         }

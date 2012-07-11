@@ -9,7 +9,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @package @package_name@
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -28,9 +28,9 @@ class calendar_recurrence
 {
   private $cal;
   private $event;
+  private $next;
   private $engine;
-  private $tz_offset = 0;
-  private $dst_start = false;
+  private $duration;
   private $hour = 0;
 
   /**
@@ -42,30 +42,30 @@ class calendar_recurrence
   function __construct($cal, $event)
   {
     $this->cal = $cal;
+    $this->event = $event;
+    $this->next = new Horde_Date($event['start'], $cal->timezone->getName());
+    $this->hour = $this->next->hour;
+
+    if (is_object($event['start']) && is_object($event['end']))
+      $this->duration = $event['start']->diff($event['end']);
 
     // use Horde classes to compute recurring instances
     // TODO: replace with something that has less than 6'000 lines of code
     require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
 
-    $this->event = $event;
     $this->engine = new Horde_Date_Recurrence($event['start']);
     $this->engine->fromRRule20(calendar::to_rrule($event['recurrence']));
 
     if (is_array($event['recurrence']['EXDATE'])) {
       foreach ($event['recurrence']['EXDATE'] as $exdate)
-        $this->engine->addException(date('Y', $exdate), date('n', $exdate), date('j', $exdate));
+        $this->engine->addException($exdate->format('Y'), $exdate->format('n'), $exdate->format('j'));
     }
-
-    $this->tz_offset = $event['allday'] ? $this->cal->gmt_offset - date('Z') : 0;
-    $this->next = new Horde_Date($event['start'] + $this->tz_offset);  # shift all-day times to server timezone because computation operates in local TZ
-    $this->dst_start = $this->next->format('I');
-    $this->hour = $this->next->hour;
   }
 
   /**
-   * Get timestamp of the next occurence of this event
+   * Get date/time of the next occurence of this event
    *
-   * @return mixed Unix timestamp or False if recurrence ended
+   * @return mixed DateTime object or False if recurrence ended
    */
   public function next_start()
   {
@@ -75,8 +75,8 @@ class calendar_recurrence
         $next->hour = $this->hour;  # fix time for all-day events
         $next->min = 0;
       }
-      # $dst_diff = ($this->dst_start - $next->format('I')) * 3600;  # consider difference in daylight saving between base event and recurring instance
-      $time = $next->timestamp() - $this->tz_offset;
+
+      $time = $next->toDateTime();
       $this->next = $next;
     }
 

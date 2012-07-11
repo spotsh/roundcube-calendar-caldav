@@ -144,7 +144,7 @@ abstract class kolab_format_xcal extends kolab_format
             }
             else if ($until = self::php_datetime($rr->end())) {
                 $until->setTime($object['start']->format('G'), $object['start']->format('i'), 0);
-                $object['recurrence']['UNTIL'] = $until->format('U');
+                $object['recurrence']['UNTIL'] = $until;
             }
 
             if (($byday = $rr->byday()) && $byday->size()) {
@@ -169,7 +169,7 @@ abstract class kolab_format_xcal extends kolab_format
             if ($exceptions = $this->obj->exceptionDates()) {
                 for ($i=0; $i < $exceptions->size(); $i++) {
                     if ($exdate = self::php_datetime($exceptions->get($i)))
-                        $object['recurrence']['EXDATE'][] = $exdate->format('U');
+                        $object['recurrence']['EXDATE'][] = $exdate;
                 }
             }
         }
@@ -223,6 +223,7 @@ abstract class kolab_format_xcal extends kolab_format
             $this->obj->setUid($object['uid']);
 
         $object['changed'] = new DateTime('now', self::$timezone);
+        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
         // increment sequence
         $this->obj->setSequence($this->obj->sequence()+1);

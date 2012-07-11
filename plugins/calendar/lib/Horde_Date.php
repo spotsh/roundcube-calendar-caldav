@@ -1,224 +1,566 @@
 <?php
-
-/**
- * This is a copy of the Horde/Date.php class from the Horde framework
- */
-
-define('HORDE_DATE_SUNDAY',    0);
-define('HORDE_DATE_MONDAY',    1);
-define('HORDE_DATE_TUESDAY',   2);
-define('HORDE_DATE_WEDNESDAY', 3);
-define('HORDE_DATE_THURSDAY',  4);
-define('HORDE_DATE_FRIDAY',    5);
-define('HORDE_DATE_SATURDAY',  6);
-
-define('HORDE_DATE_MASK_SUNDAY',    1);
-define('HORDE_DATE_MASK_MONDAY',    2);
-define('HORDE_DATE_MASK_TUESDAY',   4);
-define('HORDE_DATE_MASK_WEDNESDAY', 8);
-define('HORDE_DATE_MASK_THURSDAY', 16);
-define('HORDE_DATE_MASK_FRIDAY',   32);
-define('HORDE_DATE_MASK_SATURDAY', 64);
-define('HORDE_DATE_MASK_WEEKDAYS', 62);
-define('HORDE_DATE_MASK_WEEKEND',  65);
-define('HORDE_DATE_MASK_ALLDAYS', 127);
-
-define('HORDE_DATE_MASK_SECOND',    1);
-define('HORDE_DATE_MASK_MINUTE',    2);
-define('HORDE_DATE_MASK_HOUR',      4);
-define('HORDE_DATE_MASK_DAY',       8);
-define('HORDE_DATE_MASK_MONTH',    16);
-define('HORDE_DATE_MASK_YEAR',     32);
-define('HORDE_DATE_MASK_ALLPARTS', 63);
-
 /**
  * Horde Date wrapper/logic class, including some calculation
  * functions.
  *
- * $Horde: framework/Date/Date.php,v 1.8.10.18 2008/09/17 08:46:04 jan Exp $
+ * @category Horde
+ * @package  Date
  *
- * @package Horde_Date
+ * @TODO in format():
+ *   http://php.net/intldateformatter
+ *
+ * @TODO on timezones:
+ *   http://trac.agavi.org/ticket/1008
+ *   http://trac.agavi.org/changeset/3659
+ *
+ * @TODO on switching to PHP::DateTime:
+ *   The only thing ever stored in the database *IS* Unix timestamps. Doing
+ *   anything other than that is unmanageable, yet some frameworks use 'server
+ *   based' times in their systems, simply because they do not bother with
+ *   daylight saving and only 'serve' one timezone!
+ *
+ *   The second you have to manage 'real' time across timezones then daylight
+ *   saving becomes essential, BUT only on the display side! Since the browser
+ *   only provides a time offset, this is useless and to be honest should simply
+ *   be ignored ( until it is upgraded to provide the correct information ;)
+ *   ). So we need a 'display' function that takes a simple numeric epoch, and a
+ *   separate timezone id into which the epoch is to be 'converted'. My W3C
+ *   mapping works simply because ADOdb then converts that to it's own simple
+ *   offset abbreviation - in my case GMT or BST. As long as DateTime passes the
+ *   full 64 bit number the date range from 100AD is also preserved ( and
+ *   further back if 2 digit years are disabled ). If I want to display the
+ *   'real' timezone with this 'time' then I just add it in place of ADOdb's
+ *   'timezone'. I am tempted to simply adjust the ADOdb class to take a
+ *   timezone in place of the simple GMT switch it currently uses.
+ *
+ *   The return path is just the reverse and simply needs to take the client
+ *   display offset off prior to storage of the UTC epoch. SO we use
+ *   DateTimeZone to get an offset value for the clients timezone and simply add
+ *   or subtract this from a timezone agnostic display on the client end when
+ *   entering new times.
+ *
+ *
+ *   It's not really feasible to store dates in specific timezone, as most
+ *   national/local timezones support DST - and that is a pain to support, as
+ *   eg.  sorting breaks when some timestamps get repeated. That's why it's
+ *   usually better to store datetimes as either UTC datetime or plain unix
+ *   timestamp. I usually go with the former - using database datetime type.
  */
-class Horde_Date {
+
+/**
+ * @category Horde
+ * @package  Date
+ */
+class Horde_Date
+{
+    const DATE_SUNDAY = 0;
+    const DATE_MONDAY = 1;
+    const DATE_TUESDAY = 2;
+    const DATE_WEDNESDAY = 3;
+    const DATE_THURSDAY = 4;
+    const DATE_FRIDAY = 5;
+    const DATE_SATURDAY = 6;
+
+    const MASK_SUNDAY = 1;
+    const MASK_MONDAY = 2;
+    const MASK_TUESDAY = 4;
+    const MASK_WEDNESDAY = 8;
+    const MASK_THURSDAY = 16;
+    const MASK_FRIDAY = 32;
+    const MASK_SATURDAY = 64;
+    const MASK_WEEKDAYS = 62;
+    const MASK_WEEKEND = 65;
+    const MASK_ALLDAYS = 127;
+
+    const MASK_SECOND = 1;
+    const MASK_MINUTE = 2;
+    const MASK_HOUR = 4;
+    const MASK_DAY = 8;
+    const MASK_MONTH = 16;
+    const MASK_YEAR = 32;
+    const MASK_ALLPARTS = 63;
+
+    const DATE_DEFAULT = 'Y-m-d H:i:s';
+    const DATE_JSON = 'Y-m-d\TH:i:s';
 
     /**
      * Year
      *
      * @var integer
      */
-    var $year;
+    protected $_year;
 
     /**
      * Month
      *
      * @var integer
      */
-    var $month;
+    protected $_month;
 
     /**
      * Day
      *
      * @var integer
      */
-    var $mday;
+    protected $_mday;
 
     /**
      * Hour
      *
      * @var integer
      */
-    var $hour = 0;
+    protected $_hour = 0;
 
     /**
      * Minute
      *
      * @var integer
      */
-    var $min = 0;
+    protected $_min = 0;
 
     /**
      * Second
      *
      * @var integer
      */
-    var $sec = 0;
+    protected $_sec = 0;
 
     /**
-     * Internally supported strftime() specifiers.
+     * String representation of the date's timezone.
      *
      * @var string
      */
-    var $_supportedSpecs = '%CdDeHImMnRStTyY';
+    protected $_timezone;
 
     /**
-     * Build a new date object. If $date contains date parts, use them to
+     * Default format for __toString()
+     *
+     * @var string
+     */
+    protected $_defaultFormat = self::DATE_DEFAULT;
+
+    /**
+     * Default specs that are always supported.
+     * @var string
+     */
+    protected static $_defaultSpecs = '%CdDeHImMnRStTyY';
+
+    /**
+     * Internally supported strftime() specifiers.
+     * @var string
+     */
+    protected static $_supportedSpecs = '';
+
+    /**
+     * Map of required correction masks.
+     *
+     * @see __set()
+     *
+     * @var array
+     */
+    protected static $_corrections = array(
+        'year'  => self::MASK_YEAR,
+        'month' => self::MASK_MONTH,
+        'mday'  => self::MASK_DAY,
+        'hour'  => self::MASK_HOUR,
+        'min'   => self::MASK_MINUTE,
+        'sec'   => self::MASK_SECOND,
+    );
+
+    protected $_formatCache = array();
+
+    /**
+     * Builds a new date object. If $date contains date parts, use them to
      * initialize the object.
      *
      * Recognized formats:
-     * - arrays with keys 'year', 'month', 'mday', 'day' (since Horde 3.2),
-     *   'hour', 'min', 'minute' (since Horde 3.2), 'sec'
+     * - arrays with keys 'year', 'month', 'mday', 'day'
+     *   'hour', 'min', 'minute', 'sec'
      * - objects with properties 'year', 'month', 'mday', 'hour', 'min', 'sec'
-     * - yyyy-mm-dd hh:mm:ss (since Horde 3.1)
-     * - yyyymmddhhmmss (since Horde 3.1)
-     * - yyyymmddThhmmssZ (since Horde 3.1.4)
+     * - yyyy-mm-dd hh:mm:ss
+     * - yyyymmddhhmmss
+     * - yyyymmddThhmmssZ
+     * - yyyymmdd (might conflict with unix timestamps between 31 Oct 1966 and
+     *   03 Mar 1973)
      * - unix timestamps
-     */
-    function Horde_Date($date = null)
-    {
-        if (function_exists('nl_langinfo')) {
-            $this->_supportedSpecs .= 'bBpxX';
-        }
-
-        if (is_array($date) || is_object($date)) {
-            foreach ($date as $key => $val) {
-                if (in_array($key, array('year', 'month', 'mday', 'hour', 'min', 'sec'))) {
-                    $this->$key = (int)$val;
-                }
-            }
-
-            // If $date['day'] is present and numeric we may have been passed
-            // a Horde_Form_datetime array.
-            if (is_array($date) && isset($date['day']) &&
-                is_numeric($date['day'])) {
-                $this->mday = (int)$date['day'];
-            }
-            // 'minute' key also from Horde_Form_datetime
-            if (is_array($date) && isset($date['minute'])) {
-                $this->min = $date['minute'];
-            }
-        } elseif (!is_null($date)) {
-            // Match YYYY-MM-DD HH:MM:SS, YYYYMMDDHHMMSS and YYYYMMDD'T'HHMMSS'Z'.
-            if (preg_match('/(\d{4})-?(\d{2})-?(\d{2})T? ?(\d{2}):?(\d{2}):?(\d{2})Z?/', $date, $parts)) {
-                $this->year = (int)$parts[1];
-                $this->month = (int)$parts[2];
-                $this->mday = (int)$parts[3];
-                $this->hour = (int)$parts[4];
-                $this->min = (int)$parts[5];
-                $this->sec = (int)$parts[6];
-            } else {
-                // Try as a timestamp.
-                $parts = @getdate($date);
-                if ($parts) {
-                    $this->year = $parts['year'];
-                    $this->month = $parts['mon'];
-                    $this->mday = $parts['mday'];
-                    $this->hour = $parts['hours'];
-                    $this->min = $parts['minutes'];
-                    $this->sec = $parts['seconds'];
-                }
-            }
-        }
-    }
-
-    /**
-     * @static
-     */
-    function isLeapYear($year)
-    {
-        if (strlen($year) != 4 || preg_match('/\D/', $year)) {
-            return false;
-        }
-
-        return (($year % 4 == 0 && $year % 100 != 0) || $year % 400 == 0);
-    }
-
-    /**
-     * Returns the day of the year (1-366) that corresponds to the
-     * first day of the given week.
+     * - anything parsed by strtotime()/DateTime.
      *
-     * TODO: with PHP 5.1+, see http://derickrethans.nl/calculating_start_and_end_dates_of_a_week.php
-     *
-     * @param integer $week  The week of the year to find the first day of.
-     * @param integer $year  The year to calculate for.
-     *
-     * @return integer  The day of the year of the first day of the given week.
+     * @throws Horde_Date_Exception
      */
-    function firstDayOfWeek($week, $year)
+    public function __construct($date = null, $timezone = null)
     {
-        $jan1 = new Horde_Date(array('year' => $year, 'month' => 1, 'mday' => 1));
-        $start = $jan1->dayOfWeek();
-        if ($start > HORDE_DATE_THURSDAY) {
-            $start -= 7;
-        }
-        return (($week * 7) - (7 + $start)) + 1;
-    }
-
-    /**
-     * @static
-     */
-    function daysInMonth($month, $year)
-    {
-        if ($month == 2) {
-            if (Horde_Date::isLeapYear($year)) {
-                return 29;
-            } else {
-                return 28;
+        if (!self::$_supportedSpecs) {
+            self::$_supportedSpecs = self::$_defaultSpecs;
+            if (function_exists('nl_langinfo')) {
+                self::$_supportedSpecs .= 'bBpxX';
             }
-        } elseif ($month == 4 || $month == 6 || $month == 9 || $month == 11) {
-            return 30;
+        }
+
+        if (func_num_args() > 2) {
+            // Handle args in order: year month day hour min sec tz
+            $this->_initializeFromArgs(func_get_args());
+            return;
+        }
+
+        $this->_initializeTimezone($timezone);
+
+        if (is_null($date)) {
+            return;
+        }
+
+        if (is_string($date)) {
+            $date = trim($date, '"');
+        }
+
+        if (is_object($date)) {
+            $this->_initializeFromObject($date);
+        } elseif (is_array($date)) {
+            $this->_initializeFromArray($date);
+        } elseif (preg_match('/^(\d{4})-?(\d{2})-?(\d{2})T? ?(\d{2}):?(\d{2}):?(\d{2})(?:\.\d+)?(Z?)$/', $date, $parts)) {
+            $this->_year  = (int)$parts[1];
+            $this->_month = (int)$parts[2];
+            $this->_mday  = (int)$parts[3];
+            $this->_hour  = (int)$parts[4];
+            $this->_min   = (int)$parts[5];
+            $this->_sec   = (int)$parts[6];
+            if ($parts[7]) {
+                $this->_initializeTimezone('UTC');
+            }
+        } elseif (preg_match('/^(\d{4})-?(\d{2})-?(\d{2})$/', $date, $parts) &&
+                  $parts[2] > 0 && $parts[2] <= 12 &&
+                  $parts[3] > 0 && $parts[3] <= 31) {
+            $this->_year  = (int)$parts[1];
+            $this->_month = (int)$parts[2];
+            $this->_mday  = (int)$parts[3];
+            $this->_hour = $this->_min = $this->_sec = 0;
+        } elseif ((string)(int)$date == $date) {
+            // Try as a timestamp.
+            $parts = @getdate($date);
+            if ($parts) {
+                $this->_year  = $parts['year'];
+                $this->_month = $parts['mon'];
+                $this->_mday  = $parts['mday'];
+                $this->_hour  = $parts['hours'];
+                $this->_min   = $parts['minutes'];
+                $this->_sec   = $parts['seconds'];
+            }
         } else {
-            return 31;
+            // Use date_create() so we can catch errors with PHP 5.2. Use
+            // "new DateTime() once we require 5.3.
+            $parsed = date_create($date);
+            if (!$parsed) {
+                throw new Horde_Date_Exception(sprintf(Horde_Date_Translation::t("Failed to parse time string (%s)"), $date));
+            }
+            $parsed->setTimezone(new DateTimeZone(date_default_timezone_get()));
+            $this->_year  = (int)$parsed->format('Y');
+            $this->_month = (int)$parsed->format('m');
+            $this->_mday  = (int)$parsed->format('d');
+            $this->_hour  = (int)$parsed->format('H');
+            $this->_min   = (int)$parsed->format('i');
+            $this->_sec   = (int)$parsed->format('s');
+            $this->_initializeTimezone(date_default_timezone_get());
         }
     }
 
     /**
-     * Return the day of the week (0 = Sunday, 6 = Saturday) of this
-     * object's date.
+     * Returns a simple string representation of the date object
+     *
+     * @return string  This object converted to a string.
+     */
+    public function __toString()
+    {
+        try {
+            return $this->format($this->_defaultFormat);
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Returns a DateTime object representing this object.
+     *
+     * @return DateTime
+     */
+    public function toDateTime()
+    {
+        $date = new DateTime(null, new DateTimeZone($this->_timezone));
+        $date->setDate($this->_year, $this->_month, $this->_mday);
+        $date->setTime($this->_hour, $this->_min, $this->_sec);
+        return $date;
+    }
+
+    /**
+     * Converts a date in the proleptic Gregorian calendar to the no of days
+     * since 24th November, 4714 B.C.
+     *
+     * Returns the no of days since Monday, 24th November, 4714 B.C. in the
+     * proleptic Gregorian calendar (which is 24th November, -4713 using
+     * 'Astronomical' year numbering, and 1st January, 4713 B.C. in the
+     * proleptic Julian calendar).  This is also the first day of the 'Julian
+     * Period' proposed by Joseph Scaliger in 1583, and the number of days
+     * since this date is known as the 'Julian Day'.  (It is not directly
+     * to do with the Julian calendar, although this is where the name
+     * is derived from.)
+     *
+     * The algorithm is valid for all years (positive and negative), and
+     * also for years preceding 4714 B.C.
+     *
+     * Algorithm is from PEAR::Date_Calc
+     *
+     * @author Monte Ohrt <monte@ispi.net>
+     * @author Pierre-Alain Joye <pajoye@php.net>
+     * @author Daniel Convissor <danielc@php.net>
+     * @author C.A. Woodcock <c01234@netcomuk.co.uk>
+     *
+     * @return integer  The number of days since 24th November, 4714 B.C.
+     */
+    public function toDays()
+    {
+        if (function_exists('GregorianToJD')) {
+            return gregoriantojd($this->_month, $this->_mday, $this->_year);
+        }
+
+        $day = $this->_mday;
+        $month = $this->_month;
+        $year = $this->_year;
+
+        if ($month > 2) {
+            // March = 0, April = 1, ..., December = 9,
+            // January = 10, February = 11
+            $month -= 3;
+        } else {
+            $month += 9;
+            --$year;
+        }
+
+        $hb_negativeyear = $year < 0;
+        $century         = intval($year / 100);
+        $year            = $year % 100;
+
+        if ($hb_negativeyear) {
+            // Subtract 1 because year 0 is a leap year;
+            // And N.B. that we must treat the leap years as occurring
+            // one year earlier than they do, because for the purposes
+            // of calculation, the year starts on 1st March:
+            //
+            return intval((14609700 * $century + ($year == 0 ? 1 : 0)) / 400) +
+                   intval((1461 * $year + 1) / 4) +
+                   intval((153 * $month + 2) / 5) +
+                   $day + 1721118;
+        } else {
+            return intval(146097 * $century / 4) +
+                   intval(1461 * $year / 4) +
+                   intval((153 * $month + 2) / 5) +
+                   $day + 1721119;
+        }
+    }
+
+    /**
+     * Converts number of days since 24th November, 4714 B.C. (in the proleptic
+     * Gregorian calendar, which is year -4713 using 'Astronomical' year
+     * numbering) to Gregorian calendar date.
+     *
+     * Returned date belongs to the proleptic Gregorian calendar, using
+     * 'Astronomical' year numbering.
+     *
+     * The algorithm is valid for all years (positive and negative), and
+     * also for years preceding 4714 B.C. (i.e. for negative 'Julian Days'),
+     * and so the only limitation is platform-dependent (for 32-bit systems
+     * the maximum year would be something like about 1,465,190 A.D.).
+     *
+     * N.B. Monday, 24th November, 4714 B.C. is Julian Day '0'.
+     *
+     * Algorithm is from PEAR::Date_Calc
+     *
+     * @author Monte Ohrt <monte@ispi.net>
+     * @author Pierre-Alain Joye <pajoye@php.net>
+     * @author Daniel Convissor <danielc@php.net>
+     * @author C.A. Woodcock <c01234@netcomuk.co.uk>
+     *
+     * @param int    $days   the number of days since 24th November, 4714 B.C.
+     * @param string $format the string indicating how to format the output
+     *
+     * @return  Horde_Date  A Horde_Date object representing the date.
+     */
+    public static function fromDays($days)
+    {
+        if (function_exists('JDToGregorian')) {
+            list($month, $day, $year) = explode('/', JDToGregorian($days));
+        } else {
+            $days = intval($days);
+
+            $days   -= 1721119;
+            $century = floor((4 * $days - 1) / 146097);
+            $days    = floor(4 * $days - 1 - 146097 * $century);
+            $day     = floor($days / 4);
+
+            $year = floor((4 * $day +  3) / 1461);
+            $day  = floor(4 * $day +  3 - 1461 * $year);
+            $day  = floor(($day +  4) / 4);
+
+            $month = floor((5 * $day - 3) / 153);
+            $day   = floor(5 * $day - 3 - 153 * $month);
+            $day   = floor(($day +  5) /  5);
+
+            $year = $century * 100 + $year;
+            if ($month < 10) {
+                $month +=3;
+            } else {
+                $month -=9;
+                ++$year;
+            }
+        }
+
+        return new Horde_Date($year, $month, $day);
+    }
+
+    /**
+     * Getter for the date and time properties.
+     *
+     * @param string $name  One of 'year', 'month', 'mday', 'hour', 'min' or
+     *                      'sec'.
+     *
+     * @return integer  The property value, or null if not set.
+     */
+    public function __get($name)
+    {
+        if ($name == 'day') {
+            $name = 'mday';
+        }
+
+        return $this->{'_' . $name};
+    }
+
+    /**
+     * Setter for the date and time properties.
+     *
+     * @param string $name    One of 'year', 'month', 'mday', 'hour', 'min' or
+     *                        'sec'.
+     * @param integer $value  The property value.
+     */
+    public function __set($name, $value)
+    {
+        if ($name == 'timezone') {
+            $this->_initializeTimezone($value);
+            return;
+        }
+        if ($name == 'day') {
+            $name = 'mday';
+        }
+
+        if ($name != 'year' && $name != 'month' && $name != 'mday' &&
+            $name != 'hour' && $name != 'min' && $name != 'sec') {
+            throw new InvalidArgumentException('Undefined property ' . $name);
+        }
+
+        $down = $value < $this->{'_' . $name};
+        $this->{'_' . $name} = $value;
+        $this->_correct(self::$_corrections[$name], $down);
+        $this->_formatCache = array();
+    }
+
+    /**
+     * Returns whether a date or time property exists.
+     *
+     * @param string $name  One of 'year', 'month', 'mday', 'hour', 'min' or
+     *                      'sec'.
+     *
+     * @return boolen  True if the property exists and is set.
+     */
+    public function __isset($name)
+    {
+        if ($name == 'day') {
+            $name = 'mday';
+        }
+        return ($name == 'year' || $name == 'month' || $name == 'mday' ||
+                $name == 'hour' || $name == 'min' || $name == 'sec') &&
+            isset($this->{'_' . $name});
+    }
+
+    /**
+     * Adds a number of seconds or units to this date, returning a new Date
+     * object.
+     */
+    public function add($factor)
+    {
+        $d = clone($this);
+        if (is_array($factor) || is_object($factor)) {
+            foreach ($factor as $property => $value) {
+                $d->$property += $value;
+            }
+        } else {
+            $d->sec += $factor;
+        }
+
+        return $d;
+    }
+
+    /**
+     * Subtracts a number of seconds or units from this date, returning a new
+     * Horde_Date object.
+     */
+    public function sub($factor)
+    {
+        if (is_array($factor)) {
+            foreach ($factor as &$value) {
+                $value *= -1;
+            }
+        } else {
+            $factor *= -1;
+        }
+
+        return $this->add($factor);
+    }
+
+    /**
+     * Converts this object to a different timezone.
+     *
+     * @param string $timezone  The new timezone.
+     *
+     * @return Horde_Date  This object.
+     */
+    public function setTimezone($timezone)
+    {
+        $date = $this->toDateTime();
+        $date->setTimezone(new DateTimeZone($timezone));
+        $this->_timezone = $timezone;
+        $this->_year     = (int)$date->format('Y');
+        $this->_month    = (int)$date->format('m');
+        $this->_mday     = (int)$date->format('d');
+        $this->_hour     = (int)$date->format('H');
+        $this->_min      = (int)$date->format('i');
+        $this->_sec      = (int)$date->format('s');
+        $this->_formatCache = array();
+        return $this;
+    }
+
+    /**
+     * Sets the default date format used in __toString()
+     *
+     * @param string $format
+     */
+    public function setDefaultFormat($format)
+    {
+        $this->_defaultFormat = $format;
+    }
+
+    /**
+     * Returns the day of the week (0 = Sunday, 6 = Saturday) of this date.
      *
      * @return integer  The day of the week.
      */
-    function dayOfWeek()
+    public function dayOfWeek()
     {
-        if ($this->month > 2) {
-            $month = $this->month - 2;
-            $year = $this->year;
+        if ($this->_month > 2) {
+            $month = $this->_month - 2;
+            $year = $this->_year;
         } else {
-            $month = $this->month + 10;
-            $year = $this->year - 1;
+            $month = $this->_month + 10;
+            $year = $this->_year - 1;
         }
 
         $day = (floor((13 * $month - 1) / 5) +
-                $this->mday + ($year % 100) +
+                $this->_mday + ($year % 100) +
                 floor(($year % 100) / 4) +
                 floor(($year / 100) / 4) - 2 *
                 floor($year / 100) + 77);
@@ -231,27 +573,19 @@ class Horde_Date {
      *
      * @return integer  The day of the year.
      */
-    function dayOfYear()
+    public function dayOfYear()
     {
-        $monthTotals = array(0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334);
-        $dayOfYear = $this->mday + $monthTotals[$this->month - 1];
-        if (Horde_Date::isLeapYear($this->year) && $this->month > 2) {
-            ++$dayOfYear;
-        }
-
-        return $dayOfYear;
+        return $this->format('z') + 1;
     }
 
     /**
      * Returns the week of the month.
      *
-     * @since Horde 3.2
-     *
      * @return integer  The week number.
      */
-    function weekOfMonth()
+    public function weekOfMonth()
     {
-        return ceil($this->mday / 7);
+        return ceil($this->_mday / 7);
     }
 
     /**
@@ -259,60 +593,50 @@ class Horde_Date {
      *
      * @return integer  The week number.
      */
-    function weekOfYear()
+    public function weekOfYear()
     {
         return $this->format('W');
     }
 
     /**
-     * Return the number of weeks in the given year (52 or 53).
-     *
-     * @static
+     * Returns the number of weeks in the given year (52 or 53).
      *
      * @param integer $year  The year to count the number of weeks in.
      *
      * @return integer $numWeeks   The number of weeks in $year.
      */
-    function weeksInYear($year)
+    public static function weeksInYear($year)
     {
         // Find the last Thursday of the year.
-        $day = 31;
-        $date = new Horde_Date(array('year' => $year, 'month' => 12, 'mday' => $day, 'hour' => 0, 'min' => 0, 'sec' => 0));
-        while ($date->dayOfWeek() != HORDE_DATE_THURSDAY) {
+        $date = new Horde_Date($year . '-12-31');
+        while ($date->dayOfWeek() != self::DATE_THURSDAY) {
             --$date->mday;
         }
         return $date->weekOfYear();
     }
 
     /**
-     * Set the date of this object to the $nth weekday of $weekday.
+     * Sets the date of this object to the $nth weekday of $weekday.
      *
      * @param integer $weekday  The day of the week (0 = Sunday, etc).
      * @param integer $nth      The $nth $weekday to set to (defaults to 1).
      */
-    function setNthWeekday($weekday, $nth = 1)
+    public function setNthWeekday($weekday, $nth = 1)
     {
-        if ($weekday < HORDE_DATE_SUNDAY || $weekday > HORDE_DATE_SATURDAY) {
-            return false;
+        if ($weekday < self::DATE_SUNDAY || $weekday > self::DATE_SATURDAY) {
+            return;
         }
 
-        $this->mday = 1;
+        $this->_mday = 1;
         $first = $this->dayOfWeek();
         if ($weekday < $first) {
-            $this->mday = 8 + $weekday - $first;
+            $this->_mday = 8 + $weekday - $first;
         } else {
-            $this->mday = $weekday - $first + 1;
+            $this->_mday = $weekday - $first + 1;
         }
-        $this->mday += 7 * $nth - 7;
-
-        $this->correct();
-
-        return true;
-    }
-
-    function dump($prefix = '')
-    {
-        echo ($prefix ? $prefix . ': ' : '') . $this->year . '-' . $this->month . '-' . $this->mday . "<br />\n";
+        $diff = 7 * $nth - 7;
+        $this->_mday += $diff;
+        $this->_correct(self::MASK_DAY, $diff < 0);
     }
 
     /**
@@ -320,286 +644,241 @@ class Horde_Date {
      *
      * @return boolean  Validity, counting leap years, etc.
      */
-    function isValid()
+    public function isValid()
     {
-        if ($this->year < 0 || $this->year > 9999) {
-            return false;
-        }
-        return checkdate($this->month, $this->mday, $this->year);
+        return ($this->_year >= 0 && $this->_year <= 9999);
     }
 
     /**
-     * Correct any over- or underflows in any of the date's members.
-     *
-     * @param integer $mask  We may not want to correct some overflows.
-     */
-    function correct($mask = HORDE_DATE_MASK_ALLPARTS)
-    {
-        if ($mask & HORDE_DATE_MASK_SECOND) {
-            while ($this->sec < 0) {
-                --$this->min;
-                $this->sec += 60;
-            }
-            while ($this->sec > 59) {
-                ++$this->min;
-                $this->sec -= 60;
-            }
-        }
-
-        if ($mask & HORDE_DATE_MASK_MINUTE) {
-            while ($this->min < 0) {
-                --$this->hour;
-                $this->min += 60;
-            }
-            while ($this->min > 59) {
-                ++$this->hour;
-                $this->min -= 60;
-            }
-        }
-
-        if ($mask & HORDE_DATE_MASK_HOUR) {
-            while ($this->hour < 0) {
-                --$this->mday;
-                $this->hour += 24;
-            }
-            while ($this->hour > 23) {
-                ++$this->mday;
-                $this->hour -= 24;
-            }
-        }
-
-        if ($mask & HORDE_DATE_MASK_MONTH) {
-            while ($this->month > 12) {
-                ++$this->year;
-                $this->month -= 12;
-            }
-            while ($this->month < 1) {
-                --$this->year;
-                $this->month += 12;
-            }
-        }
-
-        if ($mask & HORDE_DATE_MASK_DAY) {
-            while ($this->mday > Horde_Date::daysInMonth($this->month, $this->year)) {
-                $this->mday -= Horde_Date::daysInMonth($this->month, $this->year);
-                ++$this->month;
-                $this->correct(HORDE_DATE_MASK_MONTH);
-            }
-            while ($this->mday < 1) {
-                --$this->month;
-                $this->correct(HORDE_DATE_MASK_MONTH);
-                $this->mday += Horde_Date::daysInMonth($this->month, $this->year);
-            }
-        }
-    }
-
-    /**
-     * Compare this date to another date object to see which one is
+     * Compares this date to another date object to see which one is
      * greater (later). Assumes that the dates are in the same
      * timezone.
      *
-     * @param mixed $date  The date to compare to.
+     * @param mixed $other  The date to compare to.
      *
-     * @return integer  ==  0 if the dates are equal
-     *                  >=  1 if this date is greater (later)
-     *                  <= -1 if the other date is greater (later)
+     * @return integer  ==  0 if they are on the same date
+     *                  >=  1 if $this is greater (later)
+     *                  <= -1 if $other is greater (later)
      */
-    function compareDate($date)
+    public function compareDate($other)
     {
-        if (!is_object($date) || !is_a($date, 'Horde_Date')) {
-            $date = new Horde_Date($date);
+        if (!($other instanceof Horde_Date)) {
+            $other = new Horde_Date($other);
         }
 
-        if ($this->year != $date->year) {
-            return $this->year - $date->year;
+        if ($this->_year != $other->year) {
+            return $this->_year - $other->year;
         }
-        if ($this->month != $date->month) {
-            return $this->month - $date->month;
+        if ($this->_month != $other->month) {
+            return $this->_month - $other->month;
         }
 
-        return $this->mday - $date->mday;
+        return $this->_mday - $other->mday;
     }
 
     /**
-     * Compare this to another date object by time, to see which one
+     * Returns whether this date is after the other.
+     *
+     * @param mixed $other  The date to compare to.
+     *
+     * @return boolean  True if this date is after the other.
+     */
+    public function after($other)
+    {
+        return $this->compareDate($other) > 0;
+    }
+
+    /**
+     * Returns whether this date is before the other.
+     *
+     * @param mixed $other  The date to compare to.
+     *
+     * @return boolean  True if this date is before the other.
+     */
+    public function before($other)
+    {
+        return $this->compareDate($other) < 0;
+    }
+
+    /**
+     * Returns whether this date is the same like the other.
+     *
+     * @param mixed $other  The date to compare to.
+     *
+     * @return boolean  True if this date is the same like the other.
+     */
+    public function equals($other)
+    {
+        return $this->compareDate($other) == 0;
+    }
+
+    /**
+     * Compares this to another date object by time, to see which one
      * is greater (later). Assumes that the dates are in the same
      * timezone.
      *
-     * @param mixed $date  The date to compare to.
+     * @param mixed $other  The date to compare to.
      *
-     * @return integer  ==  0 if the dates are equal
-     *                  >=  1 if this date is greater (later)
-     *                  <= -1 if the other date is greater (later)
+     * @return integer  ==  0 if they are at the same time
+     *                  >=  1 if $this is greater (later)
+     *                  <= -1 if $other is greater (later)
      */
-    function compareTime($date)
+    public function compareTime($other)
     {
-        if (!is_object($date) || !is_a($date, 'Horde_Date')) {
-            $date = new Horde_Date($date);
+        if (!($other instanceof Horde_Date)) {
+            $other = new Horde_Date($other);
         }
 
-        if ($this->hour != $date->hour) {
-            return $this->hour - $date->hour;
+        if ($this->_hour != $other->hour) {
+            return $this->_hour - $other->hour;
         }
-        if ($this->min != $date->min) {
-            return $this->min - $date->min;
+        if ($this->_min != $other->min) {
+            return $this->_min - $other->min;
         }
 
-        return $this->sec - $date->sec;
+        return $this->_sec - $other->sec;
     }
 
     /**
-     * Compare this to another date object, including times, to see
+     * Compares this to another date object, including times, to see
      * which one is greater (later). Assumes that the dates are in the
      * same timezone.
      *
-     * @param mixed $date  The date to compare to.
+     * @param mixed $other  The date to compare to.
      *
-     * @return integer  ==  0 if the dates are equal
-     *                  >=  1 if this date is greater (later)
-     *                  <= -1 if the other date is greater (later)
+     * @return integer  ==  0 if they are equal
+     *                  >=  1 if $this is greater (later)
+     *                  <= -1 if $other is greater (later)
      */
-    function compareDateTime($date)
+    public function compareDateTime($other)
     {
-        if (!is_object($date) || !is_a($date, 'Horde_Date')) {
-            $date = new Horde_Date($date);
+        if (!($other instanceof Horde_Date)) {
+            $other = new Horde_Date($other);
         }
 
-        if ($diff = $this->compareDate($date)) {
+        if ($diff = $this->compareDate($other)) {
             return $diff;
         }
 
-        return $this->compareTime($date);
+        return $this->compareTime($other);
     }
 
     /**
-     * Get the time offset for local time zone.
+     * Returns number of days between this date and another.
+     *
+     * @param Horde_Date $other  The other day to diff with.
+     *
+     * @return integer  The absolute number of days between the two dates.
+     */
+    public function diff($other)
+    {
+        return abs($this->toDays() - $other->toDays());
+    }
+
+    /**
+     * Returns the time offset for local time zone.
      *
      * @param boolean $colon  Place a colon between hours and minutes?
      *
      * @return string  Timezone offset as a string in the format +HH:MM.
      */
-    function tzOffset($colon = true)
+    public function tzOffset($colon = true)
     {
-        $secs = $this->format('Z');
-
-        if ($secs < 0) {
-            $sign = '-';
-            $secs = -$secs;
-        } else {
-            $sign = '+';
-        }
-        $colon = $colon ? ':' : '';
-        $mins = intval(($secs + 30) / 60);
-        return sprintf('%s%02d%s%02d',
-                       $sign, $mins / 60, $colon, $mins % 60);
+        return $colon ? $this->format('P') : $this->format('O');
     }
 
     /**
-     * Return the unix timestamp representation of this date.
+     * Returns the unix timestamp representation of this date.
      *
      * @return integer  A unix timestamp.
      */
-    function timestamp()
+    public function timestamp()
     {
-        if (class_exists('DateTime')) {
-            return $this->format('U');
-        } else {
-            return Horde_Date::_mktime($this->hour, $this->min, $this->sec, $this->month, $this->mday, $this->year);
+        if ($this->_year >= 1970 && $this->_year < 2038) {
+            return mktime($this->_hour, $this->_min, $this->_sec,
+                          $this->_month, $this->_mday, $this->_year);
         }
+        return $this->format('U');
     }
 
     /**
-     * Return the unix timestamp representation of this date, 12:00am.
+     * Returns the unix timestamp representation of this date, 12:00am.
      *
      * @return integer  A unix timestamp.
      */
-    function datestamp()
+    public function datestamp()
     {
-        if (class_exists('DateTime')) {
-            $dt = new DateTime();
-            $dt->setDate($this->year, $this->month, $this->mday);
-            $dt->setTime(0, 0, 0);
-            return $dt->format('U');
-        } else {
-            return Horde_Date::_mktime(0, 0, 0, $this->month, $this->mday, $this->year);
+        if ($this->_year >= 1970 && $this->_year < 2038) {
+            return mktime(0, 0, 0, $this->_month, $this->_mday, $this->_year);
         }
+        $date = new DateTime($this->format('Y-m-d'));
+        return $date->format('U');
     }
 
     /**
-     * Format time using the specifiers available in date() or in the DateTime
+     * Formats date and time to be passed around as a short url parameter.
+     *
+     * @return string  Date and time.
+     */
+    public function dateString()
+    {
+        return sprintf('%04d%02d%02d', $this->_year, $this->_month, $this->_mday);
+    }
+
+    /**
+     * Formats date and time to the ISO format used by JSON.
+     *
+     * @return string  Date and time.
+     */
+    public function toJson()
+    {
+        return $this->format(self::DATE_JSON);
+    }
+
+    /**
+     * Formats date and time to the RFC 2445 iCalendar DATE-TIME format.
+     *
+     * @param boolean $floating  Whether to return a floating date-time
+     *                           (without time zone information).
+     *
+     * @return string  Date and time.
+     */
+    public function toiCalendar($floating = false)
+    {
+        if ($floating) {
+            return $this->format('Ymd\THis');
+        }
+        $dateTime = $this->toDateTime();
+        $dateTime->setTimezone(new DateTimeZone('UTC'));
+        return $dateTime->format('Ymd\THis\Z');
+    }
+
+    /**
+     * Formats time using the specifiers available in date() or in the DateTime
      * class' format() method.
      *
-     * @since Horde 3.3
+     * To format in languages other than English, use strftime() instead.
      *
      * @param string $format
      *
      * @return string  Formatted time.
      */
-    function format($format)
+    public function format($format)
     {
-        if (class_exists('DateTime')) {
-            $dt = new DateTime();
-            $dt->setDate($this->year, $this->month, $this->mday);
-            $dt->setTime($this->hour, $this->min, $this->sec);
-            return $dt->format($format);
-        } else {
-            return date($format, $this->timestamp());
+        if (!isset($this->_formatCache[$format])) {
+            $this->_formatCache[$format] = $this->toDateTime()->format($format);
         }
+        return $this->_formatCache[$format];
     }
 
     /**
-     * Format time in ISO-8601 format. Works correctly since Horde 3.2.
-     *
-     * @return string  Date and time in ISO-8601 format.
-     */
-    function iso8601DateTime()
-    {
-        return $this->rfc3339DateTime() . $this->tzOffset();
-    }
-
-    /**
-     * Format time in RFC 2822 format.
-     *
-     * @return string  Date and time in RFC 2822 format.
-     */
-    function rfc2822DateTime()
-    {
-        return $this->format('D, j M Y H:i:s') . ' ' . $this->tzOffset(false);
-    }
-
-    /**
-     * Format time in RFC 3339 format.
-     *
-     * @since Horde 3.1
-     *
-     * @return string  Date and time in RFC 3339 format. The seconds part has
-     *                 been added with Horde 3.2.
-     */
-    function rfc3339DateTime()
-    {
-        return $this->format('Y-m-d\TH:i:s');
-    }
-
-    /**
-     * Format time to standard 'ctime' format.
-     *
-     * @return string  Date and time.
-     */
-    function cTime()
-    {
-        return $this->format('D M j H:i:s Y');
-    }
-
-    /**
-     * Format date and time using strftime() format.
-     *
-     * @since Horde 3.1
+     * Formats date and time using strftime() format.
      *
      * @return string  strftime() formatted date and time.
      */
-    function strftime($format)
+    public function strftime($format)
     {
-        if (preg_match('/%[^' . $this->_supportedSpecs . ']/', $format)) {
+        if (preg_match('/%[^' . self::$_supportedSpecs . ']/', $format)) {
             return strftime($format, $this->timestamp());
         } else {
             return $this->_strftime($format);
@@ -607,16 +886,12 @@ class Horde_Date {
     }
 
     /**
-     * Format date and time using a limited set of the strftime() format.
+     * Formats date and time using a limited set of the strftime() format.
      *
      * @return string  strftime() formatted date and time.
      */
-    function _strftime($format)
+    protected function _strftime($format)
     {
-        if (preg_match('/%[bBpxX]/', $format)) {
-            require_once 'Horde/NLS.php';
-        }
-
         return preg_replace(
             array('/%b/e',
                   '/%B/e',
@@ -639,136 +914,199 @@ class Horde_Date {
                   '/%y/e',
                   '/%Y/',
                   '/%%/'),
-            array('$this->_strftime(NLS::getLangInfo(constant(\'ABMON_\' . (int)$this->month)))',
-                  '$this->_strftime(NLS::getLangInfo(constant(\'MON_\' . (int)$this->month)))',
-                  '(int)($this->year / 100)',
-                  'sprintf(\'%02d\', $this->mday)',
+            array('$this->_strftime(Horde_Nls::getLangInfo(constant(\'ABMON_\' . (int)$this->_month)))',
+                  '$this->_strftime(Horde_Nls::getLangInfo(constant(\'MON_\' . (int)$this->_month)))',
+                  '(int)($this->_year / 100)',
+                  'sprintf(\'%02d\', $this->_mday)',
                   '$this->_strftime(\'%m/%d/%y\')',
-                  'sprintf(\'%2d\', $this->mday)',
-                  'sprintf(\'%02d\', $this->hour)',
-                  'sprintf(\'%02d\', $this->hour == 0 ? 12 : ($this->hour > 12 ? $this->hour - 12 : $this->hour))',
-                  'sprintf(\'%02d\', $this->month)',
-                  'sprintf(\'%02d\', $this->min)',
+                  'sprintf(\'%2d\', $this->_mday)',
+                  'sprintf(\'%02d\', $this->_hour)',
+                  'sprintf(\'%02d\', $this->_hour == 0 ? 12 : ($this->_hour > 12 ? $this->_hour - 12 : $this->_hour))',
+                  'sprintf(\'%02d\', $this->_month)',
+                  'sprintf(\'%02d\', $this->_min)',
                   "\n",
-                  '$this->_strftime(NLS::getLangInfo($this->hour < 12 ? AM_STR : PM_STR))',
+                  '$this->_strftime(Horde_Nls::getLangInfo($this->_hour < 12 ? AM_STR : PM_STR))',
                   '$this->_strftime(\'%H:%M\')',
-                  'sprintf(\'%02d\', $this->sec)',
+                  'sprintf(\'%02d\', $this->_sec)',
                   "\t",
                   '$this->_strftime(\'%H:%M:%S\')',
-                  '$this->_strftime(NLS::getLangInfo(D_FMT))',
-                  '$this->_strftime(NLS::getLangInfo(T_FMT))',
-                  'substr(sprintf(\'%04d\', $this->year), -2)',
-                  (int)$this->year,
+                  '$this->_strftime(Horde_Nls::getLangInfo(D_FMT))',
+                  '$this->_strftime(Horde_Nls::getLangInfo(T_FMT))',
+                  'substr(sprintf(\'%04d\', $this->_year), -2)',
+                  (int)$this->_year,
                   '%'),
             $format);
     }
 
     /**
-     * mktime() implementation that supports dates outside of 1970-2038,
-     * from http://phplens.com/phpeverywhere/adodb_date_library.
+     * Corrects any over- or underflows in any of the date's members.
      *
-     * @TODO remove in Horde 4
-     *
-     * This does NOT work with pre-1970 daylight saving times.
-     *
-     * @static
+     * @param integer $mask  We may not want to correct some overflows.
+     * @param integer $down  Whether to correct the date up or down.
      */
-    function _mktime($hr, $min, $sec, $mon = false, $day = false,
-                     $year = false, $is_dst = false, $is_gmt = false)
+    protected function _correct($mask = self::MASK_ALLPARTS, $down = false)
     {
-        if ($mon === false) {
-            return $is_gmt
-                ? @gmmktime($hr, $min, $sec)
-                : @mktime($hr, $min, $sec);
+        if ($mask & self::MASK_SECOND) {
+            if ($this->_sec < 0 || $this->_sec > 59) {
+                $mask |= self::MASK_MINUTE;
+
+                $this->_min += (int)($this->_sec / 60);
+                $this->_sec %= 60;
+                if ($this->_sec < 0) {
+                    $this->_min--;
+                    $this->_sec += 60;
+                }
+            }
         }
 
-        if ($year > 1901 && $year < 2038 &&
-            ($year >= 1970 || version_compare(PHP_VERSION, '5.0.0', '>='))) {
-            return $is_gmt
-                ? @gmmktime($hr, $min, $sec, $mon, $day, $year)
-                : @mktime($hr, $min, $sec, $mon, $day, $year);
+        if ($mask & self::MASK_MINUTE) {
+            if ($this->_min < 0 || $this->_min > 59) {
+                $mask |= self::MASK_HOUR;
+
+                $this->_hour += (int)($this->_min / 60);
+                $this->_min %= 60;
+                if ($this->_min < 0) {
+                    $this->_hour--;
+                    $this->_min += 60;
+                }
+            }
         }
 
-        $gmt_different = $is_gmt
-            ? 0
-            : (mktime(0, 0, 0, 1, 2, 1970, 0) - gmmktime(0, 0, 0, 1, 2, 1970, 0));
+        if ($mask & self::MASK_HOUR) {
+            if ($this->_hour < 0 || $this->_hour > 23) {
+                $mask |= self::MASK_DAY;
 
-        $mon = intval($mon);
-        $day = intval($day);
-        $year = intval($year);
-
-        if ($mon > 12) {
-            $y = floor($mon / 12);
-            $year += $y;
-            $mon -= $y * 12;
-        } elseif ($mon < 1) {
-            $y = ceil((1 - $mon) / 12);
-            $year -= $y;
-            $mon += $y * 12;
+                $this->_mday += (int)($this->_hour / 24);
+                $this->_hour %= 24;
+                if ($this->_hour < 0) {
+                    $this->_mday--;
+                    $this->_hour += 24;
+                }
+            }
         }
 
-        $_day_power = 86400;
-        $_hour_power = 3600;
-        $_min_power = 60;
+        if ($mask & self::MASK_MONTH) {
+            $this->_correctMonth($down);
+            /* When correcting the month, always correct the day too. Months
+             * have different numbers of days. */
+            $mask |= self::MASK_DAY;
+        }
 
-        $_month_table_normal = array('', 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
-        $_month_table_leaf = array('', 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
-
-        $_total_date = 0;
-        if ($year >= 1970) {
-            for ($a = 1970; $a <= $year; $a++) {
-                $leaf = Horde_Date::isLeapYear($a);
-                if ($leaf == true) {
-                    $loop_table = $_month_table_leaf;
-                    $_add_date = 366;
+        if ($mask & self::MASK_DAY) {
+            while ($this->_mday > 28 &&
+                   $this->_mday > Horde_Date_Utils::daysInMonth($this->_month, $this->_year)) {
+                if ($down) {
+                    $this->_mday -= Horde_Date_Utils::daysInMonth($this->_month + 1, $this->_year) - Horde_Date_Utils::daysInMonth($this->_month, $this->_year);
                 } else {
-                    $loop_table = $_month_table_normal;
-                    $_add_date = 365;
+                    $this->_mday -= Horde_Date_Utils::daysInMonth($this->_month, $this->_year);
+                    $this->_month++;
                 }
-                if ($a < $year) {
-                    $_total_date += $_add_date;
-                } else {
-                    for ($b = 1; $b < $mon; $b++) {
-                        $_total_date += $loop_table[$b];
-                    }
-                }
+                $this->_correctMonth($down);
             }
-
-            return ($_total_date + $day - 1) * $_day_power + $hr * $_hour_power + $min * $_min_power + $sec + $gmt_different;
-        }
-
-        for ($a = 1969 ; $a >= $year; $a--) {
-            $leaf = Horde_Date::isLeapYear($a);
-            if ($leaf == true) {
-                $loop_table = $_month_table_leaf;
-                $_add_date = 366;
-            } else {
-                $loop_table = $_month_table_normal;
-                $_add_date = 365;
+            while ($this->_mday < 1) {
+                --$this->_month;
+                $this->_correctMonth($down);
+                $this->_mday += Horde_Date_Utils::daysInMonth($this->_month, $this->_year);
             }
-            if ($a > $year) {
-                $_total_date += $_add_date;
-            } else {
-                for ($b = 12; $b > $mon; $b--) {
-                    $_total_date += $loop_table[$b];
-                }
-            }
-        }
-
-        $_total_date += $loop_table[$mon] - $day;
-        $_day_time = $hr * $_hour_power + $min * $_min_power + $sec;
-        $_day_time = $_day_power - $_day_time;
-        $ret = -($_total_date * $_day_power + $_day_time - $gmt_different);
-        if ($ret < -12220185600) {
-            // If earlier than 5 Oct 1582 - gregorian correction.
-            return $ret + 10 * 86400;
-        } elseif ($ret < -12219321600) {
-            // If in limbo, reset to 15 Oct 1582.
-            return -12219321600;
-        } else {
-            return $ret;
         }
     }
 
-}
+    /**
+     * Corrects the current month.
+     *
+     * This cannot be done in _correct() because that would also trigger a
+     * correction of the day, which would result in an infinite loop.
+     *
+     * @param integer $down  Whether to correct the date up or down.
+     */
+    protected function _correctMonth($down = false)
+    {
+        $this->_year += (int)($this->_month / 12);
+        $this->_month %= 12;
+        if ($this->_month < 1) {
+            $this->_year--;
+            $this->_month += 12;
+        }
+    }
 
+    /**
+     * Handles args in order: year month day hour min sec tz
+     */
+    protected function _initializeFromArgs($args)
+    {
+        $tz = (isset($args[6])) ? array_pop($args) : null;
+        $this->_initializeTimezone($tz);
+
+        $args = array_slice($args, 0, 6);
+        $keys = array('year' => 1, 'month' => 1, 'mday' => 1, 'hour' => 0, 'min' => 0, 'sec' => 0);
+        $date = array_combine(array_slice(array_keys($keys), 0, count($args)), $args);
+        $date = array_merge($keys, $date);
+
+        $this->_initializeFromArray($date);
+    }
+
+    protected function _initializeFromArray($date)
+    {
+        if (isset($date['year']) && is_string($date['year']) && strlen($date['year']) == 2) {
+            if ($date['year'] > 70) {
+                $date['year'] += 1900;
+            } else {
+                $date['year'] += 2000;
+            }
+        }
+
+        foreach ($date as $key => $val) {
+            if (in_array($key, array('year', 'month', 'mday', 'hour', 'min', 'sec'))) {
+                $this->{'_'. $key} = (int)$val;
+            }
+        }
+
+        // If $date['day'] is present and numeric we may have been passed
+        // a Horde_Form_datetime array.
+        if (isset($date['day']) &&
+            (string)(int)$date['day'] == $date['day']) {
+            $this->_mday = (int)$date['day'];
+        }
+        // 'minute' key also from Horde_Form_datetime
+        if (isset($date['minute']) &&
+            (string)(int)$date['minute'] == $date['minute']) {
+            $this->_min = (int)$date['minute'];
+        }
+
+        $this->_correct();
+    }
+
+    protected function _initializeFromObject($date)
+    {
+        if ($date instanceof DateTime) {
+            $this->_year  = (int)$date->format('Y');
+            $this->_month = (int)$date->format('m');
+            $this->_mday  = (int)$date->format('d');
+            $this->_hour  = (int)$date->format('H');
+            $this->_min   = (int)$date->format('i');
+            $this->_sec   = (int)$date->format('s');
+            $this->_initializeTimezone($date->getTimezone()->getName());
+        } else {
+            $is_horde_date = $date instanceof Horde_Date;
+            foreach (array('year', 'month', 'mday', 'hour', 'min', 'sec') as $key) {
+                if ($is_horde_date || isset($date->$key)) {
+                    $this->{'_' . $key} = (int)$date->$key;
+                }
+            }
+            if (!$is_horde_date) {
+                $this->_correct();
+            } else {
+                $this->_initializeTimezone($date->timezone);
+            }
+        }
+    }
+
+    protected function _initializeTimezone($timezone)
+    {
+        if (empty($timezone)) {
+            $timezone = date_default_timezone_get();
+        }
+        $this->_timezone = $timezone;
+    }
+
+}

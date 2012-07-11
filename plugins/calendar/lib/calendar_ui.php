@@ -380,7 +380,7 @@ class calendar_ui
         $this->cal->gettext(array('name' => $label, 'vars' => array('min' => $n % 60, 'hrs' => intval($n / 60))))));
     }
     
-    return html::tag('ul', $attrib, join("\n", $items), html::$common_attrib);
+    return html::tag('ul', $attrib + array('class' => 'toolbarmenu'), join("\n", $items), html::$common_attrib);
   }
   
   /**

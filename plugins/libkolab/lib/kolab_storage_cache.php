@@ -515,7 +515,7 @@ class kolab_storage_cache
             // extend date range for recurring events
             if ($object['recurrence']) {
                 $recurrence = new kolab_date_recurrence($object);
-                $sql_data['dtend'] = date('Y-m-d H:i:s', $recurrence->end() ?: strtotime('now +1 year'));
+                $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
             }
         }
         else if ($objtype == 'task') {

@@ -16,3 +16,8 @@ are used. They are packaged in a slightly modified version with this plugin.
 iCalendar parsing is done with the help of the Horde_iCalendar class. A copy
 of that class with all its dependencies is part of this package. In order
 to update it, execute lib/get_horde_icalendar.sh > lib/Horde_iCalendar.php
+
+IMPORTANT
+---------
+The calendar module makes heavy use of PHP's DateTime as well as DateInterval
+classes. The latter one requires at least PHP 5.3.0 to run.

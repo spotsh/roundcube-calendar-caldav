@@ -50,6 +50,7 @@ class kolab_format_distributionlist extends kolab_format
             $this->obj->setUid($object['uid']);
 
         $object['changed'] = new DateTime('now', self::$timezone);
+        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
         $this->obj->setName($object['name']);
 

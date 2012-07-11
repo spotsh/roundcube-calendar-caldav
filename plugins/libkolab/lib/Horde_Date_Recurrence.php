@@ -1198,7 +1198,10 @@ class Horde_Date_Recurrence
                                                     '%04d%02d%02d');
                 $this->setRecurEnd(new Horde_Date(array('year' => $year,
                                                         'month' => $month,
-                                                        'mday' => $mday)));
+                                                        'mday' => $mday,
+                                                        'hour' => 23,
+                                                        'min' => 59,
+                                                        'sec' => 59)));
             }
             if (isset($rdata['COUNT'])) {
                 $this->setRecurCount($rdata['COUNT']);
