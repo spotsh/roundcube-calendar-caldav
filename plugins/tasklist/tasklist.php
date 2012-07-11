@@ -387,7 +387,7 @@ class tasklist extends rcube_plugin
         // sort tasks according to their hierarchy level and due date
         usort($data, array($this, 'task_sort_cmp'));
 
-        $this->rc->output->command('plugin.data_ready', $data);
+        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'data' => $data));
     }
 
     /**

@@ -48,6 +48,7 @@ function rcube_tasklist(settings)
     /*  private vars  */
     var selector = 'all';
     var filtermask = FILTER_MASK_ALL;
+    var loadstate = { filter:-1, lists:'' };
     var idcount = 0;
     var saving_lock;
     var ui_loading;
@@ -274,46 +275,72 @@ function rcube_tasklist(settings)
     }
 
     /**
-     * fetch tasks from server
+     * List tasks matching the given selector
      */
     function list_tasks(sel)
     {
+        if (rcmail.busy)
+            return;
+
         if (sel && filter_masks[sel] !== undefined) {
             filtermask = filter_masks[sel];
             selector = sel;
         }
 
-        var active = active_lists();
-        if (active.length) {
+        var active = active_lists(),
+            basefilter = filtermask == FILTER_MASK_COMPLETE ? FILTER_MASK_COMPLETE : FILTER_MASK_ALL,
+            reload = active.join(',') != loadstate.lists || basefilter != loadstate.filter;
+
+        if (active.length && reload) {
             ui_loading = rcmail.set_busy(true, 'loading');
-            rcmail.http_request('fetch', { filter:filtermask, lists:active.join(','), q:search_query }, true);
+            rcmail.http_request('fetch', { filter:basefilter, lists:active.join(','), q:search_query }, true);
         }
-        else
+        else if (reload)
             data_ready([]);
+        else
+            render_tasklist();
 
         $('#taskselector li.selected').removeClass('selected');
         $('#taskselector li.'+selector).addClass('selected');
     }
 
     /**
-     * callback if task data from server is ready
+     * Callback if task data from server is ready
      */
-    function data_ready(data)
+    function data_ready(response)
     {
-        // clear display
-        var msgbox = $('#listmessagebox').hide(),
-            list = $(rcmail.gui_objects.resultlist).html('');
         listdata = {};
-
-        for (var i=0; i < data.length; i++) {
-            listdata[data[i].id] = data[i];
-            render_task(data[i]);
+        loadstate.lists = response.lists;
+        loadstate.filter = response.filter;
+        for (var i=0; i < response.data.length; i++) {
+            listdata[response.data[i].id] = response.data[i];
         }
 
-        if (!data.length)
-            msgbox.html(rcmail.gettext('notasksfound','tasklist')).show();
-
+        render_tasklist();
         rcmail.set_busy(false, 'loading', ui_loading);
+    }
+
+    /**
+     *
+     */
+    function render_tasklist()
+    {
+        // clear display
+        var rec,
+            count = 0,
+            msgbox = $('#listmessagebox').hide(),
+            list = $(rcmail.gui_objects.resultlist).html('');
+
+        for (var id in listdata) {
+            rec = listdata[id];
+            if (match_filter(rec)) {
+                render_task(rec);
+                count++;
+            }
+        }
+
+        if (!count)
+            msgbox.html(rcmail.gettext('notasksfound','tasklist')).show();
     }
 
     /**
@@ -714,8 +741,7 @@ function rcube_tasklist(settings)
      */
     function match_filter(rec)
     {
-        // TBD.
-        return true;
+        return !filtermask || (filtermask & rec.mask) > 0;
     }
 
     /**
