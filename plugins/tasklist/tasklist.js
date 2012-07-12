@@ -32,7 +32,7 @@ function rcube_tasklist(settings)
     var FILTER_MASK_OVERDUE = 32;
     var FILTER_MASK_FLAGGED = 64;
     var FILTER_MASK_COMPLETE = 128;
-    
+
     var filter_masks = {
         all:      FILTER_MASK_ALL,
         today:    FILTER_MASK_TODAY,
@@ -44,9 +44,10 @@ function rcube_tasklist(settings)
         flagged:  FILTER_MASK_FLAGGED,
         complete: FILTER_MASK_COMPLETE
     };
-    
+
     /*  private vars  */
     var selector = 'all';
+    var tagsfilter = null;
     var filtermask = FILTER_MASK_ALL;
     var loadstate = { filter:-1, lists:'' };
     var idcount = 0;
@@ -60,7 +61,7 @@ function rcube_tasklist(settings)
     var search_request;
     var search_query;
     var me = this;
-    
+
     // general datepicker settings
     var datepicker_settings = {
       // translate from PHP format to datepicker format
@@ -150,7 +151,15 @@ function rcube_tasklist(settings)
             var item = $(e.target),
                 tag = item.data('value');
 
-            alert(tag);
+            $('li', this).removeClass('selected');
+            if (tag != tagsfilter) {
+                item.addClass('selected');
+                tagsfilter = tag;
+            }
+            else
+                tagsfilter = null;
+
+            list_tasks();
         });
 
         // click-handler on task list items (delegate)
@@ -328,21 +337,8 @@ function rcube_tasklist(settings)
             listdata[response.data[i].id] = response.data[i];
         }
 
-        // find new tags
-        var newtags = [];
-        for (var i=0; i < response.tags.length; i++) {
-            if (tags.indexOf(response.tags[i]) < 0)
-                newtags.push(response.tags[i]);
-        }
-        tags = tags.concat(newtags);
-
-        // append new tags to tag cloud
-        var taglist = $(rcmail.gui_objects.tagslist);
-        $.each(newtags, function(i, tag){
-            $('<li>').attr('rel', tag).data('value', tag).html(Q(tag)).appendTo(taglist);
-        });
-
         render_tasklist();
+        append_tags(response.tags || []);
         rcmail.set_busy(false, 'loading', ui_loading);
     }
 
@@ -367,6 +363,22 @@ function rcube_tasklist(settings)
 
         if (!count)
             msgbox.html(rcmail.gettext('notasksfound','tasklist')).show();
+    }
+
+    function append_tags(taglist)
+    {
+        // find new tags
+        var newtags = [];
+        for (var i=0; i < taglist.length; i++) {
+            if (tags.indexOf(taglist[i]) < 0)
+                newtags.push(taglist[i]);
+        }
+        tags = tags.concat(newtags);
+
+        // append new tags to tag cloud
+        $.each(newtags, function(i, tag){
+            $('<li>').attr('rel', tag).data('value', tag).html(Q(tag)).appendTo(rcmail.gui_objects.tagslist);
+        });
     }
 
     /**
@@ -397,6 +409,7 @@ function rcube_tasklist(settings)
         var id = rec.id;
         listdata[id] = rec;
         render_task(rec, rec.tempid || id);
+        append_tags(rec.tags || []);
     }
 
     /**
@@ -626,6 +639,13 @@ function rcube_tasklist(settings)
         $('#task-completeness .task-text').html(((rec.complete || 0) * 100) + '%');
         $('#task-list .task-text').html(Q(me.tasklists[rec.list] ? me.tasklists[rec.list].name : ''));
 
+        var taglist = $('#task-tags')[(rec.tags && rec.tags.length ? 'show' : 'hide')]().children('.task-text').empty();
+        if (rec.tags && rec.tags.length) {
+            $.each(rec.tags, function(i,val){
+                $('<span>').addClass('tag-element').html(Q(val)).data('value', val).appendTo(taglist);
+            });
+        }
+
         // define dialog buttons
         var buttons = {};
         buttons[rcmail.gettext('edit','tasklist')] = function() {
@@ -680,6 +700,25 @@ function rcube_tasklist(settings)
         completeness_slider.slider('value', complete.val());
         var tasklist = $('#edit-tasklist').val(rec.list || 0); // .prop('disabled', rec.parent_id ? true : false);
 
+        // tag-edit line
+        var tagline = $(rcmail.gui_objects.edittagline).empty();
+        $.each(typeof rec.tags == 'object' && rec.tags.length ? rec.tags : [''], function(i,val){
+            $('<input>')
+                .attr('name', 'tags[]')
+                .attr('tabindex', '3')
+                .addClass('tag')
+                .val(val)
+                .appendTo(tagline);
+        });
+
+        $('input.tag', rcmail.gui_objects.edittagline).tagedit({
+            animSpeed: 100,
+            allowEdit: false,
+            checkNewEntriesCaseSensitive: false,
+            autocompleteOptions: { source: tags, minLength: 0 },
+            texts: { removeLinkTitle: rcmail.gettext('removetag', 'tasklist') }
+        });
+
         $('#edit-nodate').unbind('click').click(function(){
             recdate.val('');
             rectime.val('');
@@ -694,6 +733,12 @@ function rcube_tasklist(settings)
             me.selected_task.date = recdate.val();
             me.selected_task.time = rectime.val();
             me.selected_task.list = tasklist.val();
+            me.selected_task.tags = [];
+
+            $('input[name="tags[]"]', rcmail.gui_objects.edittagline).each(function(i,elem){
+                if (elem.value)
+                    me.selected_task.tags.push(elem.value);
+            });
 
             if (me.selected_task.list && me.selected_task.list != rec.list)
               me.selected_task._fromlist = rec.list;
@@ -763,11 +808,16 @@ function rcube_tasklist(settings)
     }
 
     /**
-     * Check if the given task matches the current filtermask
+     * Check if the given task matches the current filtermask and tag selection
      */
     function match_filter(rec)
     {
-        return !filtermask || (filtermask & rec.mask) > 0;
+        var match = !filtermask || (filtermask & rec.mask) > 0;
+
+        if (match && tagsfilter)
+            match = rec.tags && rec.tags.indexOf(tagsfilter) >= 0;
+
+        return match;
     }
 
     /**
@@ -1064,7 +1114,6 @@ function rcube_tasklist(settings)
             rcmail.enable_command('list-edit', 'list-remove', 'import', !me.tasklists[id].readonly);
             me.selected_list = id;
       })
-//              .dblclick(function(){ list_edit_dialog(me.selected_list); })
       .data('id', id);
     }
 }
@@ -1089,7 +1138,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rctasks = new rcube_tasklist(rcmail.env.tasklist_settings);
 
   // register button commands
-  //rcmail.register_command('addtask', function(){ rctasks.add_task(); }, true);
+  rcmail.register_command('newtask', function(){ rctasks.edit_task(null, 'new', {}); }, true);
   //rcmail.register_command('print', function(){ rctasks.print_list(); }, true);
 
   rcmail.register_command('list-create', function(){ rctasks.list_edit_dialog(null); }, true);

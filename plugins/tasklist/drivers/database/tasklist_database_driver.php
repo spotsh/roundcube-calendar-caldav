@@ -344,6 +344,7 @@ class tasklist_database_driver extends tasklist_driver
         $rec['id'] = $rec['task_id'];
         $rec['list'] = $rec['tasklist_id'];
         $rec['changed'] = strtotime($rec['changed']);
+        $rec['tags'] = array_filter(explode(',', $rec['tags']));
 
         if (!$rec['parent_id'])
             unset($rec['parent_id']);
@@ -373,8 +374,8 @@ class tasklist_database_driver extends tasklist_driver
 
         $result = $this->rc->db->query(sprintf(
             "INSERT INTO " . $this->db_tasks . "
-             (tasklist_id, uid, parent_id, created, changed, title, date, time)
-             VALUES (?, ?, ?, %s, %s, ?, ?, ?)",
+             (tasklist_id, uid, parent_id, created, changed, title, date, time, description, tags)
+             VALUES (?, ?, ?, %s, %s, ?, ?, ?, ?, ?)",
              $this->rc->db->now(),
              $this->rc->db->now()
             ),
@@ -383,7 +384,9 @@ class tasklist_database_driver extends tasklist_driver
             $prop['parent_id'],
             $prop['title'],
             $prop['date'],
-            $prop['time']
+            $prop['time'],
+            strval($prop['description']),
+            join(',', (array)$prop['tags'])
         );
 
         if ($result)
@@ -410,6 +413,8 @@ class tasklist_database_driver extends tasklist_driver
             if (isset($prop[$col]))
                 $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . (empty($prop[$col]) ? 'NULL' : $this->rc->db->quote($prop[$col]));
         }
+        if (isset($prop['tags']))
+            $sql_set[] = $this->rc->db->quote_identifier('tags') . '=' . $this->rc->db->quote(join(',', (array)$prop['tags']));
 
         // moved from another list
         if ($prop['_fromlist'] && ($newlist = $prop['list'])) {

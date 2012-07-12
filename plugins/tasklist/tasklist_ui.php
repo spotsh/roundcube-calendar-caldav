@@ -69,7 +69,9 @@ class tasklist_ui
         $this->plugin->register_handler('plugin.tasklist_editform', array($this, 'tasklist_editform'));
         $this->plugin->register_handler('plugin.tasks', array($this, 'tasks_resultview'));
         $this->plugin->register_handler('plugin.tagslist', array($this, 'tagslist'));
+        $this->plugin->register_handler('plugin.tags_editline', array($this, 'tags_editline'));
 
+        $this->plugin->include_script('jquery.tagedit.js');
         $this->plugin->include_script('tasklist.js');
 
         // copy config to client
@@ -207,6 +209,9 @@ class tasklist_ui
         return html::tag('ul', $attrib, '');
     }
 
+    /**
+     * Container for a tags cloud
+     */
     function tagslist($attrib)
     {
         $attrib += array('id' => 'rcmtagslist');
@@ -214,6 +219,18 @@ class tasklist_ui
 
         $this->rc->output->add_gui_object('tagslist', $attrib['id']);
         return html::tag('ul', $attrib, '');
+    }
+
+    /**
+     * Interactive UI element to add/remove tags
+     */
+    function tags_editline($attrib)
+    {
+        $attrib += array('id' => 'rcmtagsedit');
+        $this->rc->output->add_gui_object('edittagline', $attrib['id']);
+
+        $input = new html_inputfield(array('name' => 'tags[]', 'class' => 'tag', 'size' => $attrib['size'], 'tabindex' => $attrib['tabindex']));
+        return html::div($attrib, $input->show(''));
     }
 
 }

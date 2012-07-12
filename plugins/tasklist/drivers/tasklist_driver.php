@@ -33,6 +33,7 @@
   *       'changed' => <unixtime>, // Last modification date of record
   *         'title' => 'Event title/summary',
   *   'description' => 'Event description',
+  *          'tags' => array(),      // List of tags for this task
   *          'date' => 'Due date',   // as string of format YYYY-MM-DD or null if no date is set
   *          'time' => 'Due time',   // as string of format hh::ii or null if no due time is set
   *    'categories' => 'Task category',

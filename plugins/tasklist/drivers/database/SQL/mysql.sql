@@ -29,6 +29,7 @@ CREATE TABLE `tasks` (
   `del` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `title` varchar(255) NOT NULL,
   `description` text,
+  `tags` text,
   `date` varchar(10) DEFAULT NULL,
   `time` varchar(5) DEFAULT NULL,
   `flagged` tinyint(4) NOT NULL DEFAULT '0',

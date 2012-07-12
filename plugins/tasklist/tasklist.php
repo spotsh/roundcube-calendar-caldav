@@ -378,8 +378,8 @@ class tasklist extends rcube_plugin
                 $this->task_tree[$rec['id']] = $rec['parent_id'];
             }
             $this->encode_task($rec);
-            if (!empty($rec['categories']))
-                $tags = array_merge($tags, (array)$rec['categories']);
+            if (!empty($rec['tags']))
+                $tags = array_merge($tags, (array)$rec['tags']);
 
             // apply filter; don't trust the driver on this :-)
             if ((!$f && $rec['complete'] < 1.0) || ($rec['mask'] & $f))
@@ -389,7 +389,7 @@ class tasklist extends rcube_plugin
         // sort tasks according to their hierarchy level and due date
         usort($data, array($this, 'task_sort_cmp'));
 
-        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'data' => $data, 'tags' => array_unique($tags)));
+        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'data' => $data, 'tags' => array_values(array_unique($tags))));
     }
 
     /**

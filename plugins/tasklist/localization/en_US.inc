@@ -6,6 +6,7 @@ $labels['lists'] = 'Resources';
 $labels['list'] = 'Resource';
 $labels['tags'] = 'Tags';
 
+$labels['newtask'] = 'New Task';
 $labels['createnewtask'] = 'Create new Task (e.g. Saturday, Mow the lawn)';
 $labels['mark'] = 'Mark';
 $labels['unmark'] = 'Unmark';
@@ -24,6 +25,7 @@ $labels['tomorrow'] = 'Tomorrow';
 $labels['next7days'] = 'Next 7 days';
 $labels['later'] = 'Later';
 $labels['nodate'] = 'no date';
+$labels['removetag'] = 'Remove';
 
 $labels['taskdetails'] = 'Details';
 $labels['newtask'] = 'New Task';

@@ -11,6 +11,7 @@
 <div id="mainscreen">
 	<div id="sidebar">
 		<div id="taskstoolbar" class="toolbar">
+			<roundcube:button command="newtask" type="link" class="button newtask disabled" classAct="button newtask" classSel="button newtask pressed" label="tasklist.newtask" title="tasklist.newtask" />
 			<roundcube:container name="toolbar" id="taskstoolbar" />
 		</div>
 
@@ -97,6 +98,10 @@
 	</div>
 	<div id="task-description" class="form-section">
 	</div>
+	<div id="task-tags" class="form-section">
+		<label><roundcube:label name="tasklist.tags" /></label>
+		<span class="task-text"></span>
+	</div>
 	<div id="task-date" class="form-section">
 		<label><roundcube:label name="tasklist.datetime" /></label>
 		<span class="task-text"></span>
@@ -117,27 +122,31 @@
 		<div class="form-section">
 			<label for="edit-title"><roundcube:label name="tasklist.title" /></label>
 			<br />
-			<input type="text" class="text" name="title" id="edit-title" size="40" />
+			<input type="text" class="text" name="title" id="edit-title" size="60" tabindex="1" />
 		</div>
 		<div class="form-section">
 			<label for="edit-description"><roundcube:label name="tasklist.description" /></label>
 			<br />
-			<textarea name="description" id="edit-description" class="text" rows="5" cols="40"></textarea>
+			<textarea name="description" id="edit-description" class="text" rows="5" cols="60" tabindex="2"></textarea>
+		</div>
+		<div class="form-section">
+			<label for="edit-tags"><roundcube:label name="tasklist.tags" /></label>
+			<roundcube:object name="plugin.tags_editline" id="edit-tagline" class="tagedit" tabindex="3" />
 		</div>
 		<div class="form-section">
 			<label for="edit-date"><roundcube:label name="tasklist.datetime" /></label>
-			<input type="text" name="date" size="10" id="edit-date" /> &nbsp;
-			<input type="text" name="time" size="6" id="edit-time" />
+			<input type="text" name="date" size="10" id="edit-date" tabindex="20" /> &nbsp;
+			<input type="text" name="time" size="6" id="edit-time" tabindex="21" />
 			<a href="#nodate" style="margin-left:1em" id="edit-nodate"><roundcube:label name="tasklist.nodate" /></a>
 		</div>
 		<div class="form-section">
 			<label for="edit-completeness"><roundcube:label name="tasklist.complete" /></label>
-			<input type="text" name="title" id="edit-completeness" size="3" />&nbsp;%
+			<input type="text" name="title" id="edit-completeness" size="3"  tabindex="23" />&nbsp;%
 			<div id="edit-completeness-slider"></div>
 		</div>
 		<div class="form-section" id="tasklist-select">
 			<label for="edit-tasklist"><roundcube:label name="tasklist.list" /></label>
-			<roundcube:object name="plugin.tasklist_select" id="edit-tasklist" />
+			<roundcube:object name="plugin.tasklist_select" id="edit-tasklist" tabindex="24" />
 		</div>
 	</form>
 </div>

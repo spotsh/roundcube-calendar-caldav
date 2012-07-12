@@ -326,6 +326,7 @@ class tasklist_kolab_driver extends tasklist_driver
             'title' => $record['title'],
 #            'location' => $record['location'],
             'description' => $record['description'],
+            'tags' => (array)$record['categories'],
             'flagged' => $record['priority'] == 1,
             'complete' => $record['status'] == 'COMPLETED' ? 1 : floatval($record['complete'] / 100),
             'parent_id' => $record['parent_id'],
@@ -350,6 +351,7 @@ class tasklist_kolab_driver extends tasklist_driver
     private function _from_rcube_task($task, $old = array())
     {
         $object = $task;
+        $object['categories'] = (array)$task['tags'];
 
         if (!empty($task['date'])) {
             $object['due'] = new DateTime($task['date'].' '.$task['time'], $this->plugin->timezone);

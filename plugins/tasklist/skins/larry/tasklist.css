@@ -42,19 +42,6 @@
 	height: 242px;
 }
 
-#tagslist {
-	padding: 0;
-	margin: 6px 8px;
-	list-style: none;
-}
-
-#tagslist li {
-	display: inline-block;
-	color: #004458;
-	padding: 0.2em 1em 0.2em 0;
-	cursor: pointer;
-}
-
 #tasklistsbox {
 	position: absolute;
 	top: 300px;
@@ -75,6 +62,7 @@
 	padding-right: 0.3em;
 }
 
+#tagslist li,
 #taskselector li a {
 	display: inline-block;
 	color: #004458;
@@ -105,6 +93,7 @@
 	color: #97b3bf;
 }
 
+#tagslist li.selected,
 #taskselector li.selected a {
 	color: #fff;
 	background: #005d76;
@@ -166,32 +155,19 @@
 	border-color: #ff3800 transparent;
 }
 
-/*
-#taskselector li .count {
-	display: none;
-	position: absolute;
-	top: -8px;
-	right: 0px;
-	padding: 2px 5px;
-	background: #db3333;
-	background: -moz-linear-gradient(top, #db3333 0%, #a82727 100%);
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#db3333), color-stop(100%,#a82727));
-	background: -o-linear-gradient(top, #db3333 0%, #a82727 100%);
-	background: -ms-linear-gradient(top, #db3333 0%, #a82727 100%);
-	background: linear-gradient(top, #db3333 0%, #a82727 100%);
-	box-shadow: inset 0 1px 1px 0 #831f1f;
-	-o-box-shadow: inset 0 1px 1px 0 #831f1f;
-	-webkit-box-shadow: inset 0 1px 1px 0 #831f1f;
-	-moz-box-shadow: inset 0 1px 1px 0 #831f1f;
-	border: 1px solid #831f1f;
-	border-radius: 9px;
-	color: #fff;
-	text-align: center;
-	font-weight: bold;
-	font-size: 80%;
-	text-shadow: none;
+#tagslist {
+	padding: 0;
+	margin: 6px;
+	list-style: none;
 }
-*/
+
+#tagslist li {
+	display: inline-block;
+	color: #004458;
+	margin-right: 0.5em;
+	min-width: 1.2em;
+	cursor: pointer;
+}
 
 #tasklists li {
 	margin: 0;
@@ -576,3 +552,93 @@ label.block {
 	border: 1px solid #ccc;
 }
 
+#edit-tagline {
+	width: 97%;
+}
+
+
+/**
+ * Styles of the tagedit inputsforms
+ */
+.tagedit-list {
+	width: 100%;
+	margin: 0;
+	padding: 4px 4px 0 5px;
+	overflow: auto;
+	min-height: 26px;
+	background: #fff;
+	border: 1px solid #b2b2b2;
+	border-radius: 4px;
+	box-shadow: inset 0 0 2px 1px rgba(0,0,0, 0.1);
+	-moz-box-shadow: inset 0 0 2px 1px rgba(0,0,0, 0.1);
+	-webkit-box-shadow: inset 0 0 2px 1px rgba(0,0,0, 0.1);
+	-o-box-shadow: inset 0 0 2px 1px rgba(0,0,0, 0.1);
+}
+.tagedit-list li.tagedit-listelement {
+	list-style-type: none;
+	float: left;
+	margin: 0 4px 4px 0;
+	padding: 0;
+}
+
+/* New Item input */
+.tagedit-list li.tagedit-listelement-new input {
+	border: 0;
+	height: 100%;
+	padding: 4px 1px;
+	width: 15px;
+	background: #fff;
+	border-radius: 0;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	-o-box-shadow: none;
+}
+.tagedit-list li.tagedit-listelement-new input:focus {
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	-o-box-shadow: none;
+	outline: none;
+}
+.tagedit-list li.tagedit-listelement-new input.tagedit-input-disabled {
+	display: none;
+}
+
+/* Item that is put to the List */
+.form-section span.tag-element,
+.tagedit-list li.tagedit-listelement-old {
+	padding: 3px 0 1px 6px;
+	background: #ddeef5;
+	background: -moz-linear-gradient(top, #edf6fa 0%, #d6e9f3 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#edf6fa), color-stop(100%,#d6e9f3));
+	background: -o-linear-gradient(top, #edf6fa 0%, #d6e9f3 100%);
+	background: -ms-linear-gradient(top, #edf6fa 0%, #d6e9f3 100%);
+	background: linear-gradient(top, #edf6fa 0%, #d6e9f3 100%);
+	border: 1px solid #c2dae5;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	color: #0d5165;
+}
+
+.form-section span.tag-element {
+	margin-right: 0.6em;
+	padding: 2px 6px;
+/*	cursor: pointer; */
+}
+
+.tagedit-list li.tagedit-listelement-old a.tagedit-close,
+.tagedit-list li.tagedit-listelement-old a.tagedit-break,
+.tagedit-list li.tagedit-listelement-old a.tagedit-delete,
+.tagedit-list li.tagedit-listelement-old a.tagedit-save {
+	text-indent: -2000px;
+	display: inline-block;
+	position: relative;
+	top: -1px;
+	width: 16px;
+	height: 16px;
+	margin: 0 2px 0 6px;
+	background: url(sprites.png) -2px -122px no-repeat;
+	cursor: pointer;
+}
