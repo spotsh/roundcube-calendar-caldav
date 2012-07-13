@@ -219,10 +219,10 @@ class tasklist_kolab_driver extends tasklist_driver
         $counts = array('all' => 0, 'flagged' => 0, 'today' => 0, 'tomorrow' => 0, 'overdue' => 0, 'nodate' => 0);
         foreach ($lists as $list_id) {
             $folder = $this->folders[$list_id];
-            foreach ((array)$folder->select(array(array('tags','!~','complete'))) as $record) {
+            foreach ((array)$folder->select(array(array('tags','!~','x-complete'))) as $record) {
                 $rec = $this->_to_rcube_task($record);
 
-                if ($rec['complete'])  // don't count complete tasks
+                if ($rec['complete'] >= 1.0)  // don't count complete tasks
                     continue;
 
                 $counts['all']++;
