@@ -129,10 +129,10 @@ class kolab_format_task extends kolab_format_xcal
         $tags = array();
 
         if ($this->data['status'] == 'COMPLETED' || $this->data['complete'] == 100)
-            $tags[] = 'complete';
+            $tags[] = 'x-complete';
 
         if ($this->data['priority'] == 1)
-            $tags[] = 'flagged';
+            $tags[] = 'x-flagged';
 
         if (!empty($this->data['alarms']))
             $tags[] = 'x-has-alarms';
