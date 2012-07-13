@@ -313,7 +313,7 @@ class tasklist extends rcube_plugin
      */
     public function fetch_counts()
     {
-        $lists = null;
+        $lists = get_input_value('lists', RCUBE_INPUT_GPC);;
         $counts = $this->driver->count_tasks($lists);
         $this->rc->output->command('plugin.update_counts', $counts);
     }
@@ -389,7 +389,7 @@ class tasklist extends rcube_plugin
         // sort tasks according to their hierarchy level and due date
         usort($data, array($this, 'task_sort_cmp'));
 
-        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'data' => $data, 'tags' => array_values(array_unique($tags))));
+        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'search' => $search, 'data' => $data, 'tags' => array_values(array_unique($tags))));
     }
 
     /**
