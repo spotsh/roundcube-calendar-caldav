@@ -265,9 +265,9 @@ class tasklist_kolab_driver extends tasklist_driver
         // query Kolab storage
         $query = array();
         if ($filter['mask'] & tasklist::FILTER_MASK_COMPLETE)
-            $query[] = array('tags','~','complete');
+            $query[] = array('tags','~','x-complete');
         else
-            $query[] = array('tags','!~','complete');
+            $query[] = array('tags','!~','x-complete');
 
         // full text search (only works with cache enabled)
         if ($filter['search']) {
