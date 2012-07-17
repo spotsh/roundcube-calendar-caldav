@@ -28,7 +28,7 @@ abstract class kolab_format_xcal extends kolab_format
 {
     public $CTYPE = 'application/calendar+xml';
 
-    public static $fulltext_cols = array('title', 'description', 'location', 'attendees:name', 'attendees:email');
+    public static $fulltext_cols = array('title', 'description', 'location', 'attendees:name', 'attendees:email', 'categories');
 
     protected $sensitivity_map = array(
         'public'       => kolabformat::ClassPublic,

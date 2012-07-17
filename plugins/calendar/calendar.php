@@ -1340,7 +1340,7 @@ class calendar extends rcube_plugin
       $rrule .= $k . '=' . $val . ';';
     }
     
-    return $rrule;
+    return rtrim($rrule, ';');
   }
   
   /**

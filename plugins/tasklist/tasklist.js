@@ -49,7 +49,7 @@ function rcube_tasklist(settings)
     var selector = 'all';
     var tagsfilter = null;
     var filtermask = FILTER_MASK_ALL;
-    var loadstate = { filter:-1, lists:'' };
+    var loadstate = { filter:-1, lists:'', search:null };
     var idcount = 0;
     var saving_lock;
     var ui_loading;
@@ -310,7 +310,7 @@ function rcube_tasklist(settings)
 
         var active = active_lists(),
             basefilter = filtermask == FILTER_MASK_COMPLETE ? FILTER_MASK_COMPLETE : FILTER_MASK_ALL,
-            reload = active.join(',') != loadstate.lists || basefilter != loadstate.filter;
+            reload = active.join(',') != loadstate.lists || basefilter != loadstate.filter || loadstate.search != search_query;
 
         if (active.length && reload) {
             ui_loading = rcmail.set_busy(true, 'loading');
@@ -333,6 +333,8 @@ function rcube_tasklist(settings)
         listdata = {};
         loadstate.lists = response.lists;
         loadstate.filter = response.filter;
+        loadstate.search = response.search;
+
         for (var i=0; i < response.data.length; i++) {
             listdata[response.data[i].id] = response.data[i];
         }
@@ -378,6 +380,12 @@ function rcube_tasklist(settings)
         // append new tags to tag cloud
         $.each(newtags, function(i, tag){
             $('<li>').attr('rel', tag).data('value', tag).html(Q(tag)).appendTo(rcmail.gui_objects.tagslist);
+        });
+
+        // re-sort tags list
+        $(rcmail.gui_objects.tagslist).children('li').sortElements(function(a,b){
+            console.log($.text([a]), $.text([b]))
+            return $.text([a]).toLowerCase() > $.text([b]).toLowerCase() ? 1 : -1;
         });
     }
 
@@ -1129,6 +1137,25 @@ function rcube_tasklist(settings)
     return json;
   };
 })(jQuery);
+
+// from http://james.padolsey.com/javascript/sorting-elements-with-jquery/
+jQuery.fn.sortElements = (function(){
+    var sort = [].sort;
+
+    return function(comparator, getSortable) {
+        getSortable = getSortable || function(){ return this };
+
+        var last = null;
+        return sort.call(this, comparator).each(function(i){
+            // at this point the array is sorted, so we can just detach each one from wherever it is, and add it after the last
+            var node = $(getSortable.call(this));
+            var parent = node.parent();
+            if (last) last.after(node);
+            else      parent.prepend(node);
+            last = node;
+        });
+    };
+})();
 
 
 /* tasklist plugin UI initialization */
