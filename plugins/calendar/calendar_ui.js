@@ -2006,7 +2006,7 @@ function rcube_calendar_ui(settings)
         var event = p.update;
         event.temp = false;
         event.editable = source.editable;
-        var existing = fc.fullCalendar('clientEvents', event.id);
+        var existing = fc.fullCalendar('clientEvents', function(e){ return (e.id == event.id && e.calendar == event.calendar); });
         if (existing.length) {
           $.extend(existing[0], event);
           fc.fullCalendar('updateEvent', existing[0]);
