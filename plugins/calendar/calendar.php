@@ -1157,6 +1157,7 @@ class calendar extends rcube_plugin
     }
 
     return array(
+      '_id'   => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
       'start' => $this->adjust_timezone($event['start'])->format('c'),
       'end'   => $this->adjust_timezone($event['end'])->format('c'),
       'title'       => strval($event['title']),
