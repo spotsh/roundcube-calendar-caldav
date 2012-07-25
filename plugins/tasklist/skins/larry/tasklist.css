@@ -67,7 +67,7 @@
 	display: inline-block;
 	color: #004458;
 	min-width: 4em;
-	padding: 0.2em 0.6em;
+	padding: 0.2em 0.6em 0.3em 0.6em;
 	text-align: center;
 	text-decoration: none;
 	border: 1px solid #eee;
@@ -324,7 +324,7 @@
 	-webkit-box-shadow: 0 1px 1px 0 rgba(50, 50, 50, 0.5);
 	-moz-box-shadow: 0 1px 1px 0 rgba(50, 50, 50, 0.5);
 	box-shadow: 0 1px 1px 0 rgba(50, 50, 50, 0.5);
-	padding-right: 11em;
+	padding-right: 26em;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -365,6 +365,26 @@
 .taskhead.flagged .flagged {
 	visibility: visible;
 	background-position: -2px -23px;
+}
+
+.taskhead .tags {
+	position: absolute;
+	top: 4px;
+	right: 110px;
+	max-width: 14em;
+	overflow: hidden;
+	padding-top: 1px;
+	padding-bottom: 4px;
+	text-align: right;
+}
+
+.taskhead .tags .tag {
+	font-size: 85%;
+	background: #d9ecf4;
+	border: 1px solid #c2dae5;
+	border-radius: 4px;
+	padding: 2px 8px;
+	margin-right: 3px;
 }
 
 .taskhead .date {

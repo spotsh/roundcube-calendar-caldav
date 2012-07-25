@@ -47,7 +47,7 @@ function rcube_tasklist(settings)
 
     /*  private vars  */
     var selector = 'all';
-    var tagsfilter = null;
+    var tagsfilter = [];
     var filtermask = FILTER_MASK_ALL;
     var loadstate = { filter:-1, lists:'', search:null };
     var idcount = 0;
@@ -146,20 +146,43 @@ function rcube_tasklist(settings)
         // click-handler on tags list
         $(rcmail.gui_objects.tagslist).click(function(e){
             if (e.target.nodeName != 'LI')
-                return;
+                return false;
 
             var item = $(e.target),
                 tag = item.data('value');
 
-            $('li', this).removeClass('selected');
-            if (tag != tagsfilter) {
-                item.addClass('selected');
-                tagsfilter = tag;
+            // reset selection on regular clicks
+            var index = tagsfilter.indexOf(tag);
+            var shift = e.shiftKey || e.ctrlKey || e.metaKey;
+
+            if (!shift) {
+                if (tagsfilter.length > 1)
+                    index = -1;
+
+                $('li', this).removeClass('selected');
+                tagsfilter = [];
             }
-            else
-                tagsfilter = null;
+
+            // add tag to filter
+            if (index < 0) {
+                item.addClass('selected');
+                tagsfilter.push(tag);
+            }
+            else if (shift) {
+                item.removeClass('selected');
+                var a = tagsfilter.slice(0,index);
+                tagsfilter = a.concat(tagsfilter.slice(index+1));
+            }
 
             list_tasks();
+
+            e.preventDefault();
+            return false;
+        })
+        .mousedown(function(e){
+            // disable content selection with the mouse
+            e.preventDefault();
+            return false;
         });
 
         // click-handler on task list items (delegate)
@@ -439,11 +462,16 @@ function rcube_tasklist(settings)
      */
     function render_task(rec, replace)
     {
+        var tags_html = '';
+        for (var j=0; rec.tags && j < rec.tags.length; j++)
+            tags_html += '<span class="tag">' + Q(rec.tags[j]) + '</span>';
+
         var div = $('<div>').addClass('taskhead').html(
             '<div class="progressbar"><div class="progressvalue" style="width:' + (rec.complete * 100) + '%"></div></div>' +
             '<input type="checkbox" name="completed[]" value="1" class="complete" ' + (rec.complete == 1.0 ? 'checked="checked" ' : '') + '/>' + 
             '<span class="flagged"></span>' +
             '<span class="title">' + Q(rec.title) + '</span>' +
+            '<span class="tags">' + tags_html + '</span>' +
             '<span class="date">' + Q(rec.date || rcmail.gettext('nodate','tasklist')) + '</span>' +
             '<a href="#" class="actions">V</a>'
             )
@@ -822,8 +850,13 @@ function rcube_tasklist(settings)
     {
         var match = !filtermask || (filtermask & rec.mask) > 0;
 
-        if (match && tagsfilter)
-            match = rec.tags && rec.tags.indexOf(tagsfilter) >= 0;
+        if (match && tagsfilter.length) {
+            match = rec.tags && rec.tags.length;
+            for (var i=0; match && i < tagsfilter.length; i++) {
+                if (rec.tags.indexOf(tagsfilter[i]) < 0)
+                    match = false;
+            }
+        }
 
         return match;
     }
