@@ -245,7 +245,7 @@ class tasklist extends rcube_plugin
             $rec['description'] = '';
 
         foreach ($rec as $key => $val) {
-            if ($val == 'null')
+            if ($val === 'null')
                 $rec[$key] = null;
         }
 

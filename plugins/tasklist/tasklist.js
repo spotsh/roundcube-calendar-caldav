@@ -407,7 +407,6 @@ function rcube_tasklist(settings)
 
         // re-sort tags list
         $(rcmail.gui_objects.tagslist).children('li').sortElements(function(a,b){
-            console.log($.text([a]), $.text([b]))
             return $.text([a]).toLowerCase() > $.text([b]).toLowerCase() ? 1 : -1;
         });
     }
@@ -496,7 +495,7 @@ function rcube_tasklist(settings)
         if ((rec.mask & FILTER_MASK_OVERDUE))
             div.addClass('overdue');
 
-        var li, parent;
+        var li, parent = rec.parent_id ? $('li[rel="'+rec.parent_id+'"] > ul.childtasks', rcmail.gui_objects.resultlist) : null;
         if (replace && (li = $('li[rel="'+replace+'"]', rcmail.gui_objects.resultlist)) && li.length) {
             li.children('div.taskhead').first().replaceWith(div);
             li.attr('rel', rec.id);
@@ -508,12 +507,13 @@ function rcube_tasklist(settings)
                 .append(div)
                 .append('<ul class="childtasks"></ul>');
 
-            if (rec.parent_id && (parent = $('li[rel="'+rec.parent_id+'"] > ul.childtasks', rcmail.gui_objects.resultlist)) && parent.length)
-                li.appendTo(parent);
-            else
+            if (!parent || !parent.length)
                 li.appendTo(rcmail.gui_objects.resultlist);
         }
-        
+
+        if (parent && parent.length)
+            li.appendTo(parent);
+
         if (replace) {
             resort_task(rec, li, true);
             // TODO: remove the item after a while if it doesn't match the current filter anymore
@@ -936,7 +936,6 @@ function rcube_tasklist(settings)
      */
     function insert_list(prop)
     {
-        console.log(prop)
         var li = $('<li>').attr('id', 'rcmlitasklist'+prop.id)
             .append('<input type="checkbox" name="_list[]" value="'+prop.id+'" checked="checked" />')
             .append('<span class="handle">&nbsp;</span>')
