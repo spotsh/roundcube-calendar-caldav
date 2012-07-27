@@ -24,7 +24,7 @@ class owncloud extends rcube_plugin
         $rcmail = rcmail::get_instance();
 
         // requires kolab_auth plugin
-        if (empty($_SESSION['kolab_uid'])) {
+        if (0&&empty($_SESSION['kolab_uid'])) {
             return;
         }
 
