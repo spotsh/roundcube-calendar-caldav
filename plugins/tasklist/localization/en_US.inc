@@ -8,7 +8,7 @@ $labels['tags'] = 'Tags';
 
 $labels['newtask'] = 'New Task';
 $labels['createnewtask'] = 'Create new Task (e.g. Saturday, Mow the lawn)';
-$labels['createfrommail'] = 'Create new task from email';
+$labels['createfrommail'] = 'Save as task';
 $labels['mark'] = 'Mark';
 $labels['unmark'] = 'Unmark';
 $labels['edit'] = 'Edit';

@@ -22,6 +22,11 @@
 	background-position: 0 -26px;
 }
 
+ul.toolbarmenu li span.icon.taskadd {
+	background-image: url(buttons.png);
+	background-position: -4px -90px;
+}
+
 #sidebar {
 	position: absolute;
 	top: 0;
