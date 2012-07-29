@@ -352,7 +352,7 @@ class tasklist extends rcube_plugin
         $search = get_input_value('q', RCUBE_INPUT_GPC);
         $filter = array('mask' => $f, 'search' => $search);
         $lists = get_input_value('lists', RCUBE_INPUT_GPC);;
-
+/*
         // convert magic date filters into a real date range
         switch ($f) {
         case self::FILTER_MASK_TODAY:
@@ -383,7 +383,7 @@ class tasklist extends rcube_plugin
             break;
 
         }
-
+*/
         $data = $tags = $this->task_tree = $this->task_titles = array();
         foreach ($this->driver->list_tasks($filter, $lists) as $rec) {
             if ($rec['parent_id']) {
@@ -484,23 +484,27 @@ class tasklist extends rcube_plugin
             $week_date = new DateTime('now + 7 days', $this->timezone);
             $weeklimit = $week_date->format('Y-m-d');
         }
-        
+
         $mask = 0;
+        $start = $rec['startdate'] ?: '1900-00-00';
+
         if ($rec['flagged'])
             $mask |= self::FILTER_MASK_FLAGGED;
         if ($rec['complete'] == 1.0)
             $mask |= self::FILTER_MASK_COMPLETE;
+
         if (empty($rec['date']))
             $mask |= self::FILTER_MASK_NODATE;
-        else if ($rec['date'] == $today)
-            $mask |= self::FILTER_MASK_TODAY;
-        else if ($rec['date'] == $tomorrow)
-            $mask |= self::FILTER_MASK_TOMORROW;
         else if ($rec['date'] < $today)
             $mask |= self::FILTER_MASK_OVERDUE;
-        else if ($rec['date'] > $tomorrow && $rec['date'] <= $weeklimit)
-            $mask |= self::FILTER_MASK_LATER;
-        else if ($rec['date'] > $weeklimit)
+
+        if ($rec['date'] >= $today && $start <= $today)
+            $mask |= self::FILTER_MASK_TODAY;
+        if ($rec['date'] >= $tomorrow && $start <= $tomorrow)
+            $mask |= self::FILTER_MASK_TOMORROW;
+        if (($start > $tomorrow || $rec['date'] > $tomorrow) && $rec['date'] <= $weeklimit)
+            $mask |= self::FILTER_MASK_WEEK;
+        if ($start > $weeklimit || $rec['date'] > $weeklimit)
             $mask |= self::FILTER_MASK_LATER;
 
         return $mask;
