@@ -51,8 +51,7 @@ class tasklist_ui
             'label'   => 'tasklist.navtitle',
         ), 'taskbar');
 
-        $skin = $this->rc->config->get('skin');
-        $this->plugin->include_stylesheet('skins/' . $skin . '/tasklist.css');
+        $this->plugin->include_stylesheet($this->plugin->local_skin_path() . '/tasklist.css');
         $this->ready = true;
   }
 
