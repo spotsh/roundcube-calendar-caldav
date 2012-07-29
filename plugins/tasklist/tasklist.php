@@ -81,6 +81,29 @@ class tasklist extends rcube_plugin
             $this->register_action('tasklist', array($this, 'tasklist_action'));
             $this->register_action('counts', array($this, 'fetch_counts'));
             $this->register_action('fetch', array($this, 'fetch_tasks'));
+            $this->register_action('inlineui', array($this, 'get_inline_ui'));
+            $this->register_action('mail2task', array($this, 'mail_message2task'));
+        }
+        else if ($this->rc->task == 'mail') {
+            // TODO: register hooks to catch ical/vtodo email attachments
+            if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
+                // $this->add_hook('message_load', array($this, 'mail_message_load'));
+                // $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
+            }
+
+            // add 'Create event' item to message menu
+            if ($this->api->output->type == 'html') {
+                $this->api->add_content(html::tag('li', null, 
+                    $this->api->output->button(array(
+                        'command'  => 'tasklist-create-from-mail',
+                        'label'    => 'tasklist.createfrommail',
+                        'type'     => 'link',
+                        'classact' => 'icon taskaddlink active',
+                        'class'    => 'icon taskaddlink',
+                        'innerclass' => 'icon taskadd',
+                    ))),
+                'messagemenu');
+            }
         }
 
         if (!$this->rc->output->ajax_call && !$this->rc->output->env['framed']) {
@@ -522,6 +545,89 @@ class tasklist extends rcube_plugin
         $this->ui->init_templates();
         $this->rc->output->set_pagetitle($this->gettext('navtitle'));
         $this->rc->output->send('tasklist.mainview');
+    }
+
+
+    /**
+     *
+     */
+    public function get_inline_ui()
+    {
+        foreach (array('save','cancel','savingdata') as $label)
+            $texts['tasklist.'.$label] = $this->gettext($label);
+
+        $texts['tasklist.newtask'] = $this->gettext('createfrommail');
+
+        $this->ui->init_templates();
+        echo $this->api->output->parse('tasklist.taskedit', false, false);
+        echo html::tag('script', array('type' => 'text/javascript'),
+            "rcmail.set_env('tasklists', " . json_encode($this->api->output->env['tasklists']) . ");\n".
+//            "rcmail.set_env('deleteicon', '" . $this->api->output->env['deleteicon'] . "');\n".
+//            "rcmail.set_env('cancelicon', '" . $this->api->output->env['cancelicon'] . "');\n".
+//            "rcmail.set_env('loadingicon', '" . $this->api->output->env['loadingicon'] . "');\n".
+            "rcmail.add_label(" . json_encode($texts) . ");\n"
+        );
+        exit;
+    }
+
+
+    /*******  Email related function *******/
+
+    public function mail_message2task()
+    {
+        $uid = get_input_value('_uid', RCUBE_INPUT_POST);
+        $mbox = get_input_value('_mbox', RCUBE_INPUT_POST);
+        $task = array();
+
+        // establish imap connection
+        $imap = $this->rc->get_storage();
+        $imap->set_mailbox($mbox);
+        $message = new rcube_message($uid);
+
+        if ($message->headers) {
+            $task['title'] = trim($message->subject);
+            $task['description'] = trim($message->first_text_part());
+/*
+            // copy mail attachments to event
+            if ($message->attachments) {
+              $eventid = 'cal:';
+              if (!is_array($_SESSION['event_session']) || $_SESSION['event_session']['id'] != $eventid) {
+                $_SESSION['event_session'] = array();
+                $_SESSION['event_session']['id'] = $eventid;
+                $_SESSION['event_session']['attachments'] = array();
+              }
+
+              foreach ((array)$message->attachments as $part) {
+                $attachment = array(
+                  'data' => $imap->get_message_part($uid, $part->mime_id, $part),
+                  'size' => $part->size,
+                  'name' => $part->filename,
+                  'mimetype' => $part->mimetype,
+                  'group' => $eventid,
+                );
+
+                $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
+
+                if ($attachment['status'] && !$attachment['abort']) {
+                  $id = $attachment['id'];
+
+                  // store new attachment in session
+                  unset($attachment['status'], $attachment['abort'], $attachment['data']);
+                  $_SESSION['event_session']['attachments'][$id] = $attachment;
+
+                  $attachment['id'] = 'rcmfile' . $attachment['id'];  # add prefix to consider it 'new'
+                  $event['attachments'][] = $attachment;
+                }
+              }
+            }
+*/
+            $this->rc->output->command('plugin.mail2taskdialog', $task);
+        }
+        else {
+            $this->rc->output->command('display_message', $this->gettext('messageopenerror'), 'error');
+        }
+
+        $this->rc->output->send();
     }
 
 

@@ -52,6 +52,18 @@ class tasklist_ui
         ), 'taskbar');
 
         $this->plugin->include_stylesheet($this->plugin->local_skin_path() . '/tasklist.css');
+        $this->plugin->include_script('tasklist_base.js');
+
+        // copy config to client
+        $defaults = $this->plugin->defaults;
+        $settings = array(
+            'date_format' => $this->rc->config->get('date_format', $defaults['date_format']),
+            'time_format' => $this->rc->config->get('time_format', $defaults['time_format']),
+            'first_day' => $this->rc->config->get('calendar_first_day', $defaults['first_day']),
+        );
+
+        $this->rc->output->set_env('tasklist_settings', $settings);
+
         $this->ready = true;
   }
 
@@ -72,16 +84,6 @@ class tasklist_ui
 
         $this->plugin->include_script('jquery.tagedit.js');
         $this->plugin->include_script('tasklist.js');
-
-        // copy config to client
-        $defaults = $this->plugin->defaults;
-        $settings = array(
-            'date_format' => $this->rc->config->get('date_format', $defaults['date_format']),
-            'time_format' => $this->rc->config->get('time_format', $defaults['time_format']),
-            'first_day' => $this->rc->config->get('calendar_first_day', $defaults['first_day']),
-        );
-        
-        $this->rc->output->set_env('tasklist_settings', $settings);
     }
 
     /**

@@ -20,7 +20,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
  
-function rcube_tasklist(settings)
+function rcube_tasklist_ui(settings)
 {
     /*  constants  */
     var FILTER_MASK_ALL = 0;
@@ -58,7 +58,6 @@ function rcube_tasklist(settings)
     var listdata = {};
     var tags = [];
     var draghelper;
-    var completeness_slider;
     var search_request;
     var search_query;
     var me = this;
@@ -91,6 +90,21 @@ function rcube_tasklist(settings)
     this.reset_search = reset_search;
     this.list_remove = list_remove;
     this.list_edit_dialog = list_edit_dialog;
+    this.unlock_saving = unlock_saving;
+
+
+    /* basic initializations */
+
+    var completeness_slider = $('#edit-completeness-slider').slider({
+        range: 'min',
+        slide: function(e, ui){
+            var v = completeness_slider.slider('value');
+            if (v >= 98) v = 100;
+            if (v <= 2)  v = 0;
+            $('#edit-completeness').val(v);
+        }
+    });
+    $('#edit-completeness').change(function(e){ completeness_slider.slider('value', parseInt(this.value)) });
 
 
     /**
@@ -118,7 +132,7 @@ function rcube_tasklist(settings)
         rcmail.addEventListener('plugin.insert_tasklist', insert_list);
         rcmail.addEventListener('plugin.update_tasklist', update_list);
         rcmail.addEventListener('plugin.reload_data', function(){ list_tasks(null); });
-        rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, saving_lock); });
+        rcmail.addEventListener('plugin.unlock_saving', unlock_saving);
 
         // start loading tasks
         fetch_counts();
@@ -277,22 +291,11 @@ function rcube_tasklist(settings)
             }
         });
 
-        completeness_slider = $('#edit-completeness-slider').slider({
-            range: 'min',
-            slide: function(e, ui){
-                var v = completeness_slider.slider('value');
-                if (v >= 98) v = 100;
-                if (v <= 2)  v = 0;
-                $('#edit-completeness').val(v);
-            }
-        });
-        $('#edit-completeness').change(function(e){ completeness_slider.slider('value', parseInt(this.value)) });
-
         // handle global document clicks: close popup menus
         $(document.body).click(clear_popups);
 
         // extended datepicker settings
-        extended_datepicker_settings = $.extend({
+        var extended_datepicker_settings = $.extend({
             showButtonPanel: true,
             beforeShow: function(input, inst) {
                 setTimeout(function(){
@@ -462,11 +465,20 @@ function rcube_tasklist(settings)
     {
         if (!rcmail.busy) {
             saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
-            rcmail.http_post('task', { action:action, t:rec, filter:filtermask });
+            rcmail.http_post('tasks/task', { action:action, t:rec, filter:filtermask });
             return true;
         }
         
         return false;
+    }
+
+    /**
+     * Remove saving lock and free the UI for new input
+     */
+    function unlock_saving()
+    {
+        if (saving_lock)
+            rcmail.set_busy(false, null, saving_lock);
     }
 
     /**
@@ -1241,7 +1253,7 @@ jQuery.fn.sortElements = (function(){
 var rctasks;
 window.rcmail && rcmail.addEventListener('init', function(evt) {
 
-  rctasks = new rcube_tasklist(rcmail.env.tasklist_settings);
+  rctasks = new rcube_tasklist_ui(rcmail.env.tasklist_settings);
 
   // register button commands
   rcmail.register_command('newtask', function(){ rctasks.edit_task(null, 'new', {}); }, true);
