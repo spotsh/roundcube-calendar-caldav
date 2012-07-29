@@ -33,7 +33,7 @@ function rcube_calendar_ui(settings)
     this.selected_event = null;
     this.selected_calendar = null;
     this.search_request = null;
-    this.saving_lock = null;
+    this.saving_lock;
 
 
     /***  private vars  ***/
@@ -1714,6 +1714,15 @@ function rcube_calendar_ui(settings)
 
     /*** public methods ***/
 
+    /**
+     * Remove saving lock and free the UI for new input
+     */
+    this.unlock_saving = function()
+    {
+        if (me.saving_lock)
+            rcmail.set_busy(false, null, me.saving_lock);
+    };
+
     // opens calendar day-view in a popup
     this.fisheye_view = function(date)
     {
@@ -2703,7 +2712,6 @@ function rcube_calendar_ui(settings)
 
 /* calendar plugin initialization */
 window.rcmail && rcmail.addEventListener('init', function(evt) {
-
   // configure toolbar buttons
   rcmail.register_command('addevent', function(){ cal.add_event(); }, true);
   rcmail.register_command('print', function(){ cal.print_calendars(); }, true);
@@ -2723,7 +2731,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   // register callback commands
   rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
-  rcmail.addEventListener('plugin.unlock_saving', function(p){ rcmail.set_busy(false, null, cal.saving_lock); });
+  rcmail.addEventListener('plugin.unlock_saving', function(p){ cal.unlock_saving(); });
   rcmail.addEventListener('plugin.refresh_calendar', function(p){ cal.refresh(p); });
   rcmail.addEventListener('plugin.import_success', function(p){ cal.import_success(p); });
 
