@@ -2,4 +2,4 @@
 RewriteEngine On
 RewriteCond  %{REQUEST_FILENAME}  !-f
 RewriteCond  %{REQUEST_FILENAME}  !-d
-RewriteRule  (.*)                 ../default/$1  [qsappend,last]
+RewriteRule  larry/(.*)           %{REQUEST_URI}/../../default/$1  [qsappend,last]
