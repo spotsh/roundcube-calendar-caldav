@@ -46,13 +46,8 @@ class owncloud extends rcube_plugin
 	        'label'	=> 'owncloud.owncloud',
             ), 'taskbar');
 
-        $skin = $rcmail->config->get('skin');
-        if (!file_exists($this->home."/skins/$skin/owncloud.css")) {
-	        $skin = 'default';
-        }
-
         // add style for taskbar button (must be here) and Help UI    
-        $this->include_stylesheet("skins/$skin/owncloud.css");
+        $this->include_stylesheet($this->local_skin_path()."/owncloud.css");
     }
 
     function action()

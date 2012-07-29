@@ -59,8 +59,8 @@ class calendar_ui
     $this->cal->include_script('lib/js/fullcalendar.js');
     $this->cal->include_script('calendar_base.js');
     
-    $skin = $this->rc->config->get('skin');
-    $this->cal->include_stylesheet('skins/' . $skin . '/calendar.css');
+    $skin_path = $this->cal->local_skin_path();
+    $this->cal->include_stylesheet($skin_path . '/calendar.css');
     
     $this->ready = true;
   }
@@ -99,9 +99,9 @@ class calendar_ui
    */
   public function addCSS()
   {
-    $skin = $this->rc->config->get('skin');
-    $this->cal->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
-    $this->cal->include_stylesheet('skins/' . $skin . '/jquery.miniColors.css');
+    $skin_path = $this->cal->local_skin_path();
+    $this->cal->include_stylesheet($skin_path . '/fullcalendar.css');
+    $this->cal->include_stylesheet($skin_path . '/jquery.miniColors.css');
   }
 
   /**
@@ -648,7 +648,7 @@ class calendar_ui
     if (!$attrib['id'])
       $attrib['id'] = 'rcmAttachmentList';
 
-    $skin_path = $this->rc->config->get('skin_path');
+    $skin_path = $this->cal->local_skin_path();
     if ($attrib['deleteicon']) {
       $_SESSION['calendar_deleteicon'] = $skin_path . $attrib['deleteicon'];
       $this->rc->output->set_env('deleteicon', $skin_path . $attrib['deleteicon']);

@@ -459,7 +459,7 @@ class calendar extends rcube_plugin
 
         // include color picker
         $this->include_script('lib/js/jquery.miniColors.min.js');
-        $this->include_stylesheet('skins/' .$this->rc->config->get('skin') . '/jquery.miniColors.css');
+        $this->include_stylesheet($this->local_skin_path() . '/jquery.miniColors.css');
         $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
         $this->rc->output->add_script('$("input.colors").miniColors({ colorValues:rcmail.env.mscolors })', 'docready');
       }
@@ -1942,9 +1942,9 @@ class calendar extends rcube_plugin
     }
     
     // Add CSS stylesheets to the page header
-    $skin = $this->rc->config->get('skin');
-    $this->include_stylesheet('skins/' . $skin . '/fullcalendar.css');
-    $this->include_stylesheet('skins/' . $skin . '/print.css');
+    $skin_path = $this->local_skin_path();
+    $this->include_stylesheet($skin_path . '/fullcalendar.css');
+    $this->include_stylesheet($skin_path . '/print.css');
     
     // Add JS files to the page header
     $this->include_script('print.js');

@@ -32,13 +32,13 @@
 			<file name="localization/de_DE.inc" role="data"></file>
 			<file name="localization/en_US.inc" role="data"></file>
 			<file name="localization/pl_PL.inc" role="data"></file>
-			<file name="skins/default/templates/config.html" role="data"></file>
-			<file name="skins/default/config.css" role="data"></file>
-			<file name="skins/default/alarm-clock.png" role="data"></file>
-			<file name="skins/default/deviceactions.png" role="data"></file>
-			<file name="skins/default/foldertypes.png" role="data"></file>
-			<file name="skins/default/pointer-left.gif" role="data"></file>
-			<file name="skins/default/synchronize.png" role="data"></file>
+			<file name="skins/classic/templates/config.html" role="data"></file>
+			<file name="skins/classic/config.css" role="data"></file>
+			<file name="skins/classic/alarm-clock.png" role="data"></file>
+			<file name="skins/classic/deviceactions.png" role="data"></file>
+			<file name="skins/classic/foldertypes.png" role="data"></file>
+			<file name="skins/classic/pointer-left.gif" role="data"></file>
+			<file name="skins/classic/synchronize.png" role="data"></file>
 			<file name="skins/larry/templates/config.html" role="data"></file>
 			<file name="skins/larry/config.css" role="data"></file>
 			<file name="skins/larry/alarm-clock.png" role="data"></file>
