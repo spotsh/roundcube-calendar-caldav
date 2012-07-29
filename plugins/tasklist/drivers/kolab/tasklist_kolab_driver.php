@@ -337,8 +337,13 @@ class tasklist_kolab_driver extends tasklist_driver
             $task['date'] = $record['due']->format('Y-m-d');
             $task['time'] = $record['due']->format('h:i');
         }
+        // convert from DateTime to internal date format
+        if (is_a($record['start'], 'DateTime')) {
+            $task['startdate'] = $record['start']->format('Y-m-d');
+            $task['starttime'] = $record['start']->format('h:i');
+        }
         if (is_a($record['dtstamp'], 'DateTime')) {
-            $task['changed'] = $record['dtstamp']->format('U');
+            $task['changed'] = $record['dtstamp'];
         }
 
         return $task;
@@ -358,6 +363,13 @@ class tasklist_kolab_driver extends tasklist_driver
             if (empty($task['time']))
                 $object['due']->_dateonly = true;
             unset($object['date']);
+        }
+
+        if (!empty($task['startdate'])) {
+            $object['start'] = new DateTime($task['startdate'].' '.$task['starttime'], $this->plugin->timezone);
+            if (empty($task['starttime']))
+                $object['start']->_dateonly = true;
+            unset($object['startdate']);
         }
 
         $object['complete'] = $task['complete'] * 100;

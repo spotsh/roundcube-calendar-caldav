@@ -2,8 +2,8 @@
 
 $labels = array();
 $labels['navtitle'] = 'Tasks';
-$labels['lists'] = 'Resources';
-$labels['list'] = 'Resource';
+$labels['lists'] = 'Tasklists';
+$labels['list'] = 'Tasklist';
 $labels['tags'] = 'Tags';
 
 $labels['newtask'] = 'New Task';
@@ -15,6 +15,7 @@ $labels['delete'] = 'Delete';
 $labels['title'] = 'Title';
 $labels['description'] = 'Description';
 $labels['datetime'] = 'Date/Time';
+$labels['start'] = 'Start';
 
 $labels['all'] = 'All';
 $labels['flagged'] = 'Flagged';
@@ -51,3 +52,4 @@ $labels['next'] = 'next';
 $labels['savingdata'] = 'Saving data...';
 $labels['errorsaving'] = 'Failed to save data.';
 $labels['notasksfound'] = 'No tasks found for the given criteria';
+$labels['invalidstartduedates'] = 'Start date must not be greater than due date.';

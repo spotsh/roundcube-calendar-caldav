@@ -32,6 +32,8 @@ CREATE TABLE `tasks` (
   `tags` text,
   `date` varchar(10) DEFAULT NULL,
   `time` varchar(5) DEFAULT NULL,
+  `startdate` varchar(10) DEFAULT NULL,
+  `starttime` varchar(5) DEFAULT NULL,
   `flagged` tinyint(4) NOT NULL DEFAULT '0',
   `complete` float NOT NULL DEFAULT '0',
   `alarms` varchar(255) NOT NULL,

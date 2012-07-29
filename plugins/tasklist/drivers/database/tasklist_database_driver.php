@@ -343,7 +343,7 @@ class tasklist_database_driver extends tasklist_driver
     {
         $rec['id'] = $rec['task_id'];
         $rec['list'] = $rec['tasklist_id'];
-        $rec['changed'] = strtotime($rec['changed']);
+        $rec['changed'] = new DateTime($rec['changed']);
         $rec['tags'] = array_filter(explode(',', $rec['tags']));
 
         if (!$rec['parent_id'])
@@ -409,7 +409,7 @@ class tasklist_database_driver extends tasklist_driver
             if (isset($prop[$col]))
                 $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($prop[$col]);
         }
-        foreach (array('parent_id', 'date', 'time') as $col) {
+        foreach (array('parent_id', 'date', 'time', 'startdate', 'starttime') as $col) {
             if (isset($prop[$col]))
                 $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . (empty($prop[$col]) ? 'NULL' : $this->rc->db->quote($prop[$col]));
         }

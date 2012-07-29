@@ -30,12 +30,14 @@
   *     'parent_id' => 'ID of parent task',  // null if top-level task
   *           'uid' => 'Unique identifier of this task',
   *          'list' => 'Task list identifier to add the task to or where the task is stored',
-  *       'changed' => <unixtime>, // Last modification date of record
+  *       'changed' => <DateTime>,  // Last modification date/time of the record
   *         'title' => 'Event title/summary',
   *   'description' => 'Event description',
   *          'tags' => array(),      // List of tags for this task
   *          'date' => 'Due date',   // as string of format YYYY-MM-DD or null if no date is set
   *          'time' => 'Due time',   // as string of format hh::ii or null if no due time is set
+  *     'startdate' => 'Start date'  // Delay start of the task until that date
+  *     'starttime' => 'Start time'  // ...and time
   *    'categories' => 'Task category',
   *       'flagged' => 'Boolean value whether this record is flagged',
   *      'complete' => 'Float value representing the completeness state (range 0..1)',

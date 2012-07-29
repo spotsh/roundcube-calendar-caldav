@@ -54,6 +54,7 @@ function rcube_tasklist(settings)
     var saving_lock;
     var ui_loading;
     var taskcounts = {};
+    var listindex = [];
     var listdata = {};
     var tags = [];
     var draghelper;
@@ -354,12 +355,14 @@ function rcube_tasklist(settings)
     function data_ready(response)
     {
         listdata = {};
+        listindex = [];
         loadstate.lists = response.lists;
         loadstate.filter = response.filter;
         loadstate.search = response.search;
 
         for (var i=0; i < response.data.length; i++) {
             listdata[response.data[i].id] = response.data[i];
+            listindex.push(response.data[i].id);
         }
 
         render_tasklist();
@@ -373,12 +376,13 @@ function rcube_tasklist(settings)
     function render_tasklist()
     {
         // clear display
-        var rec,
+        var id, rec,
             count = 0,
             msgbox = $('#listmessagebox').hide(),
             list = $(rcmail.gui_objects.resultlist).html('');
 
-        for (var id in listdata) {
+        for (var i=0; i < listindex.length; i++) {
+            id = listindex[i];
             rec = listdata[id];
             if (match_filter(rec)) {
                 render_task(rec);
@@ -436,9 +440,18 @@ function rcube_tasklist(settings)
      */
     function update_taskitem(rec)
     {
-        var id = rec.id;
+        var id = rec.id,
+            oldid = rec.tempid || id;
+            oldindex = listindex.indexOf(oldid);
+
+        if (oldindex >= 0)
+            listindex[oldindex] = id;
+        else
+            listindex.push(id);
+
         listdata[id] = rec;
-        render_task(rec, rec.tempid || id);
+
+        render_task(rec, oldid);
         append_tags(rec.tags || []);
     }
 
@@ -525,7 +538,7 @@ function rcube_tasklist(settings)
      */
     function resort_task(rec, li, animated)
     {
-        var dir = 0, next_li, next_id, next_rec;
+        var dir = 0, index, slice, next_li, next_id, next_rec;
 
         // animated moving
         var insert_animated = function(li, before, after) {
@@ -540,6 +553,13 @@ function rcube_tasklist(settings)
                 else if (after) li.insertAfter(after);
                 li.slideDown(speed);
             });
+        }
+
+        // remove from list index
+        var oldindex = listindex.indexOf(rec.id);
+        if (oldindex >= 0) {
+            slice = listindex.slice(0,oldindex);
+            listindex = slice.concat(listindex.slice(oldindex+1));
         }
 
         // find the right place to insert the task item
@@ -558,17 +578,26 @@ function rcube_tasklist(settings)
             }
             else if (next_rec && next_li && task_cmp(rec, next_rec) < 0) {
                 if (animated) insert_animated(li, next_li);
-                else          li.insertBefore(next_li)
+                else          li.insertBefore(next_li);
                 next_li = null;
                 return false;
             }
         });
 
+        index = listindex.indexOf(next_id);
+
         if (next_li) {
             if (animated) insert_animated(li, null, next_li);
             else          li.insertAfter(next_li);
+            index++;
         }
-        return;
+
+        // insert into list index
+        if (next_id && index >= 0) {
+            slice = listindex.slice(0,index);
+            slice.push(rec.id);
+            listindex = slice.concat(listindex.slice(index));
+        }
     }
 
     /**
@@ -617,15 +646,19 @@ function rcube_tasklist(settings)
     {
         var drag_id = draggable.data('id'),
             parent_id = $(this).data('id'),
-            rec = listdata[parent_id];
+            drag_rec = listdata[drag_id],
+            drop_rec = listdata[parent_id];
 
-        if (parent_id == listdata[drag_id].parent_id)
+        if (drop_rec && drop_rec.list != drag_rec.list)
             return false;
 
-        while (rec && rec.parent_id) {
-            if (rec.parent_id == drag_id)
+        if (parent_id == drag_rec.parent_id)
+            return false;
+
+        while (drop_rec && drop_rec.parent_id) {
+            if (drop_rec.parent_id == drag_id)
                 return false;
-            rec = listdata[rec.parent_id];
+            drop_rec = listdata[drop_rec.parent_id];
         }
 
         return true;
@@ -672,6 +705,8 @@ function rcube_tasklist(settings)
         $('#task-description').html(text2html(rec.description || '', 300, 6))[(rec.description ? 'show' : 'hide')]();
         $('#task-date')[(rec.date ? 'show' : 'hide')]().children('.task-text').html(Q(rec.date || rcmail.gettext('nodate','tasklist')));
         $('#task-time').html(Q(rec.time || ''));
+        $('#task-start')[(rec.startdate ? 'show' : 'hide')]().children('.task-text').html(Q(rec.startdate || ''));
+        $('#task-starttime').html(Q(rec.starttime || ''));
         $('#task-completeness .task-text').html(((rec.complete || 0) * 100) + '%');
         $('#task-list .task-text').html(Q(me.tasklists[rec.list] ? me.tasklists[rec.list].name : ''));
 
@@ -732,6 +767,8 @@ function rcube_tasklist(settings)
         var description = $('#edit-description').val(rec.description || '');
         var recdate = $('#edit-date').val(rec.date || '').datepicker(datepicker_settings);
         var rectime = $('#edit-time').val(rec.time || '');
+        var recstartdate = $('#edit-startdate').val(rec.startdate || '').datepicker(datepicker_settings);
+        var recstarttime = $('#edit-starttime').val(rec.starttime || '');
         var complete = $('#edit-completeness').val((rec.complete || 0) * 100);
         completeness_slider.slider('value', complete.val());
         var tasklist = $('#edit-tasklist').val(rec.list || 0); // .prop('disabled', rec.parent_id ? true : false);
@@ -755,21 +792,30 @@ function rcube_tasklist(settings)
             texts: { removeLinkTitle: rcmail.gettext('removetag', 'tasklist') }
         });
 
-        $('#edit-nodate').unbind('click').click(function(){
-            recdate.val('');
-            rectime.val('');
+        $('a.edit-nodate').unbind('click').click(function(){
+            var sel = $(this).attr('rel');
+            if (sel) $(sel).val('');
             return false;
         })
 
         // define dialog buttons
         var buttons = {};
         buttons[rcmail.gettext('save', 'tasklist')] = function() {
-            me.selected_task.title = title.val();
-            me.selected_task.description = description.val();
-            me.selected_task.date = recdate.val();
-            me.selected_task.time = rectime.val();
-            me.selected_task.list = tasklist.val();
+            // copy form field contents into task object to save
+            $.each({ title:title, description:description, date:recdate, time:rectime, startdate:recstartdate, starttime:recstarttime, list:tasklist }, function(key,input){
+                me.selected_task[key] = input.val();
+            });
             me.selected_task.tags = [];
+
+            // do some basic input validation
+            if (me.selected_task.startdate && me.selected_task.date) {
+                var startdate = $.datepicker.parseDate(datepicker_settings.dateFormat, me.selected_task.startdate, datepicker_settings);
+                var duedate = $.datepicker.parseDate(datepicker_settings.dateFormat, me.selected_task.date, datepicker_settings);
+                if (startdate > duedate) {
+                    alert(rcmail.gettext('invalidstartduedates', 'tasklist'));
+                    return false;
+                }
+            }
 
             $('input[name="tags[]"]', rcmail.gui_objects.edittagline).each(function(i,elem){
                 if (elem.value)
@@ -812,9 +858,10 @@ function rcube_tasklist(settings)
             $dialog.dialog('destroy').remove();
           },
           buttons: buttons,
+          minHeight: 340,
           minWidth: 500,
           width: 580
-        }).append(editform.show());  // adding form content AFTERWARDS massively speeds up opening on IE6
+        }).append(editform.show());  // adding form content AFTERWARDS massively speeds up opening on IE
 
         title.select();
     }

@@ -261,6 +261,18 @@ class tasklist extends rcube_plugin
             }
         }
 
+        if (!empty($rec['startdate'])) {
+            try {
+                $date = new DateTime($rec['startdate'] . ' ' . $rec['starttime'], $this->timezone);
+                $rec['startdate'] = $date->format('Y-m-d');
+                if (!empty($rec['starttime']))
+                    $rec['starttime'] = $date->format('H:i');
+            }
+            catch (Exception $e) {
+                $rec['startdate'] = $rec['starttime'] = null;
+            }
+        }
+
         return $rec;
     }
 
@@ -400,6 +412,7 @@ class tasklist extends rcube_plugin
         $rec['mask'] = $this->filter_mask($rec);
         $rec['flagged'] = intval($rec['flagged']);
         $rec['complete'] = floatval($rec['complete']);
+        $rec['changed'] = is_object($rec['changed']) ? $rec['changed']->format('U') : null;
 
         if ($rec['date']) {
             try {
@@ -415,6 +428,17 @@ class tasklist extends rcube_plugin
         else {
             $rec['date'] = $rec['datetime'] = null;
             $rec['_hasdate'] = 0;
+        }
+
+        if ($rec['startdate']) {
+            try {
+                $date = new DateTime($rec['startdate'] . ' ' . $rec['starttime'], $this->timezone);
+                $rec['startdatetime'] = intval($date->format('U'));
+                $rec['startdate'] = $date->format($this->rc->config->get('date_format', 'Y-m-d'));
+            }
+            catch (Exception $e) {
+                $rec['startdate'] = $rec['startdatetime'] = null;
+            }
         }
 
         if (!isset($rec['_depth'])) {

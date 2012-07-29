@@ -2,8 +2,8 @@
 
 $labels = array();
 $labels['navtitle'] = 'Aufgaben';
-$labels['lists'] = 'Ressourcen';
-$labels['list'] = 'Ressource';
+$labels['lists'] = 'Aufgabenlisten';
+$labels['list'] = 'Liste';
 $labels['tags'] = 'Tags';
 
 $labels['newtask'] = 'Neue Aufgabe';
@@ -15,6 +15,7 @@ $labels['delete'] = 'Löschen';
 $labels['title'] = 'Titel';
 $labels['description'] = 'Beschreibung';
 $labels['datetime'] = 'Datum/Zeit';
+$labels['start'] = 'Beginn';
 
 $labels['all'] = 'Alle';
 $labels['flagged'] = 'Markiert';
@@ -51,3 +52,4 @@ $labels['next'] = 'nächsten';
 $labels['savingdata'] = 'Daten werden gespeichert...';
 $labels['errorsaving'] = 'Fehler beim Speichern.';
 $labels['notasksfound'] = 'Für die aktuellen Kriterien wurden keine Aufgaben gefunden.';
+$labels['invalidstartduedates'] = 'Beginn der Aufgabe darf nicht grösser als das Enddatum sein.';
