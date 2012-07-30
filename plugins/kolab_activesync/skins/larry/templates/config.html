@@ -1,0 +1,70 @@
+<roundcube:object name="doctype" value="html5" />
+<html>
+<head>
+<title><roundcube:object name="pagetitle" /></title>
+<roundcube:include file="/includes/links.html" />
+</head>
+<body>
+
+<roundcube:include file="/includes/header.html" />
+
+<div id="mainscreen" class="offset">
+
+<roundcube:include file="/includes/settingstabs.html" />
+
+<div id="settings-right">
+
+<div id="sectionslist" class="uibox listbox">
+<h2 id="directorylist-title" class="boxtitle"><roundcube:label name="kolab_activesync.devices" /></h2>
+<div class="boxlistcontent">
+	<roundcube:object name="plugin.devicelist" id="devices-table" class="listing" cellspacing="0" />
+</div>
+<div class="boxfooter">
+	<roundcube:button type="link" command="plugin.delete-device" title="kolab_activesync.deletedevice" class="listbutton delete disabled" classAct="listbutton delete" innerClass="inner" content="x" />
+</div>
+</div>
+
+<div id="prefs-box" class="uibox contentbox">
+	<h1 class="boxtitle" style="display:none"><roundcube:label name="kolab_activesync.syncsettings"></h1>
+	<form action="#" method="post" id="configform" class="boxcontent tabbed" style="display:none">
+		<fieldset>
+			<legend><roundcube:label name="kolab_activesync.deviceconfig" /></legend>
+			<roundcube:object name="plugin.deviceconfigform" form="configform" class="propform" />
+		</fieldset>
+		<fieldset>
+			<legend><roundcube:label name="kolab_activesync.folderstosync" /></legend>
+			<roundcube:object name="plugin.foldersubscriptions" form="configform" id="foldersubscriptions" syncicon="synchronize.png" alarmicon="alarm-clock.png" />
+		</fieldset>
+
+		<p class="formbuttons">
+			<roundcube:button type="input" class="button mainaction" command="plugin.save-config" label="save" />
+		</p>
+	</form>
+
+	<div id="introtext">
+		<div class="inner">
+			<roundcube:if condition="env:devicecount" />
+				<roundcube:label name="kolab_activesync.introtext" />
+			<roundcube:else />
+				<roundcube:label name="kolab_activesync.nodevices" html="true" />
+			<roundcube:endif />
+		</div>
+		<div class="pointer-left"></div>
+	</div>
+
+	<roundcube:object name="message" id="message" class="statusbar" />
+</div>
+
+</div>
+
+<roundcube:include file="/includes/footer.html" />
+
+<script type="text/javascript">
+
+	var viewsplit = new rcube_splitter({ id:'devicelistsplitter', p1:'#sectionslist', p2:'#prefs-box', orientation:'v', relative:true, start:226, min:150, size:12 });
+	rcmail.add_onload('viewsplit.init()');
+
+</script>
+
+</body>
+</html>

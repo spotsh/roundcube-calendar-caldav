@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" packagerversion="1.9.0" version="2.0" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+    http://pear.php.net/dtd/tasks-1.0.xsd
+    http://pear.php.net/dtd/package-2.0
+    http://pear.php.net/dtd/package-2.0.xsd">
+	<name>kolab_activesync</name>
+    <uri>http://git.kolab.org/roundcubemail-plugins-kolab/</uri>
+	<summary>ActiveSync configuration utility for Kolab accounts</summary>
+	<description></description>
+	<lead>
+		<name>Aleksander Machniak</name>
+		<user>alec</user>
+		<email>machniak@kolabsys.com</email>
+		<active>yes</active>
+	</lead>
+	<lead>
+		<name>Thomas Bruederli</name>
+		<user>thomasb</user>
+		<email>bruederli@kolabsys.com</email>
+		<active>yes</active>
+	</lead>
+	<date>2012-07-30</date>
+	<version>
+		<release>1.0</release>
+		<api>1.0</api>
+	</version>
+	<stability>
+		<release>stable</release>
+	</stability>
+	<license uri="http://www.gnu.org/licenses/agpl.html">GNU AGPL</license>
+	<notes>-</notes>
+	<contents>
+		<dir baseinstalldir="/" name="/">
+			<file name="kolab_activesync.php" role="php"></file>
+			<file name="kolab_activesync_ui.php" role="php"></file>
+			<file name="kolab_activesync.js" role="data"></file>
+			<file name="localization/de_CH.inc" role="data"></file>
+			<file name="localization/de_DE.inc" role="data"></file>
+			<file name="localization/en_US.inc" role="data"></file>
+			<file name="localization/pl_PL.inc" role="data"></file>
+			<file name="skins/classic/templates/config.html" role="data"></file>
+			<file name="skins/classic/config.css" role="data"></file>
+			<file name="skins/classic/alarm-clock.png" role="data"></file>
+			<file name="skins/classic/deviceactions.png" role="data"></file>
+			<file name="skins/classic/foldertypes.png" role="data"></file>
+			<file name="skins/classic/pointer-left.gif" role="data"></file>
+			<file name="skins/classic/synchronize.png" role="data"></file>
+			<file name="skins/larry/templates/config.html" role="data"></file>
+			<file name="skins/larry/config.css" role="data"></file>
+			<file name="skins/larry/alarm-clock.png" role="data"></file>
+			<file name="skins/larry/deviceactions.png" role="data"></file>
+			<file name="skins/larry/foldertypes.png" role="data"></file>
+			<file name="skins/larry/pointer-left.png" role="data"></file>
+			<file name="skins/larry/synchronize.png" role="data"></file>
+			<file name="README" role="data"></file>
+			<file name="LICENSE" role="data"></file>
+		</dir>
+	</contents>
+	<dependencies>
+		<required>
+			<php>
+				<min>5.2.1</min>
+			</php>
+			<pearinstaller>
+				<min>1.7.0</min>
+			</pearinstaller>
+			<package>
+				<name>libkolab</name>
+				<uri>http://kolabsys.com</uri>
+			</package>
+			<package>
+				<name>jqueryui</name>
+				<channel>pear.roundcube.net</uri>
+			</package>
+		</required>
+	</dependencies>
+	<phprelease/>
+</package>
