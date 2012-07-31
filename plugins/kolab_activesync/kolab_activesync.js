@@ -52,11 +52,11 @@ function kolab_activesync_config()
         .closest('table').find('input.'+classname).prop('checked', check).change();
     });
 
-    // select the one and only device from list
-    if (rcmail.env.devicecount == 1) {
-        for (var imei in rcmail.env.devices)
-            break;
-        devicelist.select(imei);
+    // select first device
+    if (rcmail.env.devicecount) {
+      for (var imei in rcmail.env.devices)
+        break;
+      devicelist.select(imei);
     }
 
     /* private methods */

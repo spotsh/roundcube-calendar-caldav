@@ -43,11 +43,7 @@
 
 	<div id="introtext">
 		<div class="inner">
-			<roundcube:if condition="env:devicecount" />
-				<roundcube:label name="kolab_activesync.introtext" />
-			<roundcube:else />
-				<roundcube:label name="kolab_activesync.nodevices" html="true" />
-			<roundcube:endif />
+			<roundcube:label name="kolab_activesync.nodevices" html="true" />
 		</div>
 		<div class="pointer-left"></div>
 	</div>

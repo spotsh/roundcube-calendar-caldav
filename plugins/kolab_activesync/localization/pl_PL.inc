@@ -21,7 +21,6 @@ $labels['note'] = 'Notatki';
 $labels['deletedevice'] = 'Usuń urządzenie';
 $labels['imageformat'] = 'Format obrazka';
 $labels['laxpiclabel'] = 'Zezwalaj na obrazki PNG i GIF';
-$labels['introtext'] = 'Wybierz urządzenie do skonfigurowania';
 $labels['nodevices'] = 'Obecnie brak zarejestrowanych urządzeń.<br/><br/>Aby zarejestrować urządzenie najpierw podłącz je do serwera według <a href="http://wiki.kolab.org/Z_push#Clients">instrukcji z Wiki</a>. Po tym procesie urządzenie powinno dać się skonfigurować tutaj.';
 $labels['savingdata'] = 'Zapisywanie danych...';
 $labels['savingerror'] = 'Nie udało się zapisać konfiguracji';
