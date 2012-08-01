@@ -1747,7 +1747,7 @@ class calendar extends rcube_plugin
     $eventid = 'cal:'.$event['id'];
     if (!empty($_SESSION['event_session']) && ($eventid = $_SESSION['event_session']['id'])) {
       $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $eventid));
-      unset($_SESSION['event_session']);
+      $this->rc->session->remove('event_session');
     }
   }
 

@@ -162,13 +162,16 @@ class tasklist extends rcube_plugin
             if ($success = $this->driver->create_task($rec)) {
                 $refresh = $this->driver->get_task($rec);
                 if ($temp_id) $refresh['tempid'] = $temp_id;
+                $this->cleanup_task($rec);
             }
             break;
 
         case 'edit':
             $rec = $this->prepare_task($rec);
-            if ($success = $this->driver->edit_task($rec))
+            if ($success = $this->driver->edit_task($rec)) {
                 $refresh = $this->driver->get_task($rec);
+                $this->cleanup_task($rec);
+            }
             break;
 
         case 'delete':
@@ -318,6 +321,21 @@ class tasklist extends rcube_plugin
 
         return $rec;
     }
+
+
+    /**
+     * Releases some resources after successful save
+     */
+    private function cleanup_task(&$rec)
+    {
+        // remove temp. attachment files
+        $taskid = $rec['id'];
+        if (!empty($_SESSION['tasklist_session']) && ($taskid = $_SESSION['tasklist_session']['id'])) {
+            $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $taskid));
+            $this->rc->session->remove('tasklist_session');
+        }
+    }
+
 
     /**
      *
