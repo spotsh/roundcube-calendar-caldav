@@ -26,7 +26,7 @@
  */
 class odfviewer extends rcube_plugin
 {
-  public $task = 'mail|calendar|logout';
+  public $task = 'mail|calendar|tasks|logout';
   
   private $tempdir  = 'plugins/odfviewer/files/';
   private $tempbase = 'plugins/odfviewer/files/';
@@ -58,7 +58,7 @@ class odfviewer extends rcube_plugin
       return;
     // extend list of mimetypes that should open in preview
     $rcmail = rcmail::get_instance();
-    if ($rcmail->action == 'preview' || $rcmail->action == 'show' || $rcmail->task == 'calendar') {
+    if ($rcmail->action == 'preview' || $rcmail->action == 'show' || $rcmail->task == 'calendar' || $rcmail->task == 'tasks') {
       $mimetypes = $rcmail->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
       if (!is_array($mimetypes))
         $mimetypes = explode(',', $mimetypes);
