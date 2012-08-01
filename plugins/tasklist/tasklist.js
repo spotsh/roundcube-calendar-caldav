@@ -847,7 +847,7 @@ function rcube_tasklist_ui(settings)
         $('#taskedit-tab-attachments')[(list.attachments?'show':'hide')]();
 
         // activate the first tab
-        $('#eventtabs').tabs('select', 0);
+        $('#taskedit').tabs('select', 0);
 
         // define dialog buttons
         var buttons = {};
