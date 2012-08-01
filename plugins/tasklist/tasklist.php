@@ -329,7 +329,6 @@ class tasklist extends rcube_plugin
     private function cleanup_task(&$rec)
     {
         // remove temp. attachment files
-        $taskid = $rec['id'];
         if (!empty($_SESSION['tasklist_session']) && ($taskid = $_SESSION['tasklist_session']['id'])) {
             $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $taskid));
             $this->rc->session->remove('tasklist_session');
@@ -650,7 +649,7 @@ class tasklist extends rcube_plugin
                         'size' => $_FILES['_attachments']['size'][$i],
                         'name' => $_FILES['_attachments']['name'][$i],
                         'mimetype' => rc_mime_content_type($filepath, $_FILES['_attachments']['name'][$i], $_FILES['_attachments']['type'][$i]),
-                        'group' => $eventid,
+                        'group' => $taskid,
                     );
 
                     $attachment = $this->rc->plugins->exec_hook('attachment_upload', $attachment);
@@ -852,40 +851,43 @@ class tasklist extends rcube_plugin
         if ($message->headers) {
             $task['title'] = trim($message->subject);
             $task['description'] = trim($message->first_text_part());
-/*
-            // copy mail attachments to event
-            if ($message->attachments) {
-              $eventid = 'cal:';
-              if (!is_array($_SESSION['event_session']) || $_SESSION['event_session']['id'] != $eventid) {
-                $_SESSION['event_session'] = array();
-                $_SESSION['event_session']['id'] = $eventid;
-                $_SESSION['event_session']['attachments'] = array();
-              }
+            $task['id'] = -$uid;
 
-              foreach ((array)$message->attachments as $part) {
-                $attachment = array(
-                  'data' => $imap->get_message_part($uid, $part->mime_id, $part),
-                  'size' => $part->size,
-                  'name' => $part->filename,
-                  'mimetype' => $part->mimetype,
-                  'group' => $eventid,
-                );
+            $this->load_driver();
 
-                $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
-
-                if ($attachment['status'] && !$attachment['abort']) {
-                  $id = $attachment['id'];
-
-                  // store new attachment in session
-                  unset($attachment['status'], $attachment['abort'], $attachment['data']);
-                  $_SESSION['event_session']['attachments'][$id] = $attachment;
-
-                  $attachment['id'] = 'rcmfile' . $attachment['id'];  # add prefix to consider it 'new'
-                  $event['attachments'][] = $attachment;
+            // copy mail attachments to task
+            if ($message->attachments && $this->driver->attachments) {
+                if (!is_array($_SESSION['tasklist_session']) || $_SESSION['tasklist_session']['id'] != $task['id']) {
+                    $_SESSION['tasklist_session'] = array();
+                    $_SESSION['tasklist_session']['id'] = $task['id'];
+                    $_SESSION['tasklist_session']['attachments'] = array();
                 }
-              }
+
+                foreach ((array)$message->attachments as $part) {
+                    $attachment = array(
+                        'data' => $imap->get_message_part($uid, $part->mime_id, $part),
+                        'size' => $part->size,
+                        'name' => $part->filename,
+                        'mimetype' => $part->mimetype,
+                        'group' => $task['id'],
+                    );
+
+                    $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
+
+                    if ($attachment['status'] && !$attachment['abort']) {
+                        $id = $attachment['id'];
+                        $attachment['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
+
+                        // store new attachment in session
+                        unset($attachment['status'], $attachment['abort'], $attachment['data']);
+                        $_SESSION['tasklist_session']['attachments'][$id] = $attachment;
+
+                        $attachment['id'] = 'rcmfile' . $attachment['id'];  # add prefix to consider it 'new'
+                        $task['attachments'][] = $attachment;
+                    }
+                }
             }
-*/
+
             $this->rc->output->command('plugin.mail2taskdialog', $task);
         }
         else {

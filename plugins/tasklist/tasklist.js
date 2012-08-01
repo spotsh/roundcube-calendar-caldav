@@ -844,7 +844,7 @@ function rcube_tasklist_ui(settings)
         }
 
         // show/hide tabs according to calendar's feature support
-        $('#taskedit-tab-attachments')[(list.attachments?'show':'hide')]();
+        $('#taskedit-tab-attachments')[(list.attachments||rec.attachments?'show':'hide')]();
 
         // activate the first tab
         $('#taskedit').tabs('select', 0);
@@ -894,15 +894,15 @@ function rcube_tasklist_ui(settings)
                 $dialog.dialog('close');
         };
 
-        if (rec.id) {
-          buttons[rcmail.gettext('delete', 'tasklist')] = function() {
-            if (delete_task(rec.id))
-                $dialog.dialog('close');
-          };
+        if (action != 'new') {
+            buttons[rcmail.gettext('delete', 'tasklist')] = function() {
+                if (delete_task(rec.id))
+                    $dialog.dialog('close');
+            };
         }
 
         buttons[rcmail.gettext('cancel', 'tasklist')] = function() {
-          $dialog.dialog('close');
+            $dialog.dialog('close');
         };
 
         // open jquery UI dialog
@@ -930,6 +930,10 @@ function rcube_tasklist_ui(settings)
      */
     function load_attachment(rec, att)
     {
+        // can't open temp attachments
+        if (!rec.id || rec.id < 0)
+            return false;
+
         var qstring = '_id='+urlencode(att.id)+'&_t='+urlencode(rec.recurrence_id||rec.id)+'&_list='+urlencode(rec.list);
 
         // open attachment in frame if it's of a supported mimetype
