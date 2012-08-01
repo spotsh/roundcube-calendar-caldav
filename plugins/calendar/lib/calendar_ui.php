@@ -623,7 +623,7 @@ class calendar_ui
 
     return html::div($attrib,
       html::div(null, $input->show()) .
-      html::div('buttons', $button->show(rcube_label('upload'), array('class' => 'button mainaction',
+      html::div('formbuttons', $button->show(rcube_label('upload'), array('class' => 'button mainaction',
         'onclick' => JS_OBJECT_NAME . ".upload_file(this.form)"))) .
       html::div('hint', rcube_label(array('name' => 'maxuploadsize', 'vars' => array('size' => $max_filesize))))
     );

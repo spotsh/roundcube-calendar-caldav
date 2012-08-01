@@ -1469,7 +1469,6 @@ class calendar extends rcube_plugin
     }
 
     $event    = get_input_value('_id', RCUBE_INPUT_GPC);
-    $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
     $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
 
     $eventid = 'cal:'.$event;
