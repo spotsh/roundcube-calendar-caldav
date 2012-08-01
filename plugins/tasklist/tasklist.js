@@ -802,7 +802,7 @@ function rcube_tasklist_ui(settings)
         var recstarttime = $('#edit-starttime').val(rec.starttime || '');
         var complete = $('#edit-completeness').val((rec.complete || 0) * 100);
         completeness_slider.slider('value', complete.val());
-        var tasklist = $('#edit-tasklist').val(rec.list || 0); // .prop('disabled', rec.parent_id ? true : false);
+        var tasklist = $('#edit-tasklist').val(rec.list || 0).prop('disabled', rec.parent_id ? true : false);
 
         // tag-edit line
         var tagline = $(rcmail.gui_objects.edittagline).empty();
@@ -1014,7 +1014,8 @@ function rcube_tasklist_ui(settings)
      */
     function add_childtask(id)
     {
-        task_edit_dialog(null, 'new', { parent_id:id });
+        var rec = listdata[id];
+        task_edit_dialog(null, 'new', { parent_id:id, list:rec.list });
     }
 
     /**
