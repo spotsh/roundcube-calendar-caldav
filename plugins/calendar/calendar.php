@@ -1744,7 +1744,6 @@ class calendar extends rcube_plugin
   private function cleanup_event(&$event)
   {
     // remove temp. attachment files
-    $eventid = 'cal:'.$event['id'];
     if (!empty($_SESSION['event_session']) && ($eventid = $_SESSION['event_session']['id'])) {
       $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $eventid));
       $this->rc->session->remove('event_session');
@@ -2413,6 +2412,7 @@ class calendar extends rcube_plugin
 
           if ($attachment['status'] && !$attachment['abort']) {
             $id = $attachment['id'];
+            $attachment['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
 
             // store new attachment in session
             unset($attachment['status'], $attachment['abort'], $attachment['data']);
