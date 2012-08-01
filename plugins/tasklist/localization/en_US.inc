@@ -36,6 +36,11 @@ $labels['save'] = 'Save';
 $labels['cancel'] = 'Cancel';
 $labels['addsubtask'] = 'Add subtask';
 
+$labels['tabsummary'] = 'Summary';
+$labels['tabrecurrence'] = 'Recurrence';
+$labels['tabattachments'] = 'Attachments';
+$labels['tabsharing'] = 'Sharing';
+
 $labels['editlist'] = 'Edit resource';
 $labels['createlist'] = 'Add resource';
 $labels['listactions'] = 'Resource options...';

@@ -95,6 +95,8 @@ function rcube_tasklist_ui(settings)
 
     /* basic initializations */
 
+    $('#taskedit').tabs();
+
     var completeness_slider = $('#edit-completeness-slider').slider({
         range: 'min',
         slide: function(e, ui){
@@ -568,6 +570,7 @@ function rcube_tasklist_ui(settings)
         }
 
         // remove from list index
+        var oldlist = listindex.join('%%%');
         var oldindex = listindex.indexOf(rec.id);
         if (oldindex >= 0) {
             slice = listindex.slice(0,oldindex);
@@ -609,6 +612,9 @@ function rcube_tasklist_ui(settings)
             slice = listindex.slice(0,index);
             slice.push(rec.id);
             listindex = slice.concat(listindex.slice(index));
+        }
+        else {  // restore old list index
+            listindex = oldlist.split('%%%');
         }
     }
 
@@ -729,6 +735,15 @@ function rcube_tasklist_ui(settings)
             });
         }
 
+        // build attachments list
+        $('#task-attachments').hide();
+        if ($.isArray(rec.attachments)) {
+            task_show_attachments(rec.attachments || [], $('#task-attachments').children('.task-text'), rec);
+            if (rec.attachments.length > 0) {
+                $('#task-attachments').show();
+          }
+        }
+
         // define dialog buttons
         var buttons = {};
         buttons[rcmail.gettext('edit','tasklist')] = function() {
@@ -748,7 +763,7 @@ function rcube_tasklist_ui(settings)
           closeOnEscape: true,
           title: rcmail.gettext('taskdetails', 'tasklist'),
           close: function() {
-            $dialog.dialog('destroy').appendTo(document.body);
+              $dialog.dialog('destroy').appendTo(document.body);
           },
           buttons: buttons,
           minWidth: 500,
@@ -769,10 +784,14 @@ function rcube_tasklist_ui(settings)
             list = rec.list && me.tasklists[rec.list] ? me.tasklists[rec.list] :
                 (me.selected_list ? me.tasklists[me.selected_list] : { editable: action=='new' });
 
-        if (list.readonly || (action == 'edit' && (!rec || rec.readonly || rec.temp)))
+        if (list.readonly || (action == 'edit' && (!rec || rec.readonly)))
             return false;
 
         me.selected_task = $.extend({}, rec);  // clone task object
+
+        // assign temporary id
+        if (!me.selected_task.id)
+            me.selected_task.id = -(++idcount);
 
         // fill form data
         var title = $('#edit-title').val(rec.title || '');
@@ -810,6 +829,26 @@ function rcube_tasklist_ui(settings)
             return false;
         })
 
+        // attachments
+        rcmail.enable_command('remove-attachment', !list.readonly);
+        me.selected_task.deleted_attachments = [];
+        // we're sharing some code for uploads handling with app.js
+        rcmail.env.attachments = [];
+        rcmail.env.compose_id = me.selected_task.id; // for rcmail.async_upload_form()
+
+        if ($.isArray(rec.attachments)) {
+            task_show_attachments(rec.attachments, $('#taskedit-attachments'), rec, true);
+        }
+        else {
+            $('#taskedit-attachments > ul').empty();
+        }
+
+        // show/hide tabs according to calendar's feature support
+        $('#taskedit-tab-attachments')[(list.attachments?'show':'hide')]();
+
+        // activate the first tab
+        $('#eventtabs').tabs('select', 0);
+
         // define dialog buttons
         var buttons = {};
         buttons[rcmail.gettext('save', 'tasklist')] = function() {
@@ -818,6 +857,7 @@ function rcube_tasklist_ui(settings)
                 me.selected_task[key] = input.val();
             });
             me.selected_task.tags = [];
+            me.selected_task.attachments = [];
 
             // do some basic input validation
             if (me.selected_task.startdate && me.selected_task.date) {
@@ -834,8 +874,14 @@ function rcube_tasklist_ui(settings)
                     me.selected_task.tags.push(elem.value);
             });
 
+            // uploaded attachments list
+            for (var i in rcmail.env.attachments) {
+                if (i.match(/^rcmfile(.+)/))
+                    me.selected_task.attachments.push(RegExp.$1);
+            }
+
             if (me.selected_task.list && me.selected_task.list != rec.list)
-              me.selected_task._fromlist = rec.list;
+                me.selected_task._fromlist = rec.list;
 
             me.selected_task.complete = complete.val() / 100;
             if (isNaN(me.selected_task.complete))
@@ -866,8 +912,8 @@ function rcube_tasklist_ui(settings)
           closeOnEscape: false,
           title: rcmail.gettext((action == 'edit' ? 'edittask' : 'newtask'), 'tasklist'),
           close: function() {
-            editform.hide().appendTo(document.body);
-            $dialog.dialog('destroy').remove();
+              editform.hide().appendTo(document.body);
+              $dialog.dialog('destroy').remove();
           },
           buttons: buttons,
           minHeight: 340,
@@ -877,6 +923,91 @@ function rcube_tasklist_ui(settings)
 
         title.select();
     }
+
+
+    /**
+     * Open a task attachment either in a browser window for inline view or download it
+     */
+    function load_attachment(rec, att)
+    {
+        var qstring = '_id='+urlencode(att.id)+'&_t='+urlencode(rec.recurrence_id||rec.id)+'&_list='+urlencode(rec.list);
+
+        // open attachment in frame if it's of a supported mimetype
+        // similar as in app.js and calendar_ui.js
+        if (att.id && att.mimetype && $.inArray(att.mimetype, settings.mimetypes)>=0) {
+            rcmail.attachment_win = window.open(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', 'rcubetaskattachment');
+            if (rcmail.attachment_win) {
+                window.setTimeout(function() { rcmail.attachment_win.focus(); }, 10);
+                return;
+            }
+        }
+
+        rcmail.goto_url('get-attachment', qstring+'&_download=1', false);
+    };
+
+    /**
+     * Build task attachments list
+     */
+    function task_show_attachments(list, container, rec, edit)
+    {
+        var i, id, len, content, li, elem,
+            ul = $('<ul>').addClass('attachmentslist');
+
+        for (i=0, len=list.length; i<len; i++) {
+            elem = list[i];
+            li = $('<li>').addClass(elem.classname);
+
+            if (edit) {
+                rcmail.env.attachments[elem.id] = elem;
+                // delete icon
+                content = $('<a>')
+                    .attr('href', '#delete')
+                    .attr('title', rcmail.gettext('delete'))
+                    .addClass('delete')
+                    .click({ id:elem.id }, function(e) {
+                        remove_attachment(this, e.data.id);
+                        return false;
+                    });
+
+                if (!rcmail.env.deleteicon) {
+                    content.html(rcmail.gettext('delete'));
+                }
+                else {
+                    $('<img>').attr('src', rcmail.env.deleteicon).attr('alt', rcmail.gettext('delete')).appendTo(content);
+                }
+
+                li.append(content);
+            }
+
+            // name/link
+            $('<a>')
+                .attr('href', '#load')
+                .addClass('file')
+                .html(elem.name).click({ task:rec, att:elem }, function(e) {
+                    load_attachment(e.data.task, e.data.att);
+                    return false;
+                }).appendTo(li);
+
+            ul.append(li);
+        }
+
+        if (edit && rcmail.gui_objects.attachmentlist) {
+            ul.id = rcmail.gui_objects.attachmentlist.id;
+            rcmail.gui_objects.attachmentlist = ul.get(0);
+        }
+
+        container.empty().append(ul);
+    };
+
+    /**
+     *
+     */
+    var remove_attachment = function(elem, id)
+    {
+        $(elem.parentNode).hide();
+        me.selected_task.deleted_attachments.push(id);
+        delete rcmail.env.attachments[id];
+    };
 
     /**
      *

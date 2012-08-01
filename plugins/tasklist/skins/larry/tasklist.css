@@ -373,13 +373,14 @@ ul.toolbarmenu li span.icon.taskadd {
 }
 
 .taskhead .tags {
+	display: block;
 	position: absolute;
-	top: 4px;
+	top: 3px;
 	right: 110px;
 	max-width: 14em;
+	height: 16px;
 	overflow: hidden;
 	padding-top: 1px;
-	padding-bottom: 4px;
 	text-align: right;
 }
 
@@ -388,7 +389,7 @@ ul.toolbarmenu li span.icon.taskadd {
 	background: #d9ecf4;
 	border: 1px solid #c2dae5;
 	border-radius: 4px;
-	padding: 2px 8px;
+	padding: 1px 7px;
 	margin-right: 3px;
 }
 
@@ -529,6 +530,13 @@ ul.toolbarmenu li span.delete {
 	display:none;
 }
 
+#taskedit {
+	position: relative;
+	top: -1.5em;
+	padding: 0.5em 0.1em;
+	margin: 0 -0.2em;
+}
+
 #taskshow h2 {
 	margin-top: -0.5em;
 }
@@ -553,9 +561,41 @@ a.morelink:hover {
 	text-decoration: underline;
 }
 
+#taskedit .ui-tabs-panel {
+	min-height: 24em;
+}
+
 #taskeditform input.text,
 #taskeditform textarea {
 	width: 97%;
+}
+
+#taskeditform .formbuttons {
+	margin: 0.5em 0;
+}
+
+#taskedit-attachments {
+	margin: 0.6em 0;
+}
+
+#taskedit-attachments ul li {
+	display: block;
+	color: #333;
+	font-weight: bold;
+	padding: 8px 4px 3px 30px;
+	text-shadow: 0px 1px 1px #fff;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+#taskedit-attachments ul li a.file {
+	padding: 0;
+}
+
+#taskedit-attachments-form {
+	margin-top: 1em;
+	padding-top: 0.8em;
+	border-top: 2px solid #fafafa;
 }
 
 div.form-section {
@@ -568,6 +608,7 @@ div.form-section {
 	display: inline-block;
 	min-width: 7em;
 	padding-right: 0.5em;
+	margin-bottom: 0.3em;
 }
 
 label.block {
@@ -585,6 +626,38 @@ label.block {
 
 #edit-tagline {
 	width: 97%;
+}
+
+#taskedit .droptarget {
+	background-image: url(../../../../skins/larry/images/filedrop.png) !important;
+	background-position: center bottom !important;
+	background-repeat: no-repeat !important;
+}
+
+#taskedit .droptarget.hover,
+#taskedit .droptarget.active {
+	border-color: #019bc6;
+	box-shadow: 0 0 3px 2px rgba(71,135,177, 0.5);
+	-moz-box-shadow: 0 0 3px 2px rgba(71,135,177, 0.5);
+	-webkit-box-shadow: 0 0 3px 2px rgba(71,135,177, 0.5);
+	-o-box-shadow: 0 0 3px 2px rgba(71,135,177, 0.5);
+}
+
+#taskedit .droptarget.hover {
+	background-color: #d9ecf4;
+	box-shadow: 0 0 5px 2px rgba(71,135,177, 0.9);
+	-moz-box-shadow: 0 0 5px 2px rgba(71,135,177, 0.9);
+	-webkit-box-shadow: 0 0 5px 2px rgba(71,135,177, 0.9);
+	-o-box-shadow: 0 0 5px 2px rgba(71,135,177, 0.9);
+}
+
+#task-attachments .attachmentslist li {
+	float: left;
+	margin-right: 1em;
+}
+
+#task-attachments .attachmentslist li a {
+	outline: none;
 }
 
 

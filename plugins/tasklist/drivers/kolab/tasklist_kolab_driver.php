@@ -26,7 +26,7 @@ class tasklist_kolab_driver extends tasklist_driver
 {
     // features supported by the backend
     public $alarms = false;
-    public $attachments = false;
+    public $attachments = true;
     public $undelete = false; // task undelete action
 
     private $rc;
@@ -346,6 +346,18 @@ class tasklist_kolab_driver extends tasklist_driver
             $task['changed'] = $record['dtstamp'];
         }
 
+        if (!empty($record['_attachments'])) {
+            foreach ($record['_attachments'] as $key => $attachment) {
+                if ($attachment !== false) {
+                    if (!$attachment['name'])
+                        $attachment['name'] = $key;
+                    $attachments[] = $attachment;
+                }
+            }
+
+            $task['attachments'] = $attachments;
+        }
+
         return $task;
     }
 
@@ -385,6 +397,47 @@ class tasklist_kolab_driver extends tasklist_driver
         foreach ((array)$old as $key => $val) {
           if (!isset($object[$key]) && $key[0] == '_')
             $object[$key] = $val;
+        }
+
+        // delete existing attachment(s)
+        if (!empty($task['deleted_attachments'])) {
+            foreach ($task['deleted_attachments'] as $attachment) {
+                if (is_array($object['_attachments'])) {
+                    foreach ($object['_attachments'] as $idx => $att) {
+                        if ($att['id'] == $attachment)
+                            $object['_attachments'][$idx] = false;
+                    }
+                }
+            }
+            unset($task['deleted_attachments']);
+        }
+
+        // in kolab_storage attachments are indexed by content-id
+        if (is_array($task['attachments'])) {
+            foreach ($task['attachments'] as $idx => $attachment) {
+                $key = null;
+                // Roundcube ID has nothing to do with the storage ID, remove it
+                if ($attachment['content']) {
+                    unset($attachment['id']);
+                }
+                else {
+                    foreach ((array)$old['_attachments'] as $cid => $oldatt) {
+                        if ($oldatt && $attachment['id'] == $oldatt['id'])
+                            $key = $cid;
+                    }
+                }
+
+                // replace existing entry
+                if ($key) {
+                    $object['_attachments'][$key] = $attachment;
+                }
+                // append as new attachment
+                else {
+                    $object['_attachments'][] = $attachment;
+                }
+            }
+
+            unset($task['attachments']);
         }
 
         unset($object['tempid'], $object['raw']);
@@ -442,7 +495,8 @@ class tasklist_kolab_driver extends tasklist_driver
             $saved = false;
         }
         else {
-            $task['id'] = $task['uid'];
+            $task = $this->_to_rcube_task($object);
+            $task['list'] = $list_id;
             $this->tasks[$task['uid']] = $task;
         }
 
@@ -479,6 +533,54 @@ class tasklist_kolab_driver extends tasklist_driver
         return false;
     }
 
+
+    /**
+     * Get attachment properties
+     *
+     * @param string $id    Attachment identifier
+     * @param array  $task  Hash array with event properties:
+     *         id: Task identifier
+     *       list: List identifier
+     *
+     * @return array Hash array with attachment properties:
+     *         id: Attachment identifier
+     *       name: Attachment name
+     *   mimetype: MIME content type of the attachment
+     *       size: Attachment size
+     */
+    public function get_attachment($id, $task)
+    {
+        $task['uid'] = $task['id'];
+        $task = $this->get_task($task);
+
+        if ($task && !empty($task['attachments'])) {
+            foreach ($task['attachments'] as $att) {
+                if ($att['id'] == $id)
+                    return $att;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get attachment body
+     *
+     * @param string $id    Attachment identifier
+     * @param array  $task  Hash array with event properties:
+     *         id: Task identifier
+     *       list: List identifier
+     *
+     * @return string Attachment body
+     */
+    public function get_attachment_body($id, $task)
+    {
+        if ($storage = $this->folders[$task['list']]) {
+            return $storage->get_attachment($task['id'], $id);
+        }
+
+        return false;
+    }
 
     /**
      * 

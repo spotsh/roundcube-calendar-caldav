@@ -36,6 +36,11 @@ $labels['save'] = 'Speichern';
 $labels['cancel'] = 'Abbrechen';
 $labels['addsubtask'] = 'Neue Teilaufgabe';
 
+$labels['tabsummary'] = 'Übersicht';
+$labels['tabrecurrence'] = 'Wiederholung';
+$labels['tabattachments'] = 'Anhänge';
+$labels['tabsharing'] = 'Freigabe';
+
 $labels['editlist'] = 'Ressource bearbeiten';
 $labels['createlist'] = 'Neue Ressource';
 $labels['listactions'] = 'Ressourcenoptionen...';

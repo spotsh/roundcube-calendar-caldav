@@ -81,6 +81,16 @@ class tasklist_ui
         $this->plugin->register_handler('plugin.tasks', array($this, 'tasks_resultview'));
         $this->plugin->register_handler('plugin.tagslist', array($this, 'tagslist'));
         $this->plugin->register_handler('plugin.tags_editline', array($this, 'tags_editline'));
+        $this->plugin->register_handler('plugin.attachments_form', array($this, 'attachments_form'));
+        $this->plugin->register_handler('plugin.attachments_list', array($this, 'attachments_list'));
+        $this->plugin->register_handler('plugin.filedroparea', array($this, 'file_drop_area'));
+
+        // define list of file types which can be displayed inline
+        // same as in program/steps/mail/show.inc
+        $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
+        $settings = $this->rc->output->get_env('tasklist_settings');
+        $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
+        $this->rc->output->set_env('tasklist_settings', $settings);
 
         $this->plugin->include_script('jquery.tagedit.js');
         $this->plugin->include_script('tasklist.js');
@@ -102,6 +112,7 @@ class tasklist_ui
             $prop['alarms'] = $this->plugin->driver->alarms;
             $prop['undelete'] = $this->plugin->driver->undelete;
             $prop['sortable'] = $this->plugin->driver->sortable;
+            $prop['attachments'] = $this->plugin->driver->attachments;
             $jsenv[$id] = $prop;
 
             $html_id = html_identifier($id);
@@ -232,6 +243,79 @@ class tasklist_ui
 
         $input = new html_inputfield(array('name' => 'tags[]', 'class' => 'tag', 'size' => $attrib['size'], 'tabindex' => $attrib['tabindex']));
         return html::div($attrib, $input->show(''));
+    }
+
+    /**
+     * Generate HTML element for attachments list
+     */
+    function attachments_list($attrib = array())
+    {
+        if (!$attrib['id'])
+            $attrib['id'] = 'rcmAttachmentList';
+
+        $this->rc->output->add_gui_object('attachmentlist', $attrib['id']);
+
+        return html::tag('ul', $attrib, '', html::$common_attrib);
+    }
+
+    /**
+     * Generate the form for event attachments upload
+     */
+    function attachments_form($attrib = array())
+    {
+        // add ID if not given
+        if (!$attrib['id'])
+            $attrib['id'] = 'rcmUploadForm';
+
+        // Get max filesize, enable upload progress bar
+        $max_filesize = rcube_upload_init();
+
+        $button = new html_inputfield(array('type' => 'button'));
+        $input = new html_inputfield(array(
+            'type' => 'file',
+            'name' => '_attachments[]',
+            'multiple' => 'multiple',
+            'size' => $attrib['attachmentfieldsize'],
+        ));
+
+        return html::div($attrib,
+            html::div(null, $input->show()) .
+            html::div('formbuttons', $button->show(rcube_label('upload'), array('class' => 'button mainaction',
+                'onclick' => JS_OBJECT_NAME . ".upload_file(this.form)"))) .
+            html::div('hint', rcube_label(array('name' => 'maxuploadsize', 'vars' => array('size' => $max_filesize))))
+        );
+    }
+
+    /**
+     * Register UI object for HTML5 drag & drop file upload
+     */
+    function file_drop_area($attrib = array())
+    {
+        if ($attrib['id']) {
+            $this->rc->output->add_gui_object('filedrop', $attrib['id']);
+            $this->rc->output->set_env('filedrop', array('action' => 'upload', 'fieldname' => '_attachments'));
+        }
+    }
+
+    /**
+     *
+     */
+    function attachment_controls($attrib = array())
+    {
+        $table = new html_table(array('cols' => 3));
+
+        if (!empty($this->plugin->attachment['name'])) {
+            $table->add('title', Q(rcube_label('filename')));
+            $table->add('header', Q($this->plugin->attachment['name']));
+            $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))));
+        }
+
+      if (!empty($this->plugin->attachment['size'])) {
+        $table->add('title', Q(rcube_label('filesize')));
+        $table->add('header', Q(show_bytes($this->plugin->attachment['size'])));
+      }
+
+      return $table->show($attrib);
     }
 
 }

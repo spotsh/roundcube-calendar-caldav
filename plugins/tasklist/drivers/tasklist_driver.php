@@ -175,6 +175,34 @@ abstract class tasklist_driver
     }
 
     /**
+     * Get attachment properties
+     *
+     * @param string $id    Attachment identifier
+     * @param array  $task  Hash array with event properties:
+     *         id: Task identifier
+     *       list: List identifier
+     *
+     * @return array Hash array with attachment properties:
+     *         id: Attachment identifier
+     *       name: Attachment name
+     *   mimetype: MIME content type of the attachment
+     *       size: Attachment size
+     */
+    public function get_attachment($id, $task) { }
+
+    /**
+     * Get attachment body
+     *
+     * @param string $id    Attachment identifier
+     * @param array  $task  Hash array with event properties:
+     *         id: Task identifier
+     *       list: List identifier
+     *
+     * @return string Attachment body
+     */
+    public function get_attachment_body($id, $task) { }
+
+    /**
      * List availabale categories
      * The default implementation reads them from config/user prefs
      */
