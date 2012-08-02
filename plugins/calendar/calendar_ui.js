@@ -520,22 +520,22 @@ function rcube_calendar_ui(settings)
         for (var alarm, i=0; i < event.alarms.length; i++) {
           alarm = String(event.alarms[i]).split(':');
           if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
-          $('select.edit-alarm-type').val(alarm[1]);
+          $('#eventedit select.edit-alarm-type').val(alarm[1]);
           
           if (alarm[0].match(/@(\d+)/)) {
             var ondate = fromunixtime(parseInt(RegExp.$1));
-            $('select.edit-alarm-offset').val('@');
-            $('input.edit-alarm-date').val($.fullCalendar.formatDate(ondate, settings['date_format']));
-            $('input.edit-alarm-time').val($.fullCalendar.formatDate(ondate, settings['time_format']));
+            $('#eventedit select.edit-alarm-offset').val('@');
+            $('#eventedit input.edit-alarm-date').val($.fullCalendar.formatDate(ondate, settings['date_format']));
+            $('#eventedit input.edit-alarm-time').val($.fullCalendar.formatDate(ondate, settings['time_format']));
           }
           else if (alarm[0].match(/([-+])(\d+)([MHD])/)) {
-            $('input.edit-alarm-value').val(RegExp.$2);
-            $('select.edit-alarm-offset').val(''+RegExp.$1+RegExp.$3);
+            $('#eventedit input.edit-alarm-value').val(RegExp.$2);
+            $('#eventedit select.edit-alarm-offset').val(''+RegExp.$1+RegExp.$3);
           }
         }
       }
       // set correct visibility by triggering onchange handlers
-      $('select.edit-alarm-type, select.edit-alarm-offset').change();
+      $('#eventedit select.edit-alarm-type, #eventedit select.edit-alarm-offset').change();
       
       // enable/disable alarm property according to backend support
       $('#edit-alarms')[(calendar.alarms ? 'show' : 'hide')]();
@@ -550,10 +550,10 @@ function rcube_calendar_ui(settings)
       var load_recurrence_tab = function()
       {
         recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();
-        interval = $('select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
+        interval = $('#eventedit select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
         rrtimes = $('#edit-recurrence-repeat-times').val(event.recurrence ? event.recurrence.COUNT : 1);
         rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate($.fullCalendar.parseISO8601(event.recurrence.UNTIL), settings['date_format']) : '');
-        $('input.edit-recurrence-until:checked').prop('checked', false);
+        $('#eventedit input.edit-recurrence-until:checked').prop('checked', false);
       
         var weekdays = ['SU','MO','TU','WE','TH','FR','SA'];
         var rrepeat_id = '#edit-recurrence-repeat-forever';
@@ -668,12 +668,12 @@ function rcube_calendar_ui(settings)
 
         // serialize alarm settings
         // TODO: support multiple alarm entries
-        var alarm = $('select.edit-alarm-type').val();
+        var alarm = $('#eventedit select.edit-alarm-type').val();
         if (alarm) {
-          var val, offset = $('select.edit-alarm-offset').val();
+          var val, offset = $('#eventedit select.edit-alarm-offset').val();
           if (offset == '@')
-            data.alarms = '@' + date2unixtime(parse_datetime($('input.edit-alarm-time').val(), $('input.edit-alarm-date').val())) + ':' + alarm;
-          else if ((val = parseInt($('input.edit-alarm-value').val())) && !isNaN(val) && val >= 0)
+            data.alarms = '@' + date2unixtime(parse_datetime($('#eventedit input.edit-alarm-time').val(), $('#eventedit input.edit-alarm-date').val())) + ':' + alarm;
+          else if ((val = parseInt($('#eventedit input.edit-alarm-value').val())) && !isNaN(val) && val >= 0)
             data.alarms = offset[0] + val + offset[1] + ':' + alarm;
         }
 
@@ -2582,7 +2582,7 @@ function rcube_calendar_ui(settings)
       $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); event_times_changed(); });
 
       // configure drop-down menu on time input fields based on jquery UI autocomplete
-      $('#edit-starttime, #edit-endtime, input.edit-alarm-time')
+      $('#edit-starttime, #edit-endtime, #eventedit input.edit-alarm-time')
         .attr('autocomplete', "off")
         .autocomplete({
           delay: 100,
@@ -2607,10 +2607,10 @@ function rcube_calendar_ui(settings)
         });
 
       // register events on alarm fields
-      $('select.edit-alarm-type').change(function(){
+      $('#eventedit select.edit-alarm-type').change(function(){
         $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
       });
-      $('select.edit-alarm-offset').change(function(){
+      $('#eventedit select.edit-alarm-offset').change(function(){
         var mode = $(this).val() == '@' ? 'show' : 'hide';
         $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
         $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
