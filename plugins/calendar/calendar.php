@@ -209,7 +209,10 @@ class calendar extends rcube_plugin
       default:
         $this->driver = new $driver_class($this);
         break;
-      }
+     }
+
+     if ($this->driver->undelete)
+        $this->driver->undelete = $this->rc->config->get('undo_timeout', 0) > 0;
   }
 
   /**

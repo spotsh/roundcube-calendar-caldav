@@ -1554,7 +1554,7 @@ function rcube_calendar_ui(settings)
       
       // render event temporarily into the calendar
       if ((data.start && data.end) || data.id) {
-        var event = data.id ? $.extend(fc.fullCalendar('clientEvents', data.id)[0], data) : data;
+        var event = data.id ? $.extend(fc.fullCalendar('clientEvents', function(e){ return e.id == data.id; })[0], data) : data;
         if (data.start)
           event.start = fromunixtime(data.start);
         if (data.end)
