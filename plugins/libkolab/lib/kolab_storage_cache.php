@@ -196,6 +196,10 @@ class kolab_storage_cache
      */
     public function set($msguid, $object, $foldername = null)
     {
+        if (!$msguid) {
+            return;
+        }
+
         // delegate to another cache instance
         if ($foldername && $foldername != $this->folder->name) {
             kolab_storage::get_folder($foldername)->cache->set($msguid, $object);

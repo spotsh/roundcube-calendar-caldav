@@ -621,7 +621,7 @@ class kolab_storage_folder
         }
 
         if ($success) {
-            $this->cache->set($result, false);
+            $this->cache->set($msguid, false);
         }
 
         return $success;
