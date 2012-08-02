@@ -28,6 +28,7 @@ class tasklist_kolab_driver extends tasklist_driver
     public $alarms = false;
     public $attachments = true;
     public $undelete = false; // task undelete action
+    public $alarm_types = array('DISPLAY');
 
     private $rc;
     private $plugin;
@@ -437,10 +438,10 @@ class tasklist_kolab_driver extends tasklist_driver
                 }
             }
 
-            unset($task['attachments']);
+            unset($object['attachments']);
         }
 
-        unset($object['tempid'], $object['raw']);
+        unset($object['tempid'], $object['raw'], $object['list'], $object['flagged'], $object['tags']);
         return $object;
     }
 
