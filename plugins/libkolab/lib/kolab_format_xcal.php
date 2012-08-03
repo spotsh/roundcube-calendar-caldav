@@ -97,6 +97,7 @@ abstract class kolab_format_xcal extends kolab_format
 
         $object = array(
             'uid'         => $this->obj->uid(),
+            'created'     => self::php_datetime($this->obj->created()),
             'changed'     => self::php_datetime($this->obj->lastModified()),
             'title'       => $this->obj->summary(),
             'location'    => $this->obj->location(),

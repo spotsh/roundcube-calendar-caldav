@@ -97,7 +97,8 @@ class kolab_format_note extends kolab_format
         // read object properties
         $object = array(
             'uid'       => $this->obj->uid(),
-            'changed'   => $this->obj->lastModified(),
+            'created'   => self::php_datetime($this->obj->created()),
+            'changed'   => self::php_datetime($this->obj->lastModified()),
         );
 
 
