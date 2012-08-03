@@ -46,15 +46,24 @@ function rcube_calendar(settings)
     // create a nice human-readable string for the date/time range
     this.event_date_text = function(event)
     {
+      if (!event.start)
+        return '';
+      if (!event.end)
+        event.end = event.start;
+
       var fromto, duration = event.end.getTime() / 1000 - event.start.getTime() / 1000;
-      if (event.allDay)
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + (duration > 86400 || event.start.getDay() != event.end.getDay() ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
-      else if (duration < 86400 && event.start.getDay() == event.end.getDay())
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
-          + $.fullCalendar.formatDate(event.end, settings['time_format']);
-      else
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
-          + $.fullCalendar.formatDate(event.end, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.end, settings['time_format']);
+      if (event.allDay) {
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format'])
+          + (duration > 86400 || event.start.getDay() != event.end.getDay() ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
+      }
+      else if (duration < 86400 && event.start.getDay() == event.end.getDay()) {
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format'])
+          + (duration > 0 ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['time_format']) : '');
+      }
+      else {
+        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format'])
+          + (duration > 0 ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.end, settings['time_format']) : '');
+      }
 
       return fromto;
     };

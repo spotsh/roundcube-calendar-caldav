@@ -772,8 +772,13 @@ class calendar extends rcube_plugin
         break;
 
       case "dismiss":
-        foreach (explode(',', $event['id']) as $id)
-          $success |= $this->driver->dismiss_alarm($id, $event['snooze']);
+        $event['ids'] = explode(',', $event['id']);
+        $plugin = $this->rc->plugins->exec_hook('dismiss_alarms', $event);
+        $success = $plugin['success'];
+        foreach ($event['ids'] as $id) {
+            if (strpos($id, 'cal:') === 0)
+                $success |= $this->driver->dismiss_alarm(substr($id, 4), $event['snooze']);
+        }
         break;
     }
     
@@ -833,15 +838,25 @@ class calendar extends rcube_plugin
    */
   function keep_alive($attr)
   {
+    $timestamp = time();
     $this->load_driver();
-    $alarms = $this->driver->pending_alarms(time());
-    if ($alarms) {
+    $alarms = $this->driver->pending_alarms($timestamp);
+    foreach ($alarms as $i => $alarm) {
+        $alarms[$i]['id'] = 'cal:' . $alarm['id'];  // prefix ID with cal:
+    }
+
+    $plugin = $this->rc->plugins->exec_hook('pending_alarms', array(
+      'time' => $timestamp,
+      'alarms' => $alarms,
+    ));
+
+    if (!$plugin['abort'] && $plugin['alarms']) {
       // make sure texts and env vars are available on client
       if ($this->rc->task != 'calendar') {
         $this->add_texts('localization/', true);
         $this->rc->output->set_env('snooze_select', $this->ui->snooze_select());
       }
-      $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($alarms));
+      $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($plugin['alarms']));
     }
   }
   
@@ -1181,9 +1196,9 @@ class calendar extends rcube_plugin
     foreach ($alarms as $alarm) {
       $out[] = array(
         'id'       => $alarm['id'],
-        'start'    => $this->adjust_timezone($alarm['start'])->format('c'),
-        'end'      => $this->adjust_timezone($alarm['end'])->format('c'),
-        'allDay'   => ($event['allday'] == 1)?true:false,
+        'start'    => $alarm['start'] ? $this->adjust_timezone($alarm['start'])->format('c') : '',
+        'end'      => $alarm['end']   ? $this->adjust_timezone($alarm['end'])->format('c') : '',
+        'allDay'   => ($alarm['allday'] == 1)?true:false,
         'title'    => $alarm['title'],
         'location' => $alarm['location'],
         'calendar' => $alarm['calendar'],
