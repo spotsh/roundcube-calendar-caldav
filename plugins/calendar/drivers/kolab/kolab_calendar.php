@@ -278,11 +278,11 @@ class kolab_calendar
     $object = $this->_from_rcube_event($event);
     $saved = $this->storage->save($object, 'event');
     
-    if (!$saved || PEAR::isError($saved)) {
+    if (!$saved) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error saving event object to Kolab server:" . $saved->getMessage()),
+        'message' => "Error saving event object to Kolab server"),
         true, false);
       $saved = false;
     }
@@ -312,11 +312,11 @@ class kolab_calendar
     $object = $this->_from_rcube_event($event, $old);
     $saved = $this->storage->save($object, 'event', $event['id']);
 
-    if (!$saved || PEAR::isError($saved)) {
+    if (!$saved) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Error saving event object to Kolab server:" . $saved->getMessage()),
+        'message' => "Error saving event object to Kolab server"),
         true, false);
     }
     else {
@@ -337,7 +337,7 @@ class kolab_calendar
   {
     $deleted = $this->storage->delete($event['id'], $force);
 
-    if (!$deleted || PEAR::isError($deleted)) {
+    if (!$deleted) {
       raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
