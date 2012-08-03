@@ -68,27 +68,18 @@ class kolab_driver extends calendar_driver
     $folders = kolab_storage::get_folders('event');
     $this->calendars = array();
 
-    if (PEAR::isError($folders)) {
-      raise_error(array(
-        'code' => 600, 'type' => 'php',
-        'file' => __FILE__, 'line' => __LINE__,
-        'message' => "Failed to list calendar folders from Kolab server:" . $folders->getMessage()),
-      true, false);
-    }
-    else {
-      // convert to UTF8 and sort
-      $names = array();
-      foreach ($folders as $folder)
-        $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
+    // convert to UTF8 and sort
+    $names = array();
+    foreach ($folders as $folder)
+      $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
 
-      asort($names, SORT_LOCALE_STRING);
+    asort($names, SORT_LOCALE_STRING);
 
-      foreach ($names as $utf7name => $name) {
-        $calendar = new kolab_calendar($utf7name, $this->cal);
-        $this->calendars[$calendar->id] = $calendar;
-        if (!$calendar->readonly)
-          $this->has_writeable = true;
-      }
+    foreach ($names as $utf7name => $name) {
+      $calendar = new kolab_calendar($utf7name, $this->cal);
+      $this->calendars[$calendar->id] = $calendar;
+      if (!$calendar->readonly)
+        $this->has_writeable = true;
     }
 
     return $this->calendars;
@@ -469,6 +460,15 @@ class kolab_driver extends calendar_driver
     $savemode = 'all';
     $attachments = array();
     $old = $master = $fromcalendar->get_event($event['id']);
+
+    if (!$old || !$old['start']) {
+      raise_error(array(
+        'code' => 600, 'type' => 'php',
+        'file' => __FILE__, 'line' => __LINE__,
+        'message' => "Failed to load event object to update: id=" . $event['id']),
+        true, false);
+      return false;
+    }
 
     // delete existing attachment(s)
     if (!empty($event['deleted_attachments'])) {
