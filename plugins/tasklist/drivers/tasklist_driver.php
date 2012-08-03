@@ -129,6 +129,29 @@ abstract class tasklist_driver
     abstract function list_tasks($filter, $lists = null);
 
     /**
+     * Get a list of pending alarms to be displayed to the user
+     *
+     * @param  integer Current time (unix timestamp)
+     * @param  mixed   List of list IDs to show alarms for (either as array or comma-separated string)
+     * @return array   A list of alarms, each encoded as hash array with task properties
+     *         id: Task identifier
+     *        uid: Unique identifier of this task
+     *       date: Task due date
+     *       time: Task due time
+     *      title: Task title/summary
+     */
+    abstract function pending_alarms($time, $lists = null);
+
+    /**
+     * (User) feedback after showing an alarm notification
+     * This should mark the alarm as 'shown' or snooze it for the given amount of time
+     *
+     * @param  string  Task identifier
+     * @param  integer Suspend the alarm for this number of seconds
+     */
+    abstract function dismiss_alarm($id, $snooze = 0);
+
+    /**
      * Return data of a specific task
      *
      * @param mixed  Hash array with task properties or task UID

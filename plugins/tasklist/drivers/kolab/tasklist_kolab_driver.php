@@ -317,6 +317,31 @@ class tasklist_kolab_driver extends tasklist_driver
     }
 
     /**
+     * Get a list of pending alarms to be displayed to the user
+     *
+     * @param  integer Current time (unix timestamp)
+     * @param  mixed   List of list IDs to show alarms for (either as array or comma-separated string)
+     * @return array   A list of alarms, each encoded as hash array with task properties
+     * @see tasklist_driver::pending_alarms()
+     */
+    public function pending_alarms($time, $lists = null)
+    {
+        // TODO: implement this
+    }
+
+    /**
+     * (User) feedback after showing an alarm notification
+     * This should mark the alarm as 'shown' or snooze it for the given amount of time
+     *
+     * @param  string  Task identifier
+     * @param  integer Suspend the alarm for this number of seconds
+     */
+    public function dismiss_alarm($id, $snooze = 0)
+    {
+        // TODO: implement this
+    }
+
+    /**
      * Convert from Kolab_Format to internal representation
      */
     private function _to_rcube_task($record)

@@ -113,6 +113,10 @@ class tasklist extends rcube_plugin
             $this->ui = new tasklist_ui($this);
             $this->ui->init();
         }
+
+        // add hooks for alarms handling
+        $this->add_hook('pending_alarms', array($this, 'pending_alarms'));
+        $this->add_hook('dismiss_alarms', array($this, 'dismiss_alarms'));
     }
 
 
@@ -616,6 +620,43 @@ class tasklist extends rcube_plugin
             "rcmail.add_label(" . json_encode($texts) . ");\n"
         );
         exit;
+    }
+
+
+    /**
+     * Handler for pending_alarms plugin hook triggered by the calendar module on keep-alive requests.
+     * This will check for pending notifications and pass them to the client
+     */
+    public function pending_alarms($p)
+    {
+        $this->load_driver();
+        if ($alarms = $this->driver->pending_alarms($p['time'] ?: time())) {
+            foreach ($alarms as $alarm) {
+                // encode alarm object to suit the expectations of the calendaring code
+                if ($alarm['date'])
+                    $alarm['start'] = new DateTime($alarm['date'].' '.$alarm['time'], $this->timezone);
+
+                $alarm['id'] = 'task:' . $alarm['id'];  // prefix ID with task:
+                $alarm['allday'] = empty($alarm['time']) ? 1 : 0;
+                $p['alarms'][] = $alarm;
+            }
+        }
+
+        return $p;
+    }
+
+    /**
+     * Handler for alarm dismiss hook triggered by the calendar module
+     */
+    public function dismiss_alarms($p)
+    {
+        $this->load_driver();
+        foreach ((array)$p['ids'] as $id) {
+            if (strpos($id, 'task:') === 0)
+                $p['success'] |= $this->driver->dismiss_alarm(substr($id, 5), $p['snooze']);
+        }
+
+        return $p;
     }
 
 

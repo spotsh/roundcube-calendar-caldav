@@ -338,6 +338,70 @@ class tasklist_database_driver extends tasklist_driver
     }
 
     /**
+     * Get a list of pending alarms to be displayed to the user
+     *
+     * @param  integer Current time (unix timestamp)
+     * @param  mixed   List of list IDs to show alarms for (either as array or comma-separated string)
+     * @return array   A list of alarms, each encoded as hash array with task properties
+     * @see tasklist_driver::pending_alarms()
+     */
+    public function pending_alarms($time, $lists = null)
+    {
+        if (empty($lists))
+            $lists = array_keys($this->lists);
+        else if (is_string($lists))
+            $lists = explode(',', $lists);
+
+        // only allow to select from calendars with activated alarms
+        $list_ids = array();
+        foreach ($lists as $lid) {
+            if ($this->lists[$lid] && $this->lists[$lid]['showalarms'])
+                $list_ids[] = $lid;
+        }
+        $list_ids = array_map(array($this->rc->db, 'quote'), $list_ids);
+
+        $alarms = array();
+        if (!empty($list_ids)) {
+            $result = $this->rc->db->query(sprintf(
+                "SELECT * FROM " . $this->db_tasks . "
+                 WHERE tasklist_id IN (%s)
+                 AND notify <= %s AND date > %s",
+                join(',', $list_ids),
+                $this->rc->db->fromunixtime($time),
+                $this->rc->db->fromunixtime($time)
+            ));
+
+            while ($result && ($rec = $this->rc->db->fetch_assoc($result)))
+                $alarms[] = $this->_read_postprocess($rec);
+        }
+
+        return $alarms;
+    }
+
+    /**
+     * Feedback after showing/sending an alarm notification
+     *
+     * @see tasklist_driver::dismiss_alarm()
+     */
+    public function dismiss_alarm($task_id, $snooze = 0)
+    {
+        // set new notifyat time or unset if not snoozed
+        $notify_at = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
+
+        $query = $this->rc->db->query(sprintf(
+            "UPDATE " . $this->db_tasks . "
+             SET   changed=%s, notify=?
+             WHERE task_id=?
+             AND tasklist_id IN (" . $this->list_ids . ")",
+            $this->rc->db->now()),
+            $notify_at,
+            $task_id
+        );
+
+        return $this->rc->db->affected_rows($query);
+    }
+
+    /**
      * Map some internal database values to match the generic "API"
      */
     private function _read_postprocess($rec)
@@ -514,9 +578,9 @@ class tasklist_database_driver extends tasklist_driver
         // fake object properties to suit the expectations of calendar::get_next_alarm()
         // TODO: move all that to libcalendaring plugin
         if ($task['date'])
-            $task['start'] = new DateTime($task['date'] . ' ' . ($task['time'] ?: '23:00'), $this->plugin->timezone);
+            $task['start'] = new DateTime($task['date'] . ' ' . ($task['time'] ?: '12:00'), $this->plugin->timezone);
         if ($task['startdate'])
-            $task['end'] = new DateTime($task['startdate'] . ' ' . ($task['starttime'] ?: '06:00'), $this->plugin->timezone);
+            $task['end'] = new DateTime($task['startdate'] . ' ' . ($task['starttime'] ?: '12:00'), $this->plugin->timezone);
         else
             $task['end'] = $tast['start'];
 
