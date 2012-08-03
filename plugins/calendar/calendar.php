@@ -1148,7 +1148,7 @@ class calendar extends rcube_plugin
   {
     // compose a human readable strings for alarms_text and recurrence_text
     if ($event['alarms'])
-      $event['alarms_text'] = $this->_alarms_text($event['alarms']);
+      $event['alarms_text'] = self::alarms_text($event['alarms']);
     if ($event['recurrence']) {
       $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
       if ($event['recurrence']['UNTIL'])
@@ -1196,25 +1196,25 @@ class calendar extends rcube_plugin
   /**
    * Render localized text for alarm settings
    */
-  private function _alarms_text($alarm)
+  public static function alarms_text($alarm)
   {
     list($trigger, $action) = explode(':', $alarm);
     
     $text = '';
     switch ($action) {
       case 'EMAIL':
-        $text = $this->gettext('alarmemail');
+        $text = rcube_label('calendar.alarmemail');
         break;
       case 'DISPLAY':
-        $text = $this->gettext('alarmdisplay');
+        $text = rcube_label('calendar.alarmdisplay');
         break;
     }
     
     if (preg_match('/@(\d+)/', $trigger, $m)) {
-      $text .= ' ' . $this->gettext(array('name' => 'alarmat', 'vars' => array('datetime' => format_date($m[1]))));
+      $text .= ' ' . rcube_label(array('name' => 'calendar.alarmat', 'vars' => array('datetime' => format_date($m[1]))));
     }
     else if ($val = self::parse_alaram_value($trigger)) {
-      $text .= ' ' . intval($val[0]) . ' ' . $this->gettext('trigger' . $val[1]);
+      $text .= ' ' . intval($val[0]) . ' ' . rcube_label('calendar.trigger' . $val[1]);
     }
     else
       return false;
