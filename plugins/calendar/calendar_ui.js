@@ -1464,7 +1464,7 @@ function rcube_calendar_ui(settings)
       
       var html = '<td class="role">' + select + '</td>' +
         '<td class="name">' + dispname + '</td>' +
-        '<td class="availability"><img src="./program/blank.gif" class="availabilityicon ' + avail + '" /></td>' +
+        '<td class="availability"><img src="./program/resources/blank.gif" class="availabilityicon ' + avail + '" /></td>' +
         '<td class="confirmstate"><span class="' + String(data.status).toLowerCase() + '">' + Q(data.status) + '</span></td>' +
         '<td class="options">' + (organizer || readonly ? '' : dellink) + '</td>';
       
