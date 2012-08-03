@@ -26,6 +26,7 @@ class tasklist_database_driver extends tasklist_driver
 {
     public $undelete = true; // yes, we can
     public $sortable = false;
+    public $alarm_types = array('DISPLAY','EMAIL');
 
     private $rc;
     private $plugin;
@@ -367,14 +368,15 @@ class tasklist_database_driver extends tasklist_driver
         if (!$this->lists[$list_id] || $this->lists[$list_id]['readonly'])
             return false;
 
-        foreach (array('parent_id', 'date', 'time') as $col) {
+        foreach (array('parent_id', 'date', 'time', 'startdate', 'starttime', 'alarms') as $col) {
             if (empty($prop[$col]))
                 $prop[$col] = null;
         }
 
+        $notify_at = $this->_get_notification($prop);
         $result = $this->rc->db->query(sprintf(
             "INSERT INTO " . $this->db_tasks . "
-             (tasklist_id, uid, parent_id, created, changed, title, date, time, description, tags)
+             (tasklist_id, uid, parent_id, created, changed, title, date, time, starttime, starttime, description, tags, alarms, notify)
              VALUES (?, ?, ?, %s, %s, ?, ?, ?, ?, ?)",
              $this->rc->db->now(),
              $this->rc->db->now()
@@ -385,8 +387,12 @@ class tasklist_database_driver extends tasklist_driver
             $prop['title'],
             $prop['date'],
             $prop['time'],
+            $prop['startdate'],
+            $prop['starttime'],
             strval($prop['description']),
-            join(',', (array)$prop['tags'])
+            join(',', (array)$prop['tags']),
+            $prop['alarms'],
+            $notify_at
         );
 
         if ($result)
@@ -409,12 +415,17 @@ class tasklist_database_driver extends tasklist_driver
             if (isset($prop[$col]))
                 $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($prop[$col]);
         }
-        foreach (array('parent_id', 'date', 'time', 'startdate', 'starttime') as $col) {
+        foreach (array('parent_id', 'date', 'time', 'startdate', 'starttime', 'alarms') as $col) {
             if (isset($prop[$col]))
                 $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . (empty($prop[$col]) ? 'NULL' : $this->rc->db->quote($prop[$col]));
         }
         if (isset($prop['tags']))
             $sql_set[] = $this->rc->db->quote_identifier('tags') . '=' . $this->rc->db->quote(join(',', (array)$prop['tags']));
+
+        if (isset($prop['date']) || isset($prop['time']) || isset($prop['alarms'])) {
+            $notify_at = $this->_get_notification($prop);
+            $sql_set[] = $this->rc->db->quote_identifier('notify') . '=' . (empty($notify_at) ? 'NULL' : $this->rc->db->quote($notify_at));
+        }
 
         // moved from another list
         if ($prop['_fromlist'] && ($newlist = $prop['list'])) {
@@ -493,6 +504,33 @@ class tasklist_database_driver extends tasklist_driver
         );
 
         return $this->rc->db->affected_rows($query);
+    }
+
+    /**
+     * Compute absolute time to notify the user
+     */
+    private function _get_notification($task)
+    {
+        // fake object properties to suit the expectations of calendar::get_next_alarm()
+        // TODO: move all that to libcalendaring plugin
+        if ($task['date'])
+            $task['start'] = new DateTime($task['date'] . ' ' . ($task['time'] ?: '23:00'), $this->plugin->timezone);
+        if ($task['startdate'])
+            $task['end'] = new DateTime($task['startdate'] . ' ' . ($task['starttime'] ?: '06:00'), $this->plugin->timezone);
+        else
+            $task['end'] = $tast['start'];
+
+        if (!$task['start'])
+            $task['end'] = $task['start'];
+
+        if ($task['alarms'] && $task['start'] > new DateTime() || strpos($task['alarms'], '@') !== false) {
+            $alarm = calendar::get_next_alarm($task);
+
+        if ($alarm['time'] && $alarm['action'] == 'DISPLAY')
+          return date('Y-m-d H:i:s', $alarm['time']);
+      }
+
+      return null;
     }
 
 }

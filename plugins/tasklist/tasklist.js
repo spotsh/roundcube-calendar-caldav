@@ -60,6 +60,7 @@ function rcube_tasklist_ui(settings)
     var draghelper;
     var search_request;
     var search_query;
+    var completeness_slider;
     var me = this;
 
     // general datepicker settings
@@ -91,22 +92,6 @@ function rcube_tasklist_ui(settings)
     this.list_remove = list_remove;
     this.list_edit_dialog = list_edit_dialog;
     this.unlock_saving = unlock_saving;
-
-
-    /* basic initializations */
-
-    $('#taskedit').tabs();
-
-    var completeness_slider = $('#edit-completeness-slider').slider({
-        range: 'min',
-        slide: function(e, ui){
-            var v = completeness_slider.slider('value');
-            if (v >= 98) v = 100;
-            if (v <= 2)  v = 0;
-            $('#edit-completeness').val(v);
-        }
-    });
-    $('#edit-completeness').change(function(e){ completeness_slider.slider('value', parseInt(this.value)) });
 
 
     /**
@@ -310,6 +295,45 @@ function rcube_tasklist_ui(settings)
                 }, 1);
             },
         }, datepicker_settings);
+    }
+
+    /**
+     * initialize task edit form elements
+     */
+    function init_taskedit()
+    {
+        $('#taskedit').tabs();
+
+        completeness_slider = $('#taskedit-completeness-slider').slider({
+            range: 'min',
+            slide: function(e, ui){
+                var v = completeness_slider.slider('value');
+                if (v >= 98) v = 100;
+                if (v <= 2)  v = 0;
+                $('#taskedit-completeness').val(v);
+            }
+        });
+        $('#taskedit-completeness').change(function(e){
+            completeness_slider.slider('value', parseInt(this.value))
+        });
+
+        // register events on alarm fields
+        $('#taskedit select.edit-alarm-type').change(function(){
+            $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
+        });
+        $('#taskedit select.edit-alarm-offset').change(function(){
+            var mode = $(this).val() == '@' ? 'show' : 'hide';
+            $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
+            $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
+        });
+
+        $('#taskedit-date, #taskedit-startdate, #taskedit .edit-alarm-date').datepicker(datepicker_settings);
+
+        $('a.edit-nodate').click(function(){
+            var sel = $(this).attr('rel');
+            if (sel) $(sel).val('');
+            return false;
+        });
     }
 
     /**
@@ -725,6 +749,7 @@ function rcube_tasklist_ui(settings)
         $('#task-time').html(Q(rec.time || ''));
         $('#task-start')[(rec.startdate ? 'show' : 'hide')]().children('.task-text').html(Q(rec.startdate || ''));
         $('#task-starttime').html(Q(rec.starttime || ''));
+        $('#task-alarm')[(rec.alarms_text ? 'show' : 'hide')]().children('.task-text').html(Q(rec.alarms_text));
         $('#task-completeness .task-text').html(((rec.complete || 0) * 100) + '%');
         $('#task-list .task-text').html(Q(me.tasklists[rec.list] ? me.tasklists[rec.list].name : ''));
 
@@ -793,16 +818,19 @@ function rcube_tasklist_ui(settings)
         if (!me.selected_task.id)
             me.selected_task.id = -(++idcount);
 
+        // reset dialog first
+        $('#taskeditform').get(0).reset();
+
         // fill form data
-        var title = $('#edit-title').val(rec.title || '');
-        var description = $('#edit-description').val(rec.description || '');
-        var recdate = $('#edit-date').val(rec.date || '').datepicker(datepicker_settings);
-        var rectime = $('#edit-time').val(rec.time || '');
-        var recstartdate = $('#edit-startdate').val(rec.startdate || '').datepicker(datepicker_settings);
-        var recstarttime = $('#edit-starttime').val(rec.starttime || '');
-        var complete = $('#edit-completeness').val((rec.complete || 0) * 100);
+        var title = $('#taskedit-title').val(rec.title || '');
+        var description = $('#taskedit-description').val(rec.description || '');
+        var recdate = $('#taskedit-date').val(rec.date || '');
+        var rectime = $('#taskedit-time').val(rec.time || '');
+        var recstartdate = $('#taskedit-startdate').val(rec.startdate || '');
+        var recstarttime = $('#taskedit-starttime').val(rec.starttime || '');
+        var complete = $('#taskedit-completeness').val((rec.complete || 0) * 100);
         completeness_slider.slider('value', complete.val());
-        var tasklist = $('#edit-tasklist').val(rec.list || 0).prop('disabled', rec.parent_id ? true : false);
+        var tasklist = $('#taskedit-tasklist').val(rec.list || 0).prop('disabled', rec.parent_id ? true : false);
 
         // tag-edit line
         var tagline = $(rcmail.gui_objects.edittagline).empty();
@@ -823,11 +851,32 @@ function rcube_tasklist_ui(settings)
             texts: { removeLinkTitle: rcmail.gettext('removetag', 'tasklist') }
         });
 
-        $('a.edit-nodate').unbind('click').click(function(){
-            var sel = $(this).attr('rel');
-            if (sel) $(sel).val('');
-            return false;
-        })
+        // set alarm(s)
+        if (rec.alarms) {
+            if (typeof rec.alarms == 'string')
+                rec.alarms = rec.alarms.split(';');
+
+          for (var alarm, i=0; i < rec.alarms.length; i++) {
+              alarm = String(rec.alarms[i]).split(':');
+              if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
+              $('#taskedit select.edit-alarm-type').val(alarm[1]);
+
+              if (alarm[0].match(/@(\d+)/)) {
+                  var ondate = fromunixtime(parseInt(RegExp.$1));
+                  $('#taskedit select.edit-alarm-offset').val('@');
+                  $('#taskedit input.edit-alarm-date').val(format_datetime(ondate, 1));
+                  $('#taskedit input.edit-alarm-time').val(format_datetime(ondate, 2));
+              }
+              else if (alarm[0].match(/([-+])(\d+)([MHD])/)) {
+                  $('#taskedit input.edit-alarm-value').val(RegExp.$2);
+                  $('#taskedit select.edit-alarm-offset').val(''+RegExp.$1+RegExp.$3);
+              }
+
+              break; // only one alarm is currently supported
+          }
+        }
+        // set correct visibility by triggering onchange handlers
+        $('#taskedit select.edit-alarm-type, #taskedit select.edit-alarm-offset').change();
 
         // attachments
         rcmail.enable_command('remove-attachment', !list.readonly);
@@ -873,6 +922,16 @@ function rcube_tasklist_ui(settings)
                 if (elem.value)
                     me.selected_task.tags.push(elem.value);
             });
+
+            // serialize alarm settings
+            var alarm = $('#taskedit select.edit-alarm-type').val();
+            if (alarm) {
+                var val, offset = $('#taskedit select.edit-alarm-offset').val();
+                if (offset == '@')
+                    me.selected_task.alarms = '@' + date2unixtime(parse_datetime($('#taskedit input.edit-alarm-time').val(), $('#taskedit input.edit-alarm-date').val())) + ':' + alarm;
+              else if ((val = parseInt($('#taskedit input.edit-alarm-value').val())) && !isNaN(val) && val >= 0)
+                    me.selected_task.alarms = offset[0] + val + offset[1] + ':' + alarm;
+            }
 
             // uploaded attachments list
             for (var i in rcmail.env.attachments) {
@@ -1069,9 +1128,9 @@ function rcube_tasklist_ui(settings)
             list = { name:'', editable:true, showalarms:true };
 
         // fill edit form
-        var name = $('#edit-tasklistame').prop('disabled', !list.editable).val(list.editname || list.name),
-            alarms = $('#edit-showalarms').prop('checked', list.showalarms).get(0),
-            parent = $('#edit-parentfolder').val(list.parentfolder);
+        var name = $('#taskedit-tasklistame').prop('disabled', !list.editable).val(list.editname || list.name),
+            alarms = $('#taskedit-showalarms').prop('checked', list.showalarms).get(0),
+            parent = $('#taskedit-parentfolder').val(list.parentfolder);
 
         // dialog buttons
         var buttons = {};
@@ -1351,6 +1410,73 @@ function rcube_tasklist_ui(settings)
       })
       .data('id', id);
     }
+
+
+    /****  calendaring utility functions  *****/
+    /*  TO BE MOVED TO libcalendaring plugin  */
+
+    var gmt_offset = (new Date().getTimezoneOffset() / -60) - (rcmail.env.calendar_settings.timezone || 0) - (rcmail.env.calendar_settings.dst || 0);
+    var client_timezone = new Date().getTimezoneOffset();
+
+    /**
+     * from time and date strings to a real date object
+     */
+    function parse_datetime(time, date)
+    {
+        // we use the utility function from datepicker to parse dates
+        var date = date ? $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings) : new Date();
+
+        var time_arr = time.replace(/\s*[ap][.m]*/i, '').replace(/0([0-9])/g, '$1').split(/[:.]/);
+        if (!isNaN(time_arr[0])) {
+            date.setHours(time_arr[0]);
+        if (time.match(/p[.m]*/i) && date.getHours() < 12)
+            date.setHours(parseInt(time_arr[0]) + 12);
+        else if (time.match(/a[.m]*/i) && date.getHours() == 12)
+            date.setHours(0);
+      }
+      if (!isNaN(time_arr[1]))
+            date.setMinutes(time_arr[1]);
+
+      return date;
+    }
+
+    /**
+     * Format the given date object according to user's prefs
+     */
+    function format_datetime(date, mode)
+    {
+        var format =
+             mode == 2 ?  rcmail.env.calendar_settings['time_format'] :
+            (mode == 1 ? rcmail.env.calendar_settings['date_format'] :
+             rcmail.env.calendar_settings['date_format'] + '  '+ rcmail.env.calendar_settings['time_format']);
+
+        return $.fullCalendar.formatDate(date, format);
+    }
+
+    /**
+     * convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
+     */
+    function date2unixtime(date)
+    {
+        var dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;  // adjust DST offset
+        return Math.round(date.getTime()/1000 + gmt_offset * 3600 + dst_offset);
+    }
+
+    /**
+     *
+     */
+    function fromunixtime(ts)
+    {
+        ts -= gmt_offset * 3600;
+        var date = new Date(ts * 1000),
+            dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;
+        if (dst_offset)  // adjust DST offset
+            date.setTime((ts + 3600) * 1000);
+        return date;
+    }
+
+    // init dialog by default
+    init_taskedit();
 }
 
 

@@ -347,6 +347,10 @@ class tasklist_kolab_driver extends tasklist_driver
             $task['changed'] = $record['dtstamp'];
         }
 
+        if ($record['alarms']) {
+            $task['alarms'] = $record['alarms'];
+        }
+
         if (!empty($record['_attachments'])) {
             foreach ($record['_attachments'] as $key => $attachment) {
                 if ($attachment !== false) {

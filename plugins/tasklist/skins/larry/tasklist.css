@@ -616,7 +616,7 @@ label.block {
 	margin-bottom: 0.3em;
 }
 
-#edit-completeness-slider {
+#taskedit-completeness-slider {
 	display: inline-block;
 	margin-left: 2em;
 	width: 30em;
@@ -624,7 +624,7 @@ label.block {
 	border: 1px solid #ccc;
 }
 
-#edit-tagline {
+#taskedit-tagline {
 	width: 97%;
 }
 

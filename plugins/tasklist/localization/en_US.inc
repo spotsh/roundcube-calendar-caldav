@@ -41,9 +41,9 @@ $labels['tabrecurrence'] = 'Recurrence';
 $labels['tabattachments'] = 'Attachments';
 $labels['tabsharing'] = 'Sharing';
 
-$labels['editlist'] = 'Edit resource';
-$labels['createlist'] = 'Add resource';
-$labels['listactions'] = 'Resource options...';
+$labels['editlist'] = 'Edit list';
+$labels['createlist'] = 'Add list';
+$labels['listactions'] = 'List options...';
 $labels['listname'] = 'Name';
 $labels['showalarms'] = 'Show alarms';
 $labels['import'] = 'Import';

@@ -301,6 +301,10 @@ class tasklist extends rcube_plugin
             }
         }
 
+        // alarms cannot work without a date
+        if ($rec['alarms'] && !$rec['date'] && !$rec['startdate'] && strpos($task['alarms'], '@') === false)
+            $rec['alarms'] = '';
+
         $attachments = array();
         $taskid = $rec['id'];
         if (is_array($_SESSION['tasklist_session']) && $_SESSION['tasklist_session']['id'] == $taskid) {
@@ -500,6 +504,9 @@ class tasklist extends rcube_plugin
                 $rec['startdate'] = $rec['startdatetime'] = null;
             }
         }
+
+        if ($rec['alarms'])
+            $rec['alarms_text'] = calendar::alarms_text($rec['alarms']);
 
         foreach ((array)$rec['attachments'] as $k => $attachment) {
             $rec['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);

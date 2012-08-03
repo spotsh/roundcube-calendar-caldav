@@ -81,6 +81,7 @@ class tasklist_ui
         $this->plugin->register_handler('plugin.tasks', array($this, 'tasks_resultview'));
         $this->plugin->register_handler('plugin.tagslist', array($this, 'tagslist'));
         $this->plugin->register_handler('plugin.tags_editline', array($this, 'tags_editline'));
+        $this->plugin->register_handler('plugin.alarm_select', array($this, 'alarm_select'));
         $this->plugin->register_handler('plugin.attachments_form', array($this, 'attachments_form'));
         $this->plugin->register_handler('plugin.attachments_list', array($this, 'attachments_list'));
         $this->plugin->register_handler('plugin.filedroparea', array($this, 'file_drop_area'));
@@ -156,22 +157,22 @@ class tasklist_ui
     {
         $fields = array(
             'name' => array(
-                'id' => 'edit-tasklistame',
+                'id' => 'taskedit-tasklistame',
                 'label' => $this->plugin->gettext('listname'),
-                'value' => html::tag('input', array('id' => 'edit-tasklistame', 'name' => 'name', 'type' => 'text', 'class' => 'text', 'size' => 40)),
+                'value' => html::tag('input', array('id' => 'taskedit-tasklistame', 'name' => 'name', 'type' => 'text', 'class' => 'text', 'size' => 40)),
             ),
 /*
             'color' => array(
-                'id' => 'edit-color',
+                'id' => 'taskedit-color',
                 'label' => $this->plugin->gettext('color'),
-                'value' => html::tag('input', array('id' => 'edit-color', 'name' => 'color', 'type' => 'text', 'class' => 'text colorpicker', 'size' => 6)),
-            ),
-            'showalarms' => array(
-                'id' => 'edit-showalarms',
-                'label' => $this->plugin->gettext('showalarms'),
-                'value' => html::tag('input', array('id' => 'edit-showalarms', 'name' => 'color', 'type' => 'checkbox')),
+                'value' => html::tag('input', array('id' => 'taskedit-color', 'name' => 'color', 'type' => 'text', 'class' => 'text colorpicker', 'size' => 6)),
             ),
 */
+            'showalarms' => array(
+                'id' => 'taskedit-showalarms',
+                'label' => $this->plugin->gettext('showalarms'),
+                'value' => html::tag('input', array('id' => 'taskedit-showalarms', 'name' => 'color', 'type' => 'checkbox')),
+            ),
         );
 
         return html::tag('form', array('action' => "#", 'method' => "post", 'id' => 'tasklisteditform'),
@@ -180,18 +181,38 @@ class tasklist_ui
     }
 
     /**
-     * Render a HTML select box to select a task category
+     * Render HTML form for alarm configuration
      */
-    function category_select($attrib = array())
+    function alarm_select($attrib = array())
     {
-        $attrib['name'] = 'categories';
-        $select = new html_select($attrib);
-        $select->add('---', '');
-        foreach ((array)$this->plugin->driver->list_categories() as $cat => $color) {
-            $select->add($cat, $cat);
-        }
+        unset($attrib['name']);
+        $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
+        $select_type->add(rcube_label('none'), '');
+        foreach ($this->plugin->driver->alarm_types as $type)
+            $select_type->add(rcube_label(strtolower("calendar.alarm{$type}option")), $type);
 
-        return $select->show(null);
+        $input_value = new html_inputfield(array('name' => 'alarmvalue[]', 'class' => 'edit-alarm-value', 'size' => 3));
+        $input_date = new html_inputfield(array('name' => 'alarmdate[]', 'class' => 'edit-alarm-date', 'size' => 10));
+        $input_time = new html_inputfield(array('name' => 'alarmtime[]', 'class' => 'edit-alarm-time', 'size' => 6));
+
+        $select_offset = new html_select(array('name' => 'alarmoffset[]', 'class' => 'edit-alarm-offset'));
+        foreach (array('-M','-H','-D','+M','+H','+D','@') as $trigger)
+            $select_offset->add(rcube_label('calendar.trigger' . $trigger), $trigger);
+
+        // pre-set with default values from user settings
+        $preset = calendar::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
+        $hidden = array('style' => 'display:none');
+        $html = html::span('edit-alarm-set',
+            $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')) . ' ' .
+            html::span(array('class' => 'edit-alarm-values', 'style' => 'display:none'),
+            $input_value->show($preset[0]) . ' ' .
+            $select_offset->show($preset[1]) . ' ' .
+            $input_date->show('', $hidden) . ' ' .
+            $input_time->show('', $hidden)
+            )
+        );
+
+      return $html;
     }
 
     /**
@@ -226,7 +247,7 @@ class tasklist_ui
      */
     function tagslist($attrib)
     {
-        $attrib += array('id' => 'rcmtagslist');
+        $attrib += array('id' => 'rcmtasktagslist');
         unset($attrib['name']);
 
         $this->rc->output->add_gui_object('tagslist', $attrib['id']);
@@ -238,7 +259,7 @@ class tasklist_ui
      */
     function tags_editline($attrib)
     {
-        $attrib += array('id' => 'rcmtagsedit');
+        $attrib += array('id' => 'rcmtasktagsedit');
         $this->rc->output->add_gui_object('edittagline', $attrib['id']);
 
         $input = new html_inputfield(array('name' => 'tags[]', 'class' => 'tag', 'size' => $attrib['size'], 'tabindex' => $attrib['tabindex']));
@@ -251,7 +272,7 @@ class tasklist_ui
     function attachments_list($attrib = array())
     {
         if (!$attrib['id'])
-            $attrib['id'] = 'rcmAttachmentList';
+            $attrib['id'] = 'rcmtaskattachmentlist';
 
         $this->rc->output->add_gui_object('attachmentlist', $attrib['id']);
 
@@ -265,7 +286,7 @@ class tasklist_ui
     {
         // add ID if not given
         if (!$attrib['id'])
-            $attrib['id'] = 'rcmUploadForm';
+            $attrib['id'] = 'rcmtaskuploadform';
 
         // Get max filesize, enable upload progress bar
         $max_filesize = rcube_upload_init();
