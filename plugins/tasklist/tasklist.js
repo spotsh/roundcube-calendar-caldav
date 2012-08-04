@@ -1408,6 +1408,9 @@ function rcube_tasklist_ui(settings)
             rcmail.enable_command('list-edit', 'list-remove', 'import', !me.tasklists[id].readonly);
             me.selected_list = id;
       })
+      .dblclick(function(e){
+          list_edit_dialog($(this).data('id'));
+      })
       .data('id', id);
     }
 

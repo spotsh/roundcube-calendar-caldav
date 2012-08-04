@@ -41,9 +41,9 @@ $labels['tabrecurrence'] = 'Wiederholung';
 $labels['tabattachments'] = 'Anhänge';
 $labels['tabsharing'] = 'Freigabe';
 
-$labels['editlist'] = 'Ressource bearbeiten';
-$labels['createlist'] = 'Neue Ressource';
-$labels['listactions'] = 'Ressourcenoptionen...';
+$labels['editlist'] = 'Liste bearbeiten';
+$labels['createlist'] = 'Neue Liste';
+$labels['listactions'] = 'Listenoptionen...';
 $labels['listname'] = 'Name';
 $labels['showalarms'] = 'Erinnerungen anzeigen';
 $labels['import'] = 'Importieren';

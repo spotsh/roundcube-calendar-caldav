@@ -73,6 +73,8 @@ class tasklist_kolab_driver extends tasklist_driver
         $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
         $listnames = array();
 
+        $prefs = $this->rc->config->get('kolab_tasklists', array());
+
         foreach ($names as $utf7name => $name) {
             $folder = $this->folders[$utf7name];
 
@@ -82,12 +84,13 @@ class tasklist_kolab_driver extends tasklist_driver
 
             $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);
 
+            $list_id = kolab_storage::folder_id($utf7name);
             $tasklist = array(
-                'id' => kolab_storage::folder_id($utf7name),
+                'id' => $list_id,
                 'name' => $name,
                 'editname' => $editname,
                 'color' => 'CC0000',
-                'showalarms' => false,
+                'showalarms' => $prefs[$list_id]['showalarms'],
                 'editable' => true,
                 'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
                 'parentfolder' => $path_imap,
@@ -132,7 +135,17 @@ class tasklist_kolab_driver extends tasklist_driver
         }
 
         // create ID
-        return kolab_storage::folder_id($folder);
+        $id = kolab_storage::folder_id($folder);
+
+        $prefs['kolab_tasklists'] = $this->rc->config->get('kolab_tasklists', array());
+
+        if (isset($prop['showalarms']))
+            $prefs['kolab_tasklists'][$id]['showalarms'] = $prop['showalarms'] ? true : false;
+
+        if ($prefs['kolab_tasklists'][$id])
+            $this->rc->user->save_prefs($prefs);
+
+        return $id;
     }
 
     /**
@@ -158,7 +171,19 @@ class tasklist_kolab_driver extends tasklist_driver
             }
 
             // create ID
-            return kolab_storage::folder_id($newfolder);
+            $id = kolab_storage::folder_id($newfolder);
+
+            // fallback to local prefs
+            $prefs['kolab_tasklists'] = $this->rc->config->get('kolab_tasklists', array());
+            unset($prefs['kolab_tasklists'][$prop['id']]);
+
+            if (isset($prop['showalarms']))
+                $prefs['kolab_tasklists'][$id]['showalarms'] = $prop['showalarms'] ? true : false;
+
+            if ($prefs['kolab_tasklists'][$id])
+                $this->rc->user->save_prefs($prefs);
+
+            return $id;
         }
 
         return false;
@@ -326,7 +351,90 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function pending_alarms($time, $lists = null)
     {
-        // TODO: implement this
+        $interval = 300;
+        $time -= $time % 60;
+
+        $slot = $time;
+        $slot -= $slot % $interval;
+
+        $last = $time - max(60, $this->rc->session->get_keep_alive());
+        $last -= $last % $interval;
+
+        // only check for alerts once in 5 minutes
+        if ($last == $slot)
+            return array();
+
+        if ($lists && is_string($lists))
+            $lists = explode(',', $lists);
+
+        $time = $slot + $interval;
+
+        $tasks = array();
+        $query = array(array('tags', '=', 'x-has-alarms'));
+        foreach ($this->lists as $lid => $list) {
+            // skip lists with alarms disabled
+            if (!$list['showalarms'] || ($lists && !in_array($lid, $lists)))
+                continue;
+
+            $folder = $this->folders[$lid];
+            foreach ((array)$folder->select($query) as $record) {
+                if (!$record['alarms'])  // don't trust query :-)
+                    continue;
+
+                $task = $this->_to_rcube_task($record);
+
+                // fake object properties to suit the expectations of calendar::get_next_alarm()
+                // TODO: move all that to libcalendaring plugin
+                if ($task['date'])
+                    $task['start'] = new DateTime($task['date'] . ' ' . ($task['time'] ?: '12:00'), $this->plugin->timezone);
+                if ($task['startdate'])
+                    $task['end'] = new DateTime($task['startdate'] . ' ' . ($task['starttime'] ?: '12:00'), $this->plugin->timezone);
+                else
+                    $task['end'] = $tast['start'];
+
+                if (!$task['start'])
+                    $task['end'] = $task['start'];
+
+                // add to list if alarm is set
+                $alarm = calendar::get_next_alarm($task);
+                if ($alarm && $alarm['time'] && $alarm['time'] <= $time && $alarm['action'] == 'DISPLAY') {
+                    $id = $task['id'];
+                    $tasks[$id] = $task;
+                    $tasks[$id]['notifyat'] = $alarm['time'];
+                }
+            }
+        }
+
+        // get alarm information stored in local database
+        if (!empty($tasks)) {
+            $task_ids = array_map(array($this->rc->db, 'quote'), array_keys($tasks));
+            $result = $this->rc->db->query(sprintf(
+                "SELECT * FROM kolab_alarms
+                 WHERE event_id IN (%s) AND user_id=?",
+                 join(',', $task_ids),
+                 $this->rc->db->now()
+                ),
+                $this->rc->user->ID
+            );
+
+            while ($result && ($rec = $this->rc->db->fetch_assoc($result))) {
+                $dbdata[$rec['event_id']] = $rec;
+            }
+        }
+
+        $alarms = array();
+        foreach ($tasks as $id => $task) {
+          // skip dismissed
+          if ($dbdata[$id]['dismissed'])
+              continue;
+
+          // snooze function may have shifted alarm time
+          $notifyat = $dbdata[$id]['notifyat'] ? strtotime($dbdata[$id]['notifyat']) : $task['notifyat'];
+          if ($notifyat <= $time)
+              $alarms[] = $task;
+        }
+
+        return $alarms;
     }
 
     /**
@@ -338,7 +446,28 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function dismiss_alarm($id, $snooze = 0)
     {
-        // TODO: implement this
+        // delete old alarm entry
+        $this->rc->db->query(
+            "DELETE FROM kolab_alarms
+             WHERE event_id=? AND user_id=?",
+            $id,
+            $this->rc->user->ID
+        );
+
+        // set new notifyat time or unset if not snoozed
+        $notifyat = $snooze > 0 ? date('Y-m-d H:i:s', time() + $snooze) : null;
+
+        $query = $this->rc->db->query(
+            "INSERT INTO kolab_alarms
+             (event_id, user_id, dismissed, notifyat)
+             VALUES(?, ?, ?, ?)",
+            $id,
+            $this->rc->user->ID,
+            $snooze > 0 ? 0 : 1,
+            $notifyat
+        );
+
+        return $this->rc->db->affected_rows($query);
     }
 
     /**
@@ -615,15 +744,20 @@ class tasklist_kolab_driver extends tasklist_driver
     /**
      * 
      */
-    public function tasklist_edit_form($formfields)
+    public function tasklist_edit_form($fieldprop)
     {
-        $select = kolab_storage::folder_selector('task', array('name' => 'parent', 'id' => 'edit-parentfolder'), null);
-        $formfields['parent'] = array(
-            'id' => 'edit-parentfolder',
+        $select = kolab_storage::folder_selector('task', array('name' => 'parent', 'id' => 'taskedit-parentfolder'), null);
+        $fieldprop['parent'] = array(
+            'id' => 'taskedit-parentfolder',
             'label' => $this->plugin->gettext('parentfolder'),
             'value' => $select->show(''),
         );
-        
+
+        $formfields = array();
+        foreach (array('name','parent','showalarms') as $f) {
+            $formfields[$f] = $fieldprop[$f];
+        }
+
         return parent::tasklist_edit_form($formfields);
     }
 
