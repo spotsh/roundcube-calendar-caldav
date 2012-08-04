@@ -91,8 +91,10 @@ function rcube_calendar(settings)
           me.dismiss_link = $(this);
           me.dismiss_alarm(me.dismiss_link.data('id'), 0);
         });
-        asnooze = $('<a href="#" class="alarm-action-snooze"></a>').html(rcmail.gettext('snooze','calendar')).click(function(){
+        asnooze = $('<a href="#" class="alarm-action-snooze"></a>').html(rcmail.gettext('snooze','calendar')).click(function(e){
           me.snooze_dropdown($(this));
+          e.stopPropagation();
+          return false;
         });
         actions = $('<div>').addClass('alarm-actions').append(adismiss.data('id', alarm.id)).append(asnooze.data('id', alarm.id));
         
