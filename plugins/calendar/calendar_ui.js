@@ -69,9 +69,10 @@ function rcube_calendar_ui(settings)
 
 
     /***  private methods  ***/
-    
+
     var Q = this.quote_html;
-    
+    var event_date_text = this.event_date_text;
+
     var text2html = function(str, maxlen, maxlines)
     {
       var html = Q(String(str));
@@ -244,22 +245,6 @@ function rcube_calendar_ui(settings)
     var is_organizer = function(event)
     {
       return is_attendee(event, 'ORGANIZER') || !event.id;
-    };
-
-    // create a nice human-readable string for the date/time range
-    var event_date_text = function(event)
-    {
-      var fromto, duration = event.end.getTime() / 1000 - event.start.getTime() / 1000;
-      if (event.allDay)
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + (duration > 86400 || event.start.getDay() != event.end.getDay() ? ' &mdash; ' + $.fullCalendar.formatDate(event.end, settings['date_format']) : '');
-      else if (duration < 86400 && event.start.getDay() == event.end.getDay())
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
-          + $.fullCalendar.formatDate(event.end, settings['time_format']);
-      else
-        fromto = $.fullCalendar.formatDate(event.start, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.start, settings['time_format']) +  ' &mdash; '
-          + $.fullCalendar.formatDate(event.end, settings['date_format']) + ' ' + $.fullCalendar.formatDate(event.end, settings['time_format']);
-
-      return fromto;
     };
 
     var load_attachment = function(event, att)
