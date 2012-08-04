@@ -664,7 +664,7 @@ class kolab_driver extends calendar_driver
     
     // only check for alerts once in 5 minutes
     if ($last == $slot)
-      return false;
+      return array();
     
     if ($calendars && is_string($calendars))
       $calendars = explode(',', $calendars);

@@ -840,7 +840,7 @@ class calendar extends rcube_plugin
   {
     $timestamp = time();
     $this->load_driver();
-    $alarms = $this->driver->pending_alarms($timestamp);
+    $alarms = (array)$this->driver->pending_alarms($timestamp);
     foreach ($alarms as $i => $alarm) {
         $alarms[$i]['id'] = 'cal:' . $alarm['id'];  // prefix ID with cal:
     }
