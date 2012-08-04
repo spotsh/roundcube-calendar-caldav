@@ -423,7 +423,7 @@ class kolab_calendar
     // all-day events go from 12:00 - 13:00
     if ($record['end'] <= $record['start'] && $record['allday']) {
       $record['end'] = clone $record['start'];
-      $record['end']->add(new DateTimeInterval('PT1H'));
+      $record['end']->add(new DateInterval('PT1H'));
   }
 
     if (!empty($record['_attachments'])) {
