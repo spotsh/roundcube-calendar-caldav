@@ -1,0 +1,9 @@
+<?php
+    /* Configuration for libkolab */
+
+    $rcmail_config['kolab_cache'] = true;
+
+    $rcmail_config['kolab_freebusy_server'] = 'https://' . $_SESSION['imap_host'] . '/freebusy';
+    $rcmail_config['kolab_ssl_verify_peer'] = true;
+
+?>
