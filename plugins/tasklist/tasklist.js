@@ -975,7 +975,7 @@ function rcube_tasklist_ui(settings)
               $dialog.dialog('destroy').remove();
           },
           buttons: buttons,
-          minHeight: 340,
+          minHeight: 460,
           minWidth: 500,
           width: 580
         }).append(editform.show());  // adding form content AFTERWARDS massively speeds up opening on IE
