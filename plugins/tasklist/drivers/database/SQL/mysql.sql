@@ -36,7 +36,7 @@ CREATE TABLE `tasks` (
   `starttime` varchar(5) DEFAULT NULL,
   `flagged` tinyint(4) NOT NULL DEFAULT '0',
   `complete` float NOT NULL DEFAULT '0',
-  `alarms` varchar(255) NOT NULL,
+  `alarms` varchar(255) DEFAULT NULL,
   `recurrence` varchar(255) DEFAULT NULL,
   `organizer` varchar(255) DEFAULT NULL,
   `attendees` text,

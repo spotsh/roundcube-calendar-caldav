@@ -440,8 +440,8 @@ class tasklist_database_driver extends tasklist_driver
         $notify_at = $this->_get_notification($prop);
         $result = $this->rc->db->query(sprintf(
             "INSERT INTO " . $this->db_tasks . "
-             (tasklist_id, uid, parent_id, created, changed, title, date, time, starttime, starttime, description, tags, alarms, notify)
-             VALUES (?, ?, ?, %s, %s, ?, ?, ?, ?, ?)",
+             (tasklist_id, uid, parent_id, created, changed, title, date, time, startdate, starttime, description, tags, alarms, notify)
+             VALUES (?, ?, ?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
              $this->rc->db->now(),
              $this->rc->db->now()
             ),
