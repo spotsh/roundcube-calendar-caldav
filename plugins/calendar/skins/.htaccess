@@ -1,6 +1,6 @@
 # get all unknown files from default skin folder
 RewriteEngine On
 RewriteCond  %{REQUEST_FILENAME}  !-f
-RewriteCond  %{REQUEST_FILENAME}  !-d
 RewriteRule  ^larry/(images/.*)    %{REQUEST_URI}/../../../classic/$1  [qsappend,last]
+RewriteCond  %{REQUEST_FILENAME}  !-f
 RewriteRule  ^larry/(.*)           %{REQUEST_URI}/../../classic/$1  [qsappend,last]
