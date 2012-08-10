@@ -282,7 +282,7 @@ class kolab_storage_folder
         else if (is_string($type_or_query))
             $query = array(array('type','=',$type_or_query));
         else
-            $query = (array)$type_or_query;
+            $query = $this->_prepare_query((array)$type_or_query);
 
         // synchronize cache first
         $this->cache->synchronize();

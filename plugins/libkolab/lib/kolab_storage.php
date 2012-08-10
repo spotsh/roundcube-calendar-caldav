@@ -557,10 +557,10 @@ class kolab_storage
 
         // Get folders list
         if ($subscribed) {
-            $folders = self::$imap->list_folders_subscribed_direct($root, $mbox);
+            $folders = self::$imap->list_folders_subscribed($root, $mbox);
         }
         else {
-            $folders = self::$imap->list_folders_direct($root, $mbox);
+            $folders = self::$imap->list_folders($root, $mbox);
         }
 
         // In case of an error, return empty list (?)
