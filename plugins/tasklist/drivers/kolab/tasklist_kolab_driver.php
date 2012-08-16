@@ -370,7 +370,7 @@ class tasklist_kolab_driver extends tasklist_driver
         $time = $slot + $interval;
 
         $tasks = array();
-        $query = array(array('tags', '=', 'x-has-alarms'));
+        $query = array(array('tags', '=', 'x-has-alarms'), array('tags', '!=', 'x-complete'));
         foreach ($this->lists as $lid => $list) {
             // skip lists with alarms disabled
             if (!$list['showalarms'] || ($lists && !in_array($lid, $lists)))
@@ -383,20 +383,8 @@ class tasklist_kolab_driver extends tasklist_driver
 
                 $task = $this->_to_rcube_task($record);
 
-                // fake object properties to suit the expectations of calendar::get_next_alarm()
-                // TODO: move all that to libcalendaring plugin
-                if ($task['date'])
-                    $task['start'] = new DateTime($task['date'] . ' ' . ($task['time'] ?: '12:00'), $this->plugin->timezone);
-                if ($task['startdate'])
-                    $task['end'] = new DateTime($task['startdate'] . ' ' . ($task['starttime'] ?: '12:00'), $this->plugin->timezone);
-                else
-                    $task['end'] = $tast['start'];
-
-                if (!$task['start'])
-                    $task['end'] = $task['start'];
-
                 // add to list if alarm is set
-                $alarm = calendar::get_next_alarm($task);
+                $alarm = libcalendaring::get_next_alarm($task, 'task');
                 if ($alarm && $alarm['time'] && $alarm['time'] <= $time && $alarm['action'] == 'DISPLAY') {
                     $id = $task['id'];
                     $tasks[$id] = $task;

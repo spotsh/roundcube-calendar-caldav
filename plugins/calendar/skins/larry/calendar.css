@@ -1,15 +1,13 @@
 /**
  * Roundcube Calendar plugin styles for skin "Larry"
  *
- * Copyright (c) 2012, The Roundcube Dev Team
+ * Copyright (c) 2012, Kolab Systems AG <contact@kolabsys.com>
  * Screendesign by FLINT / Büro für Gestaltung, bueroflint.com
  *
  * The contents are subject to the Creative Commons Attribution-ShareAlike
  * License. It is allowed to copy, distribute, transmit and to adapt the work
  * by keeping credits to the original autors in the README file.
  * See http://creativecommons.org/licenses/by-sa/3.0/ for details.
- *
- * $Id$
  */
 
 body.calendarmain {
@@ -887,10 +885,6 @@ td.topalign {
 	text-align: center;
 }
 
-span.edit-alarm-set {
-	white-space: nowrap;
-}
-
 a.dropdown-link {
 	font-size: 12px;
 	text-decoration: none;
@@ -904,39 +898,6 @@ a.dropdown-link:after {
 
 #eventedit .ui-tabs-panel {
 	min-height: 24em;
-}
-
-.alarm-item {
-	margin: 0.4em 0 1em 0;
-}
-
-.alarm-item .event-title {
-	font-size: 14px;
-	margin: 0.1em 0 0.3em 0;
-}
-
-.alarm-item div.event-section {
-	margin-top: 0.1em;
-	margin-bottom: 0.3em;
-}
-
-.alarm-item .alarm-actions {
-	margin-top: 0.4em;
-}
-
-.alarm-item div.alarm-actions a {
-	margin-right: 0.8em;
-	text-decoration: none;
-}
-
-a.alarm-action-snooze:after {
-	content: ' ▼';
-	font-size: 10px;
-	color: #666;
-}
-
-#alarm-snooze-dropdown {
-	z-index: 5000;
 }
 
 .ui-dialog-buttonset a.dropdown-link {

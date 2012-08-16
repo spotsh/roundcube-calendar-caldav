@@ -67,64 +67,18 @@ function rcube_calendar_ui(settings)
       selectOtherMonths: true
     };
 
+    /***  imports  ***/
+    var Q = this.quote_html;
+    var text2html = this.text2html;
+    var event_date_text = this.event_date_text;
+    var parse_datetime = this.parse_datetime;
+    var date2unixtime = this.date2unixtime;
+    var fromunixtime = this.fromunixtime;
+    var init_alarms_edit = this.init_alarms_edit;
+
 
     /***  private methods  ***/
 
-    var Q = this.quote_html;
-    var event_date_text = this.event_date_text;
-
-    var text2html = function(str, maxlen, maxlines)
-    {
-      var html = Q(String(str));
-      
-      // limit visible text length
-      if (maxlen) {
-        var morelink = ' <a href="#more" onclick="$(this).hide().next().show();return false" class="morelink">'+rcmail.gettext('showmore','calendar')+'</a><span style="display:none">',
-          lines = html.split(/\r?\n/),
-          words, out = '', len = 0;
-        
-        for (var i=0; i < lines.length; i++) {
-          len += lines[i].length;
-          if (maxlines && i == maxlines - 1) {
-            out += lines[i] + '\n' + morelink;
-            maxlen = html.length * 2;
-          }
-          else if (len > maxlen) {
-            len = out.length;
-            words = lines[i].split(' ');
-            for (var j=0; j < words.length; j++) {
-              len += words[j].length + 1;
-              out += words[j] + ' ';
-              if (len > maxlen) {
-                out += morelink;
-                maxlen = html.length * 2;
-              }
-            }
-            out += '\n';
-          }
-          else
-            out += lines[i] + '\n';
-        }
-        
-        if (maxlen > str.length)
-          out += '</span>';
-        
-        html = out;
-      }
-      
-      // simple link parser (similar to rcube_string_replacer class in PHP)
-      var utf_domain = '[^?&@"\'/\\(\\)\\s\\r\\t\\n]+\\.([^\x00-\x2f\x3b-\x40\x5b-\x60\x7b-\x7f]{2,}|xn--[a-z0-9]{2,})';
-      var url1 = '.:;,', url2 = 'a-z0-9%=#@+?&/_~\\[\\]-';
-      var link_pattern = new RegExp('([hf]t+ps?://)('+utf_domain+'(['+url1+']?['+url2+']+)*)?', 'ig');
-      var mailto_pattern = new RegExp('([^\\s\\n\\(\\);]+@'+utf_domain+')', 'ig');
-
-      return html
-        .replace(link_pattern, '<a href="$1$2" target="_blank">$1$2</a>')
-        .replace(mailto_pattern, '<a href="mailto:$1">$1</a>')
-        .replace(/(mailto:)([^"]+)"/g, '$1$2" onclick="rcmail.command(\'compose\', \'$2\');return false"')
-        .replace(/\n/g, "<br/>");
-    };
-    
     // same as str.split(delimiter) but it ignores delimiters within quoted strings
     var explode_quoted_string = function(str, delimiter)
     {
@@ -148,25 +102,6 @@ function rcube_calendar_ui(settings)
       return result;
     };
 
-    // from time and date strings to a real date object
-    var parse_datetime = function(time, date)
-    {
-      // we use the utility function from datepicker to parse dates
-      var date = date ? $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings) : new Date();
-      
-      var time_arr = time.replace(/\s*[ap][.m]*/i, '').replace(/0([0-9])/g, '$1').split(/[:.]/);
-      if (!isNaN(time_arr[0])) {
-        date.setHours(time_arr[0]);
-        if (time.match(/p[.m]*/i) && date.getHours() < 12)
-          date.setHours(parseInt(time_arr[0]) + 12);
-        else if (time.match(/a[.m]*/i) && date.getHours() == 12)
-          date.setHours(0);
-      }
-      if (!isNaN(time_arr[1]))
-        date.setMinutes(time_arr[1]);
-      
-      return date;
-    };
 
     // clone the given date object and optionally adjust time
     var clone_date = function(date, adjust)
@@ -194,23 +129,6 @@ function rcube_calendar_ui(settings)
           + 'T'+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds();
     }
 
-    // convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
-    var date2unixtime = function(date)
-    {
-      var dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;  // adjust DST offset
-      return Math.round(date.getTime()/1000 + gmt_offset * 3600 + dst_offset);
-    };
-    
-    var fromunixtime = function(ts)
-    {
-      ts -= gmt_offset * 3600;
-      var date = new Date(ts * 1000),
-        dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;
-      if (dst_offset)  // adjust DST offset
-        date.setTime((ts + 3600) * 1000);
-      return date;
-    };
-    
     // determine whether the given date is on a weekend
     var is_weekend = function(date)
     {
@@ -2561,7 +2479,7 @@ function rcube_calendar_ui(settings)
           }
         }
       });
-      $('#edit-enddate, input.edit-alarm-date').datepicker(datepicker_settings);
+      $('#edit-enddate').datepicker(datepicker_settings);
       $('#edit-startdate').datepicker(datepicker_settings).datepicker('option', 'onSelect', shift_enddate).change(function(){ shift_enddate(this.value); });
       $('#edit-enddate').datepicker('option', 'onSelect', event_times_changed).change(event_times_changed);
       $('#edit-allday').click(function(){ $('#edit-starttime, #edit-endtime')[(this.checked?'hide':'show')](); event_times_changed(); });
@@ -2592,14 +2510,7 @@ function rcube_calendar_ui(settings)
         });
 
       // register events on alarm fields
-      $('#eventedit select.edit-alarm-type').change(function(){
-        $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
-      });
-      $('#eventedit select.edit-alarm-offset').change(function(){
-        var mode = $(this).val() == '@' ? 'show' : 'hide';
-        $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
-        $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
-      });
+      init_alarms_edit('#eventedit');
 
       // toggle recurrence frequency forms
       $('#edit-recurrence-frequency').change(function(e){
@@ -2721,7 +2632,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.import_success', function(p){ cal.import_success(p); });
 
   // let's go
-  var cal = new rcube_calendar_ui(rcmail.env.calendar_settings);
+  var cal = new rcube_calendar_ui($.extend(rcmail.env.calendar_settings, rcmail.env.libcal_settings));
 
   $(window).resize(function(e) {
     // check target due to bugs in jquery

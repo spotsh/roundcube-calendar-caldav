@@ -55,8 +55,7 @@ class calendar_ui
       'label'   => 'calendar.calendar',
       ), 'taskbar');
     
-    // load basic client script (which - unfortunately - requires fullcalendar)
-    $this->cal->include_script('lib/js/fullcalendar.js');
+    // load basic client script
     $this->cal->include_script('calendar_base.js');
     
     $skin_path = $this->cal->local_skin_path();
@@ -78,7 +77,6 @@ class calendar_ui
     $this->cal->register_handler('plugin.priority_select', array($this, 'priority_select'));
     $this->cal->register_handler('plugin.sensitivity_select', array($this, 'sensitivity_select'));
     $this->cal->register_handler('plugin.alarm_select', array($this, 'alarm_select'));
-    $this->cal->register_handler('plugin.snooze_select', array($this, 'snooze_select'));
     $this->cal->register_handler('plugin.recurrence_form', array($this, 'recurrence_form'));
     $this->cal->register_handler('plugin.attachments_form', array($this, 'attachments_form'));
     $this->cal->register_handler('plugin.attachments_list', array($this, 'attachments_list'));
@@ -110,6 +108,7 @@ class calendar_ui
   public function addJS()
   {
     $this->cal->include_script('calendar_ui.js');
+    $this->cal->include_script('lib/js/fullcalendar.js');
     $this->cal->include_script('lib/js/jquery.miniColors.min.js');
   }
 
@@ -326,63 +325,9 @@ class calendar_ui
    */
   function alarm_select($attrib = array())
   {
-    unset($attrib['name']);
-    $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
-    $select_type->add($this->cal->gettext('none'), '');
-    foreach ($this->cal->driver->alarm_types as $type)
-      $select_type->add($this->cal->gettext(strtolower("alarm{$type}option")), $type);
-     
-    $input_value = new html_inputfield(array('name' => 'alarmvalue[]', 'class' => 'edit-alarm-value', 'size' => 3));
-    $input_date = new html_inputfield(array('name' => 'alarmdate[]', 'class' => 'edit-alarm-date', 'size' => 10));
-    $input_time = new html_inputfield(array('name' => 'alarmtime[]', 'class' => 'edit-alarm-time', 'size' => 6));
-    
-    $select_offset = new html_select(array('name' => 'alarmoffset[]', 'class' => 'edit-alarm-offset'));
-    foreach (array('-M','-H','-D','+M','+H','+D','@') as $trigger)
-      $select_offset->add($this->cal->gettext('trigger' . $trigger), $trigger);
-     
-    // pre-set with default values from user settings
-    $preset = calendar::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
-    $hidden = array('style' => 'display:none');
-    $html = html::span('edit-alarm-set',
-      $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')) . ' ' .
-      html::span(array('class' => 'edit-alarm-values', 'style' => 'display:none'),
-        $input_value->show($preset[0]) . ' ' .
-        $select_offset->show($preset[1]) . ' ' .
-        $input_date->show('', $hidden) . ' ' .
-        $input_time->show('', $hidden)
-      )
-    );
-    
-    // TODO: support adding more alarms
-    #$html .= html::a(array('href' => '#', 'id' => 'edit-alam-add', 'title' => $this->cal->gettext('addalarm')),
-    #  $attrib['addicon'] ? html::img(array('src' => $attrib['addicon'], 'alt' => 'add')) : '(+)');
-     
-    return $html;
+    return $this->cal->lib->alarm_select($attrib, $this->cal->driver->alarm_types);
   }
 
-  function snooze_select($attrib = array())
-  {
-    $steps = array(
-       5 => 'repeatinmin',
-      10 => 'repeatinmin',
-      15 => 'repeatinmin',
-      20 => 'repeatinmin',
-      30 => 'repeatinmin',
-      60 => 'repeatinhr',
-      120 => 'repeatinhrs',
-      1440 => 'repeattomorrow',
-      10080 => 'repeatinweek',
-    );
-    
-    $items = array();
-    foreach ($steps as $n => $label) {
-      $items[] = html::tag('li', null, html::a(array('href' => "#" . ($n * 60), 'class' => 'active'),
-        $this->cal->gettext(array('name' => $label, 'vars' => array('min' => $n % 60, 'hrs' => intval($n / 60))))));
-    }
-    
-    return html::tag('ul', $attrib + array('class' => 'toolbarmenu'), join("\n", $items), html::$common_attrib);
-  }
-  
   /**
    *
    */
@@ -780,7 +725,7 @@ class calendar_ui
     $table->add('ititle', $title);
     $table->add('title', Q($event['title']));
     $table->add('label', $this->cal->gettext('date'));
-    $table->add('location', Q($this->cal->event_date_text($event)));
+    $table->add('location', Q($this->cal->lib->event_date_text($event)));
     if ($event['location']) {
       $table->add('label', $this->cal->gettext('location'));
       $table->add('location', Q($event['location']));

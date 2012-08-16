@@ -54,7 +54,7 @@ class calendar_recurrence
     require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
 
     $this->engine = new Horde_Date_Recurrence($event['start']);
-    $this->engine->fromRRule20(calendar::to_rrule($event['recurrence']));
+    $this->engine->fromRRule20(libcalendaring::to_rrule($event['recurrence']));
 
     if (is_array($event['recurrence']['EXDATE'])) {
       foreach ($event['recurrence']['EXDATE'] as $exdate)

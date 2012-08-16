@@ -8,8 +8,6 @@
  * License. It is allowed to copy, distribute, transmit and to adapt the work
  * by keeping credits to the original autors in the README file.
  * See http://creativecommons.org/licenses/by-sa/3.0/ for details.
- *
- * $Id$
  */
 
 #taskbar a.button-tasklist span.button-inner {
@@ -25,6 +23,10 @@
 ul.toolbarmenu li span.icon.taskadd {
 	background-image: url(buttons.png);
 	background-position: -4px -90px;
+}
+
+div.uidialog {
+	display: none;
 }
 
 #sidebar {

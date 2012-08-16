@@ -80,7 +80,7 @@ function rcube_tasklist(settings)
 
 /* tasklist plugin initialization (for email task) */
 window.rcmail && rcmail.env.task == 'mail' && rcmail.addEventListener('init', function(evt) {
-    var tasks = new rcube_tasklist(rcmail.env.tasklist_settings);
+    var tasks = new rcube_tasklist(rcmail.env.libcal_settings);
 
     rcmail.register_command('tasklist-create-from-mail', function() { tasks.create_from_mail() });
     rcmail.addEventListener('plugin.mail2taskdialog', function(p){ tasks.mail2taskdialog(p) });

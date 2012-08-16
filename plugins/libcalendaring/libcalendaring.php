@@ -1,0 +1,547 @@
+<?php
+
+/**
+ * Library providing common functions for calendaring plugins
+ *
+ * Provides utility functions for calendar-related modules such as
+ * - alarms display and dismissal
+ * - recurrence computation and UI elements
+ * - ical parsing and exporting
+ *
+ * @version @package_version@
+ * @author Thomas Bruederli <bruederli@kolabsys.com>
+ *
+ * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+class libcalendaring extends rcube_plugin
+{
+    public $rc;
+    public $timezone;
+    public $gmt_offset;
+    public $dst_active;
+    public $timezone_offset;
+
+    public $defaults = array(
+      'calendar_date_format'  => "yyyy-MM-dd",
+      'calendar_date_short'   => "M-d",
+      'calendar_date_long'    => "MMM d yyyy",
+      'calendar_date_agenda'  => "ddd MM-dd",
+      'calendar_time_format'  => "HH:mm",
+      'calendar_first_day'    => 1,
+      'calendar_first_hour'   => 6,
+      'calendar_date_format_sets' => array(
+        'yyyy-MM-dd' => array('MMM d yyyy',   'M-d',  'ddd MM-dd'),
+        'dd-MM-yyyy' => array('d MMM yyyy',   'd-M',  'ddd dd-MM'),
+        'yyyy/MM/dd' => array('MMM d yyyy',   'M/d',  'ddd MM/dd'),
+        'MM/dd/yyyy' => array('MMM d yyyy',   'M/d',  'ddd MM/dd'),
+        'dd/MM/yyyy' => array('d MMM yyyy',   'd/M',  'ddd dd/MM'),
+        'dd.MM.yyyy' => array('dd. MMM yyyy', 'd.M',  'ddd dd.MM.'),
+        'd.M.yyyy'   => array('d. MMM yyyy',  'd.M',  'ddd d.MM.'),
+      ),
+    );
+
+    private static $instance;
+
+    /**
+     * Singleton getter to allow direct access from other plugins
+     */
+    public static function get_instance()
+    {
+        return self::$instance;
+    }
+
+    /**
+     * Required plugin startup method
+     */
+    public function init()
+    {
+        self::$instance = $this;
+
+        $this->rc = rcmail::get_instance();
+
+        // set user's timezone
+        $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
+        $now = new DateTime('now', $this->timezone);
+        $this->gmt_offset = $now->getOffset();
+        $this->dst_active = $now->format('I');
+        $this->timezone_offset = $this->gmt_offset / 3600 - $this->dst_active;
+
+        $this->add_texts('localization/', false);
+
+        // include client scripts and styles
+        $this->include_script('libcalendaring.js');
+        $this->rc->output->set_env('libcal_settings', $this->load_settings());
+
+        $this->include_stylesheet($this->local_skin_path() . '/libcal.css');
+
+        // add hook to display alarms
+        $this->add_hook('keep_alive', array($this, 'keep_alive'));
+        $this->register_action('plugin.alarms', array($this, 'alarms_action'));
+    }
+
+
+    /**
+     * Shift dates into user's current timezone
+     *
+     * @param mixed Any kind of a date representation (DateTime object, string or unix timestamp)
+     * @return object DateTime object in user's timezone
+     */
+    public function adjust_timezone($dt)
+    {
+        if (is_numeric($dt))
+            $dt = new DateTime('@'.$td);
+        else if (is_string($dt))
+            $dt = new DateTime($dt);
+
+        $dt->setTimezone($this->timezone);
+        return $dt;
+    }
+
+
+    /**
+     *
+     */
+    public function load_settings()
+    {
+        $this->date_format_defaults();
+        $settings = array();
+
+        // configuration
+        $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']);
+        $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']);
+        $settings['date_short']  = (string)$this->rc->config->get('calendar_date_short', $this->defaults['calendar_date_short']);
+        $settings['date_long']   = (string)$this->rc->config->get('calendar_date_long', $this->defaults['calendar_date_long']);
+        $settings['dates_long']  = str_replace(' yyyy', '[ yyyy]', $settings['date_long']) . "{ '&mdash;' " . $settings['date_long'] . '}';
+        $settings['first_day']   = (int)$this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']);
+
+        $settings['timezone'] = $this->timezone_offset;
+        $settings['dst'] = $this->dst_active;
+
+        // localization
+        $settings['days'] = array(
+            rcube_label('sunday'),   rcube_label('monday'),
+            rcube_label('tuesday'),  rcube_label('wednesday'),
+            rcube_label('thursday'), rcube_label('friday'),
+            rcube_label('saturday')
+        );
+        $settings['days_short'] = array(
+            rcube_label('sun'), rcube_label('mon'),
+            rcube_label('tue'), rcube_label('wed'),
+            rcube_label('thu'), rcube_label('fri'),
+            rcube_label('sat')
+        );
+        $settings['months'] = array(
+            $this->rc->gettext('longjan'), $this->rc->gettext('longfeb'),
+            $this->rc->gettext('longmar'), $this->rc->gettext('longapr'),
+            $this->rc->gettext('longmay'), $this->rc->gettext('longjun'),
+            $this->rc->gettext('longjul'), $this->rc->gettext('longaug'),
+            $this->rc->gettext('longsep'), $this->rc->gettext('longoct'),
+            $this->rc->gettext('longnov'), $this->rc->gettext('longdec')
+        );
+        $settings['months_short'] = array(
+            $this->rc->gettext('jan'), $this->rc->gettext('feb'),
+            $this->rc->gettext('mar'), $this->rc->gettext('apr'),
+            $this->rc->gettext('may'), $this->rc->gettext('jun'),
+            $this->rc->gettext('jul'), $this->rc->gettext('aug'),
+            $this->rc->gettext('sep'), $this->rc->gettext('oct'),
+            $this->rc->gettext('nov'), $this->rc->gettext('dec')
+        );
+        $settings['today'] = $this->rc->gettext('today');
+
+        // define list of file types which can be displayed inline
+        // same as in program/steps/mail/show.inc
+        $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
+        $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
+
+        return $settings;
+    }
+
+
+    /**
+     * Helper function to set date/time format according to config and user preferences
+     */
+    private function date_format_defaults()
+    {
+        static $defaults = array();
+
+        // nothing to be done
+        if (isset($defaults['date_format']))
+          return;
+
+        $defaults['date_format'] = $this->rc->config->get('calendar_date_format', self::from_php_date_format($this->rc->config->get('date_format')));
+        $defaults['time_format'] = $this->rc->config->get('calendar_time_format', self::from_php_date_format($this->rc->config->get('time_format')));
+
+        // override defaults
+        if ($defaults['date_format'])
+            $this->defaults['calendar_date_format'] = $defaults['date_format'];
+        if ($defaults['time_format'])
+            $this->defaults['calendar_time_format'] = $defaults['time_format'];
+
+        // derive format variants from basic date format
+        $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
+        if ($format_set = $format_sets[$this->defaults['calendar_date_format']]) {
+            $this->defaults['calendar_date_long'] = $format_set[0];
+            $this->defaults['calendar_date_short'] = $format_set[1];
+            $this->defaults['calendar_date_agenda'] = $format_set[2];
+        }
+    }
+
+    /**
+     * Compose a date string for the given event
+     */
+    public function event_date_text($event, $tzinfo = false)
+    {
+        $fromto = '';
+        $duration = $event['start']->diff($event['end'])->format('s');
+
+        $this->date_format_defaults();
+        $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
+        $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
+
+        if ($event['allday']) {
+            $fromto = format_date($event['start'], $date_format);
+            if (($todate = format_date($event['end'], $date_format)) != $fromto)
+                $fromto .= ' - ' . $todate;
+        }
+        else if ($duration < 86400 && $event['start']->format('d') == $event['end']->format('d')) {
+            $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
+                ' - ' . format_date($event['end'], $time_format);
+        }
+        else {
+            $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
+                ' - ' . format_date($event['end'], $date_format) . ' ' . format_date($event['end'], $time_format);
+        }
+
+        // add timezone information
+        if ($tzinfo && ($tzname = $this->timezone->getName())) {
+            $fromto .= ' (' . strtr($tzname, '_', ' ') . ')';
+        }
+
+        return $fromto;
+    }
+
+
+    /**
+     * Render HTML form for alarm configuration
+     */
+    public function alarm_select($attrib, $alarm_types)
+    {
+        unset($attrib['name']);
+        $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
+        $select_type->add($this->gettext('none'), '');
+        foreach ($alarm_types as $type)
+            $select_type->add($this->gettext(strtolower("alarm{$type}option")), $type);
+
+        $input_value = new html_inputfield(array('name' => 'alarmvalue[]', 'class' => 'edit-alarm-value', 'size' => 3));
+        $input_date = new html_inputfield(array('name' => 'alarmdate[]', 'class' => 'edit-alarm-date', 'size' => 10));
+        $input_time = new html_inputfield(array('name' => 'alarmtime[]', 'class' => 'edit-alarm-time', 'size' => 6));
+
+        $select_offset = new html_select(array('name' => 'alarmoffset[]', 'class' => 'edit-alarm-offset'));
+        foreach (array('-M','-H','-D','+M','+H','+D','@') as $trigger)
+            $select_offset->add($this->gettext('trigger' . $trigger), $trigger);
+
+        // pre-set with default values from user settings
+        $preset = self::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
+        $hidden = array('style' => 'display:none');
+        $html = html::span('edit-alarm-set',
+            $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')) . ' ' .
+            html::span(array('class' => 'edit-alarm-values', 'style' => 'display:none'),
+                $input_value->show($preset[0]) . ' ' .
+                $select_offset->show($preset[1]) . ' ' .
+                $input_date->show('', $hidden) . ' ' .
+                $input_time->show('', $hidden)
+            )
+        );
+
+        // TODO: support adding more alarms
+        #$html .= html::a(array('href' => '#', 'id' => 'edit-alam-add', 'title' => $this->gettext('addalarm')),
+        #  $attrib['addicon'] ? html::img(array('src' => $attrib['addicon'], 'alt' => 'add')) : '(+)');
+
+        return $html;
+    }
+
+
+    /*********  Alarms handling  *********/
+
+    /**
+     * Helper function to convert alarm trigger strings
+     * into two-field values (e.g. "-45M" => 45, "-M")
+     */
+    public static function parse_alaram_value($val)
+    {
+        if ($val[0] == '@')
+            return array(substr($val, 1));
+        else if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
+            return array($m[2], $m[1].$m[3]);
+
+        return false;
+    }
+
+    /**
+     * Render localized text for alarm settings
+     */
+    public static function alarms_text($alarm)
+    {
+        list($trigger, $action) = explode(':', $alarm);
+
+        $text = '';
+        switch ($action) {
+        case 'EMAIL':
+            $text = rcube_label('libcalendaring.alarmemail');
+            break;
+        case 'DISPLAY':
+            $text = rcube_label('libcalendaring.alarmdisplay');
+            break;
+        }
+
+        if (preg_match('/@(\d+)/', $trigger, $m)) {
+            $text .= ' ' . rcube_label(array('name' => 'libcalendaring.alarmat', 'vars' => array('datetime' => format_date($m[1]))));
+        }
+        else if ($val = self::parse_alaram_value($trigger)) {
+            $text .= ' ' . intval($val[0]) . ' ' . rcube_label('libcalendaring.trigger' . $val[1]);
+        }
+        else
+            return false;
+
+        return $text;
+    }
+
+    /**
+     * Get the next alarm (time & action) for the given event
+     *
+     * @param array Record data
+     * @return array Hash array with alarm time/type or null if no alarms are configured
+     */
+    public static function get_next_alarm($rec, $type = 'event')
+    {
+        if (!$rec['alarms'])
+            return null;
+
+        if ($type == 'task') {
+            $timezone = self::get_instance()->timezone;
+            if ($rec['date'])
+                $rec['start'] = new DateTime($rec['date'] . ' ' . ($rec['time'] ?: '12:00'), $timezone);
+            if ($rec['startdate'])
+                $rec['end'] = new DateTime($rec['startdate'] . ' ' . ($rec['starttime'] ?: '12:00'), $timezone);
+        }
+
+        if (!$rec['end'])
+            $rec['end'] = $rec['start'];
+
+
+        // TODO: handle multiple alarms (currently not supported)
+        list($trigger, $action) = explode(':', $rec['alarms'], 2);
+
+        $notify = self::parse_alaram_value($trigger);
+        if (!empty($notify[1])){  // offset
+            $mult = 1;
+            switch ($notify[1]) {
+                case '-S': $mult =     -1; break;
+                case '+S': $mult =      1; break;
+                case '-M': $mult =    -60; break;
+                case '+M': $mult =     60; break;
+                case '-H': $mult =  -3600; break;
+                case '+H': $mult =   3600; break;
+                case '-D': $mult = -86400; break;
+                case '+D': $mult =  86400; break;
+                case '-W': $mult = -604800; break;
+                case '+W': $mult =  604800; break;
+            }
+            $offset = $notify[0] * $mult;
+            $refdate = $mult > 0 ? $rec['end'] : $rec['start'];
+            $notify_at = $refdate->format('U') + $offset;
+        }
+        else {  // absolute timestamp
+            $notify_at = $notify[0];
+        }
+
+        return array('time' => $notify_at, 'action' => $action ? strtoupper($action) : 'DISPLAY');
+    }
+
+    /**
+     * Handler for keep-alive requests
+     * This will check for pending notifications and pass them to the client
+     */
+    public function keep_alive($attr)
+    {
+        // collect pending alarms from all providers (e.g. calendar, tasks)
+        $plugin = $this->rc->plugins->exec_hook('pending_alarms', array(
+            'time' => time(),
+            'alarms' => $alarms,
+        ));
+
+        if (!$plugin['abort'] && $plugin['alarms']) {
+            // make sure texts and env vars are available on client
+            $this->add_texts('localization/', true);
+            $this->rc->output->set_env('snooze_select', $this->snooze_select());
+            $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($plugin['alarms']));
+        }
+    }
+
+    /**
+     * Handler for alarm dismiss/snooze requests
+     */
+    public function alarms_action()
+    {
+        $action = get_input_value('action', RCUBE_INPUT_GPC);
+        $data  = get_input_value('data', RCUBE_INPUT_POST, true);
+
+        $data['ids'] = explode(',', $data['id']);
+        $plugin = $this->rc->plugins->exec_hook('dismiss_alarms', $data);
+
+        if ($plugin['success'])
+            $this->rc->output->show_message('successfullysaved', 'confirmation');
+        else
+            $this->rc->output->show_message('calendar.errorsaving', 'error');
+    }
+
+    /**
+     * Generate reduced and streamlined output for pending alarms
+     */
+    private function _alarms_output($alarms)
+    {
+        $out = array();
+        foreach ($alarms as $alarm) {
+            $out[] = array(
+                'id'       => $alarm['id'],
+                'start'    => $alarm['start'] ? $this->adjust_timezone($alarm['start'])->format('c') : '',
+                'end'      => $alarm['end']   ? $this->adjust_timezone($alarm['end'])->format('c') : '',
+                'allDay'   => ($alarm['allday'] == 1)?true:false,
+                'title'    => $alarm['title'],
+                'location' => $alarm['location'],
+                'calendar' => $alarm['calendar'],
+            );
+        }
+
+        return $out;
+    }
+
+    /**
+     * Render a dropdown menu to choose snooze time
+     */
+    private function snooze_select($attrib = array())
+    {
+        $steps = array(
+             5 => 'repeatinmin',
+            10 => 'repeatinmin',
+            15 => 'repeatinmin',
+            20 => 'repeatinmin',
+            30 => 'repeatinmin',
+            60 => 'repeatinhr',
+            120 => 'repeatinhrs',
+            1440 => 'repeattomorrow',
+            10080 => 'repeatinweek',
+        );
+
+        $items = array();
+        foreach ($steps as $n => $label) {
+            $items[] = html::tag('li', null, html::a(array('href' => "#" . ($n * 60), 'class' => 'active'),
+                $this->gettext(array('name' => $label, 'vars' => array('min' => $n % 60, 'hrs' => intval($n / 60))))));
+        }
+
+        return html::tag('ul', $attrib + array('class' => 'toolbarmenu'), join("\n", $items), html::$common_attrib);
+    }
+
+    /**
+     * Convert the internal structured data into a vcalendar rrule 2.0 string
+     */
+    public static function to_rrule($recurrence)
+    {
+        if (is_string($recurrence))
+            return $recurrence;
+
+        $rrule = '';
+        foreach ((array)$recurrence as $k => $val) {
+            $k = strtoupper($k);
+            switch ($k) {
+            case 'UNTIL':
+                $val = $val->format('Ymd\THis');
+                break;
+            case 'EXDATE':
+                foreach ((array)$val as $i => $ex)
+                    $val[$i] = $ex->format('Ymd\THis');
+                $val = join(',', (array)$val);
+                break;
+            }
+            $rrule .= $k . '=' . $val . ';';
+        }
+
+        return rtrim($rrule, ';');
+    }
+
+    /**
+     * Convert from fullcalendar date format to PHP date() format string
+     */
+    public static function to_php_date_format($from)
+    {
+        // "dd.MM.yyyy HH:mm:ss" => "d.m.Y H:i:s"
+        return strtr(strtr($from, array(
+            'yyyy' => 'Y',
+            'yy'   => 'y',
+            'MMMM' => 'F',
+            'MMM'  => 'M',
+            'MM'   => 'm',
+            'M'    => 'n',
+            'dddd' => 'l',
+            'ddd'  => 'D',
+            'dd'   => 'd',
+            'HH'   => '**',
+            'hh'   => '%%',
+            'H'    => 'G',
+            'h'    => 'g',
+            'mm'   => 'i',
+            'ss'   => 's',
+            'TT'   => 'A',
+            'tt'   => 'a',
+            'T'    => 'A',
+            't'    => 'a',
+            'u'    => 'c',
+        )), array(
+            '**'   => 'H',
+            '%%'   => 'h',
+        ));
+    }
+
+    /**
+     * Convert from PHP date() format to fullcalendar format string
+     */
+    public static function from_php_date_format($from)
+    {
+        // "d.m.Y H:i:s" => "dd.MM.yyyy HH:mm:ss"
+        return strtr($from, array(
+            'y' => 'yy',
+            'Y' => 'yyyy',
+            'M' => 'MMM',
+            'F' => 'MMMM',
+            'm' => 'MM',
+            'n' => 'M',
+            'd' => 'dd',
+            'D' => 'ddd',
+            'l' => 'dddd',
+            'H' => 'HH',
+            'h' => 'hh',
+            'G' => 'H',
+            'g' => 'h',
+            'i' => 'mm',
+            's' => 'ss',
+            'A' => 'TT',
+            'a' => 'tt',
+            'c' => 'u',
+        ));
+    }
+
+}

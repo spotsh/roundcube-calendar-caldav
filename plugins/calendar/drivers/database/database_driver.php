@@ -378,7 +378,7 @@ class database_driver extends calendar_driver
     $event['end']->setTimezone($this->server_timezone);
     
     // compose vcalendar-style recurrencue rule from structured data
-    $rrule = $event['recurrence'] ? calendar::to_rrule($event['recurrence']) : '';
+    $rrule = $event['recurrence'] ? libcalendaring::to_rrule($event['recurrence']) : '';
     $event['_recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
     
@@ -411,7 +411,7 @@ class database_driver extends calendar_driver
   private function _get_notification($event)
   {
     if ($event['alarms'] && $event['start'] > new DateTime()) {
-      $alarm = calendar::get_next_alarm($event);
+      $alarm = libcalendaring::get_next_alarm($event);
 
       if ($alarm['time'] && $alarm['action'] == 'DISPLAY')
         return date('Y-m-d H:i:s', $alarm['time']);

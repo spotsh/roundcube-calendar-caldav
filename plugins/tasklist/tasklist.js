@@ -22,6 +22,9 @@
  
 function rcube_tasklist_ui(settings)
 {
+    // extend base class
+    rcube_libcalendaring.call(this, settings);
+
     /*  constants  */
     var FILTER_MASK_ALL = 0;
     var FILTER_MASK_TODAY = 1;
@@ -93,6 +96,15 @@ function rcube_tasklist_ui(settings)
     this.list_edit_dialog = list_edit_dialog;
     this.unlock_saving = unlock_saving;
 
+    /* imports */
+    var Q = this.quote_html;
+    var text2html = this.text2html;
+    var event_date_text = this.event_date_text;
+    var format_datetime = this.format_datetime;
+    var parse_datetime = this.parse_datetime;
+    var date2unixtime = this.date2unixtime;
+    var fromunixtime = this.fromunixtime;
+    var init_alarms_edit = this.init_alarms_edit;
 
     /**
      * initialize the tasks UI
@@ -318,16 +330,9 @@ function rcube_tasklist_ui(settings)
         });
 
         // register events on alarm fields
-        $('#taskedit select.edit-alarm-type').change(function(){
-            $(this).parent().find('span.edit-alarm-values')[(this.selectedIndex>0?'show':'hide')]();
-        });
-        $('#taskedit select.edit-alarm-offset').change(function(){
-            var mode = $(this).val() == '@' ? 'show' : 'hide';
-            $(this).parent().find('.edit-alarm-date, .edit-alarm-time')[mode]();
-            $(this).parent().find('.edit-alarm-value').prop('disabled', mode == 'show');
-        });
+        init_alarms_edit('#taskedit');
 
-        $('#taskedit-date, #taskedit-startdate, #taskedit .edit-alarm-date').datepicker(datepicker_settings);
+        $('#taskedit-date, #taskedit-startdate').datepicker(datepicker_settings);
 
         $('a.edit-nodate').click(function(){
             var sel = $(this).attr('rel');
@@ -370,7 +375,7 @@ function rcube_tasklist_ui(settings)
             rcmail.http_request('fetch', { filter:basefilter, lists:active.join(','), q:search_query }, true);
         }
         else if (reload)
-            data_ready([]);
+            data_ready({ data:[], lists:'', filter:basefilter, search:search_query });
         else
             render_tasklist();
 
@@ -688,7 +693,7 @@ function rcube_tasklist_ui(settings)
     {
         var drag_id = draggable.data('id'),
             parent_id = $(this).data('id'),
-            drag_rec = listdata[drag_id],
+            drag_rec = listdata[drag_id] || {},
             drop_rec = listdata[parent_id];
 
         if (drop_rec && drop_rec.list != drag_rec.list)
@@ -1263,70 +1268,6 @@ function rcube_tasklist_ui(settings)
     /**** Utility functions ****/
 
     /**
-     * quote html entities
-     */
-    function Q(str)
-    {
-      return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    /**
-     * Name says it all
-     * (cloned from calendar plugin)
-     */
-    function text2html(str, maxlen, maxlines)
-    {
-      var html = Q(String(str));
-
-      // limit visible text length
-      if (maxlen) {
-        var morelink = ' <a href="#more" onclick="$(this).hide().next().show();return false" class="morelink">'+rcmail.gettext('showmore','tasklist')+'</a><span style="display:none">',
-          lines = html.split(/\r?\n/),
-          words, out = '', len = 0;
-
-        for (var i=0; i < lines.length; i++) {
-          len += lines[i].length;
-          if (maxlines && i == maxlines - 1) {
-            out += lines[i] + '\n' + morelink;
-            maxlen = html.length * 2;
-          }
-          else if (len > maxlen) {
-            len = out.length;
-            words = lines[i].split(' ');
-            for (var j=0; j < words.length; j++) {
-              len += words[j].length + 1;
-              out += words[j] + ' ';
-              if (len > maxlen) {
-                out += morelink;
-                maxlen = html.length * 2;
-              }
-            }
-            out += '\n';
-          }
-          else
-            out += lines[i] + '\n';
-        }
-
-        if (maxlen > str.length)
-          out += '</span>';
-
-        html = out;
-      }
-      
-      // simple link parser (similar to rcube_string_replacer class in PHP)
-      var utf_domain = '[^?&@"\'/\\(\\)\\s\\r\\t\\n]+\\.([^\x00-\x2f\x3b-\x40\x5b-\x60\x7b-\x7f]{2,}|xn--[a-z0-9]{2,})';
-      var url1 = '.:;,', url2 = 'a-z0-9%=#@+?&/_~\\[\\]-';
-      var link_pattern = new RegExp('([hf]t+ps?://)('+utf_domain+'(['+url1+']?['+url2+']+)*)?', 'ig');
-      var mailto_pattern = new RegExp('([^\\s\\n\\(\\);]+@'+utf_domain+')', 'ig');
-
-      return html
-        .replace(link_pattern, '<a href="$1$2" target="_blank">$1$2</a>')
-        .replace(mailto_pattern, '<a href="mailto:$1">$1</a>')
-        .replace(/(mailto:)([^"]+)"/g, '$1$2" onclick="rcmail.command(\'compose\', \'$2\');return false"')
-        .replace(/\n/g, "<br/>");
-    }
-
-    /**
      * Clear any text selection
      * (text is probably selected when double-clicking somewhere)
      */
@@ -1415,85 +1356,12 @@ function rcube_tasklist_ui(settings)
     }
 
 
-    /****  calendaring utility functions  *****/
-    /*  TO BE MOVED TO libcalendaring plugin  */
-
-    var gmt_offset = (new Date().getTimezoneOffset() / -60) - (rcmail.env.calendar_settings.timezone || 0) - (rcmail.env.calendar_settings.dst || 0);
-    var client_timezone = new Date().getTimezoneOffset();
-
-    /**
-     * from time and date strings to a real date object
-     */
-    function parse_datetime(time, date)
-    {
-        // we use the utility function from datepicker to parse dates
-        var date = date ? $.datepicker.parseDate(datepicker_settings.dateFormat, date, datepicker_settings) : new Date();
-
-        var time_arr = time.replace(/\s*[ap][.m]*/i, '').replace(/0([0-9])/g, '$1').split(/[:.]/);
-        if (!isNaN(time_arr[0])) {
-            date.setHours(time_arr[0]);
-        if (time.match(/p[.m]*/i) && date.getHours() < 12)
-            date.setHours(parseInt(time_arr[0]) + 12);
-        else if (time.match(/a[.m]*/i) && date.getHours() == 12)
-            date.setHours(0);
-      }
-      if (!isNaN(time_arr[1]))
-            date.setMinutes(time_arr[1]);
-
-      return date;
-    }
-
-    /**
-     * Format the given date object according to user's prefs
-     */
-    function format_datetime(date, mode)
-    {
-        var format =
-             mode == 2 ?  rcmail.env.calendar_settings['time_format'] :
-            (mode == 1 ? rcmail.env.calendar_settings['date_format'] :
-             rcmail.env.calendar_settings['date_format'] + '  '+ rcmail.env.calendar_settings['time_format']);
-
-        return $.fullCalendar.formatDate(date, format);
-    }
-
-    /**
-     * convert the given Date object into a unix timestamp respecting browser's and user's timezone settings
-     */
-    function date2unixtime(date)
-    {
-        var dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;  // adjust DST offset
-        return Math.round(date.getTime()/1000 + gmt_offset * 3600 + dst_offset);
-    }
-
-    /**
-     *
-     */
-    function fromunixtime(ts)
-    {
-        ts -= gmt_offset * 3600;
-        var date = new Date(ts * 1000),
-            dst_offset = (client_timezone - date.getTimezoneOffset()) * 60;
-        if (dst_offset)  // adjust DST offset
-            date.setTime((ts + 3600) * 1000);
-        return date;
-    }
-
     // init dialog by default
     init_taskedit();
 }
 
 
 // extend jQuery
-(function($){
-  $.fn.serializeJSON = function(){
-    var json = {};
-    jQuery.map($(this).serializeArray(), function(n, i) {
-      json[n['name']] = n['value'];
-    });
-    return json;
-  };
-})(jQuery);
-
 // from http://james.padolsey.com/javascript/sorting-elements-with-jquery/
 jQuery.fn.sortElements = (function(){
     var sort = [].sort;
@@ -1518,7 +1386,7 @@ jQuery.fn.sortElements = (function(){
 var rctasks;
 window.rcmail && rcmail.addEventListener('init', function(evt) {
 
-  rctasks = new rcube_tasklist_ui(rcmail.env.tasklist_settings);
+  rctasks = new rcube_tasklist_ui(rcmail.env.libcal_settings);
 
   // register button commands
   rcmail.register_command('newtask', function(){ rctasks.edit_task(null, 'new', {}); }, true);

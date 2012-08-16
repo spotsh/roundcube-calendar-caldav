@@ -365,9 +365,8 @@ class tasklist_database_driver extends tasklist_driver
             $result = $this->rc->db->query(sprintf(
                 "SELECT * FROM " . $this->db_tasks . "
                  WHERE tasklist_id IN (%s)
-                 AND notify <= %s AND date > %s",
+                 AND notify <= %s AND complete < 1",
                 join(',', $list_ids),
-                $this->rc->db->fromunixtime($time),
                 $this->rc->db->fromunixtime($time)
             ));
 
@@ -575,20 +574,8 @@ class tasklist_database_driver extends tasklist_driver
      */
     private function _get_notification($task)
     {
-        // fake object properties to suit the expectations of calendar::get_next_alarm()
-        // TODO: move all that to libcalendaring plugin
-        if ($task['date'])
-            $task['start'] = new DateTime($task['date'] . ' ' . ($task['time'] ?: '12:00'), $this->plugin->timezone);
-        if ($task['startdate'])
-            $task['end'] = new DateTime($task['startdate'] . ' ' . ($task['starttime'] ?: '12:00'), $this->plugin->timezone);
-        else
-            $task['end'] = $tast['start'];
-
-        if (!$task['start'])
-            $task['end'] = $task['start'];
-
-        if ($task['alarms'] && $task['start'] > new DateTime() || strpos($task['alarms'], '@') !== false) {
-            $alarm = calendar::get_next_alarm($task);
+        if ($task['alarms'] && $task['complete'] < 1 || strpos($task['alarms'], '@') !== false) {
+            $alarm = calendarlibcalendaring::get_next_alarm($task);
 
         if ($alarm['time'] && $alarm['action'] == 'DISPLAY')
           return date('Y-m-d H:i:s', $alarm['time']);

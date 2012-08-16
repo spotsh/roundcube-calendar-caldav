@@ -55,14 +55,7 @@ class tasklist_ui
         $this->plugin->include_script('tasklist_base.js');
 
         // copy config to client
-        $defaults = $this->plugin->defaults;
-        $settings = array(
-            'date_format' => $this->rc->config->get('date_format', $defaults['date_format']),
-            'time_format' => $this->rc->config->get('time_format', $defaults['time_format']),
-            'first_day' => $this->rc->config->get('calendar_first_day', $defaults['first_day']),
-        );
-
-        $this->rc->output->set_env('tasklist_settings', $settings);
+        // $this->rc->output->set_env('tasklist_settings', $settings);
 
         $this->ready = true;
   }
@@ -85,13 +78,6 @@ class tasklist_ui
         $this->plugin->register_handler('plugin.attachments_form', array($this, 'attachments_form'));
         $this->plugin->register_handler('plugin.attachments_list', array($this, 'attachments_list'));
         $this->plugin->register_handler('plugin.filedroparea', array($this, 'file_drop_area'));
-
-        // define list of file types which can be displayed inline
-        // same as in program/steps/mail/show.inc
-        $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
-        $settings = $this->rc->output->get_env('tasklist_settings');
-        $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
-        $this->rc->output->set_env('tasklist_settings', $settings);
 
         $this->plugin->include_script('jquery.tagedit.js');
         $this->plugin->include_script('tasklist.js');
@@ -185,34 +171,7 @@ class tasklist_ui
      */
     function alarm_select($attrib = array())
     {
-        unset($attrib['name']);
-        $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
-        $select_type->add(rcube_label('none'), '');
-        foreach ($this->plugin->driver->alarm_types as $type)
-            $select_type->add(rcube_label(strtolower("calendar.alarm{$type}option")), $type);
-
-        $input_value = new html_inputfield(array('name' => 'alarmvalue[]', 'class' => 'edit-alarm-value', 'size' => 3));
-        $input_date = new html_inputfield(array('name' => 'alarmdate[]', 'class' => 'edit-alarm-date', 'size' => 10));
-        $input_time = new html_inputfield(array('name' => 'alarmtime[]', 'class' => 'edit-alarm-time', 'size' => 6));
-
-        $select_offset = new html_select(array('name' => 'alarmoffset[]', 'class' => 'edit-alarm-offset'));
-        foreach (array('-M','-H','-D','+M','+H','+D','@') as $trigger)
-            $select_offset->add(rcube_label('calendar.trigger' . $trigger), $trigger);
-
-        // pre-set with default values from user settings
-        $preset = calendar::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
-        $hidden = array('style' => 'display:none');
-        $html = html::span('edit-alarm-set',
-            $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')) . ' ' .
-            html::span(array('class' => 'edit-alarm-values', 'style' => 'display:none'),
-            $input_value->show($preset[0]) . ' ' .
-            $select_offset->show($preset[1]) . ' ' .
-            $input_date->show('', $hidden) . ' ' .
-            $input_time->show('', $hidden)
-            )
-        );
-
-      return $html;
+        return $this->plugin->lib->alarm_select($attrib, $this->plugin->driver->alarm_types);
     }
 
     /**

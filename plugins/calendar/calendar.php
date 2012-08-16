@@ -34,6 +34,7 @@ class calendar extends rcube_plugin
   
   public $task = '?(?!logout).*';
   public $rc;
+  public $lib;
   public $driver;
   public $home;  // declare public to be used in other classes
   public $urlbase;
@@ -46,29 +47,13 @@ class calendar extends rcube_plugin
 
   public $defaults = array(
     'calendar_default_view' => "agendaWeek",
-    'calendar_date_format'  => "yyyy-MM-dd",
-    'calendar_date_short'   => "M-d",
-    'calendar_date_long'    => "MMM d yyyy",
-    'calendar_date_agenda'  => "ddd MM-dd",
-    'calendar_time_format'  => "HH:mm",
     'calendar_timeslots'    => 2,
-    'calendar_first_day'    => 1,
-    'calendar_first_hour'   => 6,
     'calendar_work_start'   => 6,
     'calendar_work_end'     => 18,
     'calendar_agenda_range' => 60,
     'calendar_agenda_sections' => 'smart',
     'calendar_event_coloring'  => 0,
     'calendar_time_indicator'  => true,
-    'calendar_date_format_sets' => array(
-      'yyyy-MM-dd' => array('MMM d yyyy',   'M-d',  'ddd MM-dd'),
-      'dd-MM-yyyy' => array('d MMM yyyy',   'd-M',  'ddd dd-MM'),
-      'yyyy/MM/dd' => array('MMM d yyyy',   'M/d',  'ddd MM/dd'),
-      'MM/dd/yyyy' => array('MMM d yyyy',   'M/d',  'ddd MM/dd'),
-      'dd/MM/yyyy' => array('d MMM yyyy',   'd/M',  'ddd dd/MM'),
-      'dd.MM.yyyy' => array('dd. MMM yyyy', 'd.M',  'ddd dd.MM.'),
-      'd.M.yyyy'   => array('d. MMM yyyy',  'd.M',  'ddd d.MM.'),
-    ),
   );
 
   private $default_categories = array(
@@ -86,7 +71,10 @@ class calendar extends rcube_plugin
    */
   function init()
   {
+    $this->require_plugin('libcalendaring');
+
     $this->rc = rcmail::get_instance();
+    $this->lib = libcalendaring::get_instance();
 
     $this->register_task('calendar', 'calendar');
 
@@ -96,11 +84,9 @@ class calendar extends rcube_plugin
     // load localizations
     $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
 
-    // set user's timezone
-    $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
-    $now = new DateTime('now', $this->timezone);
-    $this->gmt_offset = $now->getOffset();
-    $this->dst_active = $now->format('I');
+    $this->timezone = $this->lib->timezone;
+    $this->gmt_offset = $this->lib->gmt_offset;
+    $this->dst_active = $this->lib->dst_active;
     $this->timezone_offset = $this->gmt_offset / 3600 - $this->dst_active;
 
     require($this->home . '/lib/calendar_ui.php');
@@ -108,8 +94,6 @@ class calendar extends rcube_plugin
 
     // load Calendar user interface which includes jquery-ui
     if (!$this->rc->output->ajax_call && !$this->rc->output->env['framed']) {
-      $this->require_plugin('jqueryui');
-
       $this->ui->init();
 
       // settings are required in (almost) every GUI step
@@ -185,8 +169,9 @@ class calendar extends rcube_plugin
       }
     }
     
-    // add hook to display alarms
-    $this->add_hook('keep_alive', array($this, 'keep_alive'));
+    // add hooks to display alarms
+    $this->add_hook('pending_alarms', array($this, 'pending_alarms'));
+    $this->add_hook('dismiss_alarms', array($this, 'dismiss_alarms'));
   }
 
   /**
@@ -358,7 +343,7 @@ class calendar extends rcube_plugin
         'content' => $select->show(strval($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']))),
       );
       
-      $time_format = $this->rc->config->get('time_format', self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format'])));
+      $time_format = $this->rc->config->get('time_format', libcalendaring::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format'])));
       $select_hours = new html_select();
       for ($h = 0; $h < 24; $h++)
         $select_hours->add(date($time_format, mktime($h, 0, 0)), $h);
@@ -403,7 +388,7 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('defaultalarmtype'))),
         'content' => $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')),
       );
-      $preset = self::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
+      $preset = libcalendaring::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
       $p['blocks']['view']['options']['alarmoffset'] = array(
         'title' => html::label($field_id . 'value', Q($this->gettext('defaultalarmoffset'))),
         'content' => $input_value->show($preset[0]) . ' ' . $select_offset->show($preset[1]),
@@ -831,35 +816,38 @@ class calendar extends rcube_plugin
     echo $this->encode($events, !empty($query));
     exit;
   }
-  
+
   /**
-   * Handler for keep-alive requests
+   * Handler for pending_alarms plugin hook triggered by the calendar module on keep-alive requests.
    * This will check for pending notifications and pass them to the client
    */
-  function keep_alive($attr)
+  public function pending_alarms($p)
   {
-    $timestamp = time();
     $this->load_driver();
-    $alarms = (array)$this->driver->pending_alarms($timestamp);
-    foreach ($alarms as $i => $alarm) {
-        $alarms[$i]['id'] = 'cal:' . $alarm['id'];  // prefix ID with cal:
-    }
-
-    $plugin = $this->rc->plugins->exec_hook('pending_alarms', array(
-      'time' => $timestamp,
-      'alarms' => $alarms,
-    ));
-
-    if (!$plugin['abort'] && $plugin['alarms']) {
-      // make sure texts and env vars are available on client
-      if ($this->rc->task != 'calendar') {
-        $this->add_texts('localization/', true);
-        $this->rc->output->set_env('snooze_select', $this->ui->snooze_select());
+    if ($alarms = $this->driver->pending_alarms($p['time'] ?: time())) {
+      foreach ($alarms as $i => $alarm) {
+        $alarm['id'] = 'cal:' . $alarm['id'];  // prefix ID with cal:
+        $p['alarms'][] = $alarm;
       }
-      $this->rc->output->command('plugin.display_alarms', $this->_alarms_output($plugin['alarms']));
     }
+
+    return $p;
   }
-  
+
+  /**
+   * Handler for alarm dismiss hook triggered by libcalendaring
+   */
+  public function dismiss_alarms($p)
+  {
+      $this->load_driver();
+      foreach ((array)$p['ids'] as $id) {
+          if (strpos($id, 'cal:') === 0)
+              $p['success'] |= $this->driver->dismiss_alarm(substr($id, 4), $p['snooze']);
+      }
+
+      return $p;
+  }
+
   /**
    * Handler for check-recent requests which are accidentally sent to calendar taks
    */
@@ -1021,20 +1009,16 @@ class calendar extends rcube_plugin
    */
   function load_settings()
   {
-    $this->date_format_defaults();
+    $this->lib->load_settings();
+    $this->defaults += $this->lib->defaults;
+
     $settings = array();
-    
+
     // configuration
     $settings['default_calendar'] = $this->rc->config->get('calendar_default_calendar');
     $settings['default_view'] = (string)$this->rc->config->get('calendar_default_view', $this->defaults['calendar_default_view']);
-    
-    $settings['date_format'] = (string)$this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']);
-    $settings['time_format'] = (string)$this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']);
-    $settings['date_short'] = (string)$this->rc->config->get('calendar_date_short', $this->defaults['calendar_date_short']);
-    $settings['date_long']  = (string)$this->rc->config->get('calendar_date_long', $this->defaults['calendar_date_long']);
-    $settings['dates_long'] = str_replace(' yyyy', '[ yyyy]', $settings['date_long']) . "{ '&mdash;' " . $settings['date_long'] . '}';
     $settings['date_agenda'] = (string)$this->rc->config->get('calendar_date_agenda', $this->defaults['calendar_date_agenda']);
-    
+
     $settings['timeslots'] = (int)$this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
     $settings['first_day'] = (int)$this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']);
     $settings['first_hour'] = (int)$this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']);
@@ -1044,39 +1028,6 @@ class calendar extends rcube_plugin
     $settings['agenda_sections'] = $this->rc->config->get('calendar_agenda_sections', $this->defaults['calendar_agenda_sections']);
     $settings['event_coloring'] = (int)$this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring']);
     $settings['time_indicator'] = (int)$this->rc->config->get('calendar_time_indicator', $this->defaults['calendar_time_indicator']);
-    $settings['timezone'] = $this->timezone_offset;
-    $settings['dst'] = $this->dst_active;
-
-    // localization
-    $settings['days'] = array(
-      rcube_label('sunday'),   rcube_label('monday'),
-      rcube_label('tuesday'),  rcube_label('wednesday'),
-      rcube_label('thursday'), rcube_label('friday'),
-      rcube_label('saturday')
-    );
-    $settings['days_short'] = array(
-      rcube_label('sun'), rcube_label('mon'),
-      rcube_label('tue'), rcube_label('wed'),
-      rcube_label('thu'), rcube_label('fri'),
-      rcube_label('sat')
-    );
-    $settings['months'] = array(
-      $this->rc->gettext('longjan'), $this->rc->gettext('longfeb'),
-      $this->rc->gettext('longmar'), $this->rc->gettext('longapr'),
-      $this->rc->gettext('longmay'), $this->rc->gettext('longjun'),
-      $this->rc->gettext('longjul'), $this->rc->gettext('longaug'),
-      $this->rc->gettext('longsep'), $this->rc->gettext('longoct'),
-      $this->rc->gettext('longnov'), $this->rc->gettext('longdec')
-    );
-    $settings['months_short'] = array(
-      $this->rc->gettext('jan'), $this->rc->gettext('feb'),
-      $this->rc->gettext('mar'), $this->rc->gettext('apr'),
-      $this->rc->gettext('may'), $this->rc->gettext('jun'),
-      $this->rc->gettext('jul'), $this->rc->gettext('aug'),
-      $this->rc->gettext('sep'), $this->rc->gettext('oct'),
-      $this->rc->gettext('nov'), $this->rc->gettext('dec')
-    );
-    $settings['today'] = $this->rc->gettext('today');
 
     // get user identity to create default attendee
     if ($this->ui->screen == 'calendar') {
@@ -1089,55 +1040,7 @@ class calendar extends rcube_plugin
       $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
     }
 
-    // define list of file types which can be displayed inline
-    // same as in program/steps/mail/show.inc
-    $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
-    $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
-
     return $settings;
-  }
-  
-  /**
-   * Helper function to set date/time format according to config and user preferences
-   */
-  private function date_format_defaults()
-  {
-    static $defaults = array();
-    
-    // nothing to be done
-    if (isset($defaults['date_format']))
-      return;
-    
-    $defaults['date_format'] = $this->rc->config->get('calendar_date_format', self::from_php_date_format($this->rc->config->get('date_format')));
-    $defaults['time_format'] = $this->rc->config->get('calendar_time_format', self::from_php_date_format($this->rc->config->get('time_format')));
-    
-    // override defaults
-    if ($defaults['date_format'])
-      $this->defaults['calendar_date_format'] = $defaults['date_format'];
-    if ($defaults['time_format'])
-      $this->defaults['calendar_time_format'] = $defaults['time_format'];
-    
-    // derive format variants from basic date format
-    $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
-    if ($format_set = $format_sets[$this->defaults['calendar_date_format']]) {
-      $this->defaults['calendar_date_long'] = $format_set[0];
-      $this->defaults['calendar_date_short'] = $format_set[1];
-      $this->defaults['calendar_date_agenda'] = $format_set[2];
-    }
-  }
-
-  /**
-   * Shift dates into user's current timezone
-   */
-  private function adjust_timezone($dt)
-  {
-    if (is_numeric($dt))
-      $dt = new DateTime('@'.$td);
-    else if (is_string($dt))
-      $dt = new DateTime($dt);
-
-    $dt->setTimezone($this->timezone);
-    return $dt;
   }
 
   /**
@@ -1163,11 +1066,11 @@ class calendar extends rcube_plugin
   {
     // compose a human readable strings for alarms_text and recurrence_text
     if ($event['alarms'])
-      $event['alarms_text'] = self::alarms_text($event['alarms']);
+      $event['alarms_text'] = libcalendaring::alarms_text($event['alarms']);
     if ($event['recurrence']) {
       $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
       if ($event['recurrence']['UNTIL'])
-        $event['recurrence']['UNTIL'] = $this->adjust_timezone($event['recurrence']['UNTIL'])->format('c');
+        $event['recurrence']['UNTIL'] = $this->lib->adjust_timezone($event['recurrence']['UNTIL'])->format('c');
     }
 
     foreach ((array)$event['attachments'] as $k => $attachment) {
@@ -1176,8 +1079,8 @@ class calendar extends rcube_plugin
 
     return array(
       '_id'   => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
-      'start' => $this->adjust_timezone($event['start'])->format('c'),
-      'end'   => $this->adjust_timezone($event['end'])->format('c'),
+      'start' => $this->lib->adjust_timezone($event['start'])->format('c'),
+      'end'   => $this->lib->adjust_timezone($event['end'])->format('c'),
       'title'       => strval($event['title']),
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
@@ -1186,56 +1089,6 @@ class calendar extends rcube_plugin
     ) + $event;
   }
 
-
-  /**
-   * Generate reduced and streamlined output for pending alarms
-   */
-  private function _alarms_output($alarms)
-  {
-    $out = array();
-    foreach ($alarms as $alarm) {
-      $out[] = array(
-        'id'       => $alarm['id'],
-        'start'    => $alarm['start'] ? $this->adjust_timezone($alarm['start'])->format('c') : '',
-        'end'      => $alarm['end']   ? $this->adjust_timezone($alarm['end'])->format('c') : '',
-        'allDay'   => ($alarm['allday'] == 1)?true:false,
-        'title'    => $alarm['title'],
-        'location' => $alarm['location'],
-        'calendar' => $alarm['calendar'],
-      );
-    }
-    
-    return $out;
-  }
-
-  /**
-   * Render localized text for alarm settings
-   */
-  public static function alarms_text($alarm)
-  {
-    list($trigger, $action) = explode(':', $alarm);
-    
-    $text = '';
-    switch ($action) {
-      case 'EMAIL':
-        $text = rcube_label('calendar.alarmemail');
-        break;
-      case 'DISPLAY':
-        $text = rcube_label('calendar.alarmdisplay');
-        break;
-    }
-    
-    if (preg_match('/@(\d+)/', $trigger, $m)) {
-      $text .= ' ' . rcube_label(array('name' => 'calendar.alarmat', 'vars' => array('datetime' => format_date($m[1]))));
-    }
-    else if ($val = self::parse_alaram_value($trigger)) {
-      $text .= ' ' . intval($val[0]) . ' ' . rcube_label('calendar.trigger' . $val[1]);
-    }
-    else
-      return false;
-    
-    return $text;
-  }
 
   /**
    * Render localized text describing the recurrence rule of an event
@@ -1266,7 +1119,7 @@ class calendar extends rcube_plugin
     if ($rrule['COUNT'])
       $until =  $this->gettext(array('name' => 'forntimes', 'vars' => array('nr' => $rrule['COUNT'])));
     else if ($rrule['UNTIL'])
-      $until = $this->gettext('recurrencend') . ' ' . format_date($rrule['UNTIL'], self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format'])));
+      $until = $this->gettext('recurrencend') . ' ' . format_date($rrule['UNTIL'], libcalendaring::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format'])));
     else
       $until = $this->gettext('forever');
     
@@ -1281,148 +1134,7 @@ class calendar extends rcube_plugin
     return strtoupper(md5(time() . uniqid(rand())) . '-' . substr(md5($this->rc->user->get_username()), 0, 16));
   }
 
-  /**
-   * Helper function to convert alarm trigger strings
-   * into two-field values (e.g. "-45M" => 45, "-M")
-   */
-  public static function parse_alaram_value($val)
-  {
-    if ($val[0] == '@')
-      return array(substr($val, 1));
-    else if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
-      return array($m[2], $m[1].$m[3]);
-    
-    return false;
-  }
 
-  /**
-   * Get the next alarm (time & action) for the given event
-   *
-   * @param array Event data
-   * @return array Hash array with alarm time/type or null if no alarms are configured
-   */
-  public static function get_next_alarm($event)
-  {
-      if (!$event['alarms'])
-        return null;
-
-      // TODO: handle multiple alarms (currently not supported)
-      list($trigger, $action) = explode(':', $event['alarms'], 2);
-
-      $notify = self::parse_alaram_value($trigger);
-      if (!empty($notify[1])){  // offset
-        $mult = 1;
-        switch ($notify[1]) {
-          case '-S': $mult =     -1; break;
-          case '+S': $mult =      1; break;
-          case '-M': $mult =    -60; break;
-          case '+M': $mult =     60; break;
-          case '-H': $mult =  -3600; break;
-          case '+H': $mult =   3600; break;
-          case '-D': $mult = -86400; break;
-          case '+D': $mult =  86400; break;
-          case '-W': $mult = -604800; break;
-          case '+W': $mult =  604800; break;
-        }
-        $offset = $notify[0] * $mult;
-        $refdate = $mult > 0 ? $event['end'] : $event['start'];
-        $notify_at = $refdate->format('U') + $offset;
-      }
-      else {  // absolute timestamp
-        $notify_at = $notify[0];
-      }
-
-      return array('time' => $notify_at, 'action' => $action ? strtoupper($action) : 'DISPLAY');
-  }
-
-  /**
-   * Convert the internal structured data into a vcalendar rrule 2.0 string
-   */
-  public static function to_rrule($recurrence)
-  {
-    if (is_string($recurrence))
-      return $recurrence;
-    
-    $rrule = '';
-    foreach ((array)$recurrence as $k => $val) {
-      $k = strtoupper($k);
-      switch ($k) {
-        case 'UNTIL':
-          $val = $val->format('Ymd\THis');
-          break;
-        case 'EXDATE':
-          foreach ((array)$val as $i => $ex)
-            $val[$i] = $ex->format('Ymd\THis');
-          $val = join(',', (array)$val);
-          break;
-      }
-      $rrule .= $k . '=' . $val . ';';
-    }
-    
-    return rtrim($rrule, ';');
-  }
-  
-  /**
-   * Convert from fullcalendar date format to PHP date() format string
-   */
-  private static function to_php_date_format($from)
-  {
-    // "dd.MM.yyyy HH:mm:ss" => "d.m.Y H:i:s"
-    return strtr(strtr($from, array(
-      'yyyy' => 'Y',
-      'yy'   => 'y',
-      'MMMM' => 'F',
-      'MMM'  => 'M',
-      'MM'   => 'm',
-      'M'    => 'n',
-      'dddd' => 'l',
-      'ddd'  => 'D',
-      'dd'   => 'd',
-      'HH'   => '**',
-      'hh'   => '%%',
-      'H'    => 'G',
-      'h'    => 'g',
-      'mm'   => 'i',
-      'ss'   => 's',
-      'TT'   => 'A',
-      'tt'   => 'a',
-      'T'    => 'A',
-      't'    => 'a',
-      'u'    => 'c',
-    )), array(
-      '**'   => 'H',
-      '%%'   => 'h',
-    ));
-  }
-  
-  /**
-   * Convert from PHP date() format to fullcalendar format string
-   */
-  private static function from_php_date_format($from)
-  {
-    // "d.m.Y H:i:s" => "dd.MM.yyyy HH:mm:ss"
-    return strtr($from, array(
-      'y' => 'yy',
-      'Y' => 'yyyy',
-      'M' => 'MMM',
-      'F' => 'MMMM',
-      'm' => 'MM',
-      'n' => 'M',
-      'd' => 'dd',
-      'D' => 'ddd',
-      'l' => 'dddd',
-      'H' => 'HH',
-      'h' => 'hh',
-      'G' => 'H',
-      'g' => 'h',
-      'i' => 'mm',
-      's' => 'ss',
-      'A' => 'TT',
-      'a' => 'tt',
-      'c' => 'u',
-    ));
-  }
-  
   /**
    * TEMPORARY: generate random event data for testing
    * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=randomdata&_num=500
@@ -1811,40 +1523,6 @@ class calendar extends rcube_plugin
     }
     
     return $sent;
-  }
-  
-  /**
-   * Compose a date string for the given event
-   */
-  public function event_date_text($event, $tzinfo = false)
-  {
-    $fromto = '';
-    $duration = $event['start']->diff($event['end'])->format('s');
-    
-    $this->date_format_defaults();
-    $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
-    $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
-    
-    if ($event['allday']) {
-      $fromto = format_date($event['start'], $date_format);
-      if (($todate = format_date($event['end'], $date_format)) != $fromto)
-        $fromto .= ' - ' . $todate;
-    }
-    else if ($duration < 86400 && $event['start']->format('d') == $event['end']->format('d')) {
-      $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
-        ' - ' . format_date($event['end'], $time_format);
-    }
-    else {
-      $fromto = format_date($event['start'], $date_format) . ' ' . format_date($event['start'], $time_format) .
-        ' - ' . format_date($event['end'], $date_format) . ' ' . format_date($event['end'], $time_format);
-    }
-    
-    // add timezone information
-    if ($tzinfo && ($tzname = $this->timezone->getName())) {
-      $fromto .= ' (' . strtr($tzname, '_', ' ') . ')';
-    }
-    
-    return $fromto;
   }
 
   /**

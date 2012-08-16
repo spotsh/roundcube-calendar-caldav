@@ -46,15 +46,10 @@ class tasklist extends rcube_plugin
 
     public $task = '?(?!login|logout).*';
     public $rc;
+    public $lib;
     public $driver;
     public $timezone;
     public $ui;
-
-    public $defaults = array(
-        'date_format'  => "Y-m-d",
-        'time_format'  => "H:i",
-        'first_day' => 1,
-    );
 
 
     /**
@@ -62,7 +57,10 @@ class tasklist extends rcube_plugin
      */
     function init()
     {
+        $this->require_plugin('libcalendaring');
+
         $this->rc = rcmail::get_instance();
+        $this->lib = libcalendaring::get_instance();
 
         $this->register_task('tasks', 'tasklist');
 
@@ -71,6 +69,8 @@ class tasklist extends rcube_plugin
 
         // load localizations
         $this->add_texts('localization/', $this->rc->task == 'tasks' && (!$this->rc->action || $this->rc->action == 'print'));
+
+        $this->timezone = $this->lib->timezone;
 
         if ($this->rc->task == 'tasks' && $this->rc->action != 'save-pref') {
             $this->load_driver();
@@ -141,14 +141,11 @@ class tasklist extends rcube_plugin
             $this->driver = new $driver_class($this);
             break;
         }
-
-        // get user's timezone
-        $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
     }
 
 
     /**
-     *
+     * Dispatcher for task-related actions initiated by the client
      */
     public function task_action()
     {
@@ -345,7 +342,7 @@ class tasklist extends rcube_plugin
 
 
     /**
-     *
+     * Dispatcher for tasklist actions initiated by the client
      */
     public function tasklist_action()
     {
@@ -389,7 +386,7 @@ class tasklist extends rcube_plugin
     }
 
     /**
-     *
+     * Get counts for active tasks divided into different selectors
      */
     public function fetch_counts()
     {
@@ -400,8 +397,6 @@ class tasklist extends rcube_plugin
 
     /**
      * Adjust the cached counts after changing a task
-     *
-     * 
      */
     public function update_counts($oldrec, $newrec)
     {
@@ -510,7 +505,7 @@ class tasklist extends rcube_plugin
         }
 
         if ($rec['alarms'])
-            $rec['alarms_text'] = calendar::alarms_text($rec['alarms']);
+            $rec['alarms_text'] = libcalendaring::alarms_text($rec['alarms']);
 
         foreach ((array)$rec['attachments'] as $k => $attachment) {
             $rec['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);

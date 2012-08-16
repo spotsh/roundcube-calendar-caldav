@@ -124,7 +124,7 @@ class calendar_ical
   public function get_parser()
   {
     // use Horde:iCalendar to parse vcalendar file format
-    @include_once('Horde/iCalendar.php');
+    // @include_once('Horde/iCalendar.php');
 
     if (!class_exists('Horde_iCalendar'))
       require_once($this->cal->home . '/lib/Horde_iCalendar.php');
@@ -377,7 +377,7 @@ class calendar_ical
           $vevent .= "LOCATION:" . self::escpape($event['location']) . self::EOL;
         }
         if ($event['recurrence']) {
-          $vevent .= "RRULE:" . calendar::to_rrule($event['recurrence'], self::EOL) . self::EOL;
+          $vevent .= "RRULE:" . libcalendaring::to_rrule($event['recurrence'], self::EOL) . self::EOL;
         }
         if(!empty($event['categories'])) {
           $vevent .= "CATEGORIES:" . self::escpape(strtoupper($event['categories'])) . self::EOL;
@@ -387,7 +387,7 @@ class calendar_ical
         }
         if ($event['alarms']) {
           list($trigger, $action) = explode(':', $event['alarms']);
-          $val = calendar::parse_alaram_value($trigger);
+          $val = libcalendaring::parse_alaram_value($trigger);
           
           $vevent .= "BEGIN:VALARM\n";
           if ($val[1]) $vevent .= "TRIGGER:" . preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger) . self::EOL;
