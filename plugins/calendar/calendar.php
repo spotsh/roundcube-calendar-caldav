@@ -1108,7 +1108,7 @@ class calendar extends rcube_plugin
       case 'MONTHLY':
         $freq .= $this->gettext('months');
         break;
-      case 'YEARY':
+      case 'YEARLY':
         $freq .= $this->gettext('years');
         break;
     }

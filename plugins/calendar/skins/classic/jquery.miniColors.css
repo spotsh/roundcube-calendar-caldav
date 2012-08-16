@@ -90,7 +90,7 @@
 
 * html .miniColors-colors {
 	background-image: none;
-	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='plugins/calendar/skins/default/images/minicolors-all.png', sizingMethod='crop');
+	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='plugins/calendar/skins/classic/images/minicolors-all.png', sizingMethod='crop');
 }
 
 * html .miniColors-colorPicker {
