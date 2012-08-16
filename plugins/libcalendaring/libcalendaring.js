@@ -122,7 +122,7 @@ function rcube_libcalendaring(settings)
         }
 
         // derived from http://delete.me.uk/2005/03/iso8601.html
-        var m = s.match(/^([0-9]{4})(-([0-9]{2})(-([0-9]{2})([T ]([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?(Z|(([-+])([0-9]{2})(:?([0-9]{2}))?))?)?)?)?$/);
+        var m = s && s.match(/^([0-9]{4})(-([0-9]{2})(-([0-9]{2})([T ]([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?(Z|(([-+])([0-9]{2})(:?([0-9]{2}))?))?)?)?)?$/);
         if (!m) {
             return null;
         }
@@ -317,7 +317,7 @@ function rcube_libcalendaring(settings)
         this.alarm_dialog = $('<div>').attr('id', 'alarm-display');
 
         var actions, adismiss, asnooze, alarm, html, event_ids = [];
-        for (var actions, html, alarm, i=0; i < alarms.length; i++) {
+        for (var i=0; i < alarms.length; i++) {
             alarm = alarms[i];
             alarm.start = parseISO8601(alarm.start);
             alarm.end = parseISO8601(alarm.end);

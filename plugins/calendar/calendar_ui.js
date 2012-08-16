@@ -2625,7 +2625,6 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('reset-search', function(){ cal.reset_quicksearch(); }, true);
 
   // register callback commands
-  rcmail.addEventListener('plugin.display_alarms', function(alarms){ cal.display_alarms(alarms); });
   rcmail.addEventListener('plugin.destroy_source', function(p){ cal.calendar_destroy_source(p.id); });
   rcmail.addEventListener('plugin.unlock_saving', function(p){ cal.unlock_saving(); });
   rcmail.addEventListener('plugin.refresh_calendar', function(p){ cal.refresh(p); });
