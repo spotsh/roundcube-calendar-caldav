@@ -277,25 +277,4 @@ class tasklist_ui
         }
     }
 
-    /**
-     *
-     */
-    function attachment_controls($attrib = array())
-    {
-        $table = new html_table(array('cols' => 3));
-
-        if (!empty($this->plugin->attachment['name'])) {
-            $table->add('title', Q(rcube_label('filename')));
-            $table->add('header', Q($this->plugin->attachment['name']));
-            $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))));
-        }
-
-      if (!empty($this->plugin->attachment['size'])) {
-        $table->add('title', Q(rcube_label('filesize')));
-        $table->add('header', Q(show_bytes($this->plugin->attachment['size'])));
-      }
-
-      return $table->show($attrib);
-    }
-
 }

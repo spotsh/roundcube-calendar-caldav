@@ -595,7 +595,7 @@ class calendar_ui
 
     $skin_path = $this->cal->local_skin_path();
     if ($attrib['deleteicon']) {
-      $_SESSION['calendar_deleteicon'] = $skin_path . $attrib['deleteicon'];
+      $_SESSION[calendar::SESSION_KEY . '_deleteicon'] = $skin_path . $attrib['deleteicon'];
       $this->rc->output->set_env('deleteicon', $skin_path . $attrib['deleteicon']);
     }
     if ($attrib['cancelicon'])
@@ -606,24 +606,6 @@ class calendar_ui
     $this->rc->output->add_gui_object('attachmentlist', $attrib['id']);
 
     return html::tag('ul', $attrib, '', html::$common_attrib);
-  }
-
-  function attachment_controls($attrib = array())
-  {
-    $table = new html_table(array('cols' => 3));
-
-    if (!empty($this->cal->attachment['name'])) {
-      $table->add('title', Q(rcube_label('filename')));
-      $table->add('header', Q($this->cal->attachment['name']));
-      $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))));
-    }
-
-    if (!empty($this->cal->attachment['size'])) {
-      $table->add('title', Q(rcube_label('filesize')));
-      $table->add('header', Q(show_bytes($this->cal->attachment['size'])));
-    }
-
-    return $table->show($attrib);
   }
 
   /**

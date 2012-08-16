@@ -17,6 +17,7 @@ $labels['title'] = 'Titel';
 $labels['description'] = 'Beschreibung';
 $labels['datetime'] = 'Datum/Zeit';
 $labels['start'] = 'Beginn';
+$labels['alarms'] = 'Erinnerung';
 
 $labels['all'] = 'Alle';
 $labels['flagged'] = 'Markiert';

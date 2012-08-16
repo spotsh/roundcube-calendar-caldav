@@ -29,6 +29,14 @@ div.uidialog {
 	display: none;
 }
 
+body.attachmentwin #mainscreen {
+	top: 60px;
+}
+
+body.attachmentwin #topnav .topright {
+	margin-top: 20px;
+}
+
 #sidebar {
 	position: absolute;
 	top: 0;

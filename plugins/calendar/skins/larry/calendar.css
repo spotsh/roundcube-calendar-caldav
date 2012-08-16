@@ -18,6 +18,14 @@ body.calendarmain #mainscreen {
 	left: 0;
 }
 
+body.attachmentwin #mainscreen {
+	top: 60px;
+}
+
+body.attachmentwin #topnav .topright {
+	margin-top: 20px;
+}
+
 #calendarsidebar {
 	position: absolute;
 	top: 0;

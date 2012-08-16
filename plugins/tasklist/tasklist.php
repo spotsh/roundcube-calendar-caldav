@@ -33,6 +33,8 @@ class tasklist extends rcube_plugin
     const FILTER_MASK_FLAGGED = 64;
     const FILTER_MASK_COMPLETE = 128;
 
+    const SESSION_KEY = 'tasklist_temp';
+
     public static $filter_masks = array(
         'today'    => self::FILTER_MASK_TODAY,
         'tomorrow' => self::FILTER_MASK_TOMORROW,
@@ -308,9 +310,9 @@ class tasklist extends rcube_plugin
 
         $attachments = array();
         $taskid = $rec['id'];
-        if (is_array($_SESSION['tasklist_session']) && $_SESSION['tasklist_session']['id'] == $taskid) {
-            if (!empty($_SESSION['tasklist_session']['attachments'])) {
-                foreach ($_SESSION['tasklist_session']['attachments'] as $id => $attachment) {
+        if (is_array($_SESSION[self::SESSION_KEY]) && $_SESSION[self::SESSION_KEY]['id'] == $taskid) {
+            if (!empty($_SESSION[self::SESSION_KEY]['attachments'])) {
+                foreach ($_SESSION[self::SESSION_KEY]['attachments'] as $id => $attachment) {
                     if (is_array($rec['attachments']) && in_array($id, $rec['attachments'])) {
                         $attachments[$id] = $this->rc->plugins->exec_hook('attachment_get', $attachment);
                         unset($attachments[$id]['abort'], $attachments[$id]['group']);
@@ -334,9 +336,9 @@ class tasklist extends rcube_plugin
     private function cleanup_task(&$rec)
     {
         // remove temp. attachment files
-        if (!empty($_SESSION['tasklist_session']) && ($taskid = $_SESSION['tasklist_session']['id'])) {
+        if (!empty($_SESSION[self::SESSION_KEY]) && ($taskid = $_SESSION[self::SESSION_KEY]['id'])) {
             $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $taskid));
-            $this->rc->session->remove('tasklist_session');
+            $this->rc->session->remove(self::SESSION_KEY);
         }
     }
 
@@ -656,104 +658,13 @@ class tasklist extends rcube_plugin
 
 
     /******* Attachment handling  *******/
-    /*** pretty much the same as in plugins/calendar/calendar.php ***/
 
     /**
      * Handler for attachments upload
     */
     public function attachment_upload()
     {
-        // Upload progress update
-        if (!empty($_GET['_progress'])) {
-            rcube_upload_progress();
-        }
-
-        $taskid = get_input_value('_id', RCUBE_INPUT_GPC);
-        $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
-
-        // prepare session storage
-        if (!is_array($_SESSION['tasklist_session']) || $_SESSION['tasklist_session']['id'] != $taskid) {
-            $_SESSION['tasklist_session'] = array();
-            $_SESSION['tasklist_session']['id'] = $taskid;
-            $_SESSION['tasklist_session']['attachments'] = array();
-        }
-
-        // clear all stored output properties (like scripts and env vars)
-        $this->rc->output->reset();
-
-        if (is_array($_FILES['_attachments']['tmp_name'])) {
-            foreach ($_FILES['_attachments']['tmp_name'] as $i => $filepath) {
-                // Process uploaded attachment if there is no error
-                $err = $_FILES['_attachments']['error'][$i];
-
-                if (!$err) {
-                    $attachment = array(
-                        'path' => $filepath,
-                        'size' => $_FILES['_attachments']['size'][$i],
-                        'name' => $_FILES['_attachments']['name'][$i],
-                        'mimetype' => rc_mime_content_type($filepath, $_FILES['_attachments']['name'][$i], $_FILES['_attachments']['type'][$i]),
-                        'group' => $taskid,
-                    );
-
-                    $attachment = $this->rc->plugins->exec_hook('attachment_upload', $attachment);
-                }
-
-                if (!$err && $attachment['status'] && !$attachment['abort']) {
-                    $id = $attachment['id'];
-
-                    // store new attachment in session
-                    unset($attachment['status'], $attachment['abort']);
-                    $_SESSION['tasklist_session']['attachments'][$id] = $attachment;
-
-                    $content = html::a(array(
-                        'href' => "#delete",
-                        'class' => 'delete',
-                        'onclick' => sprintf("return %s.remove_from_attachment_list('rcmfile%s')", JS_OBJECT_NAME, $id),
-                        'title' => rcube_label('delete'),
-                    ), Q(rcube_label('delete')));
-
-                    $content .= Q($attachment['name']);
-
-                    $this->rc->output->command('add2attachment_list', "rcmfile$id", array(
-                        'html' => $content,
-                        'name' => $attachment['name'],
-                        'mimetype' => $attachment['mimetype'],
-                        'classname' => rcmail_filetype2classname($attachment['mimetype'], $attachment['name']),
-                        'complete' => true), $uploadid);
-                }
-                else {  // upload failed
-                    if ($err == UPLOAD_ERR_INI_SIZE || $err == UPLOAD_ERR_FORM_SIZE) {
-                        $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
-                            'size' => show_bytes(parse_bytes(ini_get('upload_max_filesize'))))));
-                    }
-                    else if ($attachment['error']) {
-                        $msg = $attachment['error'];
-                    }
-                    else {
-                        $msg = rcube_label('fileuploaderror');
-                    }
-
-                    $this->rc->output->command('display_message', $msg, 'error');
-                    $this->rc->output->command('remove_from_attachment_list', $uploadid);
-                }
-            }
-        }
-        else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // if filesize exceeds post_max_size then $_FILES array is empty,
-            // show filesizeerror instead of fileuploaderror
-            if ($maxsize = ini_get('post_max_size')) {
-                $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
-                    'size' => show_bytes(parse_bytes($maxsize)))));
-            }
-            else {
-                $msg = rcube_label('fileuploaderror');
-            }
-
-            $this->rc->output->command('display_message', $msg, 'error');
-            $this->rc->output->command('remove_from_attachment_list', $uploadid);
-        }
-
-        $this->rc->output->send('iframe');
+        $this->lib->attachment_upload(self::SESSION_KEY);
     }
 
     /**
@@ -761,120 +672,34 @@ class tasklist extends rcube_plugin
      */
     public function attachment_get()
     {
+        // show loading page
+        if (!empty($_GET['_preload'])) {
+            return $this->lib->attachment_loading_page();
+        }
+
         $task = get_input_value('_t', RCUBE_INPUT_GPC);
         $list = get_input_value('_list', RCUBE_INPUT_GPC);
         $id   = get_input_value('_id', RCUBE_INPUT_GPC);
 
         $task = array('id' => $task, 'list' => $list);
-
-        // show loading page
-        if (!empty($_GET['_preload'])) {
-          $url = str_replace('&_preload=1', '', $_SERVER['REQUEST_URI']);
-          $message = rcube_label('loadingdata');
-
-          header('Content-Type: text/html; charset=' . RCMAIL_CHARSET);
-          print "<html>\n<head>\n"
-              . '<meta http-equiv="refresh" content="0; url='.Q($url).'">' . "\n"
-              . '<meta http-equiv="content-type" content="text/html; charset='.RCMAIL_CHARSET.'">' . "\n"
-              . "</head>\n<body>\n$message\n</body>\n</html>";
-          exit;
-        }
-
-        ob_end_clean();
-
-        $attachment = $this->attachment = $this->driver->get_attachment($id, $task);
+        $attachment = $this->driver->get_attachment($id, $task);
 
         // show part page
         if (!empty($_GET['_frame'])) {
-            $this->register_handler('plugin.attachmentframe', array($this, 'attachment_frame'));
-            $this->register_handler('plugin.attachmentcontrols', array($this->ui, 'attachment_controls'));
+            $this->lib->attachment = $attachment;
+            $this->register_handler('plugin.attachmentframe', array($this->lib, 'attachment_frame'));
+            $this->register_handler('plugin.attachmentcontrols', array($this->lib, 'attachment_header'));
             $this->rc->output->send('tasklist.attachment');
-            exit;
         }
-
-        if ($attachment) {
-            // allow post-processing of the attachment body
-            $part = new rcube_message_part;
-            $part->filename  = $attachment['name'];
-            $part->size      = $attachment['size'];
-            $part->mimetype  = $attachment['mimetype'];
-
-            $plugin = $this->rc->plugins->exec_hook('message_part_get', array(
-                'body' => $this->driver->get_attachment_body($id, $task),
-                'mimetype' => strtolower($attachment['mimetype']),
-                'download' => !empty($_GET['_download']),
-                'part' => $part,
-            ));
-
-            if ($plugin['abort'])
-                exit;
-
-            $mimetype = $plugin['mimetype'];
-            list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
-
-            $browser = $this->rc->output->browser;
-
-            // send download headers
-            if ($plugin['download']) {
-                header("Content-Type: application/octet-stream");
-                if ($browser->ie)
-                    header("Content-Type: application/force-download");
-            }
-            else if ($ctype_primary == 'text') {
-                header("Content-Type: text/$ctype_secondary");
-            }
-            else {
-                header("Content-Type: $mimetype");
-                header("Content-Transfer-Encoding: binary");
-            }
-
-            // display page, @TODO: support text/plain (and maybe some other text formats)
-            if ($mimetype == 'text/html' && empty($_GET['_download'])) {
-                $OUTPUT = new rcube_html_page();
-                // @TODO: use washtml on $body
-                $OUTPUT->write($plugin['body']);
-            }
-            else {
-                // don't kill the connection if download takes more than 30 sec.
-                @set_time_limit(0);
-
-                $filename = $attachment['name'];
-                $filename = preg_replace('[\r\n]', '', $filename);
-
-                if ($browser->ie && $browser->ver < 7)
-                    $filename = rawurlencode(abbreviate_string($filename, 55));
-                else if ($browser->ie)
-                    $filename = rawurlencode($filename);
-                else
-                    $filename = addcslashes($filename, '"');
-
-                $disposition = !empty($_GET['_download']) ? 'attachment' : 'inline';
-                header("Content-Disposition: $disposition; filename=\"$filename\"");
-
-                echo $plugin['body'];
-            }
-
-            exit;
+        // deliver attachment content
+        else if ($attachment) {
+            $attachment['body'] = $this->driver->get_attachment_body($id, $task);
+            $this->lib->attachment_get($attachment);
         }
 
         // if we arrive here, the requested part was not found
         header('HTTP/1.1 404 Not Found');
         exit;
-    }
-
-    /**
-     * Template object for attachment display frame
-     */
-    public function attachment_frame($attrib)
-    {
-        $attachment = $this->attachment;
-
-        $mimetype = strtolower($attachment['mimetype']);
-        list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
-
-        $attrib['src'] = './?' . str_replace('_frame=', ($ctype_primary == 'text' ? '_show=' : '_preload='), $_SERVER['QUERY_STRING']);
-
-        return html::iframe($attrib);
     }
 
 
@@ -900,10 +725,10 @@ class tasklist extends rcube_plugin
 
             // copy mail attachments to task
             if ($message->attachments && $this->driver->attachments) {
-                if (!is_array($_SESSION['tasklist_session']) || $_SESSION['tasklist_session']['id'] != $task['id']) {
-                    $_SESSION['tasklist_session'] = array();
-                    $_SESSION['tasklist_session']['id'] = $task['id'];
-                    $_SESSION['tasklist_session']['attachments'] = array();
+                if (!is_array($_SESSION[self::SESSION_KEY]) || $_SESSION[self::SESSION_KEY]['id'] != $task['id']) {
+                    $_SESSION[self::SESSION_KEY] = array();
+                    $_SESSION[self::SESSION_KEY]['id'] = $task['id'];
+                    $_SESSION[self::SESSION_KEY]['attachments'] = array();
                 }
 
                 foreach ((array)$message->attachments as $part) {
@@ -923,7 +748,7 @@ class tasklist extends rcube_plugin
 
                         // store new attachment in session
                         unset($attachment['status'], $attachment['abort'], $attachment['data']);
-                        $_SESSION['tasklist_session']['attachments'][$id] = $attachment;
+                        $_SESSION[self::SESSION_KEY]['attachments'][$id] = $attachment;
 
                         $attachment['id'] = 'rcmfile' . $attachment['id'];  # add prefix to consider it 'new'
                         $task['attachments'][] = $attachment;

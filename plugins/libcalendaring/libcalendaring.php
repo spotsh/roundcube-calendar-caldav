@@ -5,8 +5,9 @@
  *
  * Provides utility functions for calendar-related modules such as
  * - alarms display and dismissal
- * - recurrence computation and UI elements
- * - ical parsing and exporting
+ * - attachment handling
+ * - recurrence computation and UI elements (TODO)
+ * - ical parsing and exporting (TODO)
  *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
@@ -455,6 +456,246 @@ class libcalendaring extends rcube_plugin
 
         return html::tag('ul', $attrib + array('class' => 'toolbarmenu'), join("\n", $items), html::$common_attrib);
     }
+
+
+    /*********  Attachments handling  *********/
+
+    /**
+     * Handler for attachment uploads
+     */
+    public function attachment_upload($session_key, $id_prefix = '')
+    {
+        // Upload progress update
+        if (!empty($_GET['_progress'])) {
+            rcube_upload_progress();
+        }
+
+        $recid = $id_prefix . get_input_value('_id', RCUBE_INPUT_GPC);
+        $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
+
+        if (!is_array($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $recid) {
+            $_SESSION[$session_key] = array();
+            $_SESSION[$session_key]['id'] = $recid;
+            $_SESSION[$session_key]['attachments'] = array();
+        }
+
+        // clear all stored output properties (like scripts and env vars)
+        $this->rc->output->reset();
+
+        if (is_array($_FILES['_attachments']['tmp_name'])) {
+            foreach ($_FILES['_attachments']['tmp_name'] as $i => $filepath) {
+              // Process uploaded attachment if there is no error
+              $err = $_FILES['_attachments']['error'][$i];
+
+              if (!$err) {
+                $attachment = array(
+                    'path' => $filepath,
+                    'size' => $_FILES['_attachments']['size'][$i],
+                    'name' => $_FILES['_attachments']['name'][$i],
+                    'mimetype' => rc_mime_content_type($filepath, $_FILES['_attachments']['name'][$i], $_FILES['_attachments']['type'][$i]),
+                    'group' => $recid,
+                );
+
+                $attachment = $this->rc->plugins->exec_hook('attachment_upload', $attachment);
+              }
+
+              if (!$err && $attachment['status'] && !$attachment['abort']) {
+                  $id = $attachment['id'];
+
+                  // store new attachment in session
+                  unset($attachment['status'], $attachment['abort']);
+                  $_SESSION[$session_key]['attachments'][$id] = $attachment;
+
+                  if (($icon = $_SESSION[$session_key . '_deleteicon']) && is_file($icon)) {
+                      $button = html::img(array(
+                          'src' => $icon,
+                          'alt' => rcube_label('delete')
+                      ));
+                  }
+                  else {
+                      $button = Q(rcube_label('delete'));
+                  }
+
+                  $content = html::a(array(
+                      'href' => "#delete",
+                      'class' => 'delete',
+                      'onclick' => sprintf("return %s.remove_from_attachment_list('rcmfile%s')", JS_OBJECT_NAME, $id),
+                      'title' => rcube_label('delete'),
+                  ), $button);
+
+                  $content .= Q($attachment['name']);
+
+                  $this->rc->output->command('add2attachment_list', "rcmfile$id", array(
+                      'html' => $content,
+                      'name' => $attachment['name'],
+                      'mimetype' => $attachment['mimetype'],
+                      'classname' => rcmail_filetype2classname($attachment['mimetype'], $attachment['name']),
+                      'complete' => true), $uploadid);
+              }
+              else {  // upload failed
+                  if ($err == UPLOAD_ERR_INI_SIZE || $err == UPLOAD_ERR_FORM_SIZE) {
+                    $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+                        'size' => show_bytes(parse_bytes(ini_get('upload_max_filesize'))))));
+                  }
+                  else if ($attachment['error']) {
+                      $msg = $attachment['error'];
+                  }
+                  else {
+                      $msg = rcube_label('fileuploaderror');
+                  }
+
+                  $this->rc->output->command('display_message', $msg, 'error');
+                  $this->rc->output->command('remove_from_attachment_list', $uploadid);
+                }
+            }
+        }
+        else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            // if filesize exceeds post_max_size then $_FILES array is empty,
+            // show filesizeerror instead of fileuploaderror
+            if ($maxsize = ini_get('post_max_size'))
+                $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+                    'size' => show_bytes(parse_bytes($maxsize)))));
+            else
+                $msg = rcube_label('fileuploaderror');
+
+            $this->rc->output->command('display_message', $msg, 'error');
+            $this->rc->output->command('remove_from_attachment_list', $uploadid);
+        }
+
+        $this->rc->output->send('iframe');
+    }
+
+
+    /**
+     * Deliver an event/task attachment to the client
+     * (similar as in Roundcube core program/steps/mail/get.inc)
+     */
+    public function attachment_get($attachment)
+    {
+        ob_end_clean();
+
+        if ($attachment && $attachment['body']) {
+            // allow post-processing of the attachment body
+            $part = new rcube_message_part;
+            $part->filename  = $attachment['name'];
+            $part->size      = $attachment['size'];
+            $part->mimetype  = $attachment['mimetype'];
+
+            $plugin = $this->rc->plugins->exec_hook('message_part_get', array(
+                'body'     => $attachment['body'],
+                'mimetype' => strtolower($attachment['mimetype']),
+                'download' => !empty($_GET['_download']),
+                'part'     => $part,
+            ));
+
+            if ($plugin['abort'])
+                exit;
+
+            $mimetype = $plugin['mimetype'];
+            list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
+
+            $browser = $this->rc->output->browser;
+
+            // send download headers
+            if ($plugin['download']) {
+                header("Content-Type: application/octet-stream");
+                if ($browser->ie)
+                    header("Content-Type: application/force-download");
+            }
+            else if ($ctype_primary == 'text') {
+                header("Content-Type: text/$ctype_secondary");
+            }
+            else {
+                header("Content-Type: $mimetype");
+                header("Content-Transfer-Encoding: binary");
+            }
+
+            // display page, @TODO: support text/plain (and maybe some other text formats)
+            if ($mimetype == 'text/html' && empty($_GET['_download'])) {
+                $OUTPUT = new rcube_html_page();
+                // @TODO: use washtml on $body
+                $OUTPUT->write($plugin['body']);
+            }
+            else {
+                // don't kill the connection if download takes more than 30 sec.
+                @set_time_limit(0);
+
+                $filename = $attachment['name'];
+                $filename = preg_replace('[\r\n]', '', $filename);
+
+                if ($browser->ie && $browser->ver < 7)
+                    $filename = rawurlencode(abbreviate_string($filename, 55));
+                else if ($browser->ie)
+                    $filename = rawurlencode($filename);
+                else
+                    $filename = addcslashes($filename, '"');
+
+                $disposition = !empty($_GET['_download']) ? 'attachment' : 'inline';
+                header("Content-Disposition: $disposition; filename=\"$filename\"");
+
+                echo $plugin['body'];
+            }
+
+            exit;
+        }
+
+        // if we arrive here, the requested part was not found
+        header('HTTP/1.1 404 Not Found');
+        exit;
+    }
+
+    /**
+     * Show "loading..." page in attachment iframe
+     */
+    public function attachment_loading_page()
+    {
+        $url = str_replace('&_preload=1', '', $_SERVER['REQUEST_URI']);
+        $message = rcube_label('loadingdata');
+
+        header('Content-Type: text/html; charset=' . RCMAIL_CHARSET);
+        print "<html>\n<head>\n"
+            . '<meta http-equiv="refresh" content="0; url='.Q($url).'">' . "\n"
+            . '<meta http-equiv="content-type" content="text/html; charset='.RCMAIL_CHARSET.'">' . "\n"
+            . "</head>\n<body>\n$message\n</body>\n</html>";
+        exit;
+    }
+
+    /**
+     * Template object for attachment display frame
+     */
+    public function attachment_frame($attrib = array())
+    {
+        $mimetype = strtolower($this->attachment['mimetype']);
+        list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
+
+        $attrib['src'] = './?' . str_replace('_frame=', ($ctype_primary == 'text' ? '_show=' : '_preload='), $_SERVER['QUERY_STRING']);
+
+        return html::iframe($attrib);
+    }
+
+    /**
+     *
+     */
+    public function attachment_header($attrib = array())
+    {
+        $table = new html_table(array('cols' => 3));
+
+        if (!empty($this->attachment['name'])) {
+            $table->add('title', Q(rcube_label('filename')));
+            $table->add('header', Q($this->attachment['name']));
+            $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))));
+        }
+
+        if (!empty($this->attachment['size'])) {
+            $table->add('title', Q(rcube_label('filesize')));
+            $table->add('header', Q(show_bytes($this->attachment['size'])));
+        }
+
+        return $table->show($attrib);
+    }
+
+
+    /*********  Static utility functions  *********/
 
     /**
      * Convert the internal structured data into a vcalendar rrule 2.0 string
