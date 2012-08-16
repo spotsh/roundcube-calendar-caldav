@@ -15,6 +15,7 @@ $labels['trigger+M'] = 'minutes after';
 $labels['trigger+H'] = 'hours after';
 $labels['trigger+D'] = 'days after';
 $labels['addalarm'] = 'add alarm';
+
 $labels['alarmtitle'] = 'Upcoming events';
 $labels['dismissall'] = 'Dismiss all';
 $labels['dismiss'] = 'Dismiss';
