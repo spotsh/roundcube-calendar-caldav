@@ -429,6 +429,12 @@ class kolab_storage_folder
         $this->imap->set_folder($folder);
 
         $headers = $this->imap->get_message_headers($msguid);
+
+        // Message doesn't exist?
+        if (empty($headers)) {
+            return false;
+        }
+
         $object_type = kolab_format::mime2object_type($headers->others['x-kolab-type']);
         $content_type  = kolab_format::KTYPE_PREFIX . $object_type;
 
