@@ -231,7 +231,7 @@ class kolab_addressbook_ui
         $content = '';
 
         if (is_array($form['content']) && !empty($form['content'])) {
-            $table = new html_table(array('cols' => 2));
+            $table = new html_table(array('cols' => 2, 'class' => 'propform'));
             foreach ($form['content'] as $col => $colprop) {
                 $colprop['id'] = '_'.$col;
                 $label = !empty($colprop['label']) ? $colprop['label'] : rcube_label($col);
@@ -255,13 +255,13 @@ class kolab_addressbook_ui
 
         $request_key = $action . (isset($id) ? '.'.$id : '');
         $form_start = $this->rc->output->request_form(array(
-	        'name'    => 'form',
-	        'method'  => 'post',
-	        'task'    => $this->rc->task,
-	        'action'  => $action,
-	        'request' => $request_key,
-	        'noclose' => true,
-	    ) + $attrib);
+            'name'    => 'form',
+            'method'  => 'post',
+            'task'    => $this->rc->task,
+            'action'  => $action,
+            'request' => $request_key,
+            'noclose' => true,
+        ) + $attrib);
 
         if (is_array($hidden)) {
             foreach ($hidden as $field) {

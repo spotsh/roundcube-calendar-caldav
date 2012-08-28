@@ -117,6 +117,7 @@ pre {
 	background: #fff;
 	border-bottom: 1px solid #EBEBEB;
 	white-space: nowrap;
+	cursor: default;
 }
 
 #calendarslist li label {

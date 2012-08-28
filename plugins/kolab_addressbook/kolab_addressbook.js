@@ -181,9 +181,9 @@ rcube_webmail.prototype.book_update = function(data, old)
                 refrow = $('#rcmli'+n);
                 refrow.remove().attr({id: 'rcmliG'+data.id+groups[n].id});
                 $('a', refrow).removeAttr('onclick').unbind()
-            	    .click({source: data.id, id: groups[n].id}, function(e) {
-                	return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
-        	    });
+                    .click({source: data.id, id: groups[n].id}, function(e) {
+                        return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
+                    });
                 refrow.insertAfter(row);
                 row = refrow;
 
@@ -241,7 +241,7 @@ rcube_webmail.prototype.book_update = function(data, old)
                         $('a', refrow).removeAttr('onclick').unbind()
                             .click({source: id, id: groups[i].id}, function(e) {
                                 return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
-                    	    });
+                            });
                         refrow.insertAfter(row);
                         row = refrow;
 
