@@ -1,15 +1,9 @@
-/* Stylesheets for the Kolab Z-Push configuration UI */
-#configform {
-	padding-top: 15px;
-}
+/* Stylesheets for the Kolab ActiveSync configuration UI */
 
 #devices-table {
 	width: 100%;
 	table-layout: fixed;
-}
-
-#devices-table td {
-	cursor: pointer;
+	cursor: default;
 }
 
 #devices-table td span.devicetype {
@@ -38,24 +32,24 @@ div.subscriptionblock h3 {
 	font-size: 12px;
 	color: #333;
 	margin: 0 0 0.4em 0;
-	padding: 4px 4px 5px 30px;
-	background: url(foldertypes.png) 4px 4px no-repeat #fbfbfb;
+	padding: 4px 4px 0 30px;
+	background: url(foldertypes.png) 5px 4px no-repeat #eee;
 }
 
 div.subscriptionblock h3.contact {
-	background-position: 4px -16px;
+	background-position: 5px -16px;
 }
 
 div.subscriptionblock h3.event {
-	background-position: 4px -36px;
+	background-position: 5px -36px;
 }
 
 div.subscriptionblock h3.task {
-	background-position: 4px -56x;
+	background-position: 5px -56px;
 }
 
 div.subscriptionblock h3.note {
-	background-position: 4px -76px;
+	background-position: 5px -76px;
 }
 
 #foldersubscriptions thead td {
@@ -65,13 +59,22 @@ div.subscriptionblock h3.note {
 	text-align: center;
 }
 
+#foldersubscriptions thead tr td {
+	border-top: 1px solid #ddd;
+}
+
+#foldersubscriptions thead td img {
+	cursor: pointer;
+}
+
 #foldersubscriptions thead td.foldername {
     text-align: left;
 }
 
 #foldersubscriptions tbody td {
-	padding: 2px;
+	padding: 1px 2px;
 	border-top: 1px solid #ddd;
+	background-color: white;
 }
 
 #foldersubscriptions td label {
@@ -80,6 +83,7 @@ div.subscriptionblock h3.note {
 
 #foldersubscriptions td.mailbox {
 	min-width: 12em;
+	padding-right: 10px;
 }
 
 #foldersubscriptions td.virtual {
@@ -88,7 +92,6 @@ div.subscriptionblock h3.note {
 
 #foldersubscriptions {
 	overflow: auto;
-	max-height: 400px;
 	margin-top: 0.5em;
 }
 

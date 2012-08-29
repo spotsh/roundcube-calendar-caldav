@@ -28,5 +28,6 @@ $labels['savingerror'] = 'Failed to save configuration';
 $labels['notsupported'] = 'Your server does not support metadata/annotations';
 $labels['devicedeleteconfirm'] = 'Do you really want to delete the configuration for this device?';
 $labels['successfullydeleted'] = 'The device configuration was successfully removed';
+$labels['devicenotfound'] = 'Unable to read device configuration';
 
 ?>

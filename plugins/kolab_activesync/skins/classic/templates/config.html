@@ -15,44 +15,25 @@
 <div id="mainscreen">
 
 <div id="sectionslist">
-<div id="directorylist-title" class="boxtitle"><roundcube:label name="kolab_activesync.devices" /></div>
-<div class="boxlistcontent">
-	<roundcube:object name="plugin.devicelist" id="devices-table" class="records-table" cellspacing="0" />
-</div>
-<div class="boxfooter">
-	<roundcube:button type="link" command="plugin.delete-device" title="kolab_activesync.deletedevice" class="buttonPas delete" classAct="button delete" content=" " />
-</div>
-</div>
-
-<div id="prefs-box">
-	<div class="boxtitle" style="display:none"><roundcube:label name="kolab_activesync.syncsettings"></div>
-	<form action="#" method="post" id="configform" class="boxcontent" style="display:none">
-		<fieldset>
-			<legend><roundcube:label name="kolab_activesync.deviceconfig" /></legend>
-			<roundcube:object name="plugin.deviceconfigform" form="configform" />
-		</fieldset>
-		<fieldset>
-			<legend><roundcube:label name="kolab_activesync.folderstosync" /></legend>
-			<roundcube:object name="plugin.foldersubscriptions" form="configform" id="foldersubscriptions" syncicon="synchronize.png" alarmicon="alarm-clock.png" />
-		</fieldset>
-		<p class="formbuttons">
-			<roundcube:button type="input" class="button mainaction" command="plugin.save-config" label="save" />
-		</p>
-	</form>
-	<div id="introtext">
-		<div class="inner"><div class="bordered">
-			<roundcube:label name="kolab_activesync.nodevices" html="true" />
-		</div></div>
-		<div class="pointer-left"></div>
+	<div id="directorylist-title" class="boxtitle"><roundcube:label name="kolab_activesync.devices" /></div>
+	<div class="boxlistcontent">
+		<roundcube:object name="plugin.devicelist" id="devices-table" class="records-table" cellspacing="0" />
 	</div>
-</div>
-
+	<div class="boxfooter">
+		<roundcube:button type="link" command="plugin.delete-device" title="kolab_activesync.deletedevice" class="buttonPas delete" classAct="button delete" content=" " />
+	</div>
 </div>
 
 <script type="text/javascript">
 	var viewsplit = new rcube_splitter({ id:'devicelistsplitter', p1: 'sectionslist', p2: 'prefs-box', orientation: 'v', relative: true, start: 195 });
 	rcmail.add_onload('viewsplit.init()');
 </script>
+
+<div id="prefs-box">
+	<roundcube:frame name="activesyncframe" id="activesync-frame" style="width:100%; height:100%" frameborder="0" src="/watermark.html" />
+</div>
+
+</div>
 
 </body>
 </html>

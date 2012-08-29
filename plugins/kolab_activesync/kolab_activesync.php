@@ -49,8 +49,9 @@ class kolab_activesync extends rcube_plugin
         $this->require_plugin('jqueryui');
         $this->require_plugin('libkolab');
 
-        $this->register_action('plugin.activesyncconfig', array($this, 'config_view'));
-        $this->register_action('plugin.activesyncjson', array($this, 'json_command'));
+        $this->register_action('plugin.activesync', array($this, 'config_view'));
+        $this->register_action('plugin.activesync-config', array($this, 'config_frame'));
+        $this->register_action('plugin.activesync-json', array($this, 'json_command'));
 
         $this->add_texts('localization/', true);
         $this->include_script('kolab_activesync.js');
@@ -65,33 +66,9 @@ class kolab_activesync extends rcube_plugin
         $imei = get_input_value('id', RCUBE_INPUT_GPC);
 
         switch ($cmd) {
-        case 'load':
-            $devices = $this->list_devices();
-
-            if ($device = $devices[$imei]) {
-                $result['id'] = $imei;
-                $result['devicealias'] = $device['ALIAS'];
-//                $result['syncmode'] = intval($device['MODE']);
-//                $result['laxpic'] = intval($device['LAXPIC']);
-                $result['subscribed'] = array();
-
-                foreach ($this->folder_meta() as $folder => $meta) {
-                    if ($meta['FOLDER'][$imei]['S']) {
-                        $result['subscribed'][$folder] = intval($meta['FOLDER'][$imei]['S']);
-                    }
-                }
-
-                $this->rc->output->command('plugin.activesync_data_ready', $result);
-            }
-            else {
-                $this->rc->output->show_message($this->gettext('devicenotfound'), 'error');
-            }
-            break;
-
         case 'save':
-            $devices      = $this->list_devices();
-            $device       = $devices[$imei];
-
+            $devices       = $this->list_devices();
+            $device        = $devices[$imei];
             $subscriptions = (array) get_input_value('subscribed', RCUBE_INPUT_POST);
             $devicealias   = get_input_value('devicealias', RCUBE_INPUT_POST, true);
 //            $syncmode     = intval(get_input_value('syncmode', RCUBE_INPUT_POST));
@@ -115,7 +92,7 @@ class kolab_activesync extends rcube_plugin
                 }
 
                 $this->rc->output->command('plugin.activesync_save_complete', array(
-                    'success' => !$err, 'id' => $imei, 'devicealias' => Q($devicealias)));
+                    'success' => !$err, 'id' => $imei, 'alias' => Q($devicealias)));
             }
 
             if ($err)
@@ -130,7 +107,8 @@ class kolab_activesync extends rcube_plugin
 
             if ($success) {
                 $this->rc->output->show_message($this->gettext('successfullydeleted'), 'confirmation');
-                $this->rc->output->redirect(array('action' => 'plugin.activesyncconfig'));  // reload UI
+                $this->rc->output->command('plugin.activesync_save_complete', array(
+                    'success' => true, 'id' => $imei, 'delete' => true));
             }
             else
                 $this->rc->output->show_message($this->gettext('savingerror'), 'error');
@@ -142,7 +120,7 @@ class kolab_activesync extends rcube_plugin
     }
 
     /**
-     * Render main UI for device configuration
+     * Render main UI for devices configuration
      */
     public function config_view()
     {
@@ -158,10 +136,47 @@ class kolab_activesync extends rcube_plugin
         $this->ui = new kolab_activesync_ui($this);
 
         $this->register_handler('plugin.devicelist', array($this->ui, 'device_list'));
+
+        $this->rc->output->send('kolab_activesync.config');
+    }
+
+    /**
+     * Render device configuration form
+     */
+    public function config_frame()
+    {
+        $storage = $this->rc->get_storage();
+
+        // checks if IMAP server supports any of METADATA, ANNOTATEMORE, ANNOTATEMORE2
+        if (!($storage->get_capability('METADATA') || $storage->get_capability('ANNOTATEMORE') || $storage->get_capability('ANNOTATEMORE2'))) {
+            $this->rc->output->show_message($this->gettext('notsupported'), 'error');
+        }
+
+        require_once $this->home . '/kolab_activesync_ui.php';
+
+        $this->ui = new kolab_activesync_ui($this);
+
+        if (!empty($_GET['_init'])) {
+            return $this->rc->output->send('kolab_activesync.configempty');
+        }
+
         $this->register_handler('plugin.deviceconfigform', array($this->ui, 'device_config_form'));
         $this->register_handler('plugin.foldersubscriptions', array($this->ui, 'folder_subscriptions'));
 
-        $this->rc->output->send('kolab_activesync.config');
+        $imei    = get_input_value('_id', RCUBE_INPUT_GPC);
+        $devices = $this->list_devices();
+
+        if ($device = $devices[$imei]) {
+            $this->ui->device        = $device;
+            $this->ui->device['_id'] = $imei;
+            $this->rc->output->set_env('active_device', $imei);
+            $this->rc->output->command('parent.enable_command','plugin.delete-device', true);
+        }
+        else {
+            $this->rc->output->show_message($this->gettext('devicenotfound'), 'error');
+        }
+
+        $this->rc->output->send('kolab_activesync.configedit');
     }
 
     /**
@@ -259,6 +274,10 @@ class kolab_activesync extends rcube_plugin
      */
     public function folder_set($name, $deviceid, $flag)
     {
+        if (empty($deviceid)) {
+            return false;
+        }
+
         // get folders activesync config
         $metadata = $this->folder_meta();
         $metadata = $metadata[$name];
@@ -415,7 +434,7 @@ class kolab_activesync extends rcube_plugin
     private function unserialize_metadata($str)
     {
         if (!empty($str)) {
-            $data = json_decode($str, true);
+            $data = @json_decode($str, true);
             return $data;
         }
 

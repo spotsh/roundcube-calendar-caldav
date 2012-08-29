@@ -19,9 +19,9 @@
 		<email>bruederli@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2012-07-02</date>
+	<date>2012-08-29</date>
 	<version>
-		<release>1.0</release>
+		<release>0.9</release>
 		<api>1.0</api>
 	</version>
 	<stability>
@@ -39,6 +39,8 @@
 			<file name="localization/en_US.inc" role="data"></file>
 			<file name="localization/pl_PL.inc" role="data"></file>
 			<file name="skins/classic/templates/config.html" role="data"></file>
+			<file name="skins/classic/templates/configedit.html" role="data"></file>
+			<file name="skins/classic/templates/configempty.html" role="data"></file>
 			<file name="skins/classic/config.css" role="data"></file>
 			<file name="skins/classic/alarm-clock.png" role="data"></file>
 			<file name="skins/classic/deviceactions.png" role="data"></file>
@@ -46,6 +48,8 @@
 			<file name="skins/classic/pointer-left.gif" role="data"></file>
 			<file name="skins/classic/synchronize.png" role="data"></file>
 			<file name="skins/larry/templates/config.html" role="data"></file>
+			<file name="skins/larry/templates/configedit.html" role="data"></file>
+			<file name="skins/larry/templates/configempty.html" role="data"></file>
 			<file name="skins/larry/config.css" role="data"></file>
 			<file name="skins/larry/alarm-clock.png" role="data"></file>
 			<file name="skins/larry/deviceactions.png" role="data"></file>

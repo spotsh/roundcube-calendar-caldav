@@ -23,150 +23,153 @@
 
 function kolab_activesync_config()
 {
-    /* private members */
-    var me = this;
-    var http_lock = null;
-    var active_device = null;
+  /* private members */
+  var me = this,
+    http_lock = null,
+    active_device = null;
 
+  rcmail.register_command('plugin.save-config', save_config);
+  rcmail.register_command('plugin.delete-device', delete_device_config);
+  rcmail.addEventListener('plugin.activesync_save_complete', save_complete);
 
-    /* constructor */
+  if (rcmail.gui_objects.devicelist) {
     var devicelist = new rcube_list_widget(rcmail.gui_objects.devicelist,
-        { multiselect:true, draggable:false, keyboard:true });
+      { multiselect:true, draggable:false, keyboard:true });
     devicelist.addEventListener('select', select_device);
     devicelist.init();
 
-    rcmail.register_command('plugin.save-config', save_config);
-    rcmail.register_command('plugin.delete-device', delete_device_config);
-    rcmail.addEventListener('plugin.activesync_data_ready', device_data_ready);
-    rcmail.addEventListener('plugin.activesync_save_complete', save_complete);
+    // load frame if there are no devices
+    if (!rcmail.env.devicecount)
+      device_select();
+  }
+  else {
+    if (rcmail.env.active_device)
+      rcmail.enable_command('plugin.save-config', true);
 
-    $('input.alarm').change(function(e){ if (this.checked) $('#'+this.id.replace(/_alarm/, '')).prop('checked', this.checked); });
-    $('input.subscription').change(function(e){ if (!this.checked) $('#'+this.id+'_alarm').prop('checked', false); });
-    $(window).bind('resize', resize_ui);
-
-    $('.subscriptionblock thead td.subscription img, .subscriptionblock thead td.alarm img').click(function(e){
-      var $this = $(this);
-      var classname = $this.parent().get(0).className;
-      var check = !($this.data('checked') || false);
-      $this.css('cursor', 'pointer').data('checked', check)
-        .closest('table').find('input.'+classname).prop('checked', check).change();
+    $('input.alarm').change(function(e) {
+      if (this.checked)
+        $('#'+this.id.replace(/_alarm/, '')).prop('checked', this.checked);
     });
 
-    // select first device
-    if (rcmail.env.devicecount) {
-      for (var imei in rcmail.env.devices)
-        break;
-      devicelist.select(imei);
+    $('input.subscription').change(function(e) {
+      if (!this.checked)
+        $('#'+this.id+'_alarm').prop('checked', false);
+    });
+
+    $('.subscriptionblock thead td.subscription img, .subscriptionblock thead td.alarm img').click(function(e) {
+      var $this = $(this),
+        classname = $this.parent().get(0).className,
+        list = $this.closest('table').find('input.'+classname),
+        check = list.not(':checked').length > 0;
+
+      list.prop('checked', check).change();
+    });
+  }
+
+  /* private methods */
+  function select_device(list)
+  {
+    active_device = list.get_single_selection();
+
+    if (active_device)
+      device_select(active_device);
+    else if (rcmail.env.contentframe)
+      rcmail.show_contentframe(false);
+  };
+
+  function device_select(id)
+  {
+    var win, target = window, url = '&_action=plugin.activesync-config';
+
+    if (id)
+      url += '&_id='+urlencode(id);
+    else if (!rcmail.env.devicecount)
+      url += '&_init=1';
+    else {
+      rcmail.show_contentframe(false);
+      return;
     }
 
-    /* private methods */
-    function select_device(list)
-    {
-        active_device = list.get_single_selection();
-        rcmail.enable_command('plugin.save-config', 'plugin.delete-device', true);
-
-        if (active_device) {
-            http_lock = rcmail.set_busy(true, 'loading');
-            rcmail.http_request('plugin.activesyncjson', { cmd:'load', id:active_device }, http_lock);
-        }
-
-        $('#introtext').hide();
+    if (win = rcmail.get_frame_window(rcmail.env.contentframe)) {
+      target = win;
+      url += '&_framed=1';
     }
 
-    // callback from server after loading device data
-    function device_data_ready(data)
-    {
-        // reset form first
-        $('input.alarm:checked').prop('checked', false);
-        $('input.subscription:checked').prop('checked', false).change();
+    if (String(target.location.href).indexOf(url) >= 0)
+      rcmail.show_contentframe(true);
+    else
+      rcmail.location_href(rcmail.env.comm_path+url, target, true);
+  };
 
-        if (data.id && data.id == active_device) {
-            $('#config-device-alias').val(data.devicealias);
-//            $('#config-device-mode').val(data.syncmode);
-//            $('#config-device-laxpic').prop('checked', data.laxpic ? true : false);
+  // submit current configuration form to server
+  function save_config()
+  {
+    // TODO: validate device info
+    var data = {
+      cmd: 'save',
+      id: rcmail.env.active_device,
+      devicealias: $('#config-device-alias').val(),
+//      syncmode: $('#config-device-mode option:selected').val(),
+//      laxpic: $('#config-device-laxpic').get(0).checked ? 1 : 0
+    };
 
-            $('input.subscription').each(function(i, elem){
-                var key = elem.value;
-                elem.checked = data.subscribed[key] ? true : false;
-            }).change();
-            $('input.alarm').each(function(i, elem){
-                var key = elem.value;
-                elem.checked = data.subscribed[key] == 2;
-            });
+    if (data.devicealias == data.id)
+      data.devicealias = '';
 
-            $('#configform, #prefs-box .boxtitle').show();
-            resize_ui();
-        }
-        else {
-            $('#configform, #prefs-box .boxtitle').hide();
-        }
+    data.subscribed = {};
+    $('input.subscription:checked').each(function(i, elem) {
+      data.subscribed[elem.value] = 1;
+    });
+    $('input.alarm:checked').each(function(i, elem) {
+      if (data.subscribed[elem.value])
+        data.subscribed[elem.value] = 2;
+    });
+
+    http_lock = rcmail.set_busy(true, 'kolab_activesync.savingdata');
+    rcmail.http_post('plugin.activesync-json', data, http_lock);
+  };
+
+  // callback function when saving has completed
+  function save_complete(p)
+  {
+    // device updated
+    if (p.success && p.alias)
+      parent.window.activesync_object.update_list(p.id, p.alias);
+
+    // device deleted
+    if (p.success && p.id && p.delete) {
+      active_device = null;
+      device_select();
+      devicelist.remove_row(p.id);
+      rcmail.enable_command('plugin.delete-device', false);
     }
-
-    // submit current configuration form to server
-    function save_config()
-    {
-        // TODO: validate device info
-        var data = {
-            cmd: 'save',
-            id: active_device,
-            devicealias: $('#config-device-alias').val(),
-//            syncmode: $('#config-device-mode option:selected').val(),
-//            laxpic: $('#config-device-laxpic').get(0).checked ? 1 : 0
-        };
-
-        data.subscribed = {};
-        $('input.subscription:checked').each(function(i, elem){
-            data.subscribed[elem.value] = 1;
-        });
-        $('input.alarm:checked').each(function(i, elem){
-            if (data.subscribed[elem.value])
-                data.subscribed[elem.value] = 2;
-        });
-
-        http_lock = rcmail.set_busy(true, 'kolab_activesync.savingdata');
-        rcmail.http_post('plugin.activesyncjson', data, http_lock);
+  };
+  // handler for delete commands
+  function delete_device_config()
+  {
+    if (active_device && confirm(rcmail.gettext('devicedeleteconfirm', 'kolab_activesync'))) {
+      http_lock = rcmail.set_busy(true, 'kolab_activesync.savingdata');
+      rcmail.http_post('plugin.activesync-json', { cmd:'delete', id:active_device }, http_lock);
     }
+  };
 
-    // callback function when saving has completed
-    function save_complete(p)
-    {
-        if (p.success && p.devicealias) {
-            $('#devices-table tr.selected span.devicealias').html(p.devicealias);
-            rcmail.env.devices[p.id].ALIAS = p.devicealias;
-        }
-    }
-
-    // handler for delete commands
-    function delete_device_config()
-    {
-        if (active_device && confirm(rcmail.gettext('devicedeleteconfirm', 'kolab_activesync'))) {
-            http_lock = rcmail.set_busy(true, 'kolab_activesync.savingdata');
-            rcmail.http_post('plugin.activesyncjson', { cmd:'delete', id:active_device }, http_lock);
-        }
-    }
-
-    // handler for window resize events: sets max-height of folders list scroll container
-    function resize_ui()
-    {
-        if (active_device) {
-//@TODO: this doesn't work good with Larry
-            var h = $(window).height(), pos = $('#foldersubscriptions').offset();
-            $('#foldersubscriptions').css('max-height', (h - pos.top - 90) + 'px');
-        }
-    }
-}
+  this.update_list = function(id, name)
+  {
+    $('#devices-table tr.selected span.devicealias').html(name);
+  }
+};
 
 
 window.rcmail && rcmail.addEventListener('init', function(evt) {
-    var ACTION_CONFIG = 'plugin.activesyncconfig';
+  // add button to tabs list
+  var tab = $('<span>').attr('id', 'settingstabpluginactivesync').addClass('tablink'),
+    button = $('<a>').attr('href', rcmail.env.comm_path+'&_action=plugin.activesync')
+      .html(rcmail.gettext('tabtitle', 'kolab_activesync'))
+      .appendTo(tab);
+  rcmail.add_element(tab, 'tabs');
 
-    // add button to tabs list
-    var tab = $('<span>').attr('id', 'settingstabpluginactivesyncconfig').addClass('tablink');
-    var button = $('<a>').attr('href', rcmail.env.comm_path+'&_action=plugin.activesyncconfig').html(rcmail.gettext('tabtitle', 'kolab_activesync')).appendTo(tab);
-    rcmail.add_element(tab, 'tabs');
-
-    if (rcmail.env.action == ACTION_CONFIG)
-        new kolab_activesync_config();
+  if (/^plugin.activesync/.test(rcmail.env.action))
+    activesync_object = new kolab_activesync_config();
 });
 
 

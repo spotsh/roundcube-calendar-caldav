@@ -1,8 +1,4 @@
-/* Stylesheets for the Kolab Z-Push configuration UI */
-
-#configform {
-	padding-top: 15px;
-}
+/* Stylesheets for the Kolab ActiveSync configuration UI */
 
 #sectionslist {
 	width: 220px;
@@ -16,13 +12,13 @@
 	bottom: 0;
 }
 
+#activesync-frame {
+	border-radius: 3px;
+}
+
 #devices-table {
 	width: 100%;
 	table-layout: fixed;
-}
-
-#devices-table td {
-	cursor: pointer;
 }
 
 #devices-table td span.devicetype {
@@ -76,6 +72,10 @@ div.subscriptionblock h3.note {
   text-align: left;
 }
 
+#foldersubscriptions thead td img {
+	cursor: pointer;
+}
+
 #foldersubscriptions tbody td {
 	background: #eee;
 	padding: 2px;
@@ -98,7 +98,6 @@ div.subscriptionblock h3.note {
 
 #foldersubscriptions {
 	overflow: auto;
-	max-height: 400px;
 	margin-top: 0.5em;
 }
 
