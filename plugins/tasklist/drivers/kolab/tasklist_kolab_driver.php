@@ -84,14 +84,27 @@ class tasklist_kolab_driver extends tasklist_driver
 
             $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);
 
+            if ($folder->get_owner() == $_SESSION['username']) {
+                $readonly = false;
+                $alarms = true;
+            }
+            else {
+                $alarms = false;
+                $readonly = true;
+                if (($rights = $folder->get_myrights()) && !PEAR::isError($rights)) {
+                    if (strpos($rights, 'i') !== false)
+                      $readonly = false;
+                }
+            }
+
             $list_id = kolab_storage::folder_id($utf7name);
             $tasklist = array(
                 'id' => $list_id,
                 'name' => $name,
                 'editname' => $editname,
                 'color' => 'CC0000',
-                'showalarms' => $prefs[$list_id]['showalarms'],
-                'editable' => true,
+                'showalarms' => isset($prefs[$list_id]['showalarms']) ? $prefs[$list_id]['showalarms'] : $alarms,
+                'editable' => !$readonly,
                 'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
                 'parentfolder' => $path_imap,
             );

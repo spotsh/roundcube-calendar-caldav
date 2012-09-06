@@ -131,7 +131,7 @@ class tasklist_ui
         $attrib['name'] = 'list';
         $select = new html_select($attrib);
         foreach ((array)$this->plugin->driver->get_lists() as $id => $prop) {
-            if (!$prop['readonly'])
+            if ($prop['editable'])
                 $select->add($prop['name'], $id);
         }
 
