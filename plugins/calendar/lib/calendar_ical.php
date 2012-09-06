@@ -124,7 +124,7 @@ class calendar_ical
   public function get_parser()
   {
     // use Horde:iCalendar to parse vcalendar file format
-    // @include_once('Horde/iCalendar.php');
+    @include_once('Horde/Icalendar.php');
 
     if (!class_exists('Horde_iCalendar'))
       require_once($this->cal->home . '/lib/Horde_iCalendar.php');
