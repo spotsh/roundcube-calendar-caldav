@@ -146,11 +146,13 @@ function rcube_tasklist_ui(settings)
 
         // quick-add a task
         $(rcmail.gui_objects.quickaddform).submit(function(e){
-            var tasktext = this.elements.text.value;
-            var rec = { id:-(++idcount), title:tasktext, readonly:true, mask:0, complete:0 };
+            var tasktext = this.elements.text.value,
+              rec = { id:-(++idcount), title:tasktext, readonly:true, mask:0, complete:0 };
 
             save_task({ tempid:rec.id, raw:tasktext, list:me.selected_list }, 'new');
             render_task(rec);
+
+            $('#listmessagebox').hide();
 
             // clear form
             this.reset();
