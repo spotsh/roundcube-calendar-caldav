@@ -274,6 +274,7 @@ body.attachmentwin #topnav .topright {
 	bottom: 0;
 	padding-bottom: 28px;
 	background: rgba(255, 255, 255, 0.2);
+	overflow: visible;
 }
 
 #message.statusbar {
