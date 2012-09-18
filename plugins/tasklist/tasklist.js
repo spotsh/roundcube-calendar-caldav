@@ -130,6 +130,7 @@ function rcube_tasklist_ui(settings)
         rcmail.addEventListener('plugin.update_counts', update_counts);
         rcmail.addEventListener('plugin.insert_tasklist', insert_list);
         rcmail.addEventListener('plugin.update_tasklist', update_list);
+        rcmail.addEventListener('plugin.destroy_tasklist', destroy_list);
         rcmail.addEventListener('plugin.reload_data', function(){ list_tasks(null); });
         rcmail.addEventListener('plugin.unlock_saving', unlock_saving);
 
@@ -386,6 +387,24 @@ function rcube_tasklist_ui(settings)
     }
 
     /**
+     * Remove all tasks of the given list from the UI
+     */
+    function remove_tasks(list_id)
+    {
+        // remove all tasks of the given list from index
+        var newindex = $.grep(listindex, function(id, i){
+            return listdata[id] && listdata[id].list != list_id;
+        });
+
+        listindex = newindex;
+        render_tasklist();
+
+        // avoid reloading
+        me.tasklists[list_id].active = false;
+        loadstate.lists = active_lists();
+    }
+
+    /**
      * Callback if task data from server is ready
      */
     function data_ready(response)
@@ -430,6 +449,9 @@ function rcube_tasklist_ui(settings)
             msgbox.html(rcmail.gettext('notasksfound','tasklist')).show();
     }
 
+    /**
+     *
+     */
     function append_tags(taglist)
     {
         // find new tags
@@ -699,9 +721,9 @@ function rcube_tasklist_ui(settings)
             drop_rec = listdata[drop_id];
 
         // drop target is another list
-        if ($(this).data('type') == 'tasklist') {
+        if (drag_rec && $(this).data('type') == 'tasklist') {
             var  drop_list = me.tasklists[drop_id],
-               from_list = me.tasklists[drop_rec.list];
+               from_list = me.tasklists[drag_rec.list];
             return drop_id != drag_rec.list && drop_list && drop_list.editable && from_list && from_list.editable;
         }
 
@@ -1205,8 +1227,30 @@ function rcube_tasklist_ui(settings)
     function list_remove(id)
     {
         var list = me.tasklists[id];
-        if (list && list.editable) {
-            alert('To be implemented')
+        if (list && list.editable && confirm(rcmail.gettext('deletelistconfirm', 'tasklist'))) {
+            saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
+            rcmail.http_post('tasklist', { action:'remove', l:{ id:list.id } });
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Callback from server to finally remove the given list
+     */
+    function destroy_list(prop)
+    {
+        var list = me.tasklists[prop.id],
+            li = rcmail.get_folder_li(prop.id, 'rcmlitasklist');
+
+        if (li) {
+            $(li).remove();
+        }
+        if (list) {
+            list.active = false;
+            // delete me.tasklists[prop.id];
+            unlock_saving();
+            remove_tasks(list.id);
         }
     }
 
@@ -1220,8 +1264,8 @@ function rcube_tasklist_ui(settings)
             .append('<span class="handle">&nbsp;</span>')
             .append('<span class="listname">'+Q(prop.name)+'</span>');
         $(rcmail.gui_objects.folderlist).append(li);
-        init_tasklist_li(li.get(0), prop.id);
         me.tasklists[prop.id] = prop;
+        init_tasklist_li(li.get(0), prop.id);
     }
 
     /**
@@ -1358,7 +1402,8 @@ function rcube_tasklist_ui(settings)
             if (me.tasklists[id]) {  // add or remove event source on click
                 me.tasklists[id].active = this.checked;
                 fetch_counts();
-                list_tasks(null);
+                if (!this.checked) remove_tasks(id);
+                else               list_tasks(null);
                 rcmail.http_post('tasklist', { action:'subscribe', l:{ id:id, active:me.tasklists[id].active?1:0 } });
             }
         }).data('id', id).get(0).checked = me.tasklists[id].active || false;
@@ -1366,7 +1411,7 @@ function rcube_tasklist_ui(settings)
         $(li).click(function(e){
             var id = $(this).data('id');
             rcmail.select_folder(id, 'rcmlitasklist');
-            rcmail.enable_command('list-edit', 'list-remove', 'import', me.tasklists[id].editable);
+            rcmail.enable_command('list-edit', 'list-remove', 'list-import', me.tasklists[id].editable);
             me.selected_list = id;
         })
         .dblclick(function(e){

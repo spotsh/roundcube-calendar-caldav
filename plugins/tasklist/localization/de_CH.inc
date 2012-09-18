@@ -60,3 +60,4 @@ $labels['savingdata'] = 'Daten werden gespeichert...';
 $labels['errorsaving'] = 'Fehler beim Speichern.';
 $labels['notasksfound'] = 'Für die aktuellen Kriterien wurden keine Aufgaben gefunden.';
 $labels['invalidstartduedates'] = 'Beginn der Aufgabe darf nicht grösser als das Enddatum sein.';
+$labels['deletelistconfirm'] = 'Möchten Sie diese Liste mit allen Aufgaben wirklich löschen?';

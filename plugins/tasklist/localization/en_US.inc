@@ -60,3 +60,4 @@ $labels['savingdata'] = 'Saving data...';
 $labels['errorsaving'] = 'Failed to save data.';
 $labels['notasksfound'] = 'No tasks found for the given criteria';
 $labels['invalidstartduedates'] = 'Start date must not be greater than due date.';
+$labels['deletelistconfirm'] = 'Do you really want to delete this list with all its tasks?';

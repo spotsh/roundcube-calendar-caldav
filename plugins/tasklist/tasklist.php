@@ -143,6 +143,8 @@ class tasklist extends rcube_plugin
             $this->driver = new $driver_class($this);
             break;
         }
+
+        $this->rc->output->set_env('tasklist_driver', $driver_name);
     }
 
 
@@ -363,7 +365,7 @@ class tasklist extends rcube_plugin
 
         switch ($action) {
         case 'new':
-            $list += array('showalarms' => true, 'active' => true);
+            $list += array('showalarms' => true, 'active' => true, 'editable' => true);
             if ($insert_id = $this->driver->create_list($list)) {
                 $list['id'] = $insert_id;
                 $this->rc->output->command('plugin.insert_tasklist', $list);
@@ -382,6 +384,11 @@ class tasklist extends rcube_plugin
 
         case 'subscribe':
             $success = $this->driver->subscribe_list($list);
+            break;
+
+        case 'remove':
+            if (($success = $this->driver->remove_list($list)))
+                $this->rc->output->command('plugin.destroy_tasklist', $list);
             break;
         }
 

@@ -175,7 +175,27 @@ class tasklist_database_driver extends tasklist_driver
      */
     public function remove_list($prop)
     {
-        // TODO: implement this
+        $list_id = $prop['id'];
+        if ($this->lists[$list_id]) {
+            // delete all tasks linked with this list
+            $this->rc->db->query(
+                "DELETE FROM " . $this->db_tasks . "
+                 WHERE tasklist_id=?",
+                $lisr_id
+            );
+
+            // delete list record
+            $query = $this->rc->db->query(
+                "DELETE FROM " . $this->db_lists . "
+                 WHERE tasklist_id=?
+                 AND user_id=?",
+                $list_id,
+                $this->rc->user->ID
+            );
+
+            return $this->rc->db->affected_rows($query);
+        }
+
         return false;
     }
 
