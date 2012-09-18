@@ -111,13 +111,13 @@ function rcube_tasklist_ui(settings)
      */
     function init()
     {
-        // sinitialize task list selectors
+        // initialize task list selectors
         for (var id in me.tasklists) {
             if ((li = rcmail.get_folder_li(id, 'rcmlitasklist'))) {
                 init_tasklist_li(li, id);
             }
 
-            if (!me.tasklists.readonly && !me.selected_list) {
+            if (me.tasklists[id].editable && !me.selected_list) {
                 me.selected_list = id;
                 rcmail.enable_command('addtask', true);
                 $(li).click();
@@ -284,7 +284,7 @@ function rcube_tasklist_ui(settings)
 
             if (item.length && (id = item.data('id')) && (rec = listdata[id])) {
                 var list = rec.list && me.tasklists[rec.list] ? me.tasklists[rec.list] : {};
-                if (rec.readonly || list.readonly)
+                if (rec.readonly || !list.editable)
                     task_show_dialog(id);
                 else
                     task_edit_dialog(id, 'edit');
@@ -674,7 +674,7 @@ function rcube_tasklist_ui(settings)
 
     function draggable_start(event, ui)
     {
-        $('.taskhead, #rootdroppable').droppable({
+        $('.taskhead, #rootdroppable, #'+rcmail.gui_objects.folderlist.id+' li').droppable({
             hoverClass: 'droptarget',
             accept: droppable_accept,
             drop: draggable_dropped,
@@ -694,14 +694,21 @@ function rcube_tasklist_ui(settings)
     function droppable_accept(draggable)
     {
         var drag_id = draggable.data('id'),
-            parent_id = $(this).data('id'),
+            drop_id = $(this).data('id'),
             drag_rec = listdata[drag_id] || {},
-            drop_rec = listdata[parent_id];
+            drop_rec = listdata[drop_id];
+
+        // drop target is another list
+        if ($(this).data('type') == 'tasklist') {
+            var  drop_list = me.tasklists[drop_id],
+               from_list = me.tasklists[drop_rec.list];
+            return drop_id != drag_rec.list && drop_list && drop_list.editable && from_list && from_list.editable;
+        }
 
         if (drop_rec && drop_rec.list != drag_rec.list)
             return false;
 
-        if (parent_id == drag_rec.parent_id)
+        if (drop_id == drag_rec.parent_id)
             return false;
 
         while (drop_rec && drop_rec.parent_id) {
@@ -715,23 +722,34 @@ function rcube_tasklist_ui(settings)
 
     function draggable_dropped(event, ui)
     {
-        var parent_id = $(this).data('id'),
+        var drop_id = $(this).data('id'),
             task_id = ui.draggable.data('id'),
-            parent = parent_id ? $('li[rel="'+parent_id+'"] > ul.childtasks', rcmail.gui_objects.resultlist) : $(rcmail.gui_objects.resultlist),
             rec = listdata[task_id],
-            li;
+            parent, li;
 
-        if (rec && parent.length) {
-            // submit changes to server
-            rec.parent_id = parent_id || 0;
-            save_task(rec, 'edit');
+        // dropped on another list -> move
+        if ($(this).data('type') == 'tasklist') {
+            if (rec) {
+                save_task({ id:rec.id, list:drop_id, _fromlist:rec.list }, 'move');
+                rec.list = drop_id;
+            }
+        }
+        // dropped on a new parent task or root
+        else {
+            parent = drop_id ? $('li[rel="'+drop_id+'"] > ul.childtasks', rcmail.gui_objects.resultlist) : $(rcmail.gui_objects.resultlist)
 
-            li = ui.draggable.parent();
-            li.slideUp(300, function(){
-                li.appendTo(parent);
-                resort_task(rec, li);
-                li.slideDown(300);
-            });
+            if (rec && parent.length) {
+                // submit changes to server
+                rec.parent_id = drop_id || 0;
+                save_task(rec, 'edit');
+
+                li = ui.draggable.parent();
+                li.slideUp(300, function(){
+                    li.appendTo(parent);
+                    resort_task(rec, li);
+                    li.slideDown(300);
+                });
+            }
         }
     }
 
@@ -816,7 +834,7 @@ function rcube_tasklist_ui(settings)
             list = rec.list && me.tasklists[rec.list] ? me.tasklists[rec.list] :
                 (me.selected_list ? me.tasklists[me.selected_list] : { editable: action=='new' });
 
-        if (list.readonly || (action == 'edit' && (!rec || rec.readonly)))
+        if (!list.editable || (action == 'edit' && (!rec || rec.readonly)))
             return false;
 
         me.selected_task = $.extend({}, rec);  // clone task object
@@ -886,7 +904,7 @@ function rcube_tasklist_ui(settings)
         $('#taskedit select.edit-alarm-type, #taskedit select.edit-alarm-offset').change();
 
         // attachments
-        rcmail.enable_command('remove-attachment', !list.readonly);
+        rcmail.enable_command('remove-attachment', list.editable);
         me.selected_task.deleted_attachments = [];
         // we're sharing some code for uploads handling with app.js
         rcmail.env.attachments = [];
@@ -1187,7 +1205,7 @@ function rcube_tasklist_ui(settings)
     function list_remove(id)
     {
         var list = me.tasklists[id];
-        if (list && !list.readonly) {
+        if (list && list.editable) {
             alert('To be implemented')
         }
     }
@@ -1348,13 +1366,15 @@ function rcube_tasklist_ui(settings)
         $(li).click(function(e){
             var id = $(this).data('id');
             rcmail.select_folder(id, 'rcmlitasklist');
-            rcmail.enable_command('list-edit', 'list-remove', 'import', !me.tasklists[id].readonly);
+            rcmail.enable_command('list-edit', 'list-remove', 'import', me.tasklists[id].editable);
             me.selected_list = id;
-      })
-      .dblclick(function(e){
-          list_edit_dialog($(this).data('id'));
-      })
-      .data('id', id);
+        })
+        .dblclick(function(e){
+            list_edit_dialog($(this).data('id'));
+        })
+        .data('id', id)
+        .data('type', 'tasklist')
+        .addClass(me.tasklists[id].editable ? null : 'readonly');
     }
 
 

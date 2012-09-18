@@ -177,6 +177,12 @@ class tasklist extends rcube_plugin
             }
             break;
 
+          case 'move':
+              if ($success = $this->driver->move_task($rec)) {
+                  $refresh = $this->driver->get_task($rec);
+              }
+              break;
+
         case 'delete':
             if (!($success = $this->driver->delete_task($rec, false)))
                 $this->rc->output->command('plugin.reload_data');

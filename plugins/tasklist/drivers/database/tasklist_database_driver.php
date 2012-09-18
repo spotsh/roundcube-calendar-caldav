@@ -511,6 +511,18 @@ class tasklist_database_driver extends tasklist_driver
     }
 
     /**
+     * Move a single task to another list
+     *
+     * @param array   Hash array with task properties:
+     * @return boolean True on success, False on error
+     * @see tasklist_driver::move_task()
+     */
+    public function move_task($prop)
+    {
+        return $this->edit_task($prop);
+    }
+
+    /**
      * Remove a single task from the database
      *
      * @param array   Hash array with task properties

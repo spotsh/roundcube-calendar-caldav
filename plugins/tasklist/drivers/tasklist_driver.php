@@ -176,6 +176,17 @@ abstract class tasklist_driver
     abstract function edit_task($prop);
 
     /**
+     * Move a single task to another list
+     *
+     * @param array   Hash array with task properties:
+     *      id: Task identifier
+     *      list: New list identifier to move to
+     *      _fromlist: Previous list identifier
+     * @return boolean True on success, False on error
+     */
+    abstract function move_task($prop);
+
+    /**
      * Remove a single task from the database
      *
      * @param array   Hash array with task properties:

@@ -664,6 +664,27 @@ class tasklist_kolab_driver extends tasklist_driver
     }
 
     /**
+     * Move a single task to another list
+     *
+     * @param array   Hash array with task properties:
+     * @return boolean True on success, False on error
+     * @see tasklist_driver::move_task()
+     */
+    public function move_task($task)
+    {
+        $list_id = $task['list'];
+        if (!$list_id || !($folder = $this->folders[$list_id]))
+            return false;
+
+        // execute move command
+        if ($task['_fromlist'] && ($fromfolder = $this->folders[$task['_fromlist']])) {
+            return $fromfolder->move($task['uid'], $folder->name);
+        }
+
+        return false;
+    }
+
+    /**
      * Remove a single task from the database
      *
      * @param array   Hash array with task properties:
