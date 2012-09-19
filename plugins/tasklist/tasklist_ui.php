@@ -105,7 +105,7 @@ class tasklist_ui
             $html_id = html_identifier($id);
             $class = 'tasks-'  . asciiwords($id, true);
 
-            if ($prop['readonly'])
+            if (!$prop['editable'])
                 $class .= ' readonly';
             if ($prop['class_name'])
                 $class .= ' '.$prop['class_name'];

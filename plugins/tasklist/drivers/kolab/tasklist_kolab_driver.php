@@ -107,6 +107,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 'editable' => !$readonly,
                 'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
                 'parentfolder' => $path_imap,
+                'class_name' => $folder->get_namespace(),
             );
             $this->lists[$tasklist['id']] = $tasklist;
             $this->folders[$tasklist['id']] = $folder;

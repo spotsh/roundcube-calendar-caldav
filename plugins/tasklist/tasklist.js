@@ -205,8 +205,13 @@ function rcube_tasklist_ui(settings)
         // click-handler on task list items (delegate)
         $(rcmail.gui_objects.resultlist).click(function(e){
             var item = $(e.target);
+            var className = e.target.className;
 
-            if (!item.hasClass('taskhead'))
+            if (item.hasClass('childtoggle')) {
+                item = item.parent().find('.taskhead');
+                className = 'childtoggle';
+            }
+            else if (!item.hasClass('taskhead'))
                 item = item.closest('div.taskhead');
 
             // ignore
@@ -217,7 +222,13 @@ function rcube_tasklist_ui(settings)
                 li = item.parent(),
                 rec = listdata[id];
             
-            switch (e.target.className) {
+            switch (className) {
+                case 'childtoggle':
+                    rec.collapsed = !rec.collapsed;
+                    li.children('.childtasks:first').toggle();
+                    $(e.target).toggleClass('collapsed').html(rec.collapsed ? '&#9654;' : '&#9660;');
+                    break;
+
                 case 'complete':
                     rec.complete = e.target.checked ? 1 : 0;
                     li.toggleClass('complete');
@@ -450,8 +461,24 @@ function rcube_tasklist_ui(settings)
             }
         }
 
+        fix_tree_toggles();
+
         if (!count)
             msgbox.html(rcmail.gettext('notasksfound','tasklist')).show();
+    }
+
+    /**
+     * Show/hide child toggle buttons on all 
+     */
+    function fix_tree_toggles()
+    {
+        $('.taskitem', rcmail.gui_objects.resultlist).each(function(i,elem){
+            var li = $(elem),
+                rec = listdata[li.attr('rel')],
+                childs = rec && rec.children && rec.children.length ? $('.childtasks li', li) : [];
+
+            $('.childtoggle', li)[(childs.length ? 'show' : 'hide')]();
+        })
     }
 
     /**
@@ -528,6 +555,7 @@ function rcube_tasklist_ui(settings)
             $('li[rel="'+id+'"]', rcmail.gui_objects.resultlist).remove();
 
         append_tags(rec.tags || []);
+        fix_tree_toggles();
     }
 
     /**
@@ -601,8 +629,9 @@ function rcube_tasklist_ui(settings)
             li = $('<li>')
                 .attr('rel', rec.id)
                 .addClass('taskitem')
+                .append((rec.collapsed ? '<span class="childtoggle collapsed">&#9654;' : '<span class="childtoggle expanded">&#9660;') + '</span>')
                 .append(div)
-                .append('<ul class="childtasks"></ul>');
+                .append('<ul class="childtasks" style="' + (rec.collapsed ? 'display:none' : '') + '"></ul>');
 
             if (!parent || !parent.length)
                 li.appendTo(rcmail.gui_objects.resultlist);

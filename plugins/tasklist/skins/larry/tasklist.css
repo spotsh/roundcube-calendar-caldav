@@ -199,13 +199,44 @@ body.attachmentwin #topnav .topright {
 }
 
 #tasklists li span.listname {
+	display: block;
 	cursor: default;
 	padding-bottom: 2px;
+	padding-right: 30px;
+	margin-right: 20px;
 	color: #004458;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background: url(sprites.png) right 20px no-repeat;
 }
 
 #tasklists li span.handle {
 	display: none;
+}
+
+#tasklists li.selected span.listname {
+	font-weight: bold;
+}
+
+#tasklists li.readonly span.listname {
+	background-position: right -142px;
+}
+
+#tasklists li.other span.listname {
+	background-position: right -160px;
+}
+
+#tasklists li.other.readonly span.listname {
+	background-position: right -178px;
+}
+
+#tasklists li.shared span.listname {
+	background-position: right -196px;
+}
+
+#tasklists li.shared.readonly span.listname {
+	background-position: right -214px;
 }
 
 #tasklists li input {
@@ -317,8 +348,9 @@ body.attachmentwin #topnav .topright {
 }
 
 .taskitem {
+	position: relative;
 	display: block;
-	margin-bottom: 5px;
+	margin-bottom: 3px;
 }
 
 .taskitem.dragging {
@@ -326,13 +358,26 @@ body.attachmentwin #topnav .topright {
 }
 
 .taskitem .childtasks {
+	position: relative;
 	padding: 0;
-	margin: 0.5em 0 0 2em;
+	margin: 3px 0 0 20px;
 	list-style: none;
+}
+
+.taskitem .childtoggle {
+	display: none;
+	position: absolute;
+	top: 4px;
+	left: -5px;
+	padding: 2px;
+	font-size: 10px;
+	color: #727272;
+	cursor: pointer;
 }
 
 .taskhead {
 	position: relative;
+	margin-left: 14px;
 	padding: 4px 5px 3px 5px;
 	border: 1px solid #fff;
 	border-radius: 5px;
