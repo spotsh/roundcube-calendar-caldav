@@ -180,8 +180,16 @@ class tasklist extends rcube_plugin
             break;
 
           case 'move':
-              if ($success = $this->driver->move_task($rec)) {
-                  $refresh = $this->driver->get_task($rec);
+              $recs = array();
+              foreach ((array)$rec['id'] as $id) {
+                  $r = $rec;
+                  $r['id'] = $id;
+                  if ($this->driver->move_task($r)) {
+                      $r = $this->driver->get_task($r);
+                      $this->encode_task($r);
+                      $refresh[] = $r;
+                      $success = true;
+                  }
               }
               break;
 
@@ -207,7 +215,8 @@ class tasklist extends rcube_plugin
         $this->rc->output->command('plugin.unlock_saving');
 
         if ($refresh) {
-            $this->encode_task($refresh);
+            if ($refresh['id'])
+                $this->encode_task($refresh);
             $this->rc->output->command('plugin.refresh_task', $refresh);
         }
     }
@@ -405,7 +414,15 @@ class tasklist extends rcube_plugin
      */
     public function fetch_counts()
     {
-        $lists = get_input_value('lists', RCUBE_INPUT_GPC);;
+        if (isset($_REQUEST['lists'])) {
+            $lists = get_input_value('lists', RCUBE_INPUT_GPC);
+        }
+        else {
+            foreach ($this->driver->get_lists() as $list) {
+                if ($list['active'])
+                    $lists[] = $list['id'];
+            }
+        }
         $counts = $this->driver->count_tasks($lists);
         $this->rc->output->command('plugin.update_counts', $counts);
     }
@@ -477,6 +494,7 @@ class tasklist extends rcube_plugin
         }
 
         // sort tasks according to their hierarchy level and due date
+        array_walk($data, array($this, 'task_walk_tree'));
         usort($data, array($this, 'task_sort_cmp'));
 
         $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'search' => $search, 'data' => $data, 'tags' => array_values(array_unique($tags))));
@@ -526,17 +544,22 @@ class tasklist extends rcube_plugin
             $rec['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
         }
 
-        if (!isset($rec['_depth'])) {
-            $rec['_depth'] = 0;
-            $parent_id = $this->task_tree[$rec['id']];
-            while ($parent_id) {
-                $rec['_depth']++;
-                $rec['parent_title'] = $this->task_titles[$parent_id];
-                $parent_id = $this->task_tree[$parent_id];
-            }
-        }
-
         $this->task_titles[$rec['id']] = $rec['title'];
+    }
+
+    /**
+     * Callback function for array_walk over all tasks.
+     * Sets tree depth and parent titles
+     */
+    private function task_walk_tree(&$rec)
+    {
+        $rec['_depth'] = 0;
+        $parent_id = $this->task_tree[$rec['id']];
+        while ($parent_id) {
+            $rec['_depth']++;
+            $rec['parent_title'] = $this->task_titles[$parent_id];
+            $parent_id = $this->task_tree[$parent_id];
+        }
     }
 
     /**
