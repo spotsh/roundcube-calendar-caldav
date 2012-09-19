@@ -468,14 +468,14 @@ function rcube_tasklist_ui(settings)
     }
 
     /**
-     * Show/hide child toggle buttons on all 
+     * Show/hide child toggle buttons on all visible task items
      */
     function fix_tree_toggles()
     {
         $('.taskitem', rcmail.gui_objects.resultlist).each(function(i,elem){
             var li = $(elem),
                 rec = listdata[li.attr('rel')],
-                childs = rec && rec.children && rec.children.length ? $('.childtasks li', li) : [];
+                childs = $('.childtasks li', li);
 
             $('.childtoggle', li)[(childs.length ? 'show' : 'hide')]();
         })
@@ -835,6 +835,7 @@ function rcube_tasklist_ui(settings)
                     li.appendTo(parent);
                     resort_task(rec, li);
                     li.slideDown(300);
+                    fix_tree_toggles();
                 });
             }
         }
