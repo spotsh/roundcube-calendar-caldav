@@ -595,6 +595,7 @@ class tasklist extends rcube_plugin
 
         $mask = 0;
         $start = $rec['startdate'] ?: '1900-00-00';
+        $duedate = $rec['date'] ?: '3000-00-00';
 
         if ($rec['flagged'])
             $mask |= self::FILTER_MASK_FLAGGED;
@@ -606,13 +607,13 @@ class tasklist extends rcube_plugin
         else if ($rec['date'] < $today)
             $mask |= self::FILTER_MASK_OVERDUE;
 
-        if ($rec['date'] >= $today && $start <= $today)
+        if ($duedate <= $today || ($rec['startdate'] && $start <= $today))
             $mask |= self::FILTER_MASK_TODAY;
-        if ($rec['date'] >= $tomorrow && $start <= $tomorrow)
+        if ($duedate <= $tomorrow || ($rec['startdate'] && $start <= $tomorrow))
             $mask |= self::FILTER_MASK_TOMORROW;
-        if (($start > $tomorrow || $rec['date'] > $tomorrow) && $rec['date'] <= $weeklimit)
+        if (($start > $tomorrow || $duedate > $tomorrow) && $duedate <= $weeklimit)
             $mask |= self::FILTER_MASK_WEEK;
-        if ($start > $weeklimit || $rec['date'] > $weeklimit)
+        if ($start > $weeklimit || $duedate > $weeklimit)
             $mask |= self::FILTER_MASK_LATER;
 
         return $mask;

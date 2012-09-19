@@ -69,7 +69,7 @@ function rcube_tasklist_ui(settings)
     // general datepicker settings
     var datepicker_settings = {
       // translate from PHP format to datepicker format
-      dateFormat: settings['date_format'].replace(/m/, 'mm').replace(/n/g, 'm').replace(/F/, 'MM').replace(/l/, 'DD').replace(/dd/, 'D').replace(/d/, 'dd').replace(/j/, 'd').replace(/Y/g, 'yy'),
+      dateFormat: settings['date_format'].replace(/M/g, 'm').replace(/mmmmm/, 'MM').replace(/mmm/, 'M').replace(/dddd/, 'DD').replace(/ddd/, 'D').replace(/yy/g, 'y'),
       firstDay : settings['first_day'],
 //      dayNamesMin: settings['days_short'],
 //      monthNames: settings['months'],
