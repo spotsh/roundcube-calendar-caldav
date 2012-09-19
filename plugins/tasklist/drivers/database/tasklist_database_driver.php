@@ -69,7 +69,7 @@ class tasklist_database_driver extends tasklist_driver
         $result = $this->rc->db->query(
           "SELECT *, tasklist_id AS id FROM " . $this->db_lists . "
            WHERE user_id=?
-           ORDER BY IF(name='INBOX', 0, 1), name",
+           ORDER BY CASE WHEN name='INBOX' THEN 0 ELSE 1 END, name",
            $this->rc->user->ID
         );
 
