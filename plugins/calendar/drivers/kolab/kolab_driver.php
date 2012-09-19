@@ -40,6 +40,7 @@ class kolab_driver extends calendar_driver
   private $cal;
   private $calendars;
   private $has_writeable = false;
+  private $freebusy_trigger = false;
 
   /**
    * Default constructor
@@ -52,6 +53,8 @@ class kolab_driver extends calendar_driver
     
     $this->cal->register_action('push-freebusy', array($this, 'push_freebusy'));
     $this->cal->register_action('calendar-acl', array($this, 'calendar_acl'));
+    
+    $this->freebusy_trigger = $this->rc->config->get('calendar_freebusy_trigger', false);
   }
 
 
@@ -290,7 +293,7 @@ class kolab_driver extends calendar_driver
 
       $success = $storage->insert_event($event);
       
-      if ($success)
+      if ($success && $this->freebusy_trigger)
         $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
       
       return $success;
@@ -403,7 +406,7 @@ class kolab_driver extends calendar_driver
       }
     }
 
-    if ($success)
+    if ($success && $this->freebusy_trigger)
       $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
 
     return $success;
@@ -424,7 +427,7 @@ class kolab_driver extends calendar_driver
       else
         $success = $storage->restore_event($event);
       
-      if ($success)
+      if ($success && $this->freebusy_trigger)
         $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
       
       return $success;
@@ -605,7 +608,7 @@ class kolab_driver extends calendar_driver
         break;
     }
     
-    if ($success)
+    if ($success && $this->freebusy_trigger)
       $this->rc->output->command('plugin.ping_url', array('action' => 'calendar/push-freebusy', 'source' => $storage->id));
     
     return $success;

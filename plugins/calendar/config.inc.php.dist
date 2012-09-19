@@ -104,4 +104,7 @@ $rcmail_config['calendar_categories'] = array(
    'Holiday' => 'ff6600',
 );
 
+// enable asynchronous free-busy triggering after data changed
+$rcmail_config['calendar_freebusy_trigger'] = false;
+
 ?>
