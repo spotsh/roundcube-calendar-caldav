@@ -288,7 +288,7 @@ class kolab_calendar
     }
     else {
       $event['id'] = $event['uid'];
-      $this->events[$event['uid']] = $event;
+      $this->events[$event['uid']] = $this->_to_rcube_event($object);
     }
     
     return $saved;
@@ -424,13 +424,15 @@ class kolab_calendar
     if ($record['end'] <= $record['start'] && $record['allday']) {
       $record['end'] = clone $record['start'];
       $record['end']->add(new DateInterval('PT1H'));
-  }
+    }
 
     if (!empty($record['_attachments'])) {
       foreach ($record['_attachments'] as $key => $attachment) {
         if ($attachment !== false) {
           if (!$attachment['name'])
             $attachment['name'] = $key;
+
+          unset($attachment['path'], $attachment['content']);
           $attachments[] = $attachment;
         }
       }
