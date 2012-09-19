@@ -125,8 +125,13 @@ function rcube_calendar_ui(settings)
     // turn the given date into an ISO 8601 date string understandable by PHPs strtotime()
     var date2servertime = function(date)
     {
-      return date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()
-          + 'T'+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds();
+      return date.getFullYear()+'-'+zeropad(date.getMonth()+1)+'-'+zeropad(date.getDate())
+          + 'T'+zeropad(date.getHours())+':'+zeropad(date.getMinutes())+':'+zeropad(date.getSeconds());
+    }
+
+    var zeropad = function(num)
+    {
+        return (num < 10 ? '0' : '') + num;
     }
 
     // determine whether the given date is on a weekend
@@ -1459,9 +1464,9 @@ function rcube_calendar_ui(settings)
       if ((data.start && data.end) || data.id) {
         var event = data.id ? $.extend(fc.fullCalendar('clientEvents', function(e){ return e.id == data.id; })[0], data) : data;
         if (data.start)
-          event.start = fromunixtime(data.start);
+          event.start = data.start;
         if (data.end)
-          event.end = fromunixtime(data.end);
+          event.end = data.end;
         if (data.allday !== undefined)
           event.allDay = data.allday;
         event.editable = false;
