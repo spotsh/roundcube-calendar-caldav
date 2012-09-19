@@ -1022,8 +1022,15 @@ function rcube_tasklist_ui(settings)
                     me.selected_task.attachments.push(RegExp.$1);
             }
 
-            if (me.selected_task.list && me.selected_task.list != rec.list)
+            // task assigned to a new list
+            if (me.selected_task.list && me.selected_task.list != rec.list) {
                 me.selected_task._fromlist = rec.list;
+
+                // also move all childs
+                var childs = get_all_childs(me.selected_task.id);
+                if (childs.length)
+                    save_task({ id:childs, list:me.selected_task.list, _fromlist:rec.list }, 'move');
+            }
 
             me.selected_task.complete = complete.val() / 100;
             if (isNaN(me.selected_task.complete))
