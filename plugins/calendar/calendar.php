@@ -404,7 +404,7 @@ class calendar extends rcube_plugin
       $select_cal = new html_select(array('name' => '_default_calendar', 'id' => $field_id));
       foreach ((array)$this->driver->list_calendars() as $id => $prop) {
         if (!$prop['readonly'])
-          $select_cal->add($prop['name'], strval($id));
+          $select_cal->add(html_entity_decode($prop['name'], ENT_COMPAT, 'UTF-8'), strval($id));
         if ($prop['default'])
           $default_calendar = $id;
       }
@@ -712,7 +712,7 @@ class calendar extends rcube_plugin
           $numcals = 0;
           foreach ($calendars as $calendar) {
             if (!$calendar['readonly']) {
-              $calendar_select->add($calendar['name'], $calendar['id']);
+              $calendar_select->add(html_entity_decode($calendar['name'], ENT_COMPAT, 'UTF-8'), $calendar['id']);
               $numcals++;
             }
           }

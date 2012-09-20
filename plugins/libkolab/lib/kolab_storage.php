@@ -481,6 +481,7 @@ class kolab_storage
         $names   = array();
 
         // Build SELECT field of parent folder
+        $attrs['is_escaped'] = true;
         $select = new html_select($attrs);
         $select->add('---', '');
 
@@ -494,7 +495,7 @@ class kolab_storage
                     $length = strlen($names[$i].' &raquo; ');
                     $prefix = substr($name, 0, $length);
                     $count  = count(explode(' &raquo; ', $prefix));
-                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . html::quote(substr($name, $length));
                     break;
                 }
             }

@@ -162,7 +162,7 @@ class kolab_activesync_ui
                     $length = strlen($names[$i].' &raquo; ');
                     $prefix = substr($foldername, 0, $length);
                     $count  = count(explode(' &raquo; ', $prefix));
-                    $foldername = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($foldername, $length);
+                    $foldername = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . html::quote(substr($foldername, $length));
                     break;
                 }
             }
@@ -171,14 +171,14 @@ class kolab_activesync_ui
             $classes = array('mailbox');
 
             if ($folder_class = rcmail_folder_classname($folder)) {
-                $foldername = rcube_label($folder_class);
+                $foldername = html::quote(rcube_label($folder_class));
                 $classes[] = $folder_class;
             }
 
             $folder_id = 'rcmf' . html_identifier($folder);
             $padding = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
 
-            $table->add_row(array('class' => (($level+1) * $idx++) % 2 == 0 ? 'even' : 'odd'));
+            $table->add_row();
             $table->add('subscription', $checkbox_sync->show(
                 !empty($subscribed[$folder]) ? $folder : null,
                 array('value' => $folder, 'id' => $folder_id)));
@@ -189,7 +189,7 @@ class kolab_activesync_ui
                     array('value' => $folder, 'id' => $folder_id.'_alarm')));
             }
 
-            $table->add(join(' ', $classes), html::label($folder_id, $padding . Q($foldername)));
+            $table->add(join(' ', $classes), html::label($folder_id, $padding . $foldername));
         }
 
         return $table->show();

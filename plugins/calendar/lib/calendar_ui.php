@@ -206,7 +206,7 @@ class calendar_ui
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
         html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
         html::span('handle', '&nbsp;') .
-        html::span('calname', Q($prop['name'])));
+        html::span('calname', Q(html_entity_decode($prop['name'], ENT_COMPAT, 'UTF-8'))));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);
@@ -252,7 +252,7 @@ class calendar_ui
     $select = new html_select($attrib);
     foreach ((array)$this->cal->driver->list_calendars() as $id => $prop) {
       if (!$prop['readonly'])
-        $select->add($prop['name'], $id);
+        $select->add(html_entity_decode($prop['name'], ENT_COMPAT, 'UTF-8'), $id);
     }
 
     return $select->show(null);
