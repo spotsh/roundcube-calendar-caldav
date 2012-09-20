@@ -103,6 +103,7 @@ class kolab_driver extends calendar_driver
     }
 
     $calendars = $names = array();
+    $default_folder = class_exists('kolab_folders') ? kolab_folders::default_folder('event') : '';
 
     foreach ($this->calendars as $id => $cal) {
       if ($cal->ready) {
@@ -116,6 +117,7 @@ class kolab_driver extends calendar_driver
           'readonly' => $cal->readonly,
           'showalarms' => $cal->alarms,
           'class_name' => $cal->get_namespace(),
+          'default'  => $cal->get_realname() == $default_folder,
           'active'   => $cal->storage->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
         );
       }

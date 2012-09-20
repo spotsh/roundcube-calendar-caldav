@@ -229,23 +229,26 @@ class calendar extends rcube_plugin
   }
 
   /**
-   *
+   * Get properties of the calendar this user has specified as default
    */
   public function get_default_calendar($writeable = false)
   {
-    $cal_id = $this->rc->config->get('calendar_default_calendar');
+    $default_id = $this->rc->config->get('calendar_default_calendar');
     $calendars = $this->driver->list_calendars();
-    $calendar = $calendars[$cal_id] ? $calendars[$cal_id] : null;
+    $calendar = $calendars[$default_id] ?: null;
     if (!$calendar || ($writeable && $calendar['readonly'])) {
       foreach ($calendars as $cal) {
-        if (!$writeable || !$cal['readonly']) {
+        if ($cal['default']) {
           $calendar = $cal;
           break;
         }
+        if (!$writeable || !$cal['readonly']) {
+          $first = $cal;
+        }
       }
     }
-    
-    return $calendar;
+
+    return $calendar ?: $first;
   }
 
 
@@ -402,10 +405,12 @@ class calendar extends rcube_plugin
       foreach ((array)$this->driver->list_calendars() as $id => $prop) {
         if (!$prop['readonly'])
           $select_cal->add($prop['name'], strval($id));
+        if ($prop['default'])
+          $default_calendar = $id;
       }
       $p['blocks']['view']['options']['defaultcalendar'] = array(
         'title' => html::label($field_id . 'value', Q($this->gettext('defaultcalendar'))),
-        'content' => $select_cal->show($this->rc->config->get('calendar_default_calendar', '')),
+        'content' => $select_cal->show($this->rc->config->get('calendar_default_calendar', $default_calendar)),
       );
       
       
@@ -726,13 +731,14 @@ class calendar extends rcube_plugin
           }
         }
         
+        $default_calendar = $calendar_select ? $this->get_default_calendar(true) : null;
         $this->rc->output->command('plugin.update_event_rsvp_status', array(
           'uid' => $event['uid'],
           'id' => asciiwords($event['uid'], true),
           'status' => $status,
           'action' => $action,
           'html' => $html,
-          'select' => $calendar_select ? html::span('calendar-select', $this->gettext('saveincalendar') . '&nbsp;' . $calendar_select->show($this->rc->config->get('calendar_default_calendar'))) : '',
+          'select' => $calendar_select ? html::span('calendar-select', $this->gettext('saveincalendar') . '&nbsp;' . $calendar_select->show($this->rc->config->get('calendar_default_calendar', $default_calendar['id']))) : '',
         ));
         return;
 
@@ -1768,17 +1774,9 @@ class calendar extends rcube_plugin
     // successfully parsed events?
     if (!empty($events) && ($event = $events[$index])) {
       // find writeable calendar to store event
-      $cal_id = !empty($_REQUEST['_calendar']) ? get_input_value('_calendar', RCUBE_INPUT_POST) : $this->rc->config->get('calendar_default_calendar');
+      $cal_id = !empty($_REQUEST['_calendar']) ? get_input_value('_calendar', RCUBE_INPUT_POST) : null;
       $calendars = $this->driver->list_calendars();
-      $calendar = $calendars[$cal_id] ? $calendars[$cal_id] : null;
-      if (!$calendar || $calendar['readonly']) {
-        foreach ($calendars as $cal) {
-          if (!$cal['readonly']) {
-            $calendar = $cal;
-            break;
-          }
-        }
-      }
+      $calendar = $calendars[$cal_id] ?: $this->get_default_calendar(true);
 
       // update my attendee status according to submitted method
       if (!empty($status)) {
