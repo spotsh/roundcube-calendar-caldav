@@ -70,6 +70,14 @@ class tasklist_kolab_driver extends tasklist_driver
 
         asort($names, SORT_LOCALE_STRING);
 
+        // put default folder (aka INBOX) on top of the list
+        if (class_exists('kolab_folders') && ($default_folder = kolab_folders::default_folder('task'))) {
+            if ($default_name = $names[$default_folder]) {
+                unset($names[$default_folder]);
+                $names = array_merge(array($default_folder => $default_name), $names);
+            }
+        }
+
         $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
         $listnames = array();
 
@@ -107,7 +115,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 'editable' => !$readonly,
                 'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
                 'parentfolder' => $path_imap,
-                'class_name' => $folder->get_namespace(),
+                'class_name' => trim($folder->get_namespace() . ($utf7name == $default_folder ? ' default' : '')),
             );
             $this->lists[$tasklist['id']] = $tasklist;
             $this->folders[$tasklist['id']] = $folder;

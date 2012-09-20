@@ -25,8 +25,9 @@
 class kolab_storage
 {
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
+    const CTYPE_KEY_PRIVATE = '/private/vendor/kolab/folder-type';
     const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
-    const COLOR_KEY_PRIVATE = '/shared/vendor/kolab/color';
+    const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
     const SERVERSIDE_SUBSCRIPTION = 0;
     const CLIENTSIDE_SUBSCRIPTION = 1;
 
