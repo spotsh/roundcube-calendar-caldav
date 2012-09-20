@@ -388,9 +388,8 @@ class kolab_folders extends rcube_plugin
         $namespace = $storage->get_namespace();
 
         // get all folders of specified type
-        $folderdata = array_map('implode', $folderdata);
+        $folderdata = array_map(array($this, 'folder_select_metadata'), $folderdata);
         $folderdata = array_intersect($folderdata, array($type));
-        unset($folders[0]);
 
         foreach ($folderdata as $folder => $data) {
             // check if folder is in personal namespace
@@ -409,6 +408,14 @@ class kolab_folders extends rcube_plugin
         }
 
         return null;
+    }
+
+    /**
+     * Callback for array_map to select the correct annotation value
+     */
+    private function folder_select_metadata($types)
+    {
+        return $types[kolab_storage::CTYPE_KEY_PRIVATE] ?: $types[kolab_storage::CTYPE_KEY];
     }
 
     /**
