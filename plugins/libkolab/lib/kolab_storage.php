@@ -538,13 +538,13 @@ class kolab_storage
         $prefix = $root . $mbox;
 
         // get folders types
-        $folderdata = self::$imap->get_metadata($prefix, self::CTYPE_KEY);
+        $folderdata = self::$imap->get_metadata($prefix, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
 
         if (!is_array($folderdata)) {
             return array();
         }
 
-        $folderdata = array_map('implode', $folderdata);
+        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
         $regexp     = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // In some conditions we can skip LIST command (?)
@@ -583,6 +583,15 @@ class kolab_storage
         }
 
         return $folders;
+    }
+
+
+    /**
+     * Callback for array_map to select the correct annotation value
+     */
+    static function folder_select_metadata($types)
+    {
+        return $types[self::CTYPE_KEY_PRIVATE] ?: $types[self::CTYPE_KEY];
     }
 
 }
