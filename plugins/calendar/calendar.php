@@ -401,10 +401,10 @@ class calendar extends rcube_plugin
       
       // default calendar selection
       $field_id = 'rcmfd_default_calendar';
-      $select_cal = new html_select(array('name' => '_default_calendar', 'id' => $field_id));
+      $select_cal = new html_select(array('name' => '_default_calendar', 'id' => $field_id, 'is_escaped' => true));
       foreach ((array)$this->driver->list_calendars() as $id => $prop) {
         if (!$prop['readonly'])
-          $select_cal->add(html_entity_decode($prop['name'], ENT_COMPAT, 'UTF-8'), strval($id));
+          $select_cal->add($prop['name'], strval($id));
         if ($prop['default'])
           $default_calendar = $id;
       }
@@ -708,11 +708,11 @@ class calendar extends rcube_plugin
         else {
           // get a list of writeable calendars
           $calendars = $this->driver->list_calendars();
-          $calendar_select = new html_select(array('name' => 'calendar', 'id' => 'calendar-saveto'));
+          $calendar_select = new html_select(array('name' => 'calendar', 'id' => 'calendar-saveto', 'is_escaped' => true));
           $numcals = 0;
           foreach ($calendars as $calendar) {
             if (!$calendar['readonly']) {
-              $calendar_select->add(html_entity_decode($calendar['name'], ENT_COMPAT, 'UTF-8'), $calendar['id']);
+              $calendar_select->add($calendar['name'], $calendar['id']);
               $numcals++;
             }
           }

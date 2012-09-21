@@ -390,10 +390,11 @@ class kolab_storage
             $delim = self::$imap->get_hierarchy_delimiter();
 
         $folder = rcube_charset::convert($folder, 'UTF7-IMAP');
-        $folder = str_replace($delim, ' &raquo; ', $folder);
+        $folder = html::quote($folder);
+        $folder = str_replace(html::quote($delim), ' &raquo; ', $folder);
 
         if ($prefix)
-            $folder = $prefix . ' ' . $folder;
+            $folder = html::quote($prefix) . ' ' . $folder;
 
         if (!$folder_ns)
             $folder_ns = 'personal';
@@ -495,7 +496,7 @@ class kolab_storage
                     $length = strlen($names[$i].' &raquo; ');
                     $prefix = substr($name, 0, $length);
                     $count  = count(explode(' &raquo; ', $prefix));
-                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . html::quote(substr($name, $length));
+                    $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
                     break;
                 }
             }

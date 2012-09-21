@@ -162,7 +162,7 @@ class kolab_activesync_ui
                     $length = strlen($names[$i].' &raquo; ');
                     $prefix = substr($foldername, 0, $length);
                     $count  = count(explode(' &raquo; ', $prefix));
-                    $foldername = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . html::quote(substr($foldername, $length));
+                    $foldername = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($foldername, $length);
                     break;
                 }
             }

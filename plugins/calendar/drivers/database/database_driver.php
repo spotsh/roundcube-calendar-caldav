@@ -92,7 +92,8 @@ class database_driver extends calendar_driver
       );
       while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
         $arr['showalarms'] = intval($arr['showalarms']);
-        $arr['active'] = !in_array($arr['id'], $hidden);
+        $arr['active']     = !in_array($arr['id'], $hidden);
+        $arr['name']       = html::quote($arr['name']);
         $this->calendars[$arr['calendar_id']] = $arr;
         $calendar_ids[] = $this->rc->db->quote($arr['calendar_id']);
       }
