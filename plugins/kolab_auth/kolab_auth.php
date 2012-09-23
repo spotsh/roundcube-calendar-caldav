@@ -203,8 +203,6 @@ class kolab_auth extends rcube_plugin
             $args['user_email'] = $this->data['user_email'];
         if (!empty($this->data['user_name']))
             $args['user_name'] = $this->data['user_name'];
-        if (!empty($this->data['user_alias']))
-            $args['user_alias'] = $this->data['user_alias'];
 
         return $args;
     }
@@ -253,7 +251,6 @@ class kolab_auth extends rcube_plugin
         $admin_login = $rcmail->config->get('kolab_auth_admin_login');
         $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
         $login_attr  = $rcmail->config->get('kolab_auth_login');
-        $alias_attr  = $rcmail->config->get('kolab_auth_alias');
         $name_attr   = $rcmail->config->get('kolab_auth_name');
 
         // get username and host
@@ -351,8 +348,6 @@ class kolab_auth extends rcube_plugin
 
             if ($login_attr)
                 $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
-            if ($alias_attr)
-                $this->data['user_alias'] = is_array($record[$alias_attr]) ? $record[$alias_attr][0] : $record[$alias_attr];
             if ($name_attr)
                 $this->data['user_name'] = is_array($record[$name_attr]) ? $record[$name_attr][0] : $record[$name_attr];
 

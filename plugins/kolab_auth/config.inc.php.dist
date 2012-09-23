@@ -12,7 +12,6 @@ $rcmail_config['kolab_auth_login'] = 'email';
 
 // Use this fields (from fieldmap configuration) for default identity
 $rcmail_config['kolab_auth_name']  = 'name';
-$rcmail_config['kolab_auth_alias'] = 'alias';
 $rcmail_config['kolab_auth_email'] = 'email';
 
 // Login and password of the admin user. Enables "Login As" feature.
@@ -20,10 +19,10 @@ $rcmail_config['kolab_auth_admin_login']    = '';
 $rcmail_config['kolab_auth_admin_password'] = '';
 
 // Enable audit logging for abuse of administrative privileges.
-$rcmail_config['kolab_auth_auditlog']       = true;
+$rcmail_config['kolab_auth_auditlog'] = true;
 
 // Role field (from fieldmap configuration)
-$rcmail_config['kolab_auth_role']       = 'role';
+$rcmail_config['kolab_auth_role'] = 'role';
 // The required value for the role attribute to contain should the user be allowed
 // to login as another user.
 $rcmail_config['kolab_auth_role_value'] = '';

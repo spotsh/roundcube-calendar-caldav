@@ -32,23 +32,21 @@ class ldap_authentication extends rcube_plugin
     private $ldap;
     private $data = array();
 
-	function init()
-	{
-		$this->add_hook('authenticate', array($this, 'authenticate'));
-		$this->add_hook('user_create', array($this, 'user_create'));
-	}
+    function init()
+    {
+        $this->add_hook('authenticate', array($this, 'authenticate'));
+        $this->add_hook('user_create', array($this, 'user_create'));
+    }
 
-	function user_create($args)
-	{
-		if (!empty($this->data['user_email']))
-    		$args['user_email'] = $this->data['user_email'];
-		if (!empty($this->data['user_name']))
-	    	$args['user_name'] = $this->data['user_name'];
-		if (!empty($this->data['user_alias']))
-	    	$args['user_alias'] = $this->data['user_alias'];
+    function user_create($args)
+    {
+        if (!empty($this->data['user_email']))
+            $args['user_email'] = $this->data['user_email'];
+        if (!empty($this->data['user_name']))
+            $args['user_name'] = $this->data['user_name'];
 
-		return $args;
-	}
+        return $args;
+    }
 
     function authenticate($args)
     {
@@ -83,13 +81,10 @@ class ldap_authentication extends rcube_plugin
                 $record = $results->records[0];
 
                 $login_attr = $rcmail->config->get('ldap_authentication_login');
-                $alias_attr = $rcmail->config->get('ldap_authentication_alias');
                 $name_attr  = $rcmail->config->get('ldap_authentication_name');
 
                 if ($login_attr)
                     $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
-                if ($alias_attr)
-                    $this->data['user_alias'] = is_array($record[$alias_attr]) ? $record[$alias_attr][0] : $record[$alias_attr];
                 if ($name_attr)
                     $this->data['user_name'] = is_array($record[$name_attr]) ? $record[$name_attr][0] : $record[$name_attr];
 
