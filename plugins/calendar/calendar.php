@@ -379,7 +379,7 @@ class calendar extends rcube_plugin
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
       foreach ($this->driver->alarm_types as $type)
-        $select_type->add($this->gettext(strtolower("alarm{$type}option")), $type);
+        $select_type->add(rcube_label(strtolower("alarm{$type}option"), 'libcalendaring'), $type);
       
       $input_value = new html_inputfield(array('name' => '_alarm_value', 'id' => $field_id . 'value', 'size' => 3));
       $select_offset = new html_select(array('name' => '_alarm_offset', 'id' => $field_id . 'offset'));
