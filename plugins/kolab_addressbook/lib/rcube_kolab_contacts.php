@@ -1105,12 +1105,16 @@ class rcube_kolab_contacts extends rcube_addressbook
             $contact['uid'] = $old['uid'];
 
         $contact['email'] = array_filter($this->get_col_values('email', $contact, true));
-        $contact['im'] = array_filter($this->get_col_values('im', $contact, true));
-        
+        $contact['im']    = array_filter($this->get_col_values('im', $contact, true));
+
+        $websites  = array();
+        $phones    = array();
+        $addresses = array();
+
         foreach ($this->get_col_values('website', $contact) as $type => $values) {
             foreach ((array)$values as $url) {
                 if (!empty($url)) {
-                    $contact['website'][] = array('url' => $url, 'type' => $type);
+                    $websites[] = array('url' => $url, 'type' => $type);
                 }
             }
             unset($contact['website:'.$type]);
@@ -1119,13 +1123,12 @@ class rcube_kolab_contacts extends rcube_addressbook
         foreach ($this->get_col_values('phone', $contact) as $type => $values) {
             foreach ((array)$values as $phone) {
                 if (!empty($phone)) {
-                    $contact['phone'][] = array('number' => $phone, 'type' => $type);
+                    $phones[] = array('number' => $phone, 'type' => $type);
                 }
             }
             unset($contact['phone:'.$type]);
         }
 
-        $addresses = array();
         foreach ($this->get_col_values('address', $contact) as $type => $values) {
             foreach ((array)$values as $adr) {
                 // skip empty address
@@ -1145,6 +1148,9 @@ class rcube_kolab_contacts extends rcube_addressbook
 
             unset($contact['address:'.$type]);
         }
+
+        $contact['website'] = $websites;
+        $contact['phone']   = $phones;
         $contact['address'] = $addresses;
 
         // copy meta data (starting with _) from old object

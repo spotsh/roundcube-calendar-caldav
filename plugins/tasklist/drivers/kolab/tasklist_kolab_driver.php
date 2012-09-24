@@ -63,12 +63,22 @@ class tasklist_kolab_driver extends tasklist_driver
 
         // convert to UTF8 and sort
         $names = array();
+        $default_folder = null;
         foreach ($this->folders as $i => $folder) {
             $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
             $this->folders[$folder->name] = $folder;
+            if ($folder->default)
+                $default_folder = $folder->name;
         }
 
         asort($names, SORT_LOCALE_STRING);
+
+        // put default folder (aka INBOX) on top of the list
+        if ($default_folder) {
+            $default_name = $names[$default_folder];
+            unset($names[$default_folder]);
+            $names = array_merge(array($default_folder => $default_name), $names);
+        }
 
         $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
         $listnames = array();
@@ -107,7 +117,8 @@ class tasklist_kolab_driver extends tasklist_driver
                 'editable' => !$readonly,
                 'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
                 'parentfolder' => $path_imap,
-                'class_name' => $folder->get_namespace(),
+                'default' => $folder->default,
+                'class_name' => trim($folder->get_namespace() . ($folder->default ? ' default' : '')),
             );
             $this->lists[$tasklist['id']] = $tasklist;
             $this->folders[$tasklist['id']] = $folder;

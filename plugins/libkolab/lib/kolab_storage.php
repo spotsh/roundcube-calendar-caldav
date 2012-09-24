@@ -25,8 +25,9 @@
 class kolab_storage
 {
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
+    const CTYPE_KEY_PRIVATE = '/private/vendor/kolab/folder-type';
     const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
-    const COLOR_KEY_PRIVATE = '/shared/vendor/kolab/color';
+    const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
     const SERVERSIDE_SUBSCRIPTION = 0;
     const CLIENTSIDE_SUBSCRIPTION = 1;
 
@@ -389,10 +390,11 @@ class kolab_storage
             $delim = self::$imap->get_hierarchy_delimiter();
 
         $folder = rcube_charset::convert($folder, 'UTF7-IMAP');
-        $folder = str_replace($delim, ' &raquo; ', $folder);
+        $folder = html::quote($folder);
+        $folder = str_replace(html::quote($delim), ' &raquo; ', $folder);
 
         if ($prefix)
-            $folder = $prefix . ' ' . $folder;
+            $folder = html::quote($prefix) . ' ' . $folder;
 
         if (!$folder_ns)
             $folder_ns = 'personal';
@@ -480,6 +482,7 @@ class kolab_storage
         $names   = array();
 
         // Build SELECT field of parent folder
+        $attrs['is_escaped'] = true;
         $select = new html_select($attrs);
         $select->add('---', '');
 
@@ -536,13 +539,13 @@ class kolab_storage
         $prefix = $root . $mbox;
 
         // get folders types
-        $folderdata = self::$imap->get_metadata($prefix, self::CTYPE_KEY);
+        $folderdata = self::$imap->get_metadata($prefix, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
 
         if (!is_array($folderdata)) {
             return array();
         }
 
-        $folderdata = array_map('implode', $folderdata);
+        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
         $regexp     = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // In some conditions we can skip LIST command (?)
@@ -581,6 +584,15 @@ class kolab_storage
         }
 
         return $folders;
+    }
+
+
+    /**
+     * Callback for array_map to select the correct annotation value
+     */
+    static function folder_select_metadata($types)
+    {
+        return $types[self::CTYPE_KEY_PRIVATE] ?: $types[self::CTYPE_KEY];
     }
 
 }

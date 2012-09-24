@@ -116,6 +116,7 @@ class kolab_driver extends calendar_driver
           'readonly' => $cal->readonly,
           'showalarms' => $cal->alarms,
           'class_name' => $cal->get_namespace(),
+          'default'  => $cal->storage->default,
           'active'   => $cal->storage->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
         );
       }
