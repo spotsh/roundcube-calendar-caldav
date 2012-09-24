@@ -227,6 +227,7 @@ function rcube_tasklist_ui(settings)
                     rec.collapsed = !rec.collapsed;
                     li.children('.childtasks:first').toggle();
                     $(e.target).toggleClass('collapsed').html(rec.collapsed ? '&#9654;' : '&#9660;');
+                    rcmail.http_post('tasks/task', { action:'collapse', t:{ id:rec.id, list:rec.list }, collapsed:rec.collapsed?1:0 });
                     break;
 
                 case 'complete':
@@ -620,10 +621,11 @@ function rcube_tasklist_ui(settings)
         if ((rec.mask & FILTER_MASK_OVERDUE))
             div.addClass('overdue');
 
-        var li, parent = rec.parent_id ? $('li[rel="'+rec.parent_id+'"] > ul.childtasks', rcmail.gui_objects.resultlist) : null;
+        var li, inplace = false, parent = rec.parent_id ? $('li[rel="'+rec.parent_id+'"] > ul.childtasks', rcmail.gui_objects.resultlist) : null;
         if (replace && (li = $('li[rel="'+replace+'"]', rcmail.gui_objects.resultlist)) && li.length) {
             li.children('div.taskhead').first().replaceWith(div);
             li.attr('rel', rec.id);
+            inplace = true;
         }
         else {
             li = $('<li>')
@@ -637,7 +639,7 @@ function rcube_tasklist_ui(settings)
                 li.appendTo(rcmail.gui_objects.resultlist);
         }
 
-        if (parent && parent.length)
+        if (!inplace && parent && parent.length)
             li.appendTo(parent);
 
         if (replace) {

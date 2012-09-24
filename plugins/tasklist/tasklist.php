@@ -53,6 +53,8 @@ class tasklist extends rcube_plugin
     public $timezone;
     public $ui;
 
+    private $collapsed_tasks = array();
+
 
     /**
      * Plugin initialization.
@@ -87,6 +89,8 @@ class tasklist extends rcube_plugin
             $this->register_action('mail2task', array($this, 'mail_message2task'));
             $this->register_action('get-attachment', array($this, 'attachment_get'));
             $this->register_action('upload', array($this, 'attachment_upload'));
+
+            $this->collapsed_tasks = array_filter(explode(',', $this->rc->config->get('tasklist_collapsed_tasks', '')));
         }
         else if ($this->rc->task == 'mail') {
             // TODO: register hooks to catch ical/vtodo email attachments
@@ -202,6 +206,19 @@ class tasklist extends rcube_plugin
             if ($success = $this->driver->undelete_task($rec))
                 $refresh = $this->driver->get_task($rec);
             break;
+
+        case 'collapse':
+            if ($collapsed = intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
+                $this->collapsed_tasks[] = $rec['id'];
+            }
+            else {
+                $i = array_search($rec['id'], $this->collapsed_tasks);
+                if ($i !== false)
+                    unset($this->collapsed_tasks[$i]);
+            }
+
+            $this->rc->user->save_prefs(array('tasklist_collapsed_tasks' => join(',', array_unique($this->collapsed_tasks))));
+            return;  // avoid further actions
         }
 
         if ($success) {
@@ -543,6 +560,9 @@ class tasklist extends rcube_plugin
         foreach ((array)$rec['attachments'] as $k => $attachment) {
             $rec['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
         }
+
+        if (in_array($rec['id'], $this->collapsed_tasks))
+          $rec['collapsed'] = true;
 
         $this->task_titles[$rec['id']] = $rec['title'];
     }
