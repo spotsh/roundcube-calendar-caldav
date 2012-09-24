@@ -785,7 +785,7 @@ function rcube_tasklist_ui(settings)
         if (drag_rec && $(this).data('type') == 'tasklist') {
             var  drop_list = me.tasklists[drop_id],
                from_list = me.tasklists[drag_rec.list];
-            return drop_id != drag_rec.list && drop_list && drop_list.editable && from_list && from_list.editable;
+            return !drag_rec.parent_id && drop_id != drag_rec.list && drop_list && drop_list.editable && from_list && from_list.editable;
         }
 
         if (drop_rec && drop_rec.list != drag_rec.list)
