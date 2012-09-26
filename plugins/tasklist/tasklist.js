@@ -550,6 +550,10 @@ function rcube_tasklist_ui(settings)
 
         listdata[id] = rec;
 
+        // register a forward-pointer to child tasks
+        if (rec.parent_id && listdata[rec.parent_id] && listdata[rec.parent_id].children && listdata[rec.parent_id].children.indexOf(id) >= 0)
+            listdata[rec.parent_id].children.push(id);
+
         if (list.active)
             render_task(rec, oldid);
         else
