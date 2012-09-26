@@ -160,6 +160,15 @@ abstract class tasklist_driver
     abstract public function get_task($prop);
 
     /**
+     * Get decendents of the given task record
+     *
+     * @param mixed  Hash array with task properties or task UID
+     * @param boolean True if all childrens children should be fetched
+     * @return array List of all child task IDs
+     */
+    abstract public function get_childs($prop, $recursive = false);
+
+    /**
      * Add a single task to the database
      *
      * @param array Hash array with task properties (see header of this file)

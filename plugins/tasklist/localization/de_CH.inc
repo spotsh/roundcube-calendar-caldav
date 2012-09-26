@@ -36,6 +36,10 @@ $labels['edittask'] = 'Aufgabe bearbeiten';
 $labels['save'] = 'Speichern';
 $labels['cancel'] = 'Abbrechen';
 $labels['addsubtask'] = 'Neue Teilaufgabe';
+$labels['deletetask'] = 'Aufgabe löschen';
+$labels['deletethisonly'] = 'Nur diese Aufgabe löschen';
+$labels['deletewithchilds'] = 'Mit allen Teilaufhaben löschen';
+
 
 $labels['tabsummary'] = 'Übersicht';
 $labels['tabrecurrence'] = 'Wiederholung';
@@ -60,4 +64,6 @@ $labels['savingdata'] = 'Daten werden gespeichert...';
 $labels['errorsaving'] = 'Fehler beim Speichern.';
 $labels['notasksfound'] = 'Für die aktuellen Kriterien wurden keine Aufgaben gefunden.';
 $labels['invalidstartduedates'] = 'Beginn der Aufgabe darf nicht grösser als das Enddatum sein.';
+$labels['deletetasktconfirm'] = 'Möchten Sie diese Aufgabe wirklich löschen?';
+$labels['deleteparenttasktconfirm'] = 'Möchten Sie diese Aufgabe inklusive aller Teilaufgaben wirklich löschen?';
 $labels['deletelistconfirm'] = 'Möchten Sie diese Liste mit allen Aufgaben wirklich löschen?';

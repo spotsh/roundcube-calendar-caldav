@@ -815,11 +815,7 @@ function rcube_tasklist_ui(settings)
         // dropped on another list -> move
         if ($(this).data('type') == 'tasklist') {
             if (rec) {
-                var ids = [ rec.id ],
-                    childs = get_all_childs(rec.id);
-                if (childs.length)
-                    ids = ids.concat(childs);
-                save_task({ id:ids, list:drop_id, _fromlist:rec.list }, 'move');
+                save_task({ id:rec.id, list:drop_id, _fromlist:rec.list }, 'move');
                 rec.list = drop_id;
             }
         }
@@ -1057,11 +1053,6 @@ function rcube_tasklist_ui(settings)
             // task assigned to a new list
             if (me.selected_task.list && me.selected_task.list != rec.list) {
                 me.selected_task._fromlist = rec.list;
-
-                // also move all childs
-                var childs = get_all_childs(me.selected_task.id);
-                if (childs.length)
-                    save_task({ id:childs, list:me.selected_task.list, _fromlist:rec.list }, 'move');
             }
 
             me.selected_task.complete = complete.val() / 100;
@@ -1209,14 +1200,84 @@ function rcube_tasklist_ui(settings)
     function delete_task(id)
     {
         var rec = listdata[id];
-        if (rec && confirm("Delete this?")) {
-            saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
-            rcmail.http_post('task', { action:'delete', t:rec, filter:filtermask });
-            $('li[rel="'+id+'"]', rcmail.gui_objects.resultlist).hide();
-            return true;
+        if (!rec || rec.readonly)
+            return false;
+
+        var html, buttons = [{
+            text: rcmail.gettext('cancel', 'tasklist'),
+            click: function() {
+                $(this).dialog('close');
+            }
+        }];
+
+        if (rec.children && rec.children.length) {
+            html = rcmail.gettext('deleteparenttasktconfirm','tasklist');
+            buttons.push({
+                text: rcmail.gettext('deletethisonly','tasklist'),
+                click: function() {
+                    _delete_task(id, 0);
+                    $(this).dialog('close');
+                }
+            });
+            buttons.push({
+                text: rcmail.gettext('deletewithchilds','tasklist'),
+                click: function() {
+                    _delete_task(id, 1);
+                    $(this).dialog('close');
+                }
+            });
         }
-        
-        return false;
+        else {
+            html = rcmail.gettext('deletetasktconfirm','tasklist');
+            buttons.push({
+                text: rcmail.gettext('delete','tasklist'),
+                click: function() {
+                    _delete_task(id, 0);
+                    $(this).dialog('close');
+                }
+            });
+        }
+
+        var $dialog = $('<div>').html(html);
+        $dialog.dialog({
+          modal: true,
+          width: 520,
+          dialogClass: 'warning',
+          title: rcmail.gettext('deletetask', 'tasklist'),
+          buttons: buttons,
+          close: function(){
+              $dialog.dialog('destroy').hide();
+          }
+        }).addClass('tasklist-confirm').show();
+
+        return true;
+    }
+
+    /**
+     * Subfunction to submit the delete command after confirm
+     */
+    function _delete_task(id, mode)
+    {
+        var rec = listdata[id],
+            li = $('li[rel="'+id+'"]', rcmail.gui_objects.resultlist).hide();
+
+        saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
+        rcmail.http_post('task', { action:'delete', t:{ id:rec.id, list:rec.list }, mode:mode, filter:filtermask });
+
+        // move childs to parent/root
+        if (mode != 1) {
+            var parent_node = rec.parent_id ? $('li[rel="'+rec.parent_id+'"] > .childtasks', rcmail.gui_objects.resultlist) : null;
+            if (!parent_node || !parent_node.length)
+                parent_node = rcmail.gui_objects.resultlist;
+
+            $.each(rec.children, function(i,cid) {
+                var child = listdata[cid];
+                child.parent_id = rec.parent_id;
+                resort_task(child, $('li[rel="'+cid+'"]').appendTo(parent_node), true);
+            });
+        }
+
+        li.remove();
     }
 
     /**

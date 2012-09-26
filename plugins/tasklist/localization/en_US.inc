@@ -36,6 +36,9 @@ $labels['edittask'] = 'Edit Task';
 $labels['save'] = 'Save';
 $labels['cancel'] = 'Cancel';
 $labels['addsubtask'] = 'Add subtask';
+$labels['deletetask'] = 'Delete task';
+$labels['deletethisonly'] = 'Delete this task only';
+$labels['deletewithchilds'] = 'Delete with all subtasks';
 
 $labels['tabsummary'] = 'Summary';
 $labels['tabrecurrence'] = 'Recurrence';
@@ -60,4 +63,6 @@ $labels['savingdata'] = 'Saving data...';
 $labels['errorsaving'] = 'Failed to save data.';
 $labels['notasksfound'] = 'No tasks found for the given criteria';
 $labels['invalidstartduedates'] = 'Start date must not be greater than due date.';
+$labels['deletetasktconfirm'] = 'Do you really want to delete this task?';
+$labels['deleteparenttasktconfirm'] = 'Do you really want to delete this task and all its subtasks?';
 $labels['deletelistconfirm'] = 'Do you really want to delete this list with all its tasks?';

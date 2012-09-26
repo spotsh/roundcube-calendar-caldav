@@ -351,19 +351,64 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function get_task($prop)
     {
-        $id = is_array($prop) ? $prop['uid'] : $prop;
+        $id = is_array($prop) ? ($prop['uid'] ?: $prop['id']) : $prop;
         $list_id = is_array($prop) ? $prop['list'] : null;
         $folders = $list_id ? array($list_id => $this->folders[$list_id]) : $this->folders;
 
         // find task in the available folders
-        foreach ($folders as $folder) {
+        foreach ($folders as $list_id => $folder) {
+            if (is_numeric($list_id))
+                continue;
             if (!$this->tasks[$id] && ($object = $folder->get_object($id))) {
                 $this->tasks[$id] = $this->_to_rcube_task($object);
+                $this->tasks[$id]['list'] = $list_id;
                 break;
             }
         }
 
         return $this->tasks[$id];
+    }
+
+    /**
+     * Get all decendents of the given task record
+     *
+     * @param mixed  Hash array with task properties or task UID
+     * @param boolean True if all childrens children should be fetched
+     * @return array List of all child task IDs
+     */
+    public function get_childs($prop, $recursive = false)
+    {
+        if (is_string($prop)) {
+            $task = $this->get_task($prop);
+            $prop = array('id' => $task['id'], 'list' => $task['list']);
+        }
+
+        $childs = array();
+        $list_id = $prop['list'];
+        $task_ids = array($prop['id']);
+        $folder = $this->folders[$list_id];
+
+        // query for childs (recursively)
+        while ($folder && !empty($task_ids)) {
+            $query_ids = array();
+            foreach ($task_ids as $task_id) {
+                $query = array(array('tags','=','x-parent:' . $task_id));
+                foreach ((array)$folder->select($query) as $record) {
+                    // don't rely on kolab_storage_folder filtering
+                    if ($record['parent_id'] == $task_id) {
+                        $childs[] = $record['uid'];
+                        $query_ids[] = $record['uid'];
+                    }
+                }
+            }
+
+            if (!$recursive)
+                break;
+
+            $task_ids = $query_ids;
+        }
+
+        return $childs;
     }
 
     /**
@@ -641,7 +686,7 @@ class tasklist_kolab_driver extends tasklist_driver
 
         // moved from another folder
         if ($task['_fromlist'] && ($fromfolder = $this->folders[$task['_fromlist']])) {
-            if (!$fromfolder->move($task['uid'], $folder->name))
+            if (!$fromfolder->move($task['id'], $folder->name))
                 return false;
 
             unset($task['_fromlist']);
@@ -649,9 +694,13 @@ class tasklist_kolab_driver extends tasklist_driver
 
         // load previous version of this task to merge
         if ($task['id']) {
-            $old = $folder->get_object($task['uid']);
+            $old = $folder->get_object($task['id']);
             if (!$old || PEAR::isError($old))
                 return false;
+
+            // merge existing properties if the update isn't complete
+            if (!isset($task['title']) || !isset($task['complete']))
+                $task += $this->_to_rcube_task($old);
         }
 
         // generate new task object from RC input
@@ -669,7 +718,7 @@ class tasklist_kolab_driver extends tasklist_driver
         else {
             $task = $this->_to_rcube_task($object);
             $task['list'] = $list_id;
-            $this->tasks[$task['uid']] = $task;
+            $this->tasks[$task['id']] = $task;
         }
 
         return $saved;
@@ -710,7 +759,7 @@ class tasklist_kolab_driver extends tasklist_driver
         if (!$list_id || !($folder = $this->folders[$list_id]))
             return false;
 
-        return $folder->delete($task['uid']);
+        return $folder->delete($task['id']);
     }
 
     /**

@@ -157,6 +157,7 @@ class tasklist extends rcube_plugin
      */
     public function task_action()
     {
+        $filter = intval(get_input_value('filter', RCUBE_INPUT_GPC));
         $action = get_input_value('action', RCUBE_INPUT_GPC);
         $rec  = get_input_value('t', RCUBE_INPUT_POST, true);
         $oldrec = $rec;
@@ -184,27 +185,64 @@ class tasklist extends rcube_plugin
             break;
 
           case 'move':
-              $recs = array();
               foreach ((array)$rec['id'] as $id) {
                   $r = $rec;
                   $r['id'] = $id;
                   if ($this->driver->move_task($r)) {
-                      $r = $this->driver->get_task($r);
-                      $this->encode_task($r);
-                      $refresh[] = $r;
+                      $refresh[] = $this->driver->get_task($r);
                       $success = true;
+
+                      // move all childs, too
+                      foreach ($this->driver->get_childs(array('id' => $rec['id'], 'list' => $rec['_fromlist'])) as $cid) {
+                          $child = $rec;
+                          $child['id'] = $cid;
+                          if ($this->driver->move_task($child)) {
+                              $r = $this->driver->get_task($child);
+                              if ((bool)($filter & self::FILTER_MASK_COMPLETE) == ($r['complete'] == 1.0)) {
+                                  $refresh[] = $r;
+                              }
+                          }
+                      }
                   }
               }
               break;
 
         case 'delete':
-            if (!($success = $this->driver->delete_task($rec, false)))
+            $mode  = intval(get_input_value('mode', RCUBE_INPUT_POST));
+            $oldrec = $this->driver->get_task($rec);
+            if ($success = $this->driver->delete_task($rec, false)) {
+                // delete/modify all childs
+                foreach ($this->driver->get_childs($rec, $mode) as $cid) {
+                    $child = array('id' => $cid, 'list' => $rec['list']);
+
+                    if ($mode == 1) {  // delete all childs
+                        if ($this->driver->delete_task($child, false)) {
+                            if ($this->driver->undelete)
+                                $_SESSION['tasklist_undelete'][$rec['id']][] = $cid;
+                        }
+                        else
+                            $success = false;
+                    }
+                    else {
+                        $child['parent_id'] = strval($oldrec['parent_id']);
+                        $this->driver->edit_task($child);
+                    }
+                }
+            }
+
+            if (!$success)
                 $this->rc->output->command('plugin.reload_data');
             break;
 
         case 'undelete':
-            if ($success = $this->driver->undelete_task($rec))
-                $refresh = $this->driver->get_task($rec);
+            if ($success = $this->driver->undelete_task($rec)) {
+                $refresh[] = $this->driver->get_task($rec);
+                foreach ((array)$_SESSION['tasklist_undelete'][$rec['id']] as $cid) {
+                    if ($this->driver->undelete_task($rec)) {
+                        $refresh[] = $this->driver->get_task($rec);
+                    }
+                }
+            }
             break;
 
         case 'collapse':
@@ -232,8 +270,13 @@ class tasklist extends rcube_plugin
         $this->rc->output->command('plugin.unlock_saving');
 
         if ($refresh) {
-            if ($refresh['id'])
+            if ($refresh['id']) {
                 $this->encode_task($refresh);
+            }
+            else if (is_array($refresh)) {
+                foreach ($refresh as $i => $r)
+                    $this->encode_task($refresh[$i]);
+            }
             $this->rc->output->command('plugin.refresh_task', $refresh);
         }
     }

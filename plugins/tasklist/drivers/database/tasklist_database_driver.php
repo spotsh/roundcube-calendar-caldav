@@ -358,6 +358,54 @@ class tasklist_database_driver extends tasklist_driver
     }
 
     /**
+     * Get all decendents of the given task record
+     *
+     * @param mixed  Hash array with task properties or task UID
+     * @param boolean True if all childrens children should be fetched
+     * @return array List of all child task IDs
+     */
+    public function get_childs($prop, $recursive = false)
+    {
+        // resolve UID first
+        if (is_string($prop)) {
+            $result = $this->rc->db->query(sprintf(
+                "SELECT task_id AS id, tasklist_id AS list FROM " . $this->db_tasks . "
+                 WHERE tasklist_id IN (%s)
+                 AND uid=?",
+                 $this->list_ids
+                ),
+                $prop);
+            $prop = $this->rc->db->fetch_assoc($result);
+        }
+
+        $childs = array();
+        $task_ids = array($prop['id']);
+
+        // query for childs (recursively)
+        while (!empty($task_ids)) {
+            $result = $this->rc->db->query(sprintf(
+                "SELECT task_id AS id FROM " . $this->db_tasks . "
+                 WHERE tasklist_id IN (%s)
+                 AND parent_id IN (%s)
+                 AND del=0",
+                $this->list_ids,
+                join(',', array_map(array($this->rc->db, 'quote'), $task_ids))
+            ));
+
+            $task_ids = array();
+            while ($result && ($rec = $this->rc->db->fetch_assoc($result))) {
+                $childs[] = $rec['id'];
+                $task_ids[] = $rec['id'];
+            }
+
+            if (!$recursive)
+                break;
+        }
+
+        return $childs;
+    }
+
+    /**
      * Get a list of pending alarms to be displayed to the user
      *
      * @param  integer Current time (unix timestamp)
