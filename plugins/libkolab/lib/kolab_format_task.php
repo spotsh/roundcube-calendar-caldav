@@ -93,7 +93,7 @@ class kolab_format_task extends kolab_format_xcal
         if ($due = $this->obj->due())
             $object['due'] = self::php_datetime($due);
 
-        // related-to points to parent taks; we only support one relation
+        // related-to points to parent task; we only support one relation
         $related = self::vector2array($this->obj->relatedTo());
         if (count($related))
             $object['parent_id'] = $related[0];
@@ -136,6 +136,9 @@ class kolab_format_task extends kolab_format_xcal
 
         if (!empty($this->data['alarms']))
             $tags[] = 'x-has-alarms';
+
+        if ($this->data['parent_id'])
+            $tags[] = 'x-parent:' . $this->data['parent_id'];
 
         return $tags;
     }
