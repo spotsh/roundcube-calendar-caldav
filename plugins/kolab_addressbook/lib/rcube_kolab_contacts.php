@@ -722,7 +722,6 @@ class rcube_kolab_contacts extends rcube_addressbook
         $result = false;
 
         $list = array(
-            'uid' => kolab_format::generate_uid(),
             'name' => $name,
             'member' => array(),
         );

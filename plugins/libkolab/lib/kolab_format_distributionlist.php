@@ -71,6 +71,9 @@ class kolab_format_distributionlist extends kolab_format
 
         $this->obj->setMembers($members);
 
+        // set type property for proper caching
+        $object['_type'] = 'distribution-list';
+
         // cache this data
         $this->data = $object;
         unset($this->data['_formatobj']);
@@ -123,6 +126,7 @@ class kolab_format_distributionlist extends kolab_format
             'changed'   => self::php_datetime($this->obj->lastModified()),
             'name'      => $this->obj->name(),
             'member'    => array(),
+            '_type'     => 'distribution-list',
         );
 
         $members = $this->obj->members();
