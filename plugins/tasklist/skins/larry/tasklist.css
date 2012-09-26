@@ -432,7 +432,7 @@ body.attachmentwin #topnav .topright {
 	display: block;
 	position: absolute;
 	top: 3px;
-	right: 110px;
+	right: 10em;
 	max-width: 14em;
 	height: 16px;
 	overflow: hidden;
@@ -451,7 +451,7 @@ body.attachmentwin #topnav .topright {
 
 .taskhead .date {
 	position: absolute;
-	top: 6px;
+	top: 4px;
 	right: 30px;
 	text-align: right;
 	cursor: pointer;
@@ -477,6 +477,7 @@ body.attachmentwin #topnav .topright {
 	box-shadow: none;
 	outline: none;
 	text-align: right;
+	width: 6em;
 }
 
 .taskhead .actions,

@@ -248,7 +248,7 @@ function rcube_tasklist_ui(settings)
 
                     input.datepicker($.extend({
                         onClose: function(dateText, inst) {
-                            if (dateText != rec.date) {
+                            if (dateText != (rec.date || '')) {
                                 rec.date = dateText;
                                 save_task(rec, 'edit');
                             }
