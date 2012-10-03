@@ -961,15 +961,20 @@ a.dropdown-link:after {
 	right: 0;
 	height: auto;
 	z-index: 200;
-	background: #d6eaf3;
+	padding: 4px 5px;
 	border: 1px solid #c3c3c3;
 	border-top-color: #ddd;
-	padding: 4px 5px;
+	border-bottom-color: #bbb;
+	background: #ebebeb;
+	background: -moz-linear-gradient(top, #ebebeb 0%, #c6c6c6 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ebebeb), color-stop(100%,#c6c6c6));
+	background: -o-linear-gradient(top, #ebebeb 0%, #c6c6c6 100%);
+	background: -ms-linear-gradient(top, #ebebeb 0%, #c6c6c6 100%);
+	background: linear-gradient(top, #ebebeb 0%, #c6c6c6 100%);
 }
 
 #agendaoptions label {
-	color: #69939e;
-	text-shadow: 1px 1px #f2f2f2;
+	text-shadow: 1px 1px #fff;
 	padding-right: 0.5em;
 }
 
@@ -1277,6 +1282,11 @@ div.fc-event-location {
 	border-bottom: 1px solid #ccc;
 	height: 18px;
 	padding: 8px 7px 3px 7px;
+}
+
+.calendarmain .fc-view-table td.fc-list-header {
+	color: #004853;
+	font-size: 13px;
 }
 
 .calendarmain .fc-view-table tr.fc-event td {
