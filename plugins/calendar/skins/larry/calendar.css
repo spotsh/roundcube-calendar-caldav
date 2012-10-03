@@ -1411,9 +1411,15 @@ div.calendar-invitebox .rsvp-status.tentative {
 
 .calendaritipattend .centerbox {
 	width: 40em;
-	margin: 80px auto;
+	margin: 80px auto 0 auto;
 	padding: 10px 10px 10px 90px;
 	background: url(images/invitation.png) 10px 10px no-repeat #fff;
+}
+
+.calendaritipattend #message {
+	width: 46em;
+	margin: 0 auto;
+	padding: 10px;
 }
 
 .calendaritipattend .calendar-invitebox {
