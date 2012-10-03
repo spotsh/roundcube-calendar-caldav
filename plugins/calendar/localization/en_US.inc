@@ -75,7 +75,7 @@ $labels['importrange'] = 'Events from';
 $labels['onemonthback'] = '1 month back';
 $labels['nmonthsback'] = '$nr months back';
 $labels['showurl'] = 'Show calendar URL';
-$labels['showurldescription'] = 'Use the following address to access your calendar from other applications. You can copy and paste this into any calendar software that supports the iCal format.';
+$labels['showurldescription'] = 'Use the following address to access (read only) your calendar from other applications. You can copy and paste this into any calendar software that supports the iCal format.';
 
 // agenda view
 $labels['listrange'] = 'Range to display:';

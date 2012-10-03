@@ -75,7 +75,7 @@ $labels['importrange'] = 'Termine ab';
 $labels['onemonthback'] = '1 Monat zurück';
 $labels['nmonthsback'] = '$nr Monate zurück';
 $labels['showurl'] = 'URL anzeigen';
-$labels['showurldescription'] = 'Über die folgende Adresse können Sie mit einem beliebigen Kalenderprogramm auf Ihren Kalender zugreifen, sofern dieses das iCal-Format unterstützt.';
+$labels['showurldescription'] = 'Über die folgende Adresse können Sie mit einem beliebigen Kalenderprogramm Ihren Kalender abrufen (nur lesend), sofern dieses das iCal-Format unterstützt.';
 
 // agenda view
 $labels['listrange'] = 'Angezeigter Bereich:';
