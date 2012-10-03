@@ -60,7 +60,7 @@ class kolab_calendar
 
     // Set readonly and alarms flags according to folder permissions
     if ($this->ready) {
-      if ($this->get_owner() == $_SESSION['username']) {
+      if ($this->storage->get_namespace() == 'personal') {
         $this->readonly = false;
         $this->alarms = true;
       }

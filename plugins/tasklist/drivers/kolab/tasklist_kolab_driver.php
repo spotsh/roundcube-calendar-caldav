@@ -94,7 +94,7 @@ class tasklist_kolab_driver extends tasklist_driver
 
             $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);
 
-            if ($folder->get_owner() == $_SESSION['username']) {
+            if ($folder->get_namespace() == 'personal') {
                 $readonly = false;
                 $alarms = true;
             }
