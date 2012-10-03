@@ -774,18 +774,6 @@ class calendar extends rcube_plugin
         }
         break;
     }
-    
-    // send out notifications
-    if ($success && $event['_notify'] && ($event['attendees'] || $old['attendees'])) {
-      // make sure we have the complete record
-      $event = $action == 'remove' ? $old : $this->driver->get_event($event);
-      
-      // only notify if data really changed (TODO: do diff check on client already)
-      if (!$old || $action == 'remove' || self::event_diff($event, $old)) {
-        if ($this->notify_attendees($event, $old, $action) < 0)
-          $this->rc->output->show_message('calendar.errornotifying', 'error');
-        }
-    }
 
     // show confirmation/error message
     if (!$got_msg) {
@@ -793,6 +781,21 @@ class calendar extends rcube_plugin
         $this->rc->output->show_message('successfullysaved', 'confirmation');
       else
         $this->rc->output->show_message('calendar.errorsaving', 'error');
+    }
+
+    // send out notifications
+    if ($success && $event['_notify'] && ($event['attendees'] || $old['attendees'])) {
+      // make sure we have the complete record
+      $event = $action == 'remove' ? $old : $this->driver->get_event($event);
+
+      // only notify if data really changed (TODO: do diff check on client already)
+      if (!$old || $action == 'remove' || self::event_diff($event, $old)) {
+        $sent = $this->notify_attendees($event, $old, $action);
+        if ($sent > 0)
+          $this->rc->output->show_message('calendar.itipsendsuccess', 'confirmation');
+        else if ($sent < 0)
+          $this->rc->output->show_message('calendar.errornotifying', 'error');
+      }
     }
 
     // unlock client

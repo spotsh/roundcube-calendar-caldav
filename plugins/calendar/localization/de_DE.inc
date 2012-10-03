@@ -180,6 +180,7 @@ $labels['newerversionexists'] = 'Eine neuere Version dieses Termins exisitert be
 $labels['nowritecalendarfound'] = 'Kein Kalender zum Speichern gefunden';
 $labels['importedsuccessfully'] = 'Der Termin wurde erfolgreich in \'$calendar\' gespeichert';
 $labels['attendeupdateesuccess'] = 'Teilnehmerstatus erfolgreich aktualisiert';
+$labels['itipsendsuccess'] = 'Einladung an Teilnehmer versendet.';
 $labels['itipresponseerror'] = 'Die Antwort auf diese Einladung konnte nicht versendet werden';
 $labels['sentresponseto'] = 'Antwort auf diese Einladung erfolgreich an $mailto gesendet';
 $labels['localchangeswarning'] = 'Die Änderungen an diesem Termin können nur in Ihrem persönlichen Kalender gespeichert werden.';
