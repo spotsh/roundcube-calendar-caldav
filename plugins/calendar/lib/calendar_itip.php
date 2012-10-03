@@ -29,12 +29,15 @@ class calendar_itip
   private $rc;
   private $cal;
   private $event;
+  private $itip_send = false;
 
   function __construct($cal)
   {
     $this->cal = $cal;
     $this->rc = $cal->rc;
     $this->sender = $this->rc->user->get_identity();
+
+    $this->cal->add_hook('smtp_connect', array($this, 'smtp_connect_hook'));
   }
 
   /**
@@ -99,7 +102,27 @@ class calendar_itip
     $message->setTXTBody(rcube_mime::format_flowed($mailbody, 79));
 
     // finally send the message
-    return rcmail_deliver_message($message, $headers['X-Sender'], $mailto, $smtp_error);
+    $this->itip_send = true;
+    $sent = rcmail_deliver_message($message, $headers['X-Sender'], $mailto, $smtp_error);
+    $this->itip_send = false;
+
+    return $sent;
+  }
+
+  /**
+   * Plugin hook to alter SMTP authentication.
+   * This is used if iTip messages are to be sent from an unauthenticated session
+   */
+  public function smtp_connect_hook($p)
+  {
+    // replace smtp auth settings if we're not in an authenticated session
+    if ($this->itip_send && !$this->rc->user->ID) {
+      foreach (array('smtp_server', 'smtp_user', 'smtp_pass') as $prop) {
+        $p[$prop] = $this->rc->config->get("calendar_itip_$prop", $p[$prop]);
+      }
+    }
+
+    return $p;
   }
 
   /**
