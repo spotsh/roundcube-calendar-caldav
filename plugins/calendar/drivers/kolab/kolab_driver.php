@@ -890,6 +890,10 @@ class kolab_driver extends calendar_driver
           $result[] = array($from, $to, isset($fbtypemap[$type]) ? $fbtypemap[$type] : calendar::FREEBUSY_BUSY);
         }
 
+        // we take 'dummy' free-busy lists as "unknown"
+        if (empty($result) && ($comment = $fb->getAttribute('COMMENT')) && stripos($comment, 'dummy'))
+          return false;
+
         // set period from $start till the begin of the free-busy information as 'unknown'
         if (($fbstart = $fb->getStart()) && $start < $fbstart) {
           array_unshift($result, array($start, $fbstart, calendar::FREEBUSY_UNKNOWN));
@@ -898,6 +902,7 @@ class kolab_driver extends calendar_driver
         if (($fbend = $fb->getEnd()) && $fbend < $end) {
           $result[] = array($fbend, $end, calendar::FREEBUSY_UNKNOWN);
         }
+
         return $result;
       }
     }
