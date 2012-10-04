@@ -902,6 +902,9 @@ function rcube_tasklist_ui(settings)
           resizable: true,
           closeOnEscape: true,
           title: rcmail.gettext('taskdetails', 'tasklist'),
+          open: function() {
+            $dialog.parent().find('.ui-button').first().focus();
+          },
           close: function() {
               $dialog.dialog('destroy').appendTo(document.body);
           },

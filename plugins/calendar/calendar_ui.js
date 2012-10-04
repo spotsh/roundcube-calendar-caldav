@@ -354,6 +354,9 @@ function rcube_calendar_ui(settings)
         resizable: !bw.ie6,
         closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
         title: Q(me.event_date_text(event)),
+        open: function() {
+          $dialog.parent().find('.ui-button').first().focus();
+        },
         close: function() {
           $dialog.dialog('destroy').hide();
         },
@@ -835,6 +838,9 @@ function rcube_calendar_ui(settings)
         resizable: true,
         closeOnEscape: (!bw.ie6 && !bw.ie7),
         title: rcmail.gettext('scheduletime', 'calendar'),
+        open: function() {
+          $dialog.parent().find('.ui-dialog-buttonset .ui-button').first().focus();
+        },
         close: function() {
           if (bw.ie6)
             $("#edit-attendees-table").css('visibility','visible');
