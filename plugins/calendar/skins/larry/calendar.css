@@ -444,6 +444,26 @@ a.miniColors-trigger {
 	background-position: right -80px;
 }
 
+.calendarmain .fc-view-table td.fc-list-header,
+#attendees-freebusy-table h3.boxtitle,
+#schedule-freebusy-times thead th,
+#edit-attendees-table thead td
+ {
+	color: #69939e;
+	font-size: 11px;
+	font-weight: bold;
+	background: #d6eaf3;
+	background: -moz-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
+	background: -webkit-gradient(linear, left top, right top, color-stop(0,#e3f2f6), color-stop(8%,#d6eaf3), color-stop(100%,#d6eaf3));
+	background: -o-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
+	background: -ms-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px ,#d6eaf3 100%);
+	background: linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
+	border: 0;
+	border-bottom: 1px solid #ccc;
+	height: 18px;
+	padding: 8px 7px 3px 7px;
+}
+
 /* jQuery UI overrides */
 
 #eventshow h1 {
@@ -673,22 +693,22 @@ td.topalign {
 
 #schedule-freebusy-times td.free,
 .availability img.availabilityicon.free {
-	background: #0c0;
+	background: #abd640;
 }
 
 #schedule-freebusy-times td.busy,
 .availability img.availabilityicon.busy {
-	background: #c00;
+	background: #e26569;
 }
 
 #schedule-freebusy-times td.tentative,
 .availability img.availabilityicon.tentative {
-	background: #66d;
+	background: #8383fc;
 }
 
 #schedule-freebusy-times td.out-of-office,
 .availability img.availabilityicon.out-of-office {
-	background: #f0b400;
+	background: #fbaa68;
 }
 
 #schedule-freebusy-times td.all-busy,
@@ -751,13 +771,11 @@ td.topalign {
 #attendees-freebusy-table {
 	width: 100%;
 	table-layout: fixed;
-	border-collapse: collapse;
-	margin: 0.5em 0;
+	border: 1px solid #bbd3da;
 }
 
 #attendees-freebusy-table td.attendees {
 	width: 18em;
-	border: 1px solid #ccc;
 	vertical-align: top;
 	overflow: hidden;
 }
@@ -765,7 +783,6 @@ td.topalign {
 #attendees-freebusy-table td.times {
 	width: auto;
 	vertical-align: top;
-	border: 1px solid #ccc;
 }
 
 #attendees-freebusy-table div.scroll {
@@ -775,7 +792,6 @@ td.topalign {
 
 #attendees-freebusy-table h3.boxtitle {
 	margin: 0;
-	height: auto !important;
 	border-color: #ccc;
 }
 
@@ -839,19 +855,13 @@ td.topalign {
 	border: 1px solid #ccc;
 }
 
-#schedule-freebusy-times tr.dates th {
-	border-color: #aaa;
-	border-style: solid;
-	border-width: 0 1px 0 1px;
-	white-space: nowrap;
-}
-
 #attendees-freebusy-table div.timesheader,
 #schedule-freebusy-times tr.times td {
 	min-width: 30px;
 	font-size: 9px;
 	padding: 5px 2px 6px 2px;
 	text-align: center;
+	color: #004658;
 }
 
 #schedule-freebusy-times tr.times td.allday {
@@ -880,8 +890,9 @@ td.topalign {
 
 #eventfreebusy .schedule-buttons {
 	position: absolute;
-	top: 0;
+	top: 0.5em;
 	right: 0;
+	margin-right: 0;
 }
 
 #eventfreebusy .schedule-find-buttons {
@@ -1264,24 +1275,6 @@ div.fc-event-location {
 
 .fc-list-section .fc-event {
 	cursor: pointer;
-}
-
-/*.calendarmain .fc-view-list div.fc-list-header,*/
-.calendarmain .fc-view-table td.fc-list-header,
-#edit-attendees-table thead td {
-	color: #69939e;
-	font-size: 11px;
-	font-weight: bold;
-	background: #d6eaf3;
-	background: -moz-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
-	background: -webkit-gradient(linear, left top, right top, color-stop(0,#e3f2f6), color-stop(8%,#d6eaf3), color-stop(100%,#d6eaf3));
-	background: -o-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
-	background: -ms-linear-gradient(left, #e3f2f6 0, #d6eaf3 14px ,#d6eaf3 100%);
-	background: linear-gradient(left, #e3f2f6 0, #d6eaf3 14px, #d6eaf3 100%);
-	border: 0;
-	border-bottom: 1px solid #ccc;
-	height: 18px;
-	padding: 8px 7px 3px 7px;
 }
 
 .calendarmain .fc-view-table td.fc-list-header {
