@@ -448,9 +448,18 @@ class calendar extends rcube_plugin
             var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).addClass("colors").val("000000");
             var button = $("<input>").attr("type", "button").attr("value", "X").addClass("button").click(function(){ $(this).parent().remove() });
             $("<div>").append(input).append("&nbsp;").append(color).append("&nbsp;").append(button).appendTo("#calendarcategories");
-            color.miniColors({ colorValues:mscolors });
+            color.miniColors({ colorValues:(rcmail.env.mscolors || []) });
+            $("#rcmfd_new_category").val("");
           }
         }');
+
+        $this->rc->output->add_script('$("#rcmfd_new_category").keypress(function(event){
+          if (event.which == 13) {
+            rcube_calendar_add_category();
+            event.preventDefault();
+          }
+        });
+        ', 'docready');
 
         // include color picker
         $this->include_script('lib/js/jquery.miniColors.min.js');
