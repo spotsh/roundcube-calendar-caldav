@@ -310,11 +310,14 @@ class kolab_storage
 
         // save color in METADATA
         // TODO: also save 'showalarams' and other properties here
-        // TODO: change private/shared precedence depending on private or shared folder
 
         if ($result && $prop['color']) {
-            if (!($meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_SHARED => $prop['color']))))  // try in shared namespace
-                $meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_PRIVATE => $prop['color']));    // try in private namespace
+            $meta_saved = false;
+            $ns = self::$imap->folder_namespace($folder);
+            if ($ns == 'personal')  // save in shared namespace for personal folders
+                $meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_SHARED => $prop['color']));
+            if (!$meta_saved)    // try in private namespace
+                $meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_PRIVATE => $prop['color']));
             if ($meta_saved)
                 unset($prop['color']);  // unsetting will prevent fallback to local user prefs
         }
