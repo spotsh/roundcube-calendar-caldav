@@ -32,7 +32,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   
   var rc_loading;
   var showdesc = true;
-  var settings = rcmail.env.calendar_settings;
+  var settings = $.extend(rcmail.env.calendar_settings, rcmail.env.libcal_settings);
   
   // create list of event sources AKA calendars
   var src, event_sources = [];

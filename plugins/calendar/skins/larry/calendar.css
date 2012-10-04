@@ -1011,7 +1011,7 @@ a.dropdown-link:after {
 	-moz-box-shadow: 0 0 2px #999;
 }
 
-.fc-content {
+.calendarmain .fc-content {
 	position: absolute !important;
 	top: 40px;
 	left: 0;

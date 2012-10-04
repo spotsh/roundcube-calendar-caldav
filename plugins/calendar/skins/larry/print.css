@@ -67,7 +67,8 @@ body, td, th, div, p, h3, select, input, textarea {
 	font-weight: bold;
 }
 
-#calendarlist input {
+#calendarlist input,
+#calendarlist .handle {
 	display: none;
 }
 

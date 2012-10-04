@@ -1476,6 +1476,7 @@ class calendar extends rcube_plugin
     
     // Add JS files to the page header
     $this->include_script('print.js');
+    $this->include_script('lib/js/fullcalendar.js');
     
     $this->register_handler('plugin.calendar_css', array($this->ui, 'calendar_css'));
     $this->register_handler('plugin.calendar_list', array($this->ui, 'calendar_list'));
