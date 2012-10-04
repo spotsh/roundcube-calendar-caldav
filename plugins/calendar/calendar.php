@@ -1502,6 +1502,7 @@ class calendar extends rcube_plugin
       "rcmail.set_env('deleteicon', '" . $this->api->output->env['deleteicon'] . "');\n".
       "rcmail.set_env('cancelicon', '" . $this->api->output->env['cancelicon'] . "');\n".
       "rcmail.set_env('loadingicon', '" . $this->api->output->env['loadingicon'] . "');\n".
+      "rcmail.gui_object('attachmentlist', '"  . $this->ui->attachmentlist_id . "');\n".
       "rcmail.add_label(" . json_encode($texts) . ");\n"
     );
     exit;

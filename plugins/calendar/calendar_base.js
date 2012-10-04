@@ -47,9 +47,6 @@ function rcube_calendar(settings)
             $.getScript('./plugins/calendar/lib/js/fullcalendar.js'),
             $.get(rcmail.url('calendar/inlineui'), function(html){ $(document.body).append(html); }, 'html')
           ).then(function() {
-            // register attachments form
-            rcmail.gui_object('attachmentlist', 'attachmentlist');
-            
             // disable attendees feature (autocompletion and stuff is not initialized)
             for (var c in rcmail.env.calendars)
               rcmail.env.calendars[c].attendees = false;

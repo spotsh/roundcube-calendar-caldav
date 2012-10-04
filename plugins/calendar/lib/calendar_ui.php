@@ -606,6 +606,7 @@ class calendar_ui
       $this->rc->output->set_env('loadingicon', $skin_path . $attrib['loadingicon']);
 
     $this->rc->output->add_gui_object('attachmentlist', $attrib['id']);
+    $this->attachmentlist_id = $attrib['id'];
 
     return html::tag('ul', $attrib, '', html::$common_attrib);
   }
