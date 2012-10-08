@@ -11,8 +11,9 @@ $rcmail_config['kolab_auth_filter'] = '(&(objectClass=kolabInetOrgPerson)(|(uid=
 $rcmail_config['kolab_auth_login'] = 'email';
 
 // Use this fields (from fieldmap configuration) for default identity.
-// Note: These aren't LDAP attributes, but field names in config
 // If the value array contains more than one field, first non-empty will be used
+// Note: These aren't LDAP attributes, but field names in config
+// Note: If there's more than one email address, as many identities will be created
 $rcmail_config['kolab_auth_name']  = array('name', 'cn');
 $rcmail_config['kolab_auth_email'] = array('email');
 

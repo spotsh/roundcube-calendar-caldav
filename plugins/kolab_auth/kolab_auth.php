@@ -206,8 +206,15 @@ class kolab_auth extends rcube_plugin
     public function user_create($args)
     {
         if (!empty($this->data['user_email'])) {
-            $args['user_email'] = $this->data['user_email'];
+            // addresses list is supported
+            if (array_key_exists('email_list', $args)) {
+                $args['email_list'] = array_unique($this->data['user_email']);
+            }
+            else {
+                $args['user_email'] = $this->data['user_email'][0];
+            }
         }
+
         if (!empty($this->data['user_name'])) {
             $args['user_name'] = $this->data['user_name'];
         }
@@ -374,12 +381,11 @@ class kolab_auth extends rcube_plugin
                 break;
             }
         }
-        // User email for identity (first log in)
+        // User email(s) for identity (first log in)
         foreach ((array)$email_attr as $field) {
-            $email = is_array($record[$field]) ? $record[$field][0] : $record[$field];
+            $email = is_array($record[$field]) ? array_filter($record[$field]) : $record[$field];
             if (!empty($email)) {
-                $this->data['user_email'] = $email;
-                break;
+                $this->data['user_email'] = array_merge((array)$this->data['user_email'], (array)$email);
             }
         }
 
