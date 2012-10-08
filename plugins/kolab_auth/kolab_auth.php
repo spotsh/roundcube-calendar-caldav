@@ -252,6 +252,7 @@ class kolab_auth extends rcube_plugin
         $this->load_config();
 
         if (!$this->init_ldap()) {
+            $args['abort'] = true;
             return $args;
         }
 
@@ -268,6 +269,7 @@ class kolab_auth extends rcube_plugin
         $loginas = trim(get_input_value('_loginas', RCUBE_INPUT_POST));
 
         if (empty($user) || empty($pass)) {
+            $args['abort'] = true;
             return $args;
         }
 
@@ -275,6 +277,7 @@ class kolab_auth extends rcube_plugin
         $record = $this->get_user_record($user, $host);
 
         if (empty($record)) {
+            $args['abort'] = true;
             return $args;
         }
 
@@ -339,7 +342,7 @@ class kolab_auth extends rcube_plugin
             }
 
             if (empty($record)) {
-                $args['valid'] = false;
+                $args['abort'] = true;
                 return $args;
             }
 
@@ -351,21 +354,19 @@ class kolab_auth extends rcube_plugin
             $_SESSION['kolab_auth_password'] = $rcmail->encrypt($admin_pass);
         }
 
+        // Store UID in session for use by other plugins
+        $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
+
         // Set credentials
-        if ($record) {
-            // Store UID in session for use by other plugins
-            $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
+        if ($login_attr) {
+            $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
+        }
+        if ($name_attr) {
+            $this->data['user_name'] = is_array($record[$name_attr]) ? $record[$name_attr][0] : $record[$name_attr];
+        }
 
-            if ($login_attr) {
-                $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
-            }
-            if ($name_attr) {
-                $this->data['user_name'] = is_array($record[$name_attr]) ? $record[$name_attr][0] : $record[$name_attr];
-            }
-
-            if ($this->data['user_login']) {
-                $args['user'] = $this->data['user_login'];
-            }
+        if ($this->data['user_login']) {
+            $args['user'] = $this->data['user_login'];
         }
 
         // Log "Login As" usage
