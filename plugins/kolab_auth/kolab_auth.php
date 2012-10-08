@@ -261,6 +261,7 @@ class kolab_auth extends rcube_plugin
         $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
         $login_attr  = $rcmail->config->get('kolab_auth_login');
         $name_attr   = $rcmail->config->get('kolab_auth_name');
+        $email_attr  = $rcmail->config->get('kolab_auth_email');
 
         // get username and host
         $host    = rcube_parse_host($args['host']);
@@ -357,16 +358,29 @@ class kolab_auth extends rcube_plugin
         // Store UID in session for use by other plugins
         $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
 
-        // Set credentials
+        // Set user login
         if ($login_attr) {
             $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
         }
-        if ($name_attr) {
-            $this->data['user_name'] = is_array($record[$name_attr]) ? $record[$name_attr][0] : $record[$name_attr];
-        }
-
         if ($this->data['user_login']) {
             $args['user'] = $this->data['user_login'];
+        }
+
+        // User name for identity (first log in)
+        foreach ((array)$name_attr as $field) {
+            $name = is_array($record[$field]) ? $record[$field][0] : $record[$field];
+            if (!empty($name)) {
+                $this->data['user_name'] = $name;
+                break;
+            }
+        }
+        // User email for identity (first log in)
+        foreach ((array)$email_attr as $field) {
+            $email = is_array($record[$field]) ? $record[$field][0] : $record[$field];
+            if (!empty($email)) {
+                $this->data['user_email'] = $email;
+                break;
+            }
         }
 
         // Log "Login As" usage

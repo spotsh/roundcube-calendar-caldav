@@ -10,9 +10,11 @@ $rcmail_config['kolab_auth_filter'] = '(&(objectClass=kolabInetOrgPerson)(|(uid=
 // Use this fields (from fieldmap configuration) to get authentication ID
 $rcmail_config['kolab_auth_login'] = 'email';
 
-// Use this fields (from fieldmap configuration) for default identity
-$rcmail_config['kolab_auth_name']  = 'name';
-$rcmail_config['kolab_auth_email'] = 'email';
+// Use this fields (from fieldmap configuration) for default identity.
+// Note: These aren't LDAP attributes, but field names in config
+// If the value array contains more than one field, first non-empty will be used
+$rcmail_config['kolab_auth_name']  = array('name', 'cn');
+$rcmail_config['kolab_auth_email'] = array('email');
 
 // Login and password of the admin user. Enables "Login As" feature.
 $rcmail_config['kolab_auth_admin_login']    = '';
