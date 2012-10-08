@@ -130,10 +130,12 @@ class kolab_auth extends rcube_plugin
                         }
                     }
 
+                    $dont_override = (array) $rcmail->config->get('dont_override');
+
                     if (!isset($setting['allow_override']) || !$setting['allow_override']) {
-                        $rcmail->config->set('dont_override', array_merge($rcmail->config->get('dont_override', Array()), Array($setting_name)));
-                    } else {
-                        $dont_override = $rcmail->config->get('dont_override');
+                        $rcmail->config->set('dont_override', array_merge($dont_override, array($setting_name)));
+                    }
+                    else {
                         if (in_array($setting_name, $dont_override)) {
                             $_dont_override = array();
                             foreach ($dont_override as $_setting) {
@@ -162,20 +164,23 @@ class kolab_auth extends rcube_plugin
             $prio = $args['name'] == 'errors' ? LOG_ERR : LOG_INFO;
             syslog($prio, $args['line']);
             return $args;
-        } else {
+        }
+        else {
             $line = sprintf("[%s]: %s\n", $args['date'], $args['line']);
 
             // log_driver == 'file' is assumed here
-            $log_dir = $rcmail->config->get('log_dir', INSTALL_PATH . 'logs');
+            $log_dir  = $rcmail->config->get('log_dir', INSTALL_PATH . 'logs');
+            $log_path = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
 
             // Append original username + target username
-            if (!is_dir($log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']))) {
+            if (!is_dir($log_path)) {
                 // Attempt to create the directory
-                if (@mkdir($log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']), 0750, true)) {
-                    $log_dir = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
+                if (@mkdir($log_path, 0750, true)) {
+                    $log_dir = $log_path;
                 }
-            } else {
-                $log_dir = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
+            }
+            else {
+                $log_dir = $log_path;
             }
 
             // try to open specific log file for writing
@@ -187,8 +192,9 @@ class kolab_auth extends rcube_plugin
                 fclose($fp);
                 return $args;
             }
-            else
+            else {
                 trigger_error("Error writing to log file $logfile; Please check permissions", E_USER_WARNING);
+            }
         }
 
         return $args;
@@ -199,10 +205,12 @@ class kolab_auth extends rcube_plugin
      */
     public function user_create($args)
     {
-        if (!empty($this->data['user_email']))
+        if (!empty($this->data['user_email'])) {
             $args['user_email'] = $this->data['user_email'];
-        if (!empty($this->data['user_name']))
+        }
+        if (!empty($this->data['user_name'])) {
             $args['user_name'] = $this->data['user_name'];
+        }
 
         return $args;
     }
@@ -316,10 +324,12 @@ class kolab_auth extends rcube_plugin
             }
 
             // Save original user login for log (see below)
-            if ($login_attr)
+            if ($login_attr) {
                 $origname = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
-            else
+            }
+            else {
                 $origname = $user;
+            }
 
             $record = null;
 
@@ -346,13 +356,16 @@ class kolab_auth extends rcube_plugin
             // Store UID in session for use by other plugins
             $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
 
-            if ($login_attr)
+            if ($login_attr) {
                 $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
-            if ($name_attr)
+            }
+            if ($name_attr) {
                 $this->data['user_name'] = is_array($record[$name_attr]) ? $record[$name_attr][0] : $record[$name_attr];
+            }
 
-            if ($this->data['user_login'])
+            if ($this->data['user_login']) {
                 $args['user'] = $this->data['user_login'];
+            }
         }
 
         // Log "Login As" usage
@@ -460,10 +473,12 @@ class kolab_auth extends rcube_plugin
         $domain = $rcmail->config->get('username_domain');
 
         if (!empty($domain) && strpos($user, '@') === false) {
-            if (is_array($domain) && isset($domain[$host]))
+            if (is_array($domain) && isset($domain[$host])) {
                 $user .= '@'.rcube_parse_host($domain[$host], $host);
-            else if (is_string($domain))
+            }
+            else if (is_string($domain)) {
                 $user .= '@'.rcube_parse_host($domain, $host);
+            }
         }
 
         // replace variables in filter
