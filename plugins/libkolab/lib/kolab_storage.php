@@ -598,4 +598,27 @@ class kolab_storage
         return $types[self::CTYPE_KEY_PRIVATE] ?: $types[self::CTYPE_KEY];
     }
 
+
+    /**
+     * Returns type of IMAP folder
+     *
+     * @param string $folder Folder name (UTF7-IMAP)
+     *
+     * @return string Folder type
+     */
+    static function folder_type($folder)
+    {
+        $metadata = self::$imap->get_metadata($folder, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
+
+        if (!is_array($metadata)) {
+            return null;
+        }
+
+        if (!empty($metadata[$folder])) {
+            return self::folder_select_metadata($metadata[$folder]);
+        }
+
+        return 'mail';
+    }
+
 }

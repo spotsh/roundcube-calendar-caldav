@@ -75,13 +75,7 @@ class kolab_storage_folder
      */
     public function set_folder($name, $ftype = null)
     {
-        if (!$ftype) {
-            $metadata = $this->imap->get_metadata($name, array(kolab_storage::CTYPE_KEY, kolab_storage::CTYPE_KEY_PRIVATE));
-            $this->type_annotation = $metadata[$name][kolab_storage::CTYPE_KEY_PRIVATE] ?: $metadata[$name][kolab_storage::CTYPE_KEY];
-        }
-        else {
-            $this->type_annotation = $ftype;
-        }
+        $this->type_annotation = $ftype ? $ftype : kolab_storage::folder_type($name);
 
         list($this->type, $suffix) = explode('.', $this->type_annotation);
         $this->default      = $suffix == 'default';
