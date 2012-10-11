@@ -608,6 +608,8 @@ class kolab_storage
      */
     static function folder_type($folder)
     {
+        self::setup();
+
         $metadata = self::$imap->get_metadata($folder, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
 
         if (!is_array($metadata)) {
