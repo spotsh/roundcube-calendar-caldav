@@ -41,7 +41,7 @@ class tinymce_config extends rcube_plugin
 
     $script = sprintf('$.extend(window.rcmail_editor_settings, %s);', json_encode($config));
 
-    $rcmail->output->add_script($script, 'docready');
+    $rcmail->output->add_script($script, 'foot');
   }
 }
 
