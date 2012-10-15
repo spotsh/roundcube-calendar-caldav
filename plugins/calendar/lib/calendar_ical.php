@@ -149,6 +149,7 @@ class calendar_ical
       // set defaults
       'free_busy' => 'busy',
       'priority' => 0,
+      'attendees' => array(),
     );
 
     // check for all-day dates
@@ -299,7 +300,7 @@ class calendar_ical
 
     // make sure the event has an UID
     if (!$event['uid'])
-      $event['uid'] = $this->cal->$this->generate_uid();
+      $event['uid'] = $this->cal->generate_uid();
     
     return $event;
   }
