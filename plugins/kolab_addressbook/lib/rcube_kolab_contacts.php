@@ -554,6 +554,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         if (!$existing) {
+            // remove existing id attributes (#1101)
+            unset($save_data['ID'], $save_data['uid']);
+
             // generate new Kolab contact item
             $object = $this->_from_rcube_contact($save_data);
             $saved = $this->storagefolder->save($object, 'contact');
