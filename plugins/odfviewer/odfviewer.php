@@ -57,7 +57,7 @@ class odfviewer extends rcube_plugin
     if ($ua->ie && $ua->ver < 9)
       return;
     // extend list of mimetypes that should open in preview
-    $rcmail = rcmail::get_instance();
+    $rcmail = rcube::get_instance();
     if ($rcmail->action == 'preview' || $rcmail->action == 'show' || $rcmail->task == 'calendar' || $rcmail->task == 'tasks') {
       $mimetypes = $rcmail->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
       if (!is_array($mimetypes))
@@ -87,7 +87,7 @@ class odfviewer extends rcube_plugin
           }
           else {
             $fp = fopen($tempfn, 'w');
-            $imap = rcmail::get_instance()->get_storage();
+            $imap = rcube::get_instance()->get_storage();
             $imap->get_message_part($args['uid'], $args['id'], $args['part'], false, $fp);
             fclose($fp);
           }
@@ -138,7 +138,7 @@ class odfviewer extends rcube_plugin
    */
   function gc_cleanup()
   {
-    $rcmail = rcmail::get_instance();
+    $rcmail = rcube::get_instance();
 
     $tmp = unslashify($this->tempdir);
     $expire = mktime() - 172800;  // expire in 48 hours

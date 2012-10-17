@@ -30,7 +30,7 @@ class kolab_zpush_ui
     public function __construct($config)
     {
         $this->config = $config;
-        $this->rc = rcmail::get_instance();
+        $this->rc = rcube::get_instance();
 
         $skin = $this->rc->config->get('skin');
         $this->config->include_stylesheet('skins/' . $skin . '/config.css');
@@ -146,8 +146,8 @@ class kolab_zpush_ui
 
             $classes = array('mailbox');
 
-            if ($folder_class = rcmail_folder_classname($folder)) {
-                $foldername = rcube_label($folder_class);
+            if ($folder_class = $this->rc->folder_classname($folder)) {
+                $foldername = $this->rc->gettext($folder_class);
                 $classes[] = $folder_class;
             }
 

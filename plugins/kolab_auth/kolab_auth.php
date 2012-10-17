@@ -35,7 +35,7 @@ class kolab_auth extends rcube_plugin
 
     public function init()
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         $this->add_hook('authenticate', array($this, 'authenticate'));
         $this->add_hook('startup', array($this, 'startup'));
@@ -76,7 +76,7 @@ class kolab_auth extends rcube_plugin
     }
 
     public function load_user_role_plugins_and_settings($role_dns) {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         $this->load_config();
 
         // Check role dependent plugins to enable and settings to modify
@@ -152,7 +152,7 @@ class kolab_auth extends rcube_plugin
     }
 
     public function write_log($args) {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         if (!$rcmail->config->get('kolab_auth_auditlog', false)) {
             return $args;
@@ -230,7 +230,7 @@ class kolab_auth extends rcube_plugin
         $this->load_config();
         $this->add_texts('localization/');
 
-        $rcmail      = rcmail::get_instance();
+        $rcmail      = rcube::get_instance();
         $admin_login = $rcmail->config->get('kolab_auth_admin_login');
         $group       = $rcmail->config->get('kolab_auth_group');
         $role_attr   = $rcmail->config->get('kolab_auth_role');
@@ -263,7 +263,7 @@ class kolab_auth extends rcube_plugin
             return $args;
         }
 
-        $rcmail      = rcmail::get_instance();
+        $rcmail      = rcube::get_instance();
         $admin_login = $rcmail->config->get('kolab_auth_admin_login');
         $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
         $login_attr  = $rcmail->config->get('kolab_auth_login');
@@ -391,8 +391,8 @@ class kolab_auth extends rcube_plugin
 
         // Log "Login As" usage
         if (!empty($origname)) {
-            write_log('userlogins', sprintf('Admin login for %s by %s from %s',
-                $args['user'], $origname, rcmail_remote_ip()));
+            rcube::write_log('userlogins', sprintf('Admin login for %s by %s from %s',
+                $args['user'], $origname, rcube_utils::remote_ip()));
         }
 
         return $args;
@@ -404,7 +404,7 @@ class kolab_auth extends rcube_plugin
     public function imap_connect($args)
     {
         if (!empty($_SESSION['kolab_auth_admin'])) {
-            $rcmail      = rcmail::get_instance();
+            $rcmail      = rcube::get_instance();
             $admin_login = $rcmail->decrypt($_SESSION['kolab_auth_login']);
             $admin_pass  = $rcmail->decrypt($_SESSION['kolab_auth_password']);
 
@@ -421,7 +421,7 @@ class kolab_auth extends rcube_plugin
     public function smtp_connect($args)
     {
         if (!empty($_SESSION['kolab_auth_admin'])) {
-            $rcmail      = rcmail::get_instance();
+            $rcmail      = rcube::get_instance();
             $admin_login = $rcmail->decrypt($_SESSION['kolab_auth_login']);
             $admin_pass  = $rcmail->decrypt($_SESSION['kolab_auth_password']);
 
@@ -441,7 +441,7 @@ class kolab_auth extends rcube_plugin
             return $this->ldap->ready;
         }
 
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         $addressbook = $rcmail->config->get('kolab_auth_addressbook');
 
@@ -468,7 +468,7 @@ class kolab_auth extends rcube_plugin
      */
     private function get_user_record($user, $host)
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         $filter = $rcmail->config->get('kolab_auth_filter');
 
         $filter = $this->parse_vars($filter, $user, $host);
@@ -490,15 +490,15 @@ class kolab_auth extends rcube_plugin
      */
     private function parse_vars($str, $user, $host)
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         $domain = $rcmail->config->get('username_domain');
 
         if (!empty($domain) && strpos($user, '@') === false) {
             if (is_array($domain) && isset($domain[$host])) {
-                $user .= '@'.rcube_parse_host($domain[$host], $host);
+                $user .= '@'.rcube_utils::parse_host($domain[$host], $host);
             }
             else if (is_string($domain)) {
-                $user .= '@'.rcube_parse_host($domain, $host);
+                $user .= '@'.rcube_utils::parse_host($domain, $host);
             }
         }
 

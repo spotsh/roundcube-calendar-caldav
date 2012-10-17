@@ -21,7 +21,7 @@ class owncloud extends rcube_plugin
 
     function init()
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         // requires kolab_auth plugin
         if (empty($_SESSION['kolab_uid'])) {
@@ -39,20 +39,20 @@ class owncloud extends rcube_plugin
 
         // add taskbar button
         $this->add_button(array(
-	        'command' => 'owncloud',
-	        'class'	=> 'button-owncloud',
-	        'classsel' => 'button-owncloud button-selected',                                                                                                               
-	        'innerclass' => 'button-inner',                                                                                                                                
-	        'label'	=> 'owncloud.owncloud',
+            'command'    => 'owncloud',
+            'class'      => 'button-owncloud',
+            'classsel'   => 'button-owncloud button-selected',
+            'innerclass' => 'button-inner',
+            'label'      => 'owncloud.owncloud',
             ), 'taskbar');
 
-        // add style for taskbar button (must be here) and Help UI    
+        // add style for taskbar button (must be here) and Help UI
         $this->include_stylesheet($this->local_skin_path()."/owncloud.css");
     }
 
     function action()
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         $rcmail->output->add_handlers(array('owncloudframe' => array($this, 'frame')));
         $rcmail->output->set_pagetitle($this->gettext('owncloud'));
@@ -61,7 +61,7 @@ class owncloud extends rcube_plugin
 
     function frame()
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         $this->load_config();
 

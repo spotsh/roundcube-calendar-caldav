@@ -40,7 +40,7 @@ class kolab_config extends rcube_plugin
      */
     public function init()
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         // Register spellchecker dictionary handlers
         if (strtolower($rcmail->config->get('spellcheck_dictionary')) != 'shared') {

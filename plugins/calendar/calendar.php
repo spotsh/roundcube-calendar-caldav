@@ -75,7 +75,7 @@ class calendar extends rcube_plugin
   {
     $this->require_plugin('libcalendaring');
 
-    $this->rc = rcmail::get_instance();
+    $this->rc = rcube::get_instance();
     $this->lib = libcalendaring::get_instance();
 
     $this->register_task('calendar', 'calendar');
@@ -1094,7 +1094,7 @@ class calendar extends rcube_plugin
     }
 
     foreach ((array)$event['attachments'] as $k => $attachment) {
-      $event['attachments'][$k]['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
+      $event['attachments'][$k]['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
     }
 
     return array(
@@ -1936,13 +1936,13 @@ class calendar extends rcube_plugin
 
           if ($attachment['status'] && !$attachment['abort']) {
             $id = $attachment['id'];
-            $attachment['classname'] = rcmail_filetype2classname($attachment['mimetype'], $attachment['name']);
+            $attachment['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
 
             // store new attachment in session
             unset($attachment['status'], $attachment['abort'], $attachment['data']);
             $_SESSION[self::SESSION_KEY]['attachments'][$id] = $attachment;
 
-            $attachment['id'] = 'rcmfile' . $attachment['id'];  # add prefix to consider it 'new'
+            $attachment['id'] = 'rcmfile' . $attachment['id'];  // add prefix to consider it 'new'
             $event['attachments'][] = $attachment;
           }
         }

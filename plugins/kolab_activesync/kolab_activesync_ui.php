@@ -32,7 +32,7 @@ class kolab_activesync_ui
     public function __construct($plugin)
     {
         $this->plugin    = $plugin;
-        $this->rc        = rcmail::get_instance();
+        $this->rc        = rcube::get_instance();
         $skin_path       = $this->plugin->local_skin_path() . '/';
         $this->skin_path = 'plugins/kolab_activesync/' . $skin_path;
 
@@ -170,8 +170,8 @@ class kolab_activesync_ui
             $names[] = $origname;
             $classes = array('mailbox');
 
-            if ($folder_class = rcmail_folder_classname($folder)) {
-                $foldername = html::quote(rcube_label($folder_class));
+            if ($folder_class = $this->rc->folder_classname($folder)) {
+                $foldername = html::quote($this->rc->gettext($folder_class));
                 $classes[] = $folder_class;
             }
 

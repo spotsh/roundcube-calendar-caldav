@@ -72,7 +72,7 @@ class libcalendaring extends rcube_plugin
     {
         self::$instance = $this;
 
-        $this->rc = rcmail::get_instance();
+        $this->rc = rcube::get_instance();
 
         // set user's timezone
         $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
@@ -529,7 +529,7 @@ class libcalendaring extends rcube_plugin
                       'html' => $content,
                       'name' => $attachment['name'],
                       'mimetype' => $attachment['mimetype'],
-                      'classname' => rcmail_filetype2classname($attachment['mimetype'], $attachment['name']),
+                      'classname' => rcube_utils::file2class($attachment['mimetype'], $attachment['name']),
                       'complete' => true), $uploadid);
               }
               else {  // upload failed
