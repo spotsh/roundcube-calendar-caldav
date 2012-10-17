@@ -337,14 +337,7 @@ class kolab_folders extends rcube_plugin
      */
     function get_folder_type($folder)
     {
-        $storage    = $this->rc->get_storage();
-        $folderdata = $storage->get_metadata($folder, array(kolab_storage::CTYPE_KEY_PRIVATE, kolab_storage::CTYPE_KEY));
-
-        if (!($ctype = $folderdata[$folder][kolab_storage::CTYPE_KEY_PRIVATE])) {
-            $ctype = $folderdata[$folder][kolab_storage::CTYPE_KEY];
-        }
-
-        return explode('.', $ctype);
+        return explode('.', (string)kolab_storage::folder_type($folder));
     }
 
     /**
@@ -380,7 +373,7 @@ class kolab_folders extends rcube_plugin
         $namespace = $storage->get_namespace();
 
         // get all folders of specified type
-        $folderdata = array_map(array($this, 'folder_select_metadata'), $folderdata);
+        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
         $folderdata = array_intersect($folderdata, array($type));
 
         foreach ($folderdata as $folder => $data) {
@@ -400,14 +393,6 @@ class kolab_folders extends rcube_plugin
         }
 
         return null;
-    }
-
-    /**
-     * Callback for array_map to select the correct annotation value
-     */
-    private function folder_select_metadata($types)
-    {
-        return $types[kolab_storage::CTYPE_KEY_PRIVATE] ?: $types[kolab_storage::CTYPE_KEY];
     }
 
     /**

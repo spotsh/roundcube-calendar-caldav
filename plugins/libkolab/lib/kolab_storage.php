@@ -595,7 +595,14 @@ class kolab_storage
      */
     static function folder_select_metadata($types)
     {
-        return $types[self::CTYPE_KEY_PRIVATE] ?: $types[self::CTYPE_KEY];
+        if (!empty($types[self::CTYPE_KEY_PRIVATE])) {
+            return $types[self::CTYPE_KEY_PRIVATE];
+        }
+        else if (!empty($types[self::CTYPE_KEY])) {
+            list($ctype, $suffix) = explode('.', $types[self::CTYPE_KEY]);
+            return $ctype;
+        }
+        return null;
     }
 
 
