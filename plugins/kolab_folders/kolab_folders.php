@@ -357,15 +357,7 @@ class kolab_folders extends rcube_plugin
      */
     function set_folder_type($folder, $type='mail')
     {
-        $storage = $this->rc->get_storage();
-        list($ctype, $subtype) = explode('.', $type);
-
-        $success = $storage->set_metadata($folder, array(kolab_storage::CTYPE_KEY => $ctype, kolab_storage::CTYPE_KEY_PRIVATE => $subtype ? $type : null));
-
-        if (!$success)  // fallback: only set private annotation
-            $success |= $storage->set_metadata($folder, array(kolab_storage::CTYPE_KEY_PRIVATE => $type));
-
-        return $uccess;
+        return kolab_storage::set_folder_type($folder, $type);
     }
 
     /**

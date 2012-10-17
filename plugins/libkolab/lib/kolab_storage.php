@@ -191,7 +191,7 @@ class kolab_storage
         if ($saved = self::$imap->create_folder($name, $subscribed)) {
             // set metadata for folder type
             if ($type) {
-                $saved = self::$imap->set_metadata($name, array(self::CTYPE_KEY => $type));
+                $saved = self::set_folder_type($name, $type);
 
                 // revert if metadata could not be set
                 if (!$saved) {
@@ -623,4 +623,23 @@ class kolab_storage
         return 'mail';
     }
 
+    /**
+     * Sets folder content-type.
+     *
+     * @param string $folder Folder name
+     * @param string $type   Content type
+     *
+     * @return boolean True on success
+     */
+    static function set_folder_type($folder, $type='mail')
+    {
+        list($ctype, $subtype) = explode('.', $type);
+
+        $success = self::$imap->set_metadata($folder, array(self::CTYPE_KEY => $ctype, self::CTYPE_KEY_PRIVATE => $subtype ? $type : null));
+
+        if (!$success)  // fallback: only set private annotation
+            $success |= self::$imap->set_metadata($folder, array(self::CTYPE_KEY_PRIVATE => $type));
+
+        return $success;
+    }
 }
