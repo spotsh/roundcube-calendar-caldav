@@ -244,7 +244,7 @@ class kolab_auth extends rcube_plugin
             'type' => 'text', 'autocomplete' => 'off'));
         $row = html::tag('tr', null,
             html::tag('td', 'title', html::label('rcmloginas', Q($this->gettext('loginas'))))
-            . html::tag('td', 'input', $input->show(trim(get_input_value('_loginas', RCUBE_INPUT_POST))))
+            . html::tag('td', 'input', $input->show(trim(rcube_utils::get_input_value('_loginas', rcube_utils::INPUT_POST))))
         );
         $args['content'] = preg_replace('/<\/tbody>/i', $row . '</tbody>', $args['content']);
 
@@ -271,10 +271,10 @@ class kolab_auth extends rcube_plugin
         $email_attr  = $rcmail->config->get('kolab_auth_email');
 
         // get username and host
-        $host    = rcube_parse_host($args['host']);
+        $host    = rcube_utils::parse_host($args['host']);
         $user    = $args['user'];
         $pass    = $args['pass'];
-        $loginas = trim(get_input_value('_loginas', RCUBE_INPUT_POST));
+        $loginas = trim(rcube_utils::get_input_value('_loginas', rcube_utils::INPUT_POST));
 
         if (empty($user) || empty($pass)) {
             $args['abort'] = true;
