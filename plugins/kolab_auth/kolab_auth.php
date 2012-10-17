@@ -271,7 +271,7 @@ class kolab_auth extends rcube_plugin
         $email_attr  = $rcmail->config->get('kolab_auth_email');
 
         // get username and host
-        $host    = rcube_utils::parse_host($args['host']);
+        $host    = $args['host'];
         $user    = $args['user'];
         $pass    = $args['pass'];
         $loginas = trim(rcube_utils::get_input_value('_loginas', rcube_utils::INPUT_POST));
@@ -302,6 +302,7 @@ class kolab_auth extends rcube_plugin
             $result = $this->ldap->bind($dn, $pass);
 
             if (!$result) {
+                $args['abort'] = true;
                 return $args;
             }
 
