@@ -39,7 +39,7 @@ class kolab_folders extends rcube_plugin
     function init()
     {
         self::$instance = $this;
-        $this->rc = rcmail::get_instance();
+        $this->rc = rcube::get_instance();
 
         // load required plugin
         $this->require_plugin('libkolab');

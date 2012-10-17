@@ -251,7 +251,7 @@ abstract class tasklist_driver
      */
     public function list_categories()
     {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
         return $rcmail->config->get('tasklist_categories', array());
     }
 

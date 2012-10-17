@@ -36,7 +36,7 @@ class piwik_analytics extends rcube_plugin
     }
 
     function add_script($args) {
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         $exclude = $rcmail->config->get('piwik_analytics_exclude');
 

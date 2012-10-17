@@ -31,7 +31,7 @@ class tinymce_config extends rcube_plugin
 
   function config($args)
   {
-    $rcmail = rcmail::get_instance();
+    $rcmail = rcube::get_instance();
 
     $config = array(
         'forced_root_block' => '',

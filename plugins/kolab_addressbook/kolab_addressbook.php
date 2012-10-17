@@ -48,7 +48,7 @@ class kolab_addressbook extends rcube_plugin
     {
         require_once(dirname(__FILE__) . '/lib/rcube_kolab_contacts.php');
 
-        $this->rc = rcmail::get_instance();
+        $this->rc = rcube::get_instance();
 
         // load required plugin
         $this->require_plugin('libkolab');

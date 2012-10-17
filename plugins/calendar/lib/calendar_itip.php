@@ -103,7 +103,7 @@ class calendar_itip
 
     // finally send the message
     $this->itip_send = true;
-    $sent = rcmail_deliver_message($message, $headers['X-Sender'], $mailto, $smtp_error);
+    $sent = $this->rc->deliver_message($message, $headers['X-Sender'], $mailto, $smtp_error);
     $this->itip_send = false;
 
     return $sent;
@@ -147,8 +147,8 @@ class calendar_itip
     // compose common headers array
     $headers = array(
       'From' => $sender,
-      'Date' => rcmail_user_date(),
-      'Message-ID' => rcmail_gen_message_id(),
+      'Date' => $this->rc->user_date(),
+      'Message-ID' => $this->rc->gen_message_id(),
       'X-Sender' => $from,
     );
     if ($agent = $this->rc->config->get('useragent'))

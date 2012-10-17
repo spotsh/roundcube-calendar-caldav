@@ -56,7 +56,7 @@ $opts = get_opt(array(
 $opts['username'] = !empty($opts[1]) ? $opts[1] : $opts['user'];
 $action = $opts[0];
 
-$rcmail = rcmail::get_instance();
+$rcmail = rcube::get_instance();
 
 
 /*

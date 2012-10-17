@@ -132,7 +132,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
 
-        $this->action = rcmail::get_instance()->action;
+        $this->action = rcube::get_instance()->action;
     }
 
 

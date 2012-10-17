@@ -298,7 +298,7 @@ abstract class calendar_driver
    */
   public function list_categories()
   {
-    $rcmail = rcmail::get_instance();
+    $rcmail = rcube::get_instance();
     return $rcmail->config->get('calendar_categories', array());
   }
 

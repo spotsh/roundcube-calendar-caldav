@@ -51,19 +51,19 @@ class ldap_authentication extends rcube_plugin
     function authenticate($args)
     {
         if ($this->init_ldap()) {
-            $rcmail = rcmail::get_instance();
+            $rcmail = rcube::get_instance();
             $filter = $rcmail->config->get('ldap_authentication_filter');
             $domain = $rcmail->config->get('username_domain');
 
             // get username and host
             $user = $args['user'];
-            $host = rcube_parse_host($args['host']);
+            $host = rcube_utils::parse_host($args['host']);
 
             if (!empty($domain) && strpos($user, '@') === false) {
                 if (is_array($domain) && isset($domain[$args['host']]))
-                    $user .= '@'.rcube_parse_host($domain[$host], $host);
+                    $user .= '@'.rcube_utils::parse_host($domain[$host], $host);
                 else if (is_string($domain))
-                    $user .= '@'.rcube_parse_host($domain, $host);
+                    $user .= '@'.rcube_utils::parse_host($domain, $host);
             }
 
             // replace variables in filter
@@ -102,7 +102,7 @@ class ldap_authentication extends rcube_plugin
             return $this->ldap->ready;
 
         $this->load_config();
-        $rcmail = rcmail::get_instance();
+        $rcmail = rcube::get_instance();
 
         $addressbook = $rcmail->config->get('ldap_authentication_addressbook');
 

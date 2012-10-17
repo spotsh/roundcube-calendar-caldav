@@ -32,7 +32,7 @@ class kolab_addressbook_ui
      */
     public function __construct($plugin)
     {
-        $this->rc     = rcmail::get_instance();
+        $this->rc     = rcube::get_instance();
         $this->plugin = $plugin;
 
         $this->init_ui();
