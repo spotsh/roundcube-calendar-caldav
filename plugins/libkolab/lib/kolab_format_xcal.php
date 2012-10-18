@@ -214,6 +214,8 @@ abstract class kolab_format_xcal extends kolab_format
      */
     public function set(&$object)
     {
+        $is_new = !$this->obj->uid();
+
         // set some automatic values if missing
         if (!$this->obj->created()) {
             if (!empty($object['created']))
@@ -228,7 +230,7 @@ abstract class kolab_format_xcal extends kolab_format
         $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
         // increment sequence on updates
-        $object['sequence'] = $object['uid'] ? $this->obj->sequence()+1 : 0;
+        $object['sequence'] = !$is_new ? $this->obj->sequence()+1 : 0;
         $this->obj->setSequence($object['sequence']);
 
         $this->obj->setSummary($object['title']);
