@@ -223,14 +223,12 @@ abstract class kolab_format_xcal extends kolab_format
 
         if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
-        else
-            $object['sequence'] = -1;  // make the first sequence increment being 0
 
         $object['changed'] = new DateTime('now', self::$timezone);
         $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
-        // increment sequence
-        $object['sequence'] = $this->obj->sequence()+1;
+        // increment sequence on updates
+        $object['sequence'] = $object['uid'] ? $this->obj->sequence()+1 : 0;
         $this->obj->setSequence($object['sequence']);
 
         $this->obj->setSummary($object['title']);
