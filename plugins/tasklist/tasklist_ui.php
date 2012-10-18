@@ -181,7 +181,7 @@ class tasklist_ui
     {
         $attrib += array('action' => $this->rc->url('add'), 'method' => 'post', 'id' => 'quickaddform');
 
-        $input = new html_inputfield(array('name' => 'text', 'id' => 'quickaddinput', 'placeholder' => $this->plugin->gettext('createnewtask')));
+        $input = new html_inputfield(array('name' => 'text', 'id' => 'quickaddinput'));
         $button = html::tag('input', array('type' => 'submit', 'value' => '+', 'class' => 'button mainaction'));
 
         $this->rc->output->add_gui_object('quickaddform', $attrib['id']);
