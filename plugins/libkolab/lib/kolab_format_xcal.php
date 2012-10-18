@@ -99,6 +99,7 @@ abstract class kolab_format_xcal extends kolab_format
             'uid'         => $this->obj->uid(),
             'created'     => self::php_datetime($this->obj->created()),
             'changed'     => self::php_datetime($this->obj->lastModified()),
+            'sequence'    => intval($this->obj->sequence()),
             'title'       => $this->obj->summary(),
             'location'    => $this->obj->location(),
             'description' => $this->obj->description(),
@@ -220,14 +221,17 @@ abstract class kolab_format_xcal extends kolab_format
             $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
-        if (!empty($object['uid']))
+        if (!empty($object['uid'])) {
             $this->obj->setUid($object['uid']);
+            $object['sequence'] = -1;
+        }
 
         $object['changed'] = new DateTime('now', self::$timezone);
         $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
         // increment sequence
-        $this->obj->setSequence($this->obj->sequence()+1);
+        $object['sequence'] = $this->obj->sequence()+1;
+        $this->obj->setSequence($object['sequence']);
 
         $this->obj->setSummary($object['title']);
         $this->obj->setLocation($object['location']);
