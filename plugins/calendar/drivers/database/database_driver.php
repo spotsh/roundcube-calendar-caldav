@@ -277,6 +277,10 @@ class database_driver extends calendar_driver
       $update_recurring = true;
       $old = $this->get_event($event);
       
+      // increment sequence number
+      if ($old['sequence'])
+        $event['sequence'] = max($event['sequence'], $old['sequence']+1);
+      
       // modify a recurring event, check submitted savemode to do the right things
       if ($old['recurrence'] || $old['recurrence_id']) {
         $master = $old['recurrence_id'] ? $this->get_event(array('id' => $old['recurrence_id'])) : $old;
@@ -431,7 +435,7 @@ class database_driver extends calendar_driver
   {
     $event = $this->_save_preprocess($event);
     $sql_set = array();
-    $set_cols = array('start', 'end', 'all_day', 'recurrence_id', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'attendees', 'alarms', 'notifyat');
+    $set_cols = array('start', 'end', 'all_day', 'recurrence_id', 'sequence', 'title', 'description', 'location', 'categories', 'free_busy', 'priority', 'sensitivity', 'attendees', 'alarms', 'notifyat');
     foreach ($set_cols as $col) {
       if (is_object($event[$col]) && is_a($event[$col], 'DateTime'))
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]->format(self::DB_DATE_FORMAT));
@@ -650,8 +654,8 @@ class database_driver extends calendar_driver
   public function get_event($event, $writeable = null)
   {
     $id = is_array($event) ? ($event['id'] ? $event['id'] : $event['uid']) : $event;
-    $col = $event['id'] && is_numeric($event['id']) ? 'event_id' : 'uid';
-    
+    $col = is_array($event) && is_numeric($id) ? 'event_id' : 'uid';
+
     if ($this->cache[$id])
       return $this->cache[$id];
     

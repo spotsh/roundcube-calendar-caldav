@@ -30,6 +30,7 @@ CREATE TABLE events (
   uid varchar(255) NOT NULL default '',
   created datetime NOT NULL default '1000-01-01 00:00:00',
   changed datetime NOT NULL default '1000-01-01 00:00:00',
+  sequence integer NOT NULL default '0',
   start datetime NOT NULL default '1000-01-01 00:00:00',
   end datetime NOT NULL default '1000-01-01 00:00:00',
   recurrence varchar(255) default NULL,

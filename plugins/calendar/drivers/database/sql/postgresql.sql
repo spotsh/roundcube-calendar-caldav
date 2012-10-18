@@ -47,6 +47,7 @@ CREATE TABLE events (
     uid varchar(255) NOT NULL DEFAULT '',
     created timestamp without time zone DEFAULT now() NOT NULL,
     changed timestamp without time zone DEFAULT now(),
+    sequence integer NOT NULL DEFAULT 0,
     "start" timestamp without time zone DEFAULT now() NOT NULL,
     "end" timestamp without time zone DEFAULT now() NOT NULL,
     recurrence varchar(255) DEFAULT NULL,
