@@ -221,10 +221,10 @@ abstract class kolab_format_xcal extends kolab_format
             $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
-        if (!empty($object['uid'])) {
+        if (!empty($object['uid']))
             $this->obj->setUid($object['uid']);
-            $object['sequence'] = -1;
-        }
+        else
+            $object['sequence'] = -1;  // make the first sequence increment being 0
 
         $object['changed'] = new DateTime('now', self::$timezone);
         $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
