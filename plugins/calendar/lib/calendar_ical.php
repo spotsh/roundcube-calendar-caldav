@@ -356,6 +356,8 @@ class calendar_ical
         $vevent = "BEGIN:VEVENT" . self::EOL;
         $vevent .= "UID:" . self::escpape($event['uid']) . self::EOL;
         $vevent .= $this->format_datetime("DTSTAMP", $event['changed'] ?: new DateTime(), false, true) . self::EOL;
+        if ($event['sequence'])
+            $vevent .= "SEQUENCE:" . intval($event['sequence']) . self::EOL;
         // correctly set all-day dates
         if ($event['allday']) {
           $event['end'] = clone $event['end'];
@@ -444,7 +446,7 @@ class calendar_ical
       // <ATTR>;TZID=Europe/Zurich:20120706T210000
       $tz = $dt->getTimezone();
       $tzid = $tz && $tz->getName() != 'UTC' ? ';TZID=' . $tz->getName() : '';
-      return $attr . $tzid . ':' . $dt->format('Ymd\THis' . ($tzid ? '' : 'Z'));
+      return $attr . $tzid . ':' . $dt->format('Ymd\THis' . ($tzid ? '' : '\Z'));
     }
   }
 
