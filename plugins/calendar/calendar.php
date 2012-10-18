@@ -735,7 +735,7 @@ class calendar extends rcube_plugin
         }
         else if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
           $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
-          if ($existing['sequence'] > $event['sequence'] || (!$event['sequence'] && $existing['changed'] && $existing['changed'] > $event['changed'])) {
+          if ($existing['sequence'] >= $event['sequence'] || (!$event['sequence'] && $existing['changed'] && $existing['changed'] >= $event['changed'])) {
             $action = '';  // nothing to do here
          }
         }
