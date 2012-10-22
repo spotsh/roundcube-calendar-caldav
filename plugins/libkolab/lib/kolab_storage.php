@@ -640,6 +640,8 @@ class kolab_storage
      */
     static function set_folder_type($folder, $type='mail')
     {
+        self::setup();
+
         list($ctype, $subtype) = explode('.', $type);
 
         $success = self::$imap->set_metadata($folder, array(self::CTYPE_KEY => $ctype, self::CTYPE_KEY_PRIVATE => $subtype ? $type : null));
