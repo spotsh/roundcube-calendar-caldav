@@ -3,7 +3,8 @@
 /**
  * Recurrence computation class for xcal-based Kolab format objects
  *
- * Uitility class to compute instances of recurring events.
+ * Utility class to compute instances of recurring events.
+ * It requires the libcalendaring PHP module to be installed and loaded.
  *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
@@ -25,14 +26,11 @@
  */
 class kolab_date_recurrence
 {
-    private $engine;
-    private $object;
-    private $next;
-    private $duration;
-    private $tz_offset = 0;
-    private $dst_start = 0;
-    private $allday = false;
-    private $hour = 0;
+    private /* EventCal */ $engine;
+    private /* kolab_format_xcal */ $object;
+    private /* DateTime */ $start;
+    private /* DateTime */ $next;
+    private /* DateInterval */ $duration;
 
     /**
      * Default constructor
@@ -41,27 +39,16 @@ class kolab_date_recurrence
      */
     function __construct($object)
     {
+        $data = $object->to_array();
+
         $this->object = $object;
-        $this->next = new Horde_Date($object['start'], kolab_format::$timezone->getName());
+        $this->engine = $object->to_libcal();
+        $this->start = $this->next = $data['start'];
 
-        if (is_object($object['start']) && is_object($object['end']))
-            $this->duration = $object['start']->diff($object['end']);
+        if (is_object($data['start']) && is_object($data['end']))
+            $this->duration = $data['start']->diff($data['end']);
         else
-            $this->duration = new DateInterval('PT' . ($object['end'] - $object['start']) . 'S');
-
-        // use (copied) Horde classes to compute recurring instances
-        // TODO: replace with something that has less than 6'000 lines of code
-        $this->engine = new Horde_Date_Recurrence($this->next);
-        $this->engine->fromRRule20($this->to_rrule($object['recurrence']));  // TODO: get that string directly from libkolabxml
-
-        foreach ((array)$object['recurrence']['EXDATE'] as $exdate)
-            $this->engine->addException($exdate->format('Y'), $exdate->format('n'), $exdate->format('j'));
-
-        $now = new DateTime('now', kolab_format::$timezone);
-        $this->tz_offset = $object['allday'] ? $now->getOffset() - date('Z') : 0;
-        $this->dst_start = $this->next->format('I');
-        $this->allday = $object['allday'];
-        $this->hour = $this->next->hour;
+            $this->duration = new DateInterval('PT' . ($data['end'] - $data['start']) . 'S');
     }
 
     /**
@@ -73,20 +60,13 @@ class kolab_date_recurrence
     public function next_start($timestamp = false)
     {
         $time = false;
-        if ($this->next && ($next = $this->engine->nextActiveRecurrence(array('year' => $this->next->year, 'month' => $this->next->month, 'mday' => $this->next->mday + 1, 'hour' => $this->next->hour, 'min' => $this->next->min, 'sec' => $this->next->sec)))) {
-            if ($this->allday) {
-                $next->hour = $this->hour;  # fix time for all-day events
-                $next->min = 0;
+
+        if ($this->engine && $this->next) {
+            $cstart = kolab_format::get_datetime($this->next);
+            if ($next = kolab_format::php_datetime(new cDateTime($this->engine->getNextOccurence($cstart)))) {
+                $time = $timestamp ? $next->format('U') : $next;
+                $this->next = $next;
             }
-            if ($timestamp) {
-                # consider difference in daylight saving between base event and recurring instance
-                $dst_diff = ($this->dst_start - $next->format('I')) * 3600;
-                $time = $next->timestamp() - $this->tz_offset - $dst_diff;
-            }
-            else {
-                $time = $next->toDateTime();
-            }
-            $this->next = $next;
         }
 
         return $time;
@@ -103,7 +83,7 @@ class kolab_date_recurrence
             $next_end = clone $next_start;
             $next_end->add($this->duration);
 
-            $next = $this->object;
+            $next = $this->object->to_array();
             $next['recurrence_id'] = $next_start->format('Y-m-d');
             $next['start'] = $next_start;
             $next['end'] = $next_end;
@@ -123,49 +103,12 @@ class kolab_date_recurrence
      */
     public function end($limit = 'now +1 year')
     {
-        if ($this->object['recurrence']['UNTIL'])
-            return $this->object['recurrence']['UNTIL']->format('U');
-
-        $limit_time = strtotime($limit);
-        while ($next_start = $this->next_start(true)) {
-            if ($next_start > $limit_time)
-                break;
-        }
-
-        if ($this->next) {
-            $next_end = $this->next->toDateTime();
-            $next_end->add($this->duration);
-            return $next_end->format('U');
+        $limit_dt = new DateTime($limit);
+        $cstart = kolab_format::get_datetime($this->start);
+        if ($this->engine && ($cend = $this->engine->getOccurenceEndDate($cstart)) && ($end_dt = kolab_format::php_datetime(new cDateTime($cend))) && $end_dt < $limit_dt) {
+            return $end_dt->format('U');
         }
 
         return false;
     }
-
-    /**
-     * Convert the internal structured data into a vcalendar RRULE 2.0 string
-     */
-    private function to_rrule($recurrence)
-    {
-      if (is_string($recurrence))
-          return $recurrence;
-
-        $rrule = '';
-        foreach ((array)$recurrence as $k => $val) {
-            $k = strtoupper($k);
-            switch ($k) {
-            case 'UNTIL':
-                $val = $val->format('Ymd\THis');
-                break;
-            case 'EXDATE':
-                foreach ((array)$val as $i => $ex)
-                    $val[$i] = $ex->format('Ymd\THis');
-                $val = join(',', (array)$val);
-                break;
-            }
-            $rrule .= $k . '=' . $val . ';';
-        }
-
-      return $rrule;
-    }
-
 }

@@ -51,6 +51,16 @@ class kolab_format_event extends kolab_format_xcal
         $this->xmldata = $xmldata;
     }
 
+	/**
+	 * Clones into an instance of libcalendaring's extended EventCal class
+	 *
+	 * @return mixed EventCal object or false on failure
+	 */
+	public function to_libcal()
+	{
+		return class_exists('kolabcalendaring') ? new EventCal($this->obj) : false;
+	}
+
     /**
      * Set event properties to the kolabformat object
      *

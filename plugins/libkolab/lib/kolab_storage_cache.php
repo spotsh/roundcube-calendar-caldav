@@ -517,8 +517,8 @@ class kolab_storage_cache
             $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
 
             // extend date range for recurring events
-            if ($object['recurrence']) {
-                $recurrence = new kolab_date_recurrence($object);
+            if ($object['recurrence'] && $object['_formatobj']) {
+                $recurrence = new kolab_date_recurrence($object['_formatobj']);
                 $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
             }
         }
