@@ -10,6 +10,8 @@ $labels['foldertypetask'] = 'Tasks';
 $labels['foldertypenote'] = 'Notes';
 $labels['foldertypecontact'] = 'Contacts';
 $labels['foldertypeconfiguration'] = 'Configuration';
+$labels['foldertypefile'] = 'Files';
+$labels['foldertypefreebusy'] = 'Free-Busy';
 
 $labels['default'] = 'Default';
 $labels['inbox'] = 'Inbox';
