@@ -18,6 +18,10 @@ $rcmail_config['kolab_folders_task_default'] = '';
 $rcmail_config['kolab_folders_note_default'] = '';
 // Default Journal folder
 $rcmail_config['kolab_folders_journal_default'] = '';
+// Default Files folder
+$rcmail_config['kolab_folders_file_default'] = '';
+// Default FreeBusy folder
+$rcmail_config['kolab_folders_freebusy_default'] = '';
 
 // INBOX folder
 $rcmail_config['kolab_folders_mail_inbox'] = '';
