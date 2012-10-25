@@ -369,30 +369,11 @@ class kolab_folders extends rcube_plugin
             return null;
         }
 
-        $type     .= '.default';
-        $namespace = $storage->get_namespace();
-
         // get all folders of specified type
         $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
-        $folderdata = array_intersect($folderdata, array($type));
+        $folderdata = array_intersect($folderdata, array($type.'.default'));
 
-        foreach ($folderdata as $folder => $data) {
-            // check if folder is in personal namespace
-            foreach (array('shared', 'other') as $nskey) {
-                if (!empty($namespace[$nskey])) {
-                    foreach ($namespace[$nskey] as $ns) {
-                        if ($ns[0] && substr($folder, 0, strlen($ns[0])) == $ns[0]) {
-                            continue 3;
-                        }
-                    }
-                }
-            }
-
-            // There can be only one default folder of specified type
-            return $folder;
-        }
-
-        return null;
+        return key($folderdata);
     }
 
     /**
