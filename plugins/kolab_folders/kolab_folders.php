@@ -348,7 +348,7 @@ class kolab_folders extends rcube_plugin
      *
      * @return boolean True on success
      */
-    function set_folder_type($folder, $type='mail')
+    function set_folder_type($folder, $type = 'mail')
     {
         return kolab_storage::set_folder_type($folder, $type);
     }
@@ -404,24 +404,11 @@ class kolab_folders extends rcube_plugin
         $namespace   = $storage->get_namespace();
         $defaults    = array();
         $need_update = false;
-
-        if (!is_array($folderdata)) {
-            $folderdata = $storage->get_metadata('*', kolab_storage::CTYPE_KEY);
-
-            if (!is_array($folderdata)) {
-                return;
-            }
-
-            // "Flattenize" metadata array to become a name->type hash
-            $folderdata = array_map('implode', $folderdata);
-        }
+        $prefix      = '';
 
         // Find personal namespace prefix
         if (is_array($namespace['personal']) && count($namespace['personal']) == 1) {
             $prefix = $namespace['personal'][0][0];
-        }
-        else {
-            $prefix = '';
         }
 
         $this->load_config();
@@ -443,45 +430,35 @@ class kolab_folders extends rcube_plugin
             }
         }
 
+        if (empty($defaults)) {
+            return;
+        }
+
+        if (!is_array($folderdata)) {
+            $folderdata = $storage->get_metadata('*', array(kolab_storage::CTYPE_KEY_PRIVATE, kolab_storage::CTYPE_KEY));
+
+            if (!is_array($folderdata)) {
+                return;
+            }
+
+            $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
+        }
+
         // find default folders
         foreach ($defaults as $type => $foldername) {
-            // folder exists, do nothing
-            if (!empty($folderdata[$foldername])) {
-                continue;
-            }
-
-            // special case, need to set type only
-            if ($foldername == 'INBOX' || $type == 'mail.inbox') {
-                $this->set_folder_type($foldername, 'mail.inbox');
-                continue;
-            }
-
             // get all folders of specified type
-            $folders = array_intersect($folderdata, array($type));
-            unset($folders[0]);
+            $_folders = array_intersect($folderdata, array($type));
 
-            // find folders in personal namespace
-            foreach ($folders as $folder) {
-                if ($folder) {
-                    foreach (array('shared', 'other') as $nskey) {
-                        if (!empty($namespace[$nskey])) {
-                            foreach ($namespace[$nskey] as $ns) {
-                                if ($ns[0] && substr($folder, 0, strlen($ns[0])) == $ns[0]) {
-                                    continue 3;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // got folder in personal namespace
-                continue 2;
+            // default folder found
+            if (!empty($_folders)) {
+                continue;
             }
 
             list($type1, $type2) = explode('.', $type);
+            $exists = !empty($folderdata[$foldername]) || $foldername == 'INBOX';
 
             // create folder
-            if ($type1 != 'mail' || !$storage->folder_exists($foldername)) {
+            if (!$exists && !$storage->folder_exists($foldername)) {
                 $storage->create_folder($foldername, $type1 == 'mail');
             }
 
