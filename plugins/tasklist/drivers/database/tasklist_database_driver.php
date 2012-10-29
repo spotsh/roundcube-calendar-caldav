@@ -76,6 +76,7 @@ class tasklist_database_driver extends tasklist_driver
         while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
           $arr['showalarms'] = intval($arr['showalarms']);
           $arr['active'] = !in_array($arr['id'], $hidden);
+          $arr['name'] = html::quote($arr['name']);
           $arr['editable'] = true;
           $this->lists[$arr['id']] = $arr;
           $list_ids[] = $this->rc->db->quote($arr['id']);

@@ -113,7 +113,7 @@ class tasklist_ui
             $li .= html::tag('li', array('id' => 'rcmlitasklist' . $html_id, 'class' => $class),
                 html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active'])) .
                 html::span('handle', '&nbsp;') .
-                html::span('listname', Q($prop['name'])));
+                html::span('listname', $prop['name']));
         }
 
         $this->rc->output->set_env('tasklists', $jsenv);
@@ -128,8 +128,10 @@ class tasklist_ui
      */
     function tasklist_select($attrib = array())
     {
-        $attrib['name'] = 'list';
+        $attrib['name']       = 'list';
+        $attrib['is_escaped'] = true;
         $select = new html_select($attrib);
+
         foreach ((array)$this->plugin->driver->get_lists() as $id => $prop) {
             if ($prop['editable'])
                 $select->add($prop['name'], $id);
