@@ -315,7 +315,7 @@ class database_driver extends calendar_driver
               
               // if recurrence COUNT, update value to the correct number of future occurences
               if ($event['recurrence']['COUNT']) {
-                $fromdate = clone $master['start'];
+                $fromdate = clone $event['start'];
                 $fromdate->setTimezone($this->server_timezone);
                 $sqlresult = $this->rc->db->query(sprintf(
                   "SELECT event_id FROM " . $this->db_events . "
