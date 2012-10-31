@@ -104,8 +104,7 @@ class kolab_date_recurrence
     public function end($limit = 'now +1 year')
     {
         $limit_dt = new DateTime($limit);
-        $cstart = kolab_format::get_datetime($this->start);
-        if ($this->engine && ($cend = $this->engine->getOccurenceEndDate($cstart)) && ($end_dt = kolab_format::php_datetime(new cDateTime($cend))) && $end_dt < $limit_dt) {
+        if ($this->engine && ($cend = $this->engine->getLastOccurrence()) && ($end_dt = kolab_format::php_datetime(new cDateTime($cend))) && $end_dt < $limit_dt) {
             return $end_dt->format('U');
         }
 
