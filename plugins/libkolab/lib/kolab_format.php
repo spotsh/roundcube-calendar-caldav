@@ -31,36 +31,57 @@ abstract class kolab_format
 
     public /*abstract*/ $CTYPE;
 
+    protected /*abstract*/ $objclass;
     protected /*abstract*/ $read_func;
     protected /*abstract*/ $write_func;
 
     protected $obj;
     protected $data;
     protected $xmldata;
+    protected $xmlobject;
     protected $loaded = false;
+    protected $version = 3.0;
 
-    const VERSION = '3.0';
     const KTYPE_PREFIX = 'application/x-vnd.kolab.';
+    const PRODUCT_ID = 'Roundcube-libkolab-0.9';
 
     /**
-     * Factory method to instantiate a kolab_format object of the given type
+     * Factory method to instantiate a kolab_format object of the given type and version
      *
      * @param string Object type to instantiate
      * @param string Cached xml data to initialize with
+     * @param float  Format version
      * @return object kolab_format
      */
-    public static function factory($type, $xmldata = null)
+    public static function factory($type, $xmldata = null, $version = 3.0)
     {
         if (!isset(self::$timezone))
             self::$timezone = new DateTimeZone('UTC');
+
+        if (!self::supports($version))
+            return PEAR::raiseError("No support for Kolab format version " . $version);
 
         $type = preg_replace('/configuration\.[a-z.]+$/', 'configuration', $type);
         $suffix = preg_replace('/[^a-z]+/', '', $type);
         $classname = 'kolab_format_' . $suffix;
         if (class_exists($classname))
-            return new $classname($xmldata);
+            return new $classname($xmldata, $version);
 
         return PEAR::raiseError("Failed to load Kolab Format wrapper for type " . $type);
+    }
+
+    /**
+     * Determine support for the given format version
+     *
+     * @param float Format version to check
+     * @return boolean True if supported, False otherwise
+     */
+    public static function supports($version)
+    {
+        if ($version == 2.0)
+            return class_exists('kolabobject');
+        // default is version 3
+        return class_exists('kolabformat');
     }
 
     /**
@@ -184,6 +205,23 @@ abstract class kolab_format
         return preg_replace('/dictionary.[a-z.]+$/', 'dictionary', substr($x_kolab_type, strlen(self::KTYPE_PREFIX)));
     }
 
+
+    /**
+     * Default constructor of all kolab_format_* objects
+     */
+    public function __construct($xmldata = null, $version = null)
+    {
+        $this->obj = new $this->objclass;
+        $this->xmldata = $xmldata;
+
+        if ($version)
+            $this->version = $version;
+
+        // use libkolab module if available
+        if (class_exists('kolabobject'))
+            $this->xmlobject = new XMLObject();
+    }
+
     /**
      * Check for format errors after calling kolabformat::write*()
      *
@@ -246,6 +284,39 @@ abstract class kolab_format
     }
 
     /**
+     * Get constant value for libkolab's version parameter
+     *
+     * @param float Version value to convert
+     * @return int Constant value of either kolabobject::KolabV2 or kolabobject::KolabV3 or false if kolabobject module isn't available
+     */
+    protected function libversion($v = null)
+    {
+        if (class_exists('kolabobject')) {
+            $version = $v ?: $this->version;
+            if ($version <= 2.0)
+                return kolabobject::KolabV2;
+            else
+                return kolabobject::KolabV3;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine the correct libkolab(xml) wrapper function for the given call
+     * depending on the available PHP modules
+     */
+    protected function libfunc($func)
+    {
+        if (is_array($func) || strpos($func, '::'))
+            return $func;
+        else if (class_exists('kolabobject'))
+            return array($this->xmlobject, $func);
+        else
+            return 'kolabformat::' . $func;
+    }
+
+    /**
      * Direct getter for object properties
      */
     public function __get($var)
@@ -257,22 +328,29 @@ abstract class kolab_format
      * Load Kolab object data from the given XML block
      *
      * @param string XML data
+     * @return boolean True on success, False on failure
      */
     public function load($xml)
     {
-        $this->obj = call_user_func($this->read_func, $xml, false);
+        $r = call_user_func($this->libfunc($this->read_func), $xml, $this->libversion());
+        if (is_resource($r))
+            $this->obj = new $this->objclass($r);
+        else if (is_a($r, $this->objclass))
+            $this->obj = $r;
+
         $this->loaded = !$this->format_errors();
     }
 
     /**
      * Write object data to XML format
      *
+     * @param float Format version to write
      * @return string XML data
      */
-    public function write()
+    public function write($version = null)
     {
         $this->init();
-        $this->xmldata = call_user_func($this->write_func, $this->obj);
+        $this->xmldata = call_user_func($this->libfunc($this->write_func), $this->obj, $this->libversion($version), self::PRODUCT_ID);
 
         if (!$this->format_errors())
             $this->update_uid();

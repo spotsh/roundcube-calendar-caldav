@@ -26,15 +26,10 @@ class kolab_format_distributionlist extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
 
-    protected $read_func = 'kolabformat::readDistlist';
-    protected $write_func = 'kolabformat::writeDistlist';
+    protected $objclass = 'DistList';
+    protected $read_func = 'readDistlist';
+    protected $write_func = 'writeDistlist';
 
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new DistList;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object

@@ -24,15 +24,10 @@
 
 class kolab_format_task extends kolab_format_xcal
 {
-    protected $read_func = 'kolabformat::readTodo';
-    protected $write_func = 'kolabformat::writeTodo';
+    protected $objclass = 'Todo';
+    protected $read_func = 'readTodo';
+    protected $write_func = 'writeTodo';
 
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new Todo;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object

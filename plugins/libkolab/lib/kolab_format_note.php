@@ -26,15 +26,10 @@ class kolab_format_note extends kolab_format
 {
     public $CTYPE = 'application/x-vnd.kolab.note';
 
-    protected $read_func = 'kolabformat::readNote';
-    protected $write_func = 'kolabformat::writeNote';
+    protected $objclass = 'Note';
+    protected $read_func = 'readNote';
+    protected $write_func = 'writeNote';
 
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new Note;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object

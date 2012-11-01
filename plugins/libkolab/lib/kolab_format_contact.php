@@ -26,8 +26,9 @@ class kolab_format_contact extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
 
-    protected $read_func = 'kolabformat::readContact';
-    protected $write_func = 'kolabformat::writeContact';
+    protected $objclass = 'Contact';
+    protected $read_func = 'readContact';
+    protected $write_func = 'writeContact';
 
     public static $fulltext_cols = array('name', 'firstname', 'surname', 'middlename', 'email');
 
@@ -106,10 +107,9 @@ class kolab_format_contact extends kolab_format
     /**
      * Default constructor
      */
-    function __construct($xmldata = null)
+    function __construct($xmldata = null, $version = 3.0)
     {
-        $this->obj = new Contact;
-        $this->xmldata = $xmldata;
+        parent::__construct($xmldata, $version);
 
         // complete phone types
         $this->phonetypes['homefax'] |= Telephone::Home;

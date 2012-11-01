@@ -466,39 +466,27 @@ class kolab_storage_folder
             return false;
         }
 
-        $format = kolab_format::factory($object_type);
-
-        if (is_a($format, 'PEAR_Error'))
-            return false;
-
         // check kolab format version
-        $mime_version = $headers->others['x-kolab-mime-version'];
-        if (empty($mime_version)) {
+        $format_version = $headers->others['x-kolab-mime-version'];
+        if (empty($format_version)) {
             list($xmltype, $subtype) = explode('.', $object_type);
             $xmlhead = substr($xml, 0, 512);
 
             // detect old Kolab 2.0 format
             if (strpos($xmlhead, '<' . $xmltype) !== false && strpos($xmlhead, 'xmlns=') === false)
-                $mime_version = 2.0;
+                $format_version = 2.0;
             else
-                $mime_version = 3.0; // assume 3.0
+                $format_version = 3.0; // assume 3.0
         }
 
-        if ($mime_version <= 2.0) {
-            // read Kolab 2.0 format
-            $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $xmltype, array('subtype' => $subtype)) : null;
-            if (!is_object($handler) || is_a($handler, 'PEAR_Error')) {
-                return false;
-            }
+        // get Kolab format handler for the given type
+        $format = kolab_format::factory($object_type, $format_version);
 
-            // XML-to-array
-            $object = $handler->load($xml);
-            $format->fromkolab2($object);
-        }
-        else {
-            // load Kolab 3 format using libkolabxml
-            $format->load($xml);
-        }
+        if (is_a($format, 'PEAR_Error'))
+            return false;
+
+        // load Kolab object from XML part
+        $format->load($xml);
 
         if ($format->is_valid()) {
             $object = $format->to_array();
@@ -696,13 +684,13 @@ class kolab_storage_folder
 
         // create new kolab_format instance
         if (!$format)
-            $format = kolab_format::factory($type);
+            $format = kolab_format::factory($type, kolab_storage::$version);
 
         if (PEAR::isError($format))
             return false;
 
         $format->set($object);
-        $xml = $format->write();
+        $xml = $format->write(kolab_storage::$version);
         $object['uid'] = $format->uid;  // read UID from format
         $object['_formatobj'] = $format;
 
@@ -721,7 +709,7 @@ class kolab_storage_folder
         }
         $headers['Date'] = date('r');
         $headers['X-Kolab-Type'] = kolab_format::KTYPE_PREFIX . $type;
-        $headers['X-Kolab-Mime-Version'] = kolab_format::VERSION;
+        $headers['X-Kolab-Mime-Version'] = kolab_storage::$version;
         $headers['Subject'] = $object['uid'];
 //        $headers['Message-ID'] = $rcmail->gen_message_id();
         $headers['User-Agent'] = $rcmail->config->get('useragent');

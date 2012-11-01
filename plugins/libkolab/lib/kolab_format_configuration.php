@@ -26,6 +26,7 @@ class kolab_format_configuration extends kolab_format
 {
     public $CTYPE = 'application/x-vnd.kolab.configuration';
 
+    protected $objclass = 'Configuration';
     protected $read_func = 'kolabformat::readConfiguration';
     protected $write_func = 'kolabformat::writeConfiguration';
 
@@ -34,12 +35,6 @@ class kolab_format_configuration extends kolab_format
         'category' => Configuration::TypeCategoryColor,
     );
 
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new Configuration;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object

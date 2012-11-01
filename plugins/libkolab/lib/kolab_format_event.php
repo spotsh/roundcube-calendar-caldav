@@ -24,8 +24,9 @@
 
 class kolab_format_event extends kolab_format_xcal
 {
-    protected $read_func = 'kolabformat::readEvent';
-    protected $write_func = 'kolabformat::writeEvent';
+    protected $objclass = 'Event';
+    protected $read_func = 'readEvent';
+    protected $write_func = 'writeEvent';
 
     private $kolab2_rolemap = array(
         'required' => 'REQ-PARTICIPANT',
@@ -43,23 +44,14 @@ class kolab_format_event extends kolab_format_xcal
 
 
     /**
-     * Default constructor
+     * Clones into an instance of libcalendaring's extended EventCal class
+     *
+     * @return mixed EventCal object or false on failure
      */
-    function __construct($xmldata = null)
+    public function to_libcal()
     {
-        $this->obj = new Event;
-        $this->xmldata = $xmldata;
+        return class_exists('kolabcalendaring') ? new EventCal($this->obj) : false;
     }
-
-	/**
-	 * Clones into an instance of libcalendaring's extended EventCal class
-	 *
-	 * @return mixed EventCal object or false on failure
-	 */
-	public function to_libcal()
-	{
-		return class_exists('kolabcalendaring') ? new EventCal($this->obj) : false;
-	}
 
     /**
      * Set event properties to the kolabformat object
