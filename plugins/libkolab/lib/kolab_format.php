@@ -350,7 +350,11 @@ abstract class kolab_format
     public function write($version = null)
     {
         $this->init();
-        $this->xmldata = call_user_func($this->libfunc($this->write_func), $this->obj, $this->libversion($version), self::PRODUCT_ID);
+		$write_func = $this->libfunc($this->write_func);
+		if (is_array($write_func))
+			$this->xmldata = call_user_func($write_func, $this->obj, $this->libversion($version), self::PRODUCT_ID);
+		else
+			$this->xmldata = call_user_func($write_func, $this->obj, self::PRODUCT_ID);
 
         if (!$this->format_errors())
             $this->update_uid();
