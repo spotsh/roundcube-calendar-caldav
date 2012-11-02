@@ -77,7 +77,7 @@ class kolab_config extends rcube_plugin
 
         // if no folder is set as default, choose the first one
         if (!$this->default)
-            $this->default = $this->folders[0];
+            $this->default = reset($this->folders);
 
         // check if configuration folder exist
         if ($this->default && $this->default->name) {
