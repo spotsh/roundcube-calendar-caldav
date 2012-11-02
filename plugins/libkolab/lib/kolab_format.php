@@ -332,7 +332,12 @@ abstract class kolab_format
      */
     public function load($xml)
     {
-        $r = call_user_func($this->libfunc($this->read_func), $xml, $this->libversion());
+		$read_func = $this->libfunc($this->read_func);
+		if (is_array($read_func))
+			$r = call_user_func($read_func, $xml, $this->libversion());
+		else
+			$r = call_user_func($read_func, $xml, false);
+
         if (is_resource($r))
             $this->obj = new $this->objclass($r);
         else if (is_a($r, $this->objclass))
