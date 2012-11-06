@@ -25,6 +25,7 @@
 class kolab_format_distributionlist extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
+    public $CTYPEv2 = 'application/x-vnd.kolab.distribution-list';
 
     protected $objclass = 'DistList';
     protected $read_func = 'readDistlist';

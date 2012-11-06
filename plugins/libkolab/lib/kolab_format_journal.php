@@ -25,6 +25,7 @@
 class kolab_format_journal extends kolab_format
 {
     public $CTYPE = 'application/calendar+xml';
+    public $CTYPEv2 = 'application/x-vnd.kolab.journal';
 
     protected $objclass = 'Journal';
     protected $read_func = 'readJournal';

@@ -30,6 +30,7 @@ abstract class kolab_format
     public static $timezone;
 
     public /*abstract*/ $CTYPE;
+    public /*abstract*/ $CTYPEv2;
 
     protected /*abstract*/ $objclass;
     protected /*abstract*/ $read_func;
@@ -49,11 +50,11 @@ abstract class kolab_format
      * Factory method to instantiate a kolab_format object of the given type and version
      *
      * @param string Object type to instantiate
-     * @param string Cached xml data to initialize with
      * @param float  Format version
+     * @param string Cached xml data to initialize with
      * @return object kolab_format
      */
-    public static function factory($type, $xmldata = null, $version = 3.0)
+    public static function factory($type, $version = 3.0, $xmldata = null)
     {
         if (!isset(self::$timezone))
             self::$timezone = new DateTimeZone('UTC');
@@ -249,7 +250,7 @@ abstract class kolab_format
                 'type' => 'php',
                 'file' => __FILE__,
                 'line' => __LINE__,
-                'message' => "kolabformat write $log: " . kolabformat::errorMessage(),
+                'message' => "kolabformat $log: " . kolabformat::errorMessage(),
             ), true);
         }
 
@@ -332,11 +333,12 @@ abstract class kolab_format
      */
     public function load($xml)
     {
-		$read_func = $this->libfunc($this->read_func);
-		if (is_array($read_func))
-			$r = call_user_func($read_func, $xml, $this->libversion());
-		else
-			$r = call_user_func($read_func, $xml, false);
+        $read_func = $this->libfunc($this->read_func);
+
+        if (is_array($read_func))
+            $r = call_user_func($read_func, $xml, $this->libversion());
+        else
+            $r = call_user_func($read_func, $xml, false);
 
         if (is_resource($r))
             $this->obj = new $this->objclass($r);
@@ -355,11 +357,11 @@ abstract class kolab_format
     public function write($version = null)
     {
         $this->init();
-		$write_func = $this->libfunc($this->write_func);
-		if (is_array($write_func))
-			$this->xmldata = call_user_func($write_func, $this->obj, $this->libversion($version), self::PRODUCT_ID);
-		else
-			$this->xmldata = call_user_func($write_func, $this->obj, self::PRODUCT_ID);
+        $write_func = $this->libfunc($this->write_func);
+        if (is_array($write_func))
+            $this->xmldata = call_user_func($write_func, $this->obj, $this->libversion($version), self::PRODUCT_ID);
+        else
+            $this->xmldata = call_user_func($write_func, $this->obj, self::PRODUCT_ID);
 
         if (!$this->format_errors())
             $this->update_uid();

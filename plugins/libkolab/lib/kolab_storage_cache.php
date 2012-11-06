@@ -582,7 +582,7 @@ class kolab_storage_cache
         $object['_type'] = $sql_arr['type'];
         $object['_msguid'] = $sql_arr['msguid'];
         $object['_mailbox'] = $this->folder->name;
-        $object['_formatobj'] = kolab_format::factory($sql_arr['type'], $sql_arr['xml']);
+        $object['_formatobj'] = kolab_format::factory($sql_arr['type'], 3.0, $sql_arr['xml']);
 
         return $object;
     }

@@ -24,6 +24,8 @@
 
 class kolab_format_task extends kolab_format_xcal
 {
+    public $CTYPEv2 = 'application/x-vnd.kolab.task';
+
     protected $objclass = 'Todo';
     protected $read_func = 'readTodo';
     protected $write_func = 'writeTodo';

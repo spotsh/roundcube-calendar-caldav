@@ -25,6 +25,7 @@
 class kolab_format_contact extends kolab_format
 {
     public $CTYPE = 'application/vcard+xml';
+    public $CTYPEv2 = 'application/x-vnd.kolab.contact';
 
     protected $objclass = 'Contact';
     protected $read_func = 'readContact';

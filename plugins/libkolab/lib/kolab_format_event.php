@@ -24,6 +24,8 @@
 
 class kolab_format_event extends kolab_format_xcal
 {
+    public $CTYPEv2 = 'application/x-vnd.kolab.event';
+
     protected $objclass = 'Event';
     protected $read_func = 'readEvent';
     protected $write_func = 'writeEvent';

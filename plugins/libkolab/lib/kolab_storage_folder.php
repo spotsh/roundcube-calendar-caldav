@@ -719,8 +719,9 @@ class kolab_storage_folder
             . 'To view this object you will need an email client that understands the Kolab Groupware format. '
             . "For a list of such email clients please visit http://www.kolab.org/\n\n");
 
+        $ctype = kolab_storage::$version == 2.0 ? $format->CTYPEv2 : $format->CTYPE;
         $mime->addAttachment($xml,  // file
-            $format->CTYPE,         // content-type
+            $ctype,                 // content-type
             'kolab.xml',            // filename
             false,                  // is_file
             '8bit',                 // encoding
