@@ -445,12 +445,23 @@ class kolab_storage_folder
                 $xml = $part->body ? $part->body : $message->get_part_content($part->mime_id);
             }
             else if ($part->filename || $part->content_id) {
-                $key = $part->content_id ? trim($part->content_id, '<>') : $part->filename;
+                $key  = $part->content_id ? trim($part->content_id, '<>') : $part->filename;
+                $size = null;
+
+                // Use Content-Disposition 'size' as for the Kolab Format spec.
+                if (isset($part->d_parameters['size'])) {
+                    $size = $part->d_parameters['size'];
+                }
+                // we can trust part size only if it's not encoded
+                else if ($part->encoding == 'binary' || $part->encoding == '7bit' || $part->encoding == '8bit') {
+                    $size = $part->size;
+                }
+
                 $attachments[$key] = array(
-                    'id' => $part->mime_id,
-                    'name' => $part->filename,
+                    'id'       => $part->mime_id,
+                    'name'     => $part->filename,
                     'mimetype' => $part->mimetype,
-                    'size' => $part->size,
+                    'size'     => $size,
                 );
             }
         }
