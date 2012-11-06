@@ -46,7 +46,7 @@ class libkolab extends rcube_plugin
             kolab_format::$timezone = new DateTimeZone($rcmail->config->get('timezone', 'GMT'));
         }
         catch (Exception $e) {
-            raise_error($e, true);
+            rcube::raise_error($e, true);
             kolab_format::$timezone = new DateTimeZone('GMT');
         }
 

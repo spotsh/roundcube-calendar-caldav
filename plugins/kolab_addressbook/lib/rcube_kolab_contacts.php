@@ -562,7 +562,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             $saved = $this->storagefolder->save($object, 'contact');
 
             if (!$saved) {
-                raise_error(array(
+                rcube::raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
                   'message' => "Error saving contact object to Kolab server"),
@@ -596,7 +596,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             $object = $this->_from_rcube_contact($save_data, $old);
 
             if (!$this->storagefolder->save($object, 'contact', $old['uid'])) {
-                raise_error(array(
+                rcube::raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
                   'message' => "Error saving contact object to Kolab server"),
@@ -636,7 +636,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $deleted = $is_mailto || $this->storagefolder->delete($uid, $force);
 
                 if (!$deleted) {
-                    raise_error(array(
+                    rcube::raise_error(array(
                       'code' => 600, 'type' => 'php',
                       'file' => __FILE__, 'line' => __LINE__,
                       'message' => "Error deleting a contact object $uid from the Kolab server"),
@@ -680,7 +680,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $count++;
             }
             else {
-                raise_error(array(
+                rcube::raise_error(array(
                   'code' => 600, 'type' => 'php',
                   'file' => __FILE__, 'line' => __LINE__,
                   'message' => "Error undeleting a contact object $uid from the Kolab server"),
@@ -731,10 +731,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         $saved = $this->storagefolder->save($list, 'distribution-list');
 
         if (!$saved) {
-            raise_error(array(
-              'code' => 600, 'type' => 'php',
-              'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list object to Kolab server"),
+            rcube::raise_error(array(
+                'code' => 600, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => "Error saving distribution-list object to Kolab server"),
             true, false);
             return false;
         }
@@ -758,18 +758,20 @@ class rcube_kolab_contacts extends rcube_addressbook
         $this->_fetch_groups();
         $result = false;
 
-        if ($list = $this->distlists[$gid])
+        if ($list = $this->distlists[$gid]) {
             $deleted = $this->storagefolder->delete($list['uid']);
+        }
 
         if (!$deleted) {
-            raise_error(array(
-              'code' => 600, 'type' => 'php',
-              'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error deleting distribution-list object from the Kolab server"),
+            rcube::raise_error(array(
+                'code' => 600, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => "Error deleting distribution-list object from the Kolab server"),
             true, false);
         }
-        else
+        else {
             $result = true;
+        }
 
         return $result;
     }
@@ -792,10 +794,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
 
         if (!$saved) {
-            raise_error(array(
-              'code' => 600, 'type' => 'php',
-              'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list object to Kolab server"),
+            rcube::raise_error(array(
+                'code' => 600, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => "Error saving distribution-list object to Kolab server"),
             true, false);
             return false;
         }
@@ -857,10 +859,10 @@ class rcube_kolab_contacts extends rcube_addressbook
             $saved = true;
 
         if (!$saved) {
-            raise_error(array(
-              'code' => 600, 'type' => 'php',
-              'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list to Kolab server"),
+            rcube::raise_error(array(
+                'code' => 600, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => "Error saving distribution-list to Kolab server"),
             true, false);
             $added = false;
             $this->set_error(self::ERROR_SAVING, 'errorsaving');
@@ -899,10 +901,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         $saved = $this->storagefolder->save($list, 'distribution-list', $list['uid']);
 
         if (!$saved) {
-            raise_error(array(
-              'code' => 600, 'type' => 'php',
-              'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Error saving distribution-list object to Kolab server"),
+            rcube::raise_error(array(
+                'code' => 600, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => "Error saving distribution-list object to Kolab server"),
             true, false);
         }
         else {

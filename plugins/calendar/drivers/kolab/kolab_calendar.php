@@ -279,7 +279,7 @@ class kolab_calendar
     $saved = $this->storage->save($object, 'event');
     
     if (!$saved) {
-      raise_error(array(
+      rcube::raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
         'message' => "Error saving event object to Kolab server"),
@@ -313,7 +313,7 @@ class kolab_calendar
     $saved = $this->storage->save($object, 'event', $event['id']);
 
     if (!$saved) {
-      raise_error(array(
+      rcube::raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
         'message' => "Error saving event object to Kolab server"),
@@ -338,7 +338,7 @@ class kolab_calendar
     $deleted = $this->storage->delete($event['id'], $force);
 
     if (!$deleted) {
-      raise_error(array(
+      rcube::raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
         'message' => "Error deleting event object from Kolab server"),
@@ -360,7 +360,7 @@ class kolab_calendar
         return true;
     }
     else {
-        raise_error(array(
+        rcube::raise_error(array(
           'code' => 600, 'type' => 'php',
           'file' => __FILE__, 'line' => __LINE__,
           'message' => "Error undeleting the event object $uid from the Kolab server"),
