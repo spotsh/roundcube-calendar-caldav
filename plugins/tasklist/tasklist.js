@@ -853,7 +853,10 @@ function rcube_tasklist_ui(settings)
      */
     function task_show_dialog(id)
     {
-        var $dialog = $('#taskshow').dialog('close'), rec;;
+        var $dialog = $('#taskshow'), rec;
+
+        if ($dialog.is(':ui-dialog'))
+          $dialog.dialog('close');
 
         if (!(rec = listdata[id]) || clear_popups({}))
             return;
@@ -923,7 +926,7 @@ function rcube_tasklist_ui(settings)
      */
     function task_edit_dialog(id, action, presets)
     {
-        $('#taskshow').dialog('close');
+        $('#taskshow:ui-dialog').dialog('close');
 
         var rec = listdata[id] || presets,
             $dialog = $('<div>'),
@@ -1315,8 +1318,11 @@ function rcube_tasklist_ui(settings)
     function list_edit_dialog(id)
     {
         var list = me.tasklists[id],
-            $dialog = $('#tasklistform').dialog('close');
+            $dialog = $('#tasklistform');
             editform = $('#tasklisteditform');
+
+        if ($dialog.is(':ui-dialog'))
+            $dialog.dialog('close');
 
         if (!list)
             list = { name:'', editable:true, showalarms:true };

@@ -249,7 +249,7 @@ function rcube_calendar_ui(settings)
     // event details dialog (show only)
     var event_show_dialog = function(event)
     {
-      var $dialog = $("#eventshow").dialog('close').removeClass().addClass('uidialog');
+      var $dialog = $("#eventshow").removeClass().addClass('uidialog');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       me.selected_event = event;
 
@@ -382,7 +382,7 @@ function rcube_calendar_ui(settings)
     var event_edit_dialog = function(action, event)
     {
       // close show dialog first
-      $("#eventshow").dialog('close');
+      $("#eventshow:ui-dialog").dialog('close');
       
       var $dialog = $('<div>');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
@@ -721,8 +721,11 @@ function rcube_calendar_ui(settings)
     // open a dialog to display detailed free-busy information and to find free slots
     var event_freebusy_dialog = function()
     {
-      var $dialog = $('#eventfreebusy').dialog('close');
-      var event = me.selected_event;
+      var $dialog = $('#eventfreebusy'),
+        event = me.selected_event;
+      
+      if ($dialog.is(':ui-dialog'))
+        $dialog.dialog('close');
       
       if (!event_attendees.length)
         return false;
@@ -966,7 +969,9 @@ function rcube_calendar_ui(settings)
     {
       var overlay = $('#schedule-event-time');
       if (me.selected_event.end.getTime() <= freebusy_ui.start.getTime() || me.selected_event.start.getTime() >= freebusy_ui.end.getTime()) {
-        overlay.draggable('disable').hide();
+        overlay.hide();
+        if (overlay.data('isdraggable'))
+          overlay.draggable('disable');
       }
       else {
         var table = $('#schedule-freebusy-times'),
@@ -1000,7 +1005,7 @@ function rcube_calendar_ui(settings)
 
         // overlay is visible
         if (width > 0) {
-          overlay.css({ width: (width-5)+'px', height:(table.children('tbody').height() - 4)+'px', left:pos.left+'px', top:pos.top+'px' }).draggable('enable').show();
+          overlay.css({ width: (width-5)+'px', height:(table.children('tbody').height() - 4)+'px', left:pos.left+'px', top:pos.top+'px' }).show();
           
           // configure draggable
           if (!overlay.data('isdraggable')) {
@@ -1034,6 +1039,8 @@ function rcube_calendar_ui(settings)
               }
             }).data('isdraggable', true);
           }
+          else
+            overlay.draggable('enable');
         }
         else
           overlay.draggable('disable').hide();
@@ -1640,7 +1647,7 @@ function rcube_calendar_ui(settings)
     // opens calendar day-view in a popup
     this.fisheye_view = function(date)
     {
-      $('#fish-eye-view').dialog('close');
+      $('#fish-eye-view:ui-dialog').dialog('close');
       
       // create list of active event sources
       var src, cals = {}, sources = [];
@@ -1745,7 +1752,9 @@ function rcube_calendar_ui(settings)
     this.calendar_edit_dialog = function(calendar)
     {
       // close show dialog first
-      var $dialog = $("#calendarform").dialog('close');
+      var $dialog = $("#calendarform");
+      if ($dialog.is(':ui-dialog'))
+        $dialog.dialog('close');
       
       if (!calendar)
         calendar = { name:'', color:'cc0000', editable:true, showalarms:true };
@@ -1842,8 +1851,11 @@ function rcube_calendar_ui(settings)
     this.import_events = function(calendar)
     {
       // close show dialog first
-      var $dialog = $("#eventsimport").dialog('close');
-      var form = rcmail.gui_objects.importform;
+      var $dialog = $("#eventsimport"),
+        form = rcmail.gui_objects.importform;
+      
+      if ($dialog.is(':ui-dialog'))
+        $dialog.dialog('close');
       
       $('#event-import-calendar').val(calendar.id);
       
@@ -1881,7 +1893,7 @@ function rcube_calendar_ui(settings)
     // callback from server if import succeeded
     this.import_success = function(p)
     {
-      $("#eventsimport").dialog('close');
+      $("#eventsimport:ui-dialog").dialog('close');
       rcmail.set_busy(false, null, me.saving_lock);
       rcmail.gui_objects.importform.reset();
 
@@ -1892,7 +1904,10 @@ function rcube_calendar_ui(settings)
     // show URL of the given calendar in a dialog box
     this.showurl = function(calendar)
     {
-      var $dialog = $('#calendarurlbox').dialog('close');
+      var $dialog = $('#calendarurlbox');
+
+      if ($dialog.is(':ui-dialog'))
+        $dialog.dialog('close');
 
       if (calendar.feedurl) {
         $dialog.dialog({
