@@ -143,14 +143,14 @@ class kolab_format_event extends kolab_format_xcal
             $attach = $vattach->get($i);
 
             // skip cid: attachments which are mime message parts handled by kolab_storage_folder
-            if (substr($attach->uri(), 0, 4) != 'cid') {
+            if (substr($attach->uri(), 0, 4) != 'cid:') {
                 $name = $attach->label();
                 $data = $attach->data();
                 $object['_attachments'][$name] = array(
-                    'name' => $name,
+                    'name'     => $name,
                     'mimetype' => $attach->mimetype(),
-                    'size' => strlen($data),
-                    'content' => $data,
+                    'size'     => strlen($data),
+                    'content'  => $data,
                 );
             }
         }

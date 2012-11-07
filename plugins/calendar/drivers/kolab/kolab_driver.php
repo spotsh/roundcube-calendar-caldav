@@ -466,7 +466,7 @@ class kolab_driver extends calendar_driver
     $old = $master = $fromcalendar->get_event($event['id']);
 
     if (!$old || !$old['start']) {
-      raise_error(array(
+      rcube::raise_error(array(
         'code' => 600, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
         'message' => "Failed to load event object to update: id=" . $event['id']),
@@ -927,7 +927,7 @@ class kolab_driver extends calendar_driver
     // trigger updates on folder
     $trigger = $cal->storage->trigger();
     if (is_object($trigger) && is_a($trigger, 'PEAR_Error')) {
-      raise_error(array(
+      rcube::raise_error(array(
         'code' => 900, 'type' => 'php',
         'file' => __FILE__, 'line' => __LINE__,
         'message' => "Failed triggering folder. Error was " . $trigger->getMessage()),
