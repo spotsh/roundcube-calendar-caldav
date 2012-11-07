@@ -335,14 +335,17 @@ function rcube_tasklist_ui(settings)
     {
         $('#taskedit').tabs();
 
+        var completeness_slider_change = function(e, ui){
+          var v = completeness_slider.slider('value');
+          if (v >= 98) v = 100;
+          if (v <= 2)  v = 0;
+          $('#taskedit-completeness').val(v);
+        };
         completeness_slider = $('#taskedit-completeness-slider').slider({
             range: 'min',
-            slide: function(e, ui){
-                var v = completeness_slider.slider('value');
-                if (v >= 98) v = 100;
-                if (v <= 2)  v = 0;
-                $('#taskedit-completeness').val(v);
-            }
+            animate: 'fast',
+            slide: completeness_slider_change,
+            change: completeness_slider_change
         });
         $('#taskedit-completeness').change(function(e){
             completeness_slider.slider('value', parseInt(this.value))
