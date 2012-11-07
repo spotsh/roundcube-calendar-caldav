@@ -1,6 +1,6 @@
 /**
  * @preserve
- * FullCalendar v1.5.3-rcube-0.7.2
+ * FullCalendar v1.5.4-rcube-0.9.0
  * https://github.com/roundcube/fullcalendar
  *
  * Use fullcalendar.css for basic styling.
@@ -12,7 +12,7 @@
  * Dual licensed under the MIT and GPL licenses, located in
  * MIT-LICENSE.txt and GPL-LICENSE.txt respectively.
  *
- * Date: Sun Mar 4 14:35:09 2012 +0100
+ * Date: Wed Nov 7 16:28:11 2012 +0100
  *
  */
  
@@ -137,7 +137,7 @@ var rtlDefaults = {
 
 
 
-var fc = $.fullCalendar = { version: "1.5.3-rcube-0.7.2" };
+var fc = $.fullCalendar = { version: "1.5.4-rcube-0.9.0" };
 var fcViews = fc.views = {};
 
 
@@ -1708,7 +1708,7 @@ function sliceSegs(events, visEventEnds, start, end) {
 				msLength: segEnd - segStart
 			});
 		}
-	} 
+	}
 	return segs.sort(segCmp);
 }
 
@@ -1792,29 +1792,26 @@ function setOuterHeight(element, height, includeMargins) {
 }
 
 
-// TODO: curCSS has been deprecated (jQuery 1.4.3 - 10/16/2010)
-
-
 function hsides(element, includeMargins) {
 	return hpadding(element) + hborders(element) + (includeMargins ? hmargins(element) : 0);
 }
 
 
 function hpadding(element) {
-	return (parseFloat($.curCSS(element[0], 'paddingLeft', true)) || 0) +
-	       (parseFloat($.curCSS(element[0], 'paddingRight', true)) || 0);
+	return (parseFloat($.css(element[0], 'paddingLeft', true)) || 0) +
+	       (parseFloat($.css(element[0], 'paddingRight', true)) || 0);
 }
 
 
 function hmargins(element) {
-	return (parseFloat($.curCSS(element[0], 'marginLeft', true)) || 0) +
-	       (parseFloat($.curCSS(element[0], 'marginRight', true)) || 0);
+	return (parseFloat($.css(element[0], 'marginLeft', true)) || 0) +
+	       (parseFloat($.css(element[0], 'marginRight', true)) || 0);
 }
 
 
 function hborders(element) {
-	return (parseFloat($.curCSS(element[0], 'borderLeftWidth', true)) || 0) +
-	       (parseFloat($.curCSS(element[0], 'borderRightWidth', true)) || 0);
+	return (parseFloat($.css(element[0], 'borderLeftWidth', true)) || 0) +
+	       (parseFloat($.css(element[0], 'borderRightWidth', true)) || 0);
 }
 
 
@@ -1824,20 +1821,20 @@ function vsides(element, includeMargins) {
 
 
 function vpadding(element) {
-	return (parseFloat($.curCSS(element[0], 'paddingTop', true)) || 0) +
-	       (parseFloat($.curCSS(element[0], 'paddingBottom', true)) || 0);
+	return (parseFloat($.css(element[0], 'paddingTop', true)) || 0) +
+	       (parseFloat($.css(element[0], 'paddingBottom', true)) || 0);
 }
 
 
 function vmargins(element) {
-	return (parseFloat($.curCSS(element[0], 'marginTop', true)) || 0) +
-	       (parseFloat($.curCSS(element[0], 'marginBottom', true)) || 0);
+	return (parseFloat($.css(element[0], 'marginTop', true)) || 0) +
+	       (parseFloat($.css(element[0], 'marginBottom', true)) || 0);
 }
 
 
 function vborders(element) {
-	return (parseFloat($.curCSS(element[0], 'borderTopWidth', true)) || 0) +
-	       (parseFloat($.curCSS(element[0], 'borderBottomWidth', true)) || 0);
+	return (parseFloat($.css(element[0], 'borderTopWidth', true)) || 0) +
+	       (parseFloat($.css(element[0], 'borderBottomWidth', true)) || 0);
 }
 
 
@@ -2004,7 +2001,6 @@ function firstDefined() {
 		}
 	}
 }
-
 
 
 fcViews.month = MonthView;
@@ -4655,11 +4651,11 @@ function DayEventRenderer() {
 					if (overflows[k])
 						seg.overflow = true;
 					if (seg.overflow) {
-						overflows[k]++;
-						if (seg.isStart && k == seg.startCol && !overflowLinks[k])
-							overflowLinks[k] = { seg:seg, top:top, date:cloneDate(seg.start, true), count:(overflows[k]||0) };
-						else if (overflowLinks[k])
+						if (seg.isStart && !overflowLinks[k])
+							overflowLinks[k] = { seg:seg, top:top, date:cloneDate(seg.start, true), count:0 };
+						if (overflowLinks[k])
 							overflowLinks[k].count++;
+						overflows[k]++;
 					}
 					else
 						colHeights[k] = top;
@@ -5420,7 +5416,7 @@ function ListEventRenderer() {
 			event = events[i];
 			
 			// skip events out of range
-			if (event.end < t.start || event.start > t.visEnd)
+			if ((event.end || event.start) < t.start || event.start > t.visEnd)
 				continue;
 			
 			// define sections of this event
@@ -5473,7 +5469,7 @@ function ListEventRenderer() {
 
 	function sortCmp(a, b) {
 		var sd = a.start.getTime() - b.start.getTime();
-		return sd + (sd ? 0 : a.end.getTime() - b.end.getTime());
+		return sd || (a.end ? a.end.getTime() : 0) - (b.end ? b.end.getTime() : 0);
 	}
 	
 	function renderSegs(segs, modifiedEventId) {
@@ -5555,7 +5551,7 @@ function ListEventRenderer() {
 		var timeFormat = opt('timeFormat');
 		var dateFormat = opt('columnFormat');
 		var segmode = opt('listSections');
-		var duration = event.end.getTime() - event.start.getTime();
+		var duration = event.end ? event.end.getTime() - event.start.getTime() : 0;
 		var datestr = '', timestr = '';
 		
 		if (segmode == 'smart') {
