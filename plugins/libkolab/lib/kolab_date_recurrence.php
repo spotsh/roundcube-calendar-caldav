@@ -30,6 +30,7 @@ class kolab_date_recurrence
     private /* kolab_format_xcal */ $object;
     private /* DateTime */ $start;
     private /* DateTime */ $next;
+    private /* cDateTime */ $cnext;
     private /* DateInterval */ $duration;
 
     /**
@@ -44,6 +45,7 @@ class kolab_date_recurrence
         $this->object = $object;
         $this->engine = $object->to_libcal();
         $this->start = $this->next = $data['start'];
+        $this->cnext = kolab_format::get_datetime($this->next);
 
         if (is_object($data['start']) && is_object($data['end']))
             $this->duration = $data['start']->diff($data['end']);
@@ -62,9 +64,10 @@ class kolab_date_recurrence
         $time = false;
 
         if ($this->engine && $this->next) {
-            $cstart = kolab_format::get_datetime($this->next);
-            if ($next = kolab_format::php_datetime(new cDateTime($this->engine->getNextOccurence($cstart)))) {
+            if (($cnext = new cDateTime($this->engine->getNextOccurence($this->cnext))) && $cnext->isValid()) {
+                $next = kolab_format::php_datetime($cnext);
                 $time = $timestamp ? $next->format('U') : $next;
+                $this->cnext = $cnext;
                 $this->next = $next;
             }
         }
