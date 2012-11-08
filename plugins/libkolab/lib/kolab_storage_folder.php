@@ -540,11 +540,21 @@ class kolab_storage_folder
                     unset($object['_attachments'][$key]);
                 }
                 // load photo.attachment from old Kolab2 format to be directly embedded in xcard block
-                else if ($key == 'photo.attachment' && !isset($object['photo']) && !$object['_attachments'][$key]['content'] && $att['id']) {
-                    $object['photo'] = $this->get_attachment($object['_msguid'], $att['id'], $object['_mailbox']);
+                else if ($type == 'contact' && ($key == 'photo.attachment' || $key == 'kolab-picture.png') && $att['id']) {
+                    if (!isset($object['photo']))
+                        $object['photo'] = $this->get_attachment($object['_msguid'], $att['id'], $object['_mailbox']);
                     unset($object['_attachments'][$key]);
                 }
             }
+        }
+
+        // save contact photo to attachment for Kolab2 format
+        if (kolab_storage::$version == 2.0 && $object['photo'] && !$existing_photo) {
+            $attkey = 'kolab-picture.png';  // this file name is hard-coded in libkolab/kolabformatV2/contact.cpp
+            $object['_attachments'][$attkey] = array(
+                'mimetype'=> rc_image_content_type($object['photo']),
+                'content' => preg_match('![^a-z0-9/=+-]!i', $object['photo']) ? $object['photo'] : base64_decode($object['photo']),
+            );
         }
 
         // generate unique keys (used as content-id) for attachments

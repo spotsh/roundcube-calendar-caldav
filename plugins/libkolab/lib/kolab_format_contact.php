@@ -379,6 +379,8 @@ class kolab_format_contact extends kolab_format
 
         if ($this->obj->photoMimetype())
             $object['photo'] = $this->obj->photo();
+        else if ($this->xmlobject && ($photo_name = $this->xmlobject->pictureAttachmentName()))
+        	$object['photo'] = $photo_name;
 
         // relateds -> spouse, children
         $this->read_relateds($this->obj->relateds(), $object);
