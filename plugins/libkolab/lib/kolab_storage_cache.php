@@ -717,7 +717,7 @@ class kolab_storage_cache
     {
         if (!isset($this->uid2msg[$uid])) {
             // use IMAP SEARCH to get the right message
-            $index = $this->imap->search_once($this->folder->name, ($deleted ? '' : 'UNDELETED ') . 'HEADER SUBJECT ' . $uid);
+            $index = $this->imap->search_once($this->folder->name, ($deleted ? '' : 'UNDELETED ') . 'HEADER SUBJECT "' . $uid. '"');
             $results = $index->get();
             $this->uid2msg[$uid] = $results[0];
         }

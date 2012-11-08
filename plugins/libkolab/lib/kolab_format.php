@@ -265,7 +265,7 @@ abstract class kolab_format
     {
         // get generated UID
         if (!$this->data['uid']) {
-            $this->data['uid'] = kolabformat::getSerializedUID();
+            $this->data['uid'] = $this->xmlobject ? $this->xmlobject->getSerializedUID() : kolabformat::getSerializedUID();
             $this->obj->setUid($this->data['uid']);
         }
     }
