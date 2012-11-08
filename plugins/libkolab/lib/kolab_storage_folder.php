@@ -570,10 +570,22 @@ class kolab_storage_folder
             }
         }
 
-        // generate unique keys (used as content-id) for attachments
+        // Parse attachments
         if (is_array($object['_attachments'])) {
             $numatt = count($object['_attachments']);
             foreach ($object['_attachments'] as $key => $attachment) {
+                // make sure size is set, so object saved in cache contains this info
+                if (!isset($attachment['size'])) {
+                    if (!empty($attachment['content'])) {
+                        $attachment['size'] = strlen($attachment['content']);
+                    }
+                    else if (!empty($attachment['path'])) {
+                        $attachment['size'] = filesize($attachment['path']);
+                    }
+                    $object['_attachments'][$key] = $attachment;
+                }
+
+                // generate unique keys (used as content-id) for attachments
                 if (is_numeric($key) && $key < $numatt) {
                     // derrive content-id from attachment file name
                     $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $attachment['name'], $m) ? $m[1] : null;
