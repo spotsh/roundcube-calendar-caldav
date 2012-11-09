@@ -409,6 +409,10 @@ class kolab_calendar
       }
       else if ($next_event['start'] > $end)  // stop loop if out of range
         break;
+
+	  // avoid endless recursion loops
+	  if ($i > 1000)
+		  break;
     }
     
     return $events;
