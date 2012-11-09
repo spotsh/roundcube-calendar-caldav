@@ -517,8 +517,8 @@ class kolab_storage_cache
             $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
 
             // extend date range for recurring events
-            if ($object['recurrence']) {
-                $recurrence = new kolab_date_recurrence($object);
+            if ($object['recurrence'] && $object['_formatobj']) {
+                $recurrence = new kolab_date_recurrence($object['_formatobj']);
                 $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
             }
         }
@@ -534,7 +534,7 @@ class kolab_storage_cache
         }
 
         if ($object['_formatobj']) {
-            $sql_data['xml'] = preg_replace('!(</?[a-z0-9:-]+>)[\n\r\t\s]+!ms', '$1', (string)$object['_formatobj']->write());
+            $sql_data['xml'] = preg_replace('!(</?[a-z0-9:-]+>)[\n\r\t\s]+!ms', '$1', (string)$object['_formatobj']->write(3.0));
             $sql_data['tags'] = ' ' . join(' ', $object['_formatobj']->get_tags()) . ' ';  // pad with spaces for strict/prefix search
             $sql_data['words'] = ' ' . join(' ', $object['_formatobj']->get_words()) . ' ';
         }
@@ -582,7 +582,7 @@ class kolab_storage_cache
         $object['_type'] = $sql_arr['type'];
         $object['_msguid'] = $sql_arr['msguid'];
         $object['_mailbox'] = $this->folder->name;
-        $object['_formatobj'] = kolab_format::factory($sql_arr['type'], $sql_arr['xml']);
+        $object['_formatobj'] = kolab_format::factory($sql_arr['type'], 3.0, $sql_arr['xml']);
 
         return $object;
     }
@@ -717,7 +717,8 @@ class kolab_storage_cache
     {
         if (!isset($this->uid2msg[$uid])) {
             // use IMAP SEARCH to get the right message
-            $index = $this->imap->search_once($this->folder->name, ($deleted ? '' : 'UNDELETED ') . 'HEADER SUBJECT ' . $uid);
+            $index = $this->imap->search_once($this->folder->name, ($deleted ? '' : 'UNDELETED ') .
+				'HEADER SUBJECT ' . rcube_imap_generic::escape($uid));
             $results = $index->get();
             $this->uid2msg[$uid] = $results[0];
         }

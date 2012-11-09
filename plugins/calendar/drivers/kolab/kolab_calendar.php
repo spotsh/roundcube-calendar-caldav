@@ -376,7 +376,15 @@ class kolab_calendar
    */
   public function _get_recurring_events($event, $start, $end, $event_id = null)
   {
-    $recurrence = new kolab_date_recurrence($event);
+    $object = $event['_formatobj'];
+    if (!$object) {
+      $rec = $this->storage->get_object($event['id']);
+      $object = $rec['_formatobj'];
+    }
+    if (!is_object($object))
+      return array();
+
+    $recurrence = new kolab_date_recurrence($object);
 
     $i = 0;
     $events = array();
@@ -401,6 +409,10 @@ class kolab_calendar
       }
       else if ($next_event['start'] > $end)  // stop loop if out of range
         break;
+
+	  // avoid endless recursion loops
+	  if ($i > 1000)
+		  break;
     }
     
     return $events;

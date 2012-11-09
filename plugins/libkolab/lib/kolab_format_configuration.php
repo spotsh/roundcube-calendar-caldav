@@ -25,21 +25,17 @@
 class kolab_format_configuration extends kolab_format
 {
     public $CTYPE = 'application/x-vnd.kolab.configuration';
+    public $CTYPEv2 = 'application/x-vnd.kolab.configuration';
 
-    protected $read_func = 'kolabformat::readConfiguration';
-    protected $write_func = 'kolabformat::writeConfiguration';
+    protected $objclass = 'Configuration';
+    protected $read_func = 'readConfiguration';
+    protected $write_func = 'writeConfiguration';
 
     private $type_map = array(
         'dictionary' => Configuration::TypeDictionary,
         'category' => Configuration::TypeCategoryColor,
     );
 
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new Configuration;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object
@@ -74,7 +70,7 @@ class kolab_format_configuration extends kolab_format
             $this->obj->setCreated(self::get_datetime($object['created']));
 
         // adjust content-type string
-        $this->CTYPE = 'application/x-vnd.kolab.configuration.' . $object['type'];
+        $this->CTYPE = $this->CTYPEv2 = 'application/x-vnd.kolab.configuration.' . $object['type'];
 
         // cache this data
         $this->data = $object;
@@ -126,7 +122,7 @@ class kolab_format_configuration extends kolab_format
 
         // adjust content-type string
         if ($object['type'])
-            $this->CTYPE = 'application/x-vnd.kolab.configuration.' . $object['type'];
+            $this->CTYPE = $this->CTYPEv2 = 'application/x-vnd.kolab.configuration.' . $object['type'];
 
         $this->data = $object;
         return $this->data;

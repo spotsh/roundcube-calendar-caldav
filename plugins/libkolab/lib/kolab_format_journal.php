@@ -25,16 +25,12 @@
 class kolab_format_journal extends kolab_format
 {
     public $CTYPE = 'application/calendar+xml';
+    public $CTYPEv2 = 'application/x-vnd.kolab.journal';
 
-    protected $read_func = 'kolabformat::readJournal';
-    protected $write_func = 'kolabformat::writeJournal';
+    protected $objclass = 'Journal';
+    protected $read_func = 'readJournal';
+    protected $write_func = 'writeJournal';
 
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new Journal;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object

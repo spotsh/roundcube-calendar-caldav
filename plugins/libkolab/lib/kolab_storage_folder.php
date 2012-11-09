@@ -477,39 +477,27 @@ class kolab_storage_folder
             return false;
         }
 
-        $format = kolab_format::factory($object_type);
-
-        if (is_a($format, 'PEAR_Error'))
-            return false;
-
         // check kolab format version
-        $mime_version = $headers->others['x-kolab-mime-version'];
-        if (empty($mime_version)) {
+        $format_version = $headers->others['x-kolab-mime-version'];
+        if (empty($format_version)) {
             list($xmltype, $subtype) = explode('.', $object_type);
             $xmlhead = substr($xml, 0, 512);
 
             // detect old Kolab 2.0 format
             if (strpos($xmlhead, '<' . $xmltype) !== false && strpos($xmlhead, 'xmlns=') === false)
-                $mime_version = 2.0;
+                $format_version = 2.0;
             else
-                $mime_version = 3.0; // assume 3.0
+                $format_version = 3.0; // assume 3.0
         }
 
-        if ($mime_version <= 2.0) {
-            // read Kolab 2.0 format
-            $handler = class_exists('Horde_Kolab_Format') ? Horde_Kolab_Format::factory('XML', $xmltype, array('subtype' => $subtype)) : null;
-            if (!is_object($handler) || is_a($handler, 'PEAR_Error')) {
-                return false;
-            }
+        // get Kolab format handler for the given type
+        $format = kolab_format::factory($object_type, $format_version);
 
-            // XML-to-array
-            $object = $handler->load($xml);
-            $format->fromkolab2($object);
-        }
-        else {
-            // load Kolab 3 format using libkolabxml
-            $format->load($xml);
-        }
+        if (is_a($format, 'PEAR_Error'))
+            return false;
+
+        // load Kolab object from XML part
+        $format->load($xml);
 
         if ($format->is_valid()) {
             $object = $format->to_array();
@@ -563,14 +551,24 @@ class kolab_storage_folder
                     unset($object['_attachments'][$key]);
                 }
                 // load photo.attachment from old Kolab2 format to be directly embedded in xcard block
-                else if ($key == 'photo.attachment' && !isset($object['photo']) && !$object['_attachments'][$key]['content'] && $att['id']) {
-                    $object['photo'] = $this->get_attachment($object['_msguid'], $att['id'], $object['_mailbox']);
+                else if ($type == 'contact' && ($key == 'photo.attachment' || $key == 'kolab-picture.png') && $att['id']) {
+                    if (!isset($object['photo']))
+                        $object['photo'] = $this->get_attachment($object['_msguid'], $att['id'], $object['_mailbox']);
                     unset($object['_attachments'][$key]);
                 }
             }
         }
 
-        // Parse attachments
+        // save contact photo to attachment for Kolab2 format
+        if (kolab_storage::$version == 2.0 && $object['photo'] && !$existing_photo) {
+            $attkey = 'kolab-picture.png';  // this file name is hard-coded in libkolab/kolabformatV2/contact.cpp
+            $object['_attachments'][$attkey] = array(
+                'mimetype'=> rc_image_content_type($object['photo']),
+                'content' => preg_match('![^a-z0-9/=+-]!i', $object['photo']) ? $object['photo'] : base64_decode($object['photo']),
+            );
+        }
+
+        // process attachments
         if (is_array($object['_attachments'])) {
             $numatt = count($object['_attachments']);
             foreach ($object['_attachments'] as $key => $attachment) {
@@ -719,13 +717,13 @@ class kolab_storage_folder
 
         // create new kolab_format instance
         if (!$format)
-            $format = kolab_format::factory($type);
+            $format = kolab_format::factory($type, kolab_storage::$version);
 
         if (PEAR::isError($format))
             return false;
 
         $format->set($object);
-        $xml = $format->write();
+        $xml = $format->write(kolab_storage::$version);
         $object['uid'] = $format->uid;  // read UID from format
         $object['_formatobj'] = $format;
 
@@ -744,7 +742,7 @@ class kolab_storage_folder
         }
         $headers['Date'] = date('r');
         $headers['X-Kolab-Type'] = kolab_format::KTYPE_PREFIX . $type;
-        $headers['X-Kolab-Mime-Version'] = kolab_format::VERSION;
+        $headers['X-Kolab-Mime-Version'] = kolab_storage::$version;
         $headers['Subject'] = $object['uid'];
 //        $headers['Message-ID'] = $rcmail->gen_message_id();
         $headers['User-Agent'] = $rcmail->config->get('useragent');
@@ -754,8 +752,9 @@ class kolab_storage_folder
             . 'To view this object you will need an email client that understands the Kolab Groupware format. '
             . "For a list of such email clients please visit http://www.kolab.org/\n\n");
 
+        $ctype = kolab_storage::$version == 2.0 ? $format->CTYPEv2 : $format->CTYPE;
         $mime->addAttachment($xml,  // file
-            $format->CTYPE,         // content-type
+            $ctype,                 // content-type
             'kolab.xml',            // filename
             false,                  // is_file
             '8bit',                 // encoding
