@@ -236,7 +236,7 @@ class calendar_ui
     foreach (array('day' => 'days', 'week' => 'weeks', 'month' => 'months', 'smart' => 'smartsections') as $val => $label)
       $select_sections->add(preg_replace('/\(|\)/', '', ucfirst($this->cal->gettext($label))), $val);
     
-    $html .= html::span('spacer', '&nbsp');
+    $html .= html::span('spacer', '&nbsp;');
     $html .= html::label('agenda-listsections', $this->cal->gettext('listsections'));
     $html .= $select_sections->show($this->rc->config->get('calendar_agenda_sections', $this->cal->defaults['calendar_agenda_sections']));
     
