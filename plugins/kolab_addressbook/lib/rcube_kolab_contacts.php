@@ -838,7 +838,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $list['member'][] = array(
                     'uid' => $uid,
                     'email' => $email,
-                    'name' => $contact['name'],
+                    'name' => self::compose_display_name($contact),
                 );
                 $this->groupmembers[$contact_id][] = $gid;
                 $added++;
