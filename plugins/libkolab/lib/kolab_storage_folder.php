@@ -389,17 +389,21 @@ class kolab_storage_folder
      * Fetch a Kolab object attachment which is stored in a separate part
      * of the mail MIME message that represents the Kolab record.
      *
-     * @param string  Object's UID
-     * @param string  The attachment's mime number
-     * @param string  IMAP folder where message is stored;
-     *                If set, that also implies that the given UID is an IMAP UID
+     * @param string   Object's UID
+     * @param string   The attachment's mime number
+     * @param string   IMAP folder where message is stored;
+     *                 If set, that also implies that the given UID is an IMAP UID
+     * @param bool     True to print the part content
+     * @param resource File pointer to save the message part
+     * @param boolean  Disables charset conversion
+     *
      * @return mixed  The attachment content as binary string
      */
-    public function get_attachment($uid, $part, $mailbox = null)
+    public function get_attachment($uid, $part, $mailbox = null, $print = false, $fp = null, $skip_charset_conv = false)
     {
         if ($msguid = ($mailbox ? $uid : $this->cache->uid2msguid($uid))) {
             $this->imap->set_folder($mailbox ? $mailbox : $this->name);
-            return $this->imap->get_message_part($msguid, $part);
+            return $this->imap->get_message_part($msguid, $part, null, $print, $fp, $skip_charset_conv);
         }
 
         return null;
