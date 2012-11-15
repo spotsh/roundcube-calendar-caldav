@@ -549,13 +549,13 @@ class tasklist_kolab_driver extends tasklist_driver
         if (is_a($record['due'], 'DateTime')) {
             $task['date'] = $record['due']->format('Y-m-d');
             if (!$record['due']->_dateonly)
-            	$task['time'] = $record['due']->format('h:i');
+                $task['time'] = $record['due']->format('H:i');
         }
         // convert from DateTime to internal date format
         if (is_a($record['start'], 'DateTime')) {
             $task['startdate'] = $record['start']->format('Y-m-d');
             if (!$record['start']->_dateonly)
-                $task['starttime'] = $record['start']->format('h:i');
+                $task['starttime'] = $record['start']->format('H:i');
         }
         if (is_a($record['dtstamp'], 'DateTime')) {
             $task['changed'] = $record['dtstamp'];
