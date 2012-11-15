@@ -173,7 +173,7 @@ class tasklist_ui
      */
     function alarm_select($attrib = array())
     {
-        return $this->plugin->lib->alarm_select($attrib, $this->plugin->driver->alarm_types);
+        return $this->plugin->lib->alarm_select($attrib, $this->plugin->driver->alarm_types, $this->plugin->driver->alarm_absolute);
     }
 
     /**

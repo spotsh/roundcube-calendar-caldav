@@ -58,6 +58,7 @@ abstract class tasklist_driver
     public $undelete = false; // task undelete action
     public $sortable = false;
     public $alarm_types = array('DISPLAY');
+    public $alarm_absolute = true;
     public $last_error;
 
     /**

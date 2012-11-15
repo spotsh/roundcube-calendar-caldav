@@ -239,7 +239,7 @@ class libcalendaring extends rcube_plugin
     /**
      * Render HTML form for alarm configuration
      */
-    public function alarm_select($attrib, $alarm_types)
+    public function alarm_select($attrib, $alarm_types, $absolute_time = true)
     {
         unset($attrib['name']);
         $select_type = new html_select(array('name' => 'alarmtype[]', 'class' => 'edit-alarm-type'));
@@ -252,8 +252,11 @@ class libcalendaring extends rcube_plugin
         $input_time = new html_inputfield(array('name' => 'alarmtime[]', 'class' => 'edit-alarm-time', 'size' => 6));
 
         $select_offset = new html_select(array('name' => 'alarmoffset[]', 'class' => 'edit-alarm-offset'));
-        foreach (array('-M','-H','-D','+M','+H','+D','@') as $trigger)
+        foreach (array('-M','-H','-D','+M','+H','+D') as $trigger)
             $select_offset->add($this->gettext('trigger' . $trigger), $trigger);
+
+        if ($absolute_time)
+            $select_offset->add($this->gettext('trigger@'), '@');
 
         // pre-set with default values from user settings
         $preset = self::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
