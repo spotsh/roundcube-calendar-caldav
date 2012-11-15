@@ -363,6 +363,15 @@ class kolab_storage_cache
             // TODO: post-filter result according to query
         }
 
+        // We don't want to cache big results in-memory, however
+        // if we select only one object here, there's a big chance we will need it later
+        if (!$uids && count($result) == 1) {
+            if ($msguid = $result[0]['_msguid']) {
+                $this->uid2msg[$result[0]['uid']] = $msguid;
+                $this->objects[$msguid] = $result[0];
+            }
+        }
+
         return $result;
     }
 
