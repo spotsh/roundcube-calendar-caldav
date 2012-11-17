@@ -165,8 +165,7 @@ class libcalendaring extends rcube_plugin
 
         // define list of file types which can be displayed inline
         // same as in program/steps/mail/show.inc
-        $mimetypes = $this->rc->config->get('client_mimetypes', 'text/plain,text/html,text/xml,image/jpeg,image/gif,image/png,application/x-javascript,application/pdf,application/x-shockwave-flash');
-        $settings['mimetypes'] = is_string($mimetypes) ? explode(',', $mimetypes) : (array)$mimetypes;
+        $settings['mimetypes'] = (array)$this->rc->config->get('client_mimetypes');
 
         return $settings;
     }
