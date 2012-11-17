@@ -1542,7 +1542,7 @@ class calendar extends rcube_plugin
   {
     if ($p['action'] == 'attend') {
       $this->rc->output->set_env('task', 'calendar');  // override some env vars
-      $this->rc->output->set_env('keep_alive', 0);
+      $this->rc->output->set_env('refresh_interval', 0);
       $this->rc->output->set_pagetitle($this->gettext('calendar'));
 
       $itip = $this->load_itip();

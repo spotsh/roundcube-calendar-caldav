@@ -90,7 +90,7 @@ class libcalendaring extends rcube_plugin
         $this->include_stylesheet($this->local_skin_path() . '/libcal.css');
 
         // add hook to display alarms
-        $this->add_hook('keep_alive', array($this, 'keep_alive'));
+        $this->add_hook('refresh', array($this, 'refresh'));
         $this->register_action('plugin.alarms', array($this, 'alarms_action'));
     }
 
@@ -380,7 +380,7 @@ class libcalendaring extends rcube_plugin
      * Handler for keep-alive requests
      * This will check for pending notifications and pass them to the client
      */
-    public function keep_alive($attr)
+    public function refresh($attr)
     {
         // collect pending alarms from all providers (e.g. calendar, tasks)
         $plugin = $this->rc->plugins->exec_hook('pending_alarms', array(

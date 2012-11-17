@@ -431,7 +431,7 @@ class tasklist_kolab_driver extends tasklist_driver
         $slot = $time;
         $slot -= $slot % $interval;
 
-        $last = $time - max(60, $this->rc->session->get_keep_alive());
+        $last = $time - max(60, $this->rc->config->get('refresh_interval', 0));
         $last -= $last % $interval;
 
         // only check for alerts once in 5 minutes
