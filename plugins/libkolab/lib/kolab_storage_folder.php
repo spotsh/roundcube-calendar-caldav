@@ -602,7 +602,13 @@ class kolab_storage_folder
         }
 
         if ($raw_msg = $this->build_message($object, $type)) {
-            $result = $this->imap->save_message($this->name, $raw_msg, '', false);
+            if (is_array($raw_msg)) {
+                $result = $this->imap->save_message($this->name, $raw_msg[0], $raw_msg[1], true);
+                @unlink($raw_msg[0]);
+            }
+            else {
+                $result = $this->imap->save_message($this->name, $raw_msg);
+            }
 
             // delete old message
             if ($result && !empty($object['_msguid']) && !empty($object['_mailbox'])) {
@@ -620,7 +626,7 @@ class kolab_storage_folder
                 $this->cache->insert($result, $object);
             }
         }
-        
+
         return $result;
     }
 
@@ -710,6 +716,9 @@ class kolab_storage_folder
 
     /**
      * Creates source of the configuration object message
+     *
+     * @return mixed Message as string or array with two elements
+     *               (one for message file path, second for message headers)
      */
     private function build_message(&$object, $type)
     {
@@ -735,8 +744,8 @@ class kolab_storage_folder
             return false;
         }
 
-        $mime = new Mail_mime("\r\n");
-        $rcmail = rcube::get_instance();
+        $mime    = new Mail_mime("\r\n");
+        $rcmail  = rcube::get_instance();
         $headers = array();
         $part_id = 1;
 
@@ -751,12 +760,33 @@ class kolab_storage_folder
 //        $headers['Message-ID'] = $rcmail->gen_message_id();
         $headers['User-Agent'] = $rcmail->config->get('useragent');
 
+        // Check if we have enough memory to handle the message in it
+        // It's faster than using files, so we'll do this if we only can
+        if (!empty($object['_attachments']) && ($mem_limit = parse_bytes(ini_get('memory_limit'))) > 0) {
+            $memory = function_exists('memory_get_usage') ? memory_get_usage() : 16*1024*1024; // safe value: 16MB
+
+            foreach ($object['_attachments'] as $id => $attachment) {
+                $memory += $attachment['size'];
+            }
+
+            // 1.33 is for base64, we need at least 2x more memory than the message size
+            if ($memory * 1.33 * 2 > $mem_limit) {
+                $is_file  = true;
+                $temp_dir = unslashify($rcmail->config->get('temp_dir'));
+                $mime->setParam('delay_file_io', true);
+            }
+        }
+
         $mime->headers($headers);
-        $mime->setTXTBody('This is a Kolab Groupware object. '
-            . 'To view this object you will need an email client that understands the Kolab Groupware format. '
+        $mime->setTXTBody("This is a Kolab Groupware object. "
+            . "To view this object you will need an email client that understands the Kolab Groupware format. "
             . "For a list of such email clients please visit http://www.kolab.org/\n\n");
 
         $ctype = kolab_storage::$version == 2.0 ? $format->CTYPEv2 : $format->CTYPE;
+        // Convert new lines to \r\n, to wrokaround "NO Message contains bare newlines"
+        // when APPENDing from temp file
+        $xml = preg_replace('/\r?\n/', "\r\n", $xml);
+
         $mime->addAttachment($xml,  // file
             $ctype,                 // content-type
             'kolab.xml',            // filename
@@ -768,11 +798,21 @@ class kolab_storage_folder
         $part_id++;
 
         // save object attachments as separate parts
-        // TODO: optimize memory consumption by using tempfiles for transfer
         foreach ((array)$object['_attachments'] as $key => $att) {
             if (empty($att['content']) && !empty($att['id'])) {
                 $msguid = !empty($object['_msguid']) ? $object['_msguid'] : $object['uid'];
-                $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox']);
+                if ($is_file) {
+                    $att['path'] = tempnam($temp_dir, 'rcmAttmnt');
+                    if (($fp = fopen($att['path'], 'w')) && $this->get_attachment($msguid, $att['id'], $object['_mailbox'], false, $fp)) {
+                        fclose($fp);
+                    }
+                    else {
+                        return false;
+                    }
+                }
+                else {
+                    $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox']);
+                }
             }
 
             $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $key . '>', RCMAIL_CHARSET, 'quoted-printable'));
@@ -790,7 +830,23 @@ class kolab_storage_folder
             $object['_attachments'][$key]['id'] = $part_id;
         }
 
-        return $mime->getMessage();
+        if ($is_file) {
+            // use common temp dir
+            $body_file = tempnam($temp_dir, 'rcmMsg');
+
+            if (PEAR::isError($mime_result = $mime->saveMessageBody($body_file))) {
+                self::raise_error(array('code' => 650, 'type' => 'php',
+                    'file' => __FILE__, 'line' => __LINE__,
+                    'message' => "Could not create message: ".$mime_result->getMessage()),
+                    true, false);
+                return false;
+            }
+
+            return array($body_file, $mime->txtHeaders());
+        }
+        else {
+            return $mime->getMessage();
+        }
     }
 
 
