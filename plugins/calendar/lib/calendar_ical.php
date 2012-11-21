@@ -454,9 +454,12 @@ class calendar_ical
     }
   }
 
+  /**
+   * Escape values according to RFC 2426 2.5
+   */
   private function escpape($str)
   {
-    return preg_replace('/(?<!\\\\)([\:\;\,\\n\\r])/', '\\\$1', $str);
+    return strtr($str, array('\\' => '\\\\', ';' => '\\;', ',' => '\\,'));
   }
 
   /**
@@ -469,14 +472,15 @@ class calendar_ical
     $organizer = "";
     $attendees = "";
     foreach ($ats as $at) {
-      if ($at['role']=="ORGANIZER") {
-        //I am an orginizer
-        $organizer .= "ORGANIZER;";
-        if (!empty($at['name']))
-          $organizer .= 'CN="' . $at['name'] . '"';
-        $organizer .= ":mailto:". $at['email'] . self::EOL;
+      if ($at['role'] == "ORGANIZER") {
+        if ($at['email']) {
+          $organizer .= "ORGANIZER;";
+          if (!empty($at['name']))
+            $organizer .= 'CN="' . $at['name'] . '"';
+          $organizer .= ":mailto:". $at['email'] . self::EOL;
+        }
       }
-      else {
+      else if ($at['email']) {
         //I am an attendee 
         $attendees .= "ATTENDEE;ROLE=" . $at['role'] . ";PARTSTAT=" . $at['status'];
         if ($at['rsvp'])
