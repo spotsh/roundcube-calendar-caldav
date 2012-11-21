@@ -148,12 +148,14 @@ function rcube_tasklist_ui(settings)
         // quick-add a task
         $(rcmail.gui_objects.quickaddform).submit(function(e){
             var tasktext = this.elements.text.value,
-              rec = { id:-(++idcount), title:tasktext, readonly:true, mask:0, complete:0 };
+                rec = { id:-(++idcount), title:tasktext, readonly:true, mask:0, complete:0 };
 
-            save_task({ tempid:rec.id, raw:tasktext, list:me.selected_list }, 'new');
-            render_task(rec);
+            if (tasktext && tasktext.length) {
+                save_task({ tempid:rec.id, raw:tasktext, list:me.selected_list }, 'new');
+                render_task(rec);
 
-            $('#listmessagebox').hide();
+                $('#listmessagebox').hide();
+            }
 
             // clear form
             this.reset();
@@ -1059,7 +1061,11 @@ function rcube_tasklist_ui(settings)
             me.selected_task.attachments = [];
 
             // do some basic input validation
-            if (me.selected_task.startdate && me.selected_task.date) {
+            if (!me.selected_task.title || me.selected_task.title.length) {
+                title.focus();
+                return false;
+            }
+            else if (me.selected_task.startdate && me.selected_task.date) {
                 var startdate = $.datepicker.parseDate(datepicker_settings.dateFormat, me.selected_task.startdate, datepicker_settings);
                 var duedate = $.datepicker.parseDate(datepicker_settings.dateFormat, me.selected_task.date, datepicker_settings);
                 if (startdate > duedate) {
