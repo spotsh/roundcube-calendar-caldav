@@ -1874,7 +1874,17 @@ class Horde_iCalendar {
     {
         $vtimezone = $this->_container->findComponentByAttribute('vtimezone', 'TZID', $tzid);
         if (!$vtimezone) {
-            return false;
+            // use PHP's standard timezone db to determine tzoffset
+            try {
+                $tz = new DateTimeZone($tzid);
+                $dt = new DateTime('now', $tz);
+                $dt->setDate($date['year'], $date['month'], $date['mday']);
+                $dt->setTime($time['hour'], $time['minute'], $date['recond']);
+                return $tz->getOffset($dt);
+            }
+            catch (Exception $e) {
+                return false;
+            }
         }
 
         $change_times = array();
