@@ -220,7 +220,7 @@ function rcube_tasklist_ui(settings)
 
             // ignore
             if (!item.length)
-                return;
+                return false;
 
             var id = item.data('id'),
                 li = item.parent(),
@@ -235,18 +235,27 @@ function rcube_tasklist_ui(settings)
                     break;
 
                 case 'complete':
+                    if (rcmail.busy)
+                        return false;
+
                     rec.complete = e.target.checked ? 1 : 0;
                     li.toggleClass('complete');
                     save_task(rec, 'edit');
                     return true;
                 
                 case 'flagged':
+                    if (rcmail.busy)
+                        return false;
+
                     rec.flagged = rec.flagged ? 0 : 1;
                     li.toggleClass('flagged');
                     save_task(rec, 'edit');
                     break;
                 
                 case 'date':
+                    if (rcmail.busy)
+                        return false;
+
                     var link = $(e.target).html(''),
                         input = $('<input type="text" size="10" />').appendTo(link).val(rec.date || '')
 
@@ -299,7 +308,7 @@ function rcube_tasklist_ui(settings)
             if (!item.hasClass('taskhead'))
                 item = item.closest('div.taskhead');
 
-            if (item.length && (id = item.data('id')) && (rec = listdata[id])) {
+            if (!rcmail.busy && item.length && (id = item.data('id')) && (rec = listdata[id])) {
                 var list = rec.list && me.tasklists[rec.list] ? me.tasklists[rec.list] : {};
                 if (rec.readonly || !list.editable)
                     task_show_dialog(id);
@@ -578,6 +587,7 @@ function rcube_tasklist_ui(settings)
         if (!rcmail.busy) {
             saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
             rcmail.http_post('tasks/task', { action:action, t:rec, filter:filtermask });
+            $('button.ui-button:ui-button').button('option', 'disabled', rcmail.busy);
             return true;
         }
         
@@ -589,8 +599,10 @@ function rcube_tasklist_ui(settings)
      */
     function unlock_saving()
     {
-        if (saving_lock)
+        if (saving_lock) {
             rcmail.set_busy(false, null, saving_lock);
+            $('button.ui-button:ui-button').button('option', 'disabled', false);
+        }
     }
 
     /**
@@ -789,6 +801,9 @@ function rcube_tasklist_ui(settings)
 
     function droppable_accept(draggable)
     {
+        if (rcmail.busy)
+            return false;
+
         var drag_id = draggable.data('id'),
             drop_id = $(this).data('id'),
             drag_rec = listdata[drag_id] || {},
@@ -895,16 +910,23 @@ function rcube_tasklist_ui(settings)
         }
 
         // define dialog buttons
-        var buttons = {};
-        buttons[rcmail.gettext('edit','tasklist')] = function() {
-            task_edit_dialog(me.selected_task.id, 'edit');
-            $dialog.dialog('close');
-        };
+        var buttons = [];
+        buttons.push({
+            text: rcmail.gettext('edit','tasklist'),
+            click: function() {
+                task_edit_dialog(me.selected_task.id, 'edit');
+            },
+            disabled: rcmail.busy
+        });
 
-        buttons[rcmail.gettext('delete','tasklist')] = function() {
-            if (delete_task(me.selected_task.id))
-                $dialog.dialog('close');
-        };
+        buttons.push({
+            text: rcmail.gettext('delete','tasklist'),
+            click: function() {
+                if (delete_task(me.selected_task.id))
+                    $dialog.dialog('close');
+            },
+            disabled: rcmail.busy
+        });
 
         // open jquery UI dialog
         $dialog.dialog({
@@ -937,7 +959,7 @@ function rcube_tasklist_ui(settings)
             list = rec.list && me.tasklists[rec.list] ? me.tasklists[rec.list] :
                 (me.selected_list ? me.tasklists[me.selected_list] : { editable: action=='new' });
 
-        if (!list.editable || (action == 'edit' && (!rec || rec.readonly)))
+        if (rcmail.busy || !list.editable || (action == 'edit' && (!rec || rec.readonly)))
             return false;
 
         me.selected_task = $.extend({}, rec);  // clone task object
@@ -1207,6 +1229,9 @@ function rcube_tasklist_ui(settings)
      */
     function add_childtask(id)
     {
+        if (rcmail.busy)
+            return false;
+
         var rec = listdata[id];
         task_edit_dialog(null, 'new', { parent_id:id, list:rec.list });
     }
@@ -1217,7 +1242,7 @@ function rcube_tasklist_ui(settings)
     function delete_task(id)
     {
         var rec = listdata[id];
-        if (!rec || rec.readonly)
+        if (!rec || rec.readonly || rcmail.busy)
             return false;
 
         var html, buttons = [{
