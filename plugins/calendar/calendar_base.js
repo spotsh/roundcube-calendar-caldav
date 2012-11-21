@@ -138,7 +138,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
       
       rcmail.register_command('calendar-create-from-mail', function() { cal.create_from_mail() });
       rcmail.addEventListener('plugin.mail2event_dialog', function(p){ cal.mail2event_dialog(p) });
-      rcmail.addEventListener('plugin.unlock_saving', function(p){ cal.ui.unlock_saving(); });
+      rcmail.addEventListener('plugin.unlock_saving', function(p){ cal.ui && cal.ui.unlock_saving(); });
       
       if (rcmail.env.action != 'show') {
         rcmail.env.message_commands.push('calendar-create-from-mail');
