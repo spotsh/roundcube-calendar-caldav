@@ -191,6 +191,24 @@ class kolab_storage_folder
 
 
     /**
+     * Get the color value stores in metadata
+     *
+     * @param string Default color value to return if not set
+     * @return mixed Color value from IMAP metadata or $default is not set
+     */
+    public function get_color($default = null)
+    {
+        // color is defined in folder METADATA
+        $metadata = $this->get_metadata(array(kolab_storage::COLOR_KEY_PRIVATE, kolab_storage::COLOR_KEY_SHARED));
+        if (($color = $metadata[kolab_storage::COLOR_KEY_PRIVATE]) || ($color = $metadata[kolab_storage::COLOR_KEY_SHARED])) {
+            return $color;
+        }
+
+        return $default;
+    }
+
+
+    /**
      * Compose a unique resource URI for this IMAP folder
      */
     public function get_resource_uri()

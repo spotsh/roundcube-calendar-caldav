@@ -143,8 +143,7 @@ class kolab_calendar
   public function get_color()
   {
     // color is defined in folder METADATA
-    $metadata = $this->storage->get_metadata(array(kolab_storage::COLOR_KEY_PRIVATE, kolab_storage::COLOR_KEY_SHARED));
-    if (($color = $metadata[kolab_storage::COLOR_KEY_PRIVATE]) || ($color = $metadata[kolab_storage::COLOR_KEY_SHARED])) {
+    if ($color = $this->storage->get_color()) {
       return $color;
     }
 

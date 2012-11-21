@@ -116,7 +116,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 'id' => $list_id,
                 'name' => $name,
                 'editname' => $editname,
-                'color' => 'CC0000',
+                'color' => $folder->get_color('0000CC'),
                 'showalarms' => isset($prefs[$list_id]['showalarms']) ? $prefs[$list_id]['showalarms'] : $alarms,
                 'editable' => !$readonly,
                 'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
@@ -136,8 +136,8 @@ class tasklist_kolab_driver extends tasklist_driver
     {
         // attempt to create a default list for this user
         if (empty($this->lists)) {
-          if ($this->create_list(array('name' => 'Tasks', /*'color' => 'CC0000',*/ 'default' => true)))
-            $this->_read_lists(true);
+            if ($this->create_list(array('name' => 'Tasks', 'color' => '0000CC', 'default' => true)))
+                $this->_read_lists(true);
         }
 
         return $this->lists;
