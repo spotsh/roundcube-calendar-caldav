@@ -65,45 +65,6 @@ class kolab_format_contact extends kolab_format
         'children'  => Related::Child,
     );
 
-    // old Kolab 2 format field map
-    private $kolab2_fieldmap = array(
-      // kolab       => roundcube
-      'full-name'    => 'name',
-      'given-name'   => 'firstname',
-      'middle-names' => 'middlename',
-      'last-name'    => 'surname',
-      'prefix'       => 'prefix',
-      'suffix'       => 'suffix',
-      'nick-name'    => 'nickname',
-      'organization' => 'organization',
-      'department'   => 'department',
-      'job-title'    => 'jobtitle',
-      'birthday'     => 'birthday',
-      'anniversary'  => 'anniversary',
-      'phone'        => 'phone',
-      'im-address'   => 'im',
-      'web-page'     => 'website',
-      'profession'   => 'profession',
-      'manager-name' => 'manager',
-      'assistant'    => 'assistant',
-      'spouse-name'  => 'spouse',
-      'children'     => 'children',
-      'body'         => 'notes',
-      'pgp-publickey' => 'pgppublickey',
-      'free-busy-url' => 'freebusyurl',
-      'picture'       => 'photo',
-    );
-    private $kolab2_phonetypes = array(
-        'home1' => 'home',
-        'business1' => 'work',
-        'business2' => 'work',
-        'businessfax' => 'workfax',
-    );
-    private $kolab2_addresstypes = array(
-        'business' => 'work'
-    );
-    private $kolab2_gender = array(0 => 'male', 1 => 'female');
-
 
     /**
      * Default constructor
@@ -414,58 +375,6 @@ class kolab_format_contact extends kolab_format
         }
 
         return array_unique(rcube_utils::normalize_string($data, true));
-    }
-
-    /**
-     * Load data from old Kolab2 format
-     *
-     * @param array Hash array with object properties
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-          'uid' => $record['uid'],
-          'email' => array(),
-          'phone' => array(),
-        );
-
-        foreach ($this->kolab2_fieldmap as $kolab => $rcube) {
-          if (is_array($record[$kolab]) || strlen($record[$kolab]))
-            $object[$rcube] = $record[$kolab];
-        }
-
-        if (isset($record['gender']))
-            $object['gender'] = $this->kolab2_gender[$record['gender']];
-
-        foreach ((array)$record['email'] as $i => $email)
-            $object['email'][] = $email['smtp-address'];
-
-        if (!$record['email'] && $record['emails'])
-            $object['email'] = preg_split('/,\s*/', $record['emails']);
-
-        if (is_array($record['address'])) {
-            foreach ($record['address'] as $i => $adr) {
-                $object['address'][] = array(
-                    'type' => $this->kolab2_addresstypes[$adr['type']] ? $this->kolab2_addresstypes[$adr['type']] : $adr['type'],
-                    'street' => $adr['street'],
-                    'locality' => $adr['locality'],
-                    'code' => $adr['postal-code'],
-                    'region' => $adr['region'],
-                    'country' => $adr['country'],
-                );
-            }
-        }
-
-        // office location goes into an address block
-        if ($record['office-location'])
-            $object['address'][] = array('type' => 'office', 'locality' => $record['office-location']);
-
-        // merge initials into nickname
-        if ($record['initials'])
-            $object['nickname'] = trim($object['nickname'] . ', ' . $record['initials'], ', ');
-
-        // remove empty fields
-        $this->data = array_filter($object);
     }
 
     /**

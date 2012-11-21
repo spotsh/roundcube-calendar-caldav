@@ -129,19 +129,6 @@ class kolab_format_configuration extends kolab_format
     }
 
     /**
-     * Load data from old Kolab2 format
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-            'uid'     => $record['uid'],
-            'changed' => $record['last-modification-date'],
-        );
-
-        $this->data = $object + $record;
-    }
-
-    /**
      * Callback for kolab_storage_cache to get object specific tags to cache
      *
      * @return array List of tags to save in cache

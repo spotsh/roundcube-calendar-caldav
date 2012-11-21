@@ -102,21 +102,6 @@ class kolab_format_task extends kolab_format_xcal
     }
 
     /**
-     * Load data from old Kolab2 format
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-            'uid'     => $record['uid'],
-            'changed' => $record['last-modification-date'],
-        );
-
-        // TODO: implement this
-
-        $this->data = $object;
-    }
-
-    /**
      * Callback for kolab_storage_cache to get object specific tags to cache
      *
      * @return array List of tags to save in cache

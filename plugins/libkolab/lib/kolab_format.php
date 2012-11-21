@@ -391,13 +391,6 @@ abstract class kolab_format
     abstract public function to_array();
 
     /**
-     * Load object data from Kolab2 format
-     *
-     * @param array Hash array with object properties (produced by Horde Kolab_Format classes)
-     */
-    abstract public function fromkolab2($object);
-
-    /**
      * Callback for kolab_storage_cache to get object specific tags to cache
      *
      * @return array List of tags to save in cache

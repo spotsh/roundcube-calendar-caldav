@@ -64,20 +64,6 @@ class kolab_format_note extends kolab_format
     }
 
     /**
-     * Load data from old Kolab2 format
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-            'uid'     => $record['uid'],
-            'changed' => $record['last-modification-date'],
-        );
-
-
-        $this->data = $object;
-    }
-
-    /**
      * Convert the Configuration object into a hash array data structure
      *
      * @return array  Config object data as hash array

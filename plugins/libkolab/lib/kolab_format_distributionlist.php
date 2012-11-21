@@ -81,29 +81,6 @@ class kolab_format_distributionlist extends kolab_format
     }
 
     /**
-     * Load data from old Kolab2 format
-     */
-    public function fromkolab2($record)
-    {
-        $object = array(
-            'uid'     => $record['uid'],
-            'changed' => $record['last-modification-date'],
-            'name'    => $record['last-name'],
-            'member'  => array(),
-        );
-
-        foreach ((array)$record['member'] as $member) {
-            $object['member'][] = array(
-                'email' => $member['smtp-address'],
-                'name' => $member['display-name'],
-                'uid' => $member['uid'],
-            );
-        }
-
-        $this->data = $object;
-    }
-
-    /**
      * Convert the Distlist object into a hash array data structure
      *
      * @return array  Distribution list data as hash array
