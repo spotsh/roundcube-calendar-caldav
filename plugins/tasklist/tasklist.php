@@ -73,6 +73,7 @@ class tasklist extends rcube_plugin
 
         // load localizations
         $this->add_texts('localization/', $this->rc->task == 'tasks' && (!$this->rc->action || $this->rc->action == 'print'));
+        $this->rc->load_language($_SESSION['language'], array('tasks.tasks' => $this->gettext('navtitle')));  // add label for task title
 
         $this->timezone = $this->lib->timezone;
 
