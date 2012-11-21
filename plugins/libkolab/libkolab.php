@@ -49,17 +49,6 @@ class libkolab extends rcube_plugin
             rcube::raise_error($e, true);
             kolab_format::$timezone = new DateTimeZone('GMT');
         }
-
-        // load (old) dependencies if available
-        if (@include_once('Horde/Util.php')) {
-            include_once 'Horde/Kolab/Format.php';
-            include_once 'Horde/Kolab/Format/XML.php';
-            include_once 'Horde/Kolab/Format/XML/contact.php';
-            include_once 'Horde/Kolab/Format/XML/event.php';
-            include_once 'Horde_Kolab_Format_XML_configuration.php';
-
-            String::setDefaultCharset('UTF-8');
-        }
     }
 
     /**
