@@ -55,10 +55,10 @@ class tasklist_kolab_driver extends tasklist_driver
     /**
      * Read available calendars for the current user and store them internally
      */
-    private function _read_lists()
+    private function _read_lists($force = false)
     {
         // already read sources
-        if (isset($this->lists))
+        if (isset($this->lists) && !$force)
             return $this->lists;
 
         // get all folders that have type "task"
@@ -136,8 +136,8 @@ class tasklist_kolab_driver extends tasklist_driver
     {
         // attempt to create a default list for this user
         if (empty($this->lists)) {
-          if ($this->create_list(array('name' => 'Default', 'color' => '000000')))
-            $this->_read_lists();
+          if ($this->create_list(array('name' => 'Tasks', /*'color' => 'CC0000',*/ 'default' => true)))
+            $this->_read_lists(true);
         }
 
         return $this->lists;
@@ -154,7 +154,7 @@ class tasklist_kolab_driver extends tasklist_driver
      */
     public function create_list($prop)
     {
-        $prop['type'] = 'task';
+        $prop['type'] = 'task' . ($prop['default'] ? '.default' : '');
         $prop['subscribed'] = kolab_storage::SERVERSIDE_SUBSCRIPTION; // subscribe to folder by default
         $folder = kolab_storage::folder_update($prop);
 
