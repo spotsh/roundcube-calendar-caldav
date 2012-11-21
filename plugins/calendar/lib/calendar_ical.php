@@ -160,8 +160,15 @@ class calendar_ical
       $event['end']->sub(new DateInterval('PT23H'));
 
     // assign current timezone to event start/end
-    $event['start']->setTimezone($this->cal->timezone);
-    $event['end']->setTimezone($this->cal->timezone);
+    if (is_a($event['start'], 'DateTime'))
+        $event['start']->setTimezone($this->cal->timezone);
+    else
+        unset($event['start']);
+
+    if (is_a($event['end'], 'DateTime'))
+        $event['end']->setTimezone($this->cal->timezone);
+    else
+        unset($event['end']);
 
     // map other attributes to internal fields
     $_attendees = array();

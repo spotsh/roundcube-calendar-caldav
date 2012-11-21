@@ -210,6 +210,9 @@ class database_driver extends calendar_driver
    */
   public function new_event($event)
   {
+    if (!$this->validate($event))
+      return false;
+
     if (!empty($this->calendars)) {
       if ($event['calendar'] && !$this->calendars[$event['calendar']])
         return false;

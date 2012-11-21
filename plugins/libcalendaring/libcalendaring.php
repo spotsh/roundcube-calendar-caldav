@@ -206,6 +206,11 @@ class libcalendaring extends rcube_plugin
     public function event_date_text($event, $tzinfo = false)
     {
         $fromto = '';
+
+        // abort if no valid event dates are given
+        if (!is_object($event['start']) || !is_a($event['start'], 'DateTime') || !is_object($event['end']) || !is_a($event['end'], 'DateTime'))
+            return $fromto;
+
         $duration = $event['start']->diff($event['end'])->format('s');
 
         $this->date_format_defaults();

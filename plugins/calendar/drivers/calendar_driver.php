@@ -249,6 +249,25 @@ abstract class calendar_driver
   abstract function dismiss_alarm($event_id, $snooze = 0);
 
   /**
+   * Check the given event object for validity
+   *
+   * @param array Event object as hash array
+   * @return boolean True if valid, false if not
+   */
+  public function validate($event)
+  {
+    $valid = true;
+
+    if (!is_object($event['start']) || !is_a($event['start'], 'DateTime'))
+      $valid = false;
+    if (!is_object($event['end']) || !is_a($event['end'], 'DateTime'))
+      $valid = false;
+
+    return $valid;
+  }
+
+
+  /**
    * Get list of event's attachments.
    * Drivers can return list of attachments as event property.
    * If they will do not do this list_attachments() method will be used.
