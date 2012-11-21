@@ -52,7 +52,20 @@ class kolab_format_event extends kolab_format_xcal
      */
     public function to_libcal()
     {
-        return class_exists('kolabcalendaring') ? new EventCal($this->obj) : false;
+        static $error_logged = false;
+
+        if (class_exists('kolabcalendaring')) {
+            return new EventCal($this->obj);
+        }
+        else if (!$error_logged) {
+            $error_logged = true;
+            rcube::raise_error(array(
+                'code' => 900, 'type' => 'php',
+                'message' => "required kolabcalendaring module not found"
+            ), true);
+        }
+
+        return false;
     }
 
     /**

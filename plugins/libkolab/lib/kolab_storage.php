@@ -63,6 +63,18 @@ class kolab_storage
             ));
             self::$imap->set_pagesize(9999);
         }
+        else if (!class_exists('kolabformat')) {
+            rcube::raise_error(array(
+                'code' => 900, 'type' => 'php',
+                'message' => "required kolabformat module not found"
+            ), true);
+        }
+        else {
+            rcube::raise_error(array(
+                'code' => 900, 'type' => 'php',
+                'message' => "IMAP server doesn't support METADATA or ANNOTATEMORE"
+            ), true);
+        }
 
         return self::$ready;
     }
