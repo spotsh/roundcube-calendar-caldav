@@ -31,7 +31,7 @@ class kolab_storage
     const SERVERSIDE_SUBSCRIPTION = 0;
     const CLIENTSIDE_SUBSCRIPTION = 1;
 
-    public static $version = 3.0;
+    public static $version = '3.0';
     public static $last_error;
 
     private static $ready = false;

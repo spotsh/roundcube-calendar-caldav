@@ -582,7 +582,7 @@ class kolab_storage_folder
         }
 
         // save contact photo to attachment for Kolab2 format
-        if (kolab_storage::$version == 2.0 && $object['photo'] && !$existing_photo) {
+        if (kolab_storage::$version == '2.0' && $object['photo'] && !$existing_photo) {
             $attkey = 'kolab-picture.png';  // this file name is hard-coded in libkolab/kolabformatV2/contact.cpp
             $object['_attachments'][$attkey] = array(
                 'mimetype'=> rc_image_content_type($object['photo']),
@@ -800,7 +800,7 @@ class kolab_storage_folder
             . "To view this object you will need an email client that understands the Kolab Groupware format. "
             . "For a list of such email clients please visit http://www.kolab.org/\n\n");
 
-        $ctype = kolab_storage::$version == 2.0 ? $format->CTYPEv2 : $format->CTYPE;
+        $ctype = kolab_storage::$version == '2.0' ? $format->CTYPEv2 : $format->CTYPE;
         // Convert new lines to \r\n, to wrokaround "NO Message contains bare newlines"
         // when APPENDing from temp file
         $xml = preg_replace('/\r?\n/', "\r\n", $xml);

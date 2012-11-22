@@ -47,7 +47,7 @@ class tasklist_kolab_driver extends tasklist_driver
 
         $this->_read_lists();
 
-        if (kolab_storage::$version == 2.0) {
+        if (kolab_storage::$version == '2.0') {
             $this->alarm_absolute = false;
         }
     }
