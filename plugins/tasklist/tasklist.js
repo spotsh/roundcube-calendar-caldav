@@ -1061,7 +1061,7 @@ function rcube_tasklist_ui(settings)
             me.selected_task.attachments = [];
 
             // do some basic input validation
-            if (!me.selected_task.title || me.selected_task.title.length) {
+            if (!me.selected_task.title || !me.selected_task.title.length) {
                 title.focus();
                 return false;
             }
