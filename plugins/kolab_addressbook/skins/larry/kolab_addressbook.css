@@ -1,28 +1,48 @@
 
+#directorylist li.addressbook.selected {
+	background-color: #c7e3ef;
+}
+
 #directorylist li.addressbook.readonly,
 #directorylist li.addressbook.shared,
 #directorylist li.addressbook.other {
-/*	background-image: url(kolab_folders.png); */
-	background-position: 5px -1000px;
+	background-image: url(folder_icons.png);
+	background-position: right -1000px;
 	background-repeat: no-repeat;
 }
 
 #directorylist li.addressbook.readonly {
-	background-position: 5px 0px;
-}
-
-#directorylist li.addressbook.shared {
-	background-position: 5px -54px;
-}
-
-#directorylist li.addressbook.shared.readonly {
-	background-position: 5px -72px;
+	background-position: 98% -14px;
 }
 
 #directorylist li.addressbook.other {
-	background-position: 5px -18px;
+	background-position: 98% -38px;
 }
 
 #directorylist li.addressbook.other.readonly {
-	background-position: 5px -36px;
+	background-position: 98% -56px;
 }
+
+#directorylist li.addressbook.shared {
+	background-position: 98% -74px;
+}
+
+#directorylist li.addressbook.shared.readonly {
+	background-position: 98% -92px;
+}
+
+#directorylist li.addressbook.readonly a,
+#directorylist li.addressbook.shared a,
+#directorylist li.addressbook.other a {
+	padding-right: 24px;
+}
+
+#directorylist li.addressbook.other.readonly a,
+#directorylist li.addressbook.shared.readonly a {
+	padding-right: 36px;
+}
+
+#directorylist li.addressbook.selected > a {
+	background-color: transparent;
+}
+
