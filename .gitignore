@@ -1,0 +1,4 @@
+*.tar.gz
+*.tar.gz.gpg
+*.patch
+plugins/*/config.inc.php
