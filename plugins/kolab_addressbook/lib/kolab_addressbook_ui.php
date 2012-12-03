@@ -116,7 +116,7 @@ class kolab_addressbook_ui
 
         $hidden_fields[] = array('name' => '_source', 'value' => $folder);
 
-        $folder = rcube_charset_convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
+        $folder = rcube_charse::convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
         $delim  = $_SESSION['imap_delimiter'];
 
         if ($this->rc->action == 'plugin.book-save') {
@@ -131,7 +131,7 @@ class kolab_addressbook_ui
         }
         else if ($action == 'edit') {
             $path_imap = explode($delim, $folder);
-            $name      = rcube_charset_convert(array_pop($path_imap), 'UTF7-IMAP');
+            $name      = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');
             $path_imap = implode($path_imap, $delim);
         }
         else { // create
@@ -144,8 +144,7 @@ class kolab_addressbook_ui
         if (strlen($folder)) {
             $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
 
-            $this->rc->storage_connect();
-            $options = $this->rc->get_storage()->mailbox_info($folder);
+            $options = $this->rc->get_storage()->folder_info($folder);
         }
 
         $form   = array();
