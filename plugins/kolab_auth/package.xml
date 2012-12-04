@@ -18,9 +18,9 @@
 		<email>machniak@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2012-10-08</date>
+	<date>2012-12-04</date>
 	<version>
-		<release>0.4</release>
+		<release>0.5</release>
 		<api>0.1</api>
 	</version>
 	<stability>

@@ -12,7 +12,7 @@
  * @version @package_version@
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2011-2012, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -30,7 +30,7 @@
 
 class kolab_auth extends rcube_plugin
 {
-    private $ldap;
+    static $ldap;
     private $data = array();
 
     public function init()
@@ -256,9 +256,8 @@ class kolab_auth extends rcube_plugin
      */
     public function authenticate($args)
     {
-        $this->load_config();
-
-        if (!$this->init_ldap()) {
+        $ldap = self::ldap();
+        if (!$ldap || !$ldap->ready) {
             $args['abort'] = true;
             return $args;
         }
@@ -298,8 +297,8 @@ class kolab_auth extends rcube_plugin
         // Login As...
         if (!empty($loginas) && $admin_login) {
             // Authenticate to LDAP
-            $dn     = $this->ldap->dn_decode($record['ID']);
-            $result = $this->ldap->bind($dn, $pass);
+            $dn     = rcube_ldap::dn_decode($record['ID']);
+            $result = $ldap->bind($dn, $pass);
 
             if (!$result) {
                 $args['abort'] = true;
@@ -325,9 +324,9 @@ class kolab_auth extends rcube_plugin
 
             // check group
             if (!$isadmin && !empty($group)) {
-                $groups = $this->ldap->get_record_groups($record['ID']);
+                $groups = $ldap->get_record_groups($record['ID']);
                 foreach ($groups as $g) {
-                    if ($group == $this->ldap->dn_decode($g)) {
+                    if ($group == rcube_ldap::dn_decode($g)) {
                         $isadmin = true;
                         break;
                     }
@@ -363,8 +362,9 @@ class kolab_auth extends rcube_plugin
             $_SESSION['kolab_auth_password'] = $rcmail->encrypt($admin_pass);
         }
 
-        // Store UID in session for use by other plugins
+        // Store UID and DN of logged user in session for use by other plugins
         $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
+        $_SESSION['kolab_dn']  = $record['ID']; // encoded
 
         // Set user login
         if ($login_attr) {
@@ -436,13 +436,23 @@ class kolab_auth extends rcube_plugin
     /**
      * Initializes LDAP object and connects to LDAP server
      */
-    private function init_ldap()
+    public static function ldap()
     {
-        if ($this->ldap) {
-            return $this->ldap->ready;
+        if (self::$ldap) {
+            return self::$ldap;
         }
 
         $rcmail = rcube::get_instance();
+
+        // $this->load_config();
+        // we're in static method, load config manually
+        $fpath = $rcmail->plugins->dir . '/kolab_auth/config.inc.php';
+        if (is_file($fpath) && !$rcmail->config->load_from_file($fpath)) {
+            rcube::raise_error(array(
+                'code' => 527, 'type' => 'php',
+                'file' => __FILE__, 'line' => __LINE__,
+                'message' => "Failed to load config from $fpath"), true, false);
+        }
 
         $addressbook = $rcmail->config->get('kolab_auth_addressbook');
 
@@ -452,16 +462,18 @@ class kolab_auth extends rcube_plugin
         }
 
         if (empty($addressbook)) {
-            return false;
+            return null;
         }
 
-        $this->ldap = new kolab_auth_ldap_backend(
+        self::$ldap = new kolab_auth_ldap_backend(
             $addressbook,
             $rcmail->config->get('ldap_debug'),
             $rcmail->config->mail_domain($_SESSION['imap_host'])
         );
 
-        return $this->ldap->ready;
+        $rcmail->add_shutdown_function(array(self::$ldap, 'close'));
+
+        return self::$ldap;
     }
 
     /**
@@ -471,15 +483,15 @@ class kolab_auth extends rcube_plugin
     {
         $rcmail = rcube::get_instance();
         $filter = $rcmail->config->get('kolab_auth_filter');
-
         $filter = $this->parse_vars($filter, $user, $host);
+        $ldap   = self::ldap();
 
         // reset old result
-        $this->ldap->reset();
+        $ldap->reset();
 
         // get record
-        $this->ldap->set_filter($filter);
-        $results = $this->ldap->list_records();
+        $ldap->set_filter($filter);
+        $results = $ldap->list_records();
 
         if (count($results->records) == 1) {
             return $results->records[0];
