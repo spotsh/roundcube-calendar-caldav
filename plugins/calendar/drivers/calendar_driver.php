@@ -92,8 +92,13 @@ abstract class calendar_driver
 
   /**
    * Get a list of available calendars from this source
+   *
+   * @param bool $active   Return only active calendars
+   * @param bool $personal Return only personal calendars
+   *
+   * @return array List of calendars
    */
-  abstract function list_calendars();
+  abstract function list_calendars($active = false, $personal = false);
 
   /**
    * Create a new calendar assigned to the current user
@@ -208,9 +213,12 @@ abstract class calendar_driver
    *        id: Event identifier
    *  calendar: Calendar identifier (optional)
    * @param boolean If true, only writeable calendars shall be searched
+   * @param boolean If true, only active calendars shall be searched
+   * @param boolean If true, only personal calendars shall be searched
+   *
    * @return array Event object as hash array
    */
-  abstract function get_event($event, $writeable = null);
+  abstract function get_event($event, $writeable = false, $active = false, $personal = false);
 
   /**
    * Get events from source.

@@ -103,18 +103,36 @@ class database_driver extends calendar_driver
 
   /**
    * Get a list of available calendars from this source
+   *
+   * @param bool $active   Return only active calendars
+   * @param bool $personal Return only personal calendars
+   *
+   * @return array List of calendars
    */
-  public function list_calendars()
+  public function list_calendars($active = false, $personal = false)
   {
     // attempt to create a default calendar for this user
     if (empty($this->calendars)) {
       if ($this->create_calendar(array('name' => 'Default', 'color' => 'cc0000')))
         $this->_read_calendars();
     }
-    
-    return $this->calendars;
+
+    $calendars = $this->calendars;
+
+    // filter active calendars
+    if ($active) {
+      foreach ($calendars as $idx => $cal) {
+        if (!$cal['active']) {
+          unset($calendars[$idx]);
+        }
+      }
+    }
+
+    // 'personal' is unsupported in this driver
+
+    return $calendars;
   }
-  
+
   /**
    * Create a new calendar assigned to the current user
    *
@@ -651,23 +669,38 @@ class database_driver extends calendar_driver
   /**
    * Return data of a specific event
    * @param mixed  Hash array with event properties or event UID
-   * @param boolean Only search in writeable calendars (currently ignored)
+   * @param boolean Only search in writeable calendars (ignored)
+   * @param boolean Only search in active calendars
+   * @param boolean Only search in personal calendars (ignored)
    * @return array Hash array with event properties
    */
-  public function get_event($event, $writeable = null)
+  public function get_event($event, $writeable = false, $active = false, $personal = false)
   {
     $id = is_array($event) ? ($event['id'] ? $event['id'] : $event['uid']) : $event;
     $col = is_array($event) && is_numeric($id) ? 'event_id' : 'uid';
 
     if ($this->cache[$id])
       return $this->cache[$id];
-    
+
+    if ($active) {
+      $calendars = $this->calendars;
+      foreach ($calendars as $idx => $cal) {
+        if (!$cal['active']) {
+          unset($calendars[$idx]);
+        }
+      }
+      $cals = join(',', $calendars);
+    }
+    else {
+      $cals = $this->calendar_ids;
+    }
+
     $result = $this->rc->db->query(sprintf(
       "SELECT e.*, COUNT(a.attachment_id) AS _attachments FROM " . $this->db_events . " AS e
        LEFT JOIN " . $this->db_attachments . " AS a ON (a.event_id = e.event_id OR a.event_id = e.recurrence_id)
        WHERE e.calendar_id IN (%s)
        AND e.$col=?",
-       $this->calendar_ids
+       $cals
       ),
       $id);
 

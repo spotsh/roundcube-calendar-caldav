@@ -96,8 +96,13 @@ class kolab_driver extends calendar_driver
 
   /**
    * Get a list of available calendars from this source
+   *
+   * @param bool $active   Return only active calendars
+   * @param bool $personal Return only personal calendars
+   *
+   * @return array List of calendars
    */
-  public function list_calendars()
+  public function list_calendars($active = false, $personal = false)
   {
     // attempt to create a default calendar for this user
     if (!$this->has_writeable) {
@@ -107,29 +112,59 @@ class kolab_driver extends calendar_driver
       }
     }
 
-    $calendars = $names = array();
+    $calendars = $this->filter_calendars(false, $active, $personal);
+    $names     = array();
 
-    foreach ($this->calendars as $id => $cal) {
-      if ($cal->ready) {
-        $name = kolab_storage::folder_displayname($cal->get_name(), $names);
+    foreach ($calendars as $id => $cal) {
+      $name = kolab_storage::folder_displayname($cal->get_name(), $names);
 
-        $calendars[$cal->id] = array(
-          'id'       => $cal->id,
-          'name'     => $name,
-          'editname' => $cal->get_foldername(),
-          'color'    => $cal->get_color(),
-          'readonly' => $cal->readonly,
-          'showalarms' => $cal->alarms,
-          'class_name' => $cal->get_namespace(),
-          'default'  => $cal->storage->default,
-          'active'   => $cal->storage->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
-        );
-      }
+      $calendars[$id] = array(
+        'id'       => $cal->id,
+        'name'     => $name,
+        'editname' => $cal->get_foldername(),
+        'color'    => $cal->get_color(),
+        'readonly' => $cal->readonly,
+        'showalarms' => $cal->alarms,
+        'class_name' => $cal->get_namespace(),
+        'default'  => $cal->storage->default,
+        'active'   => $cal->storage->is_subscribed(),
+      );
     }
 
     return $calendars;
   }
 
+
+  /**
+   * Get list of calendars according to specified filters
+   *
+   * @param bool $writable Return only writeable calendars
+   * @param bool $active   Return only active calendars
+   * @param bool $personal Return only personal calendars
+   *
+   * @return array List of calendars
+   */
+  protected function filter_calendars($writable = false, $active = false, $personal = false)
+  {
+    $calendars = array();
+    foreach ($this->calendars as $cal) {
+      if (!$cal->ready) {
+        continue;
+      }
+      if ($writeable && $cal->readonly) {
+        continue;
+      }
+      if ($active && !$cal->storage->is_subscribed()) {
+        continue;
+      }
+      if ($personal && $cal->get_namespace() != 'personal') {
+        continue;
+      }
+      $calendars[$cal->id] = $cal;
+    }
+
+    return $calendars;
+  }
 
   /**
    * Create a new calendar assigned to the current user
@@ -252,7 +287,7 @@ class kolab_driver extends calendar_driver
    * @see calendar_driver::get_event()
    * @return array Hash array with event properties, false if not found
    */
-  public function get_event($event, $writeable = null)
+  public function get_event($event, $writeable = false, $active = false, $personal = false)
   {
     if (is_array($event)) {
       $id = $event['id'] ? $event['id'] : $event['uid'];
@@ -261,16 +296,16 @@ class kolab_driver extends calendar_driver
     else {
       $id = $event;
     }
-    
-    if ($cal && ($storage = $this->calendars[$cal])) {
-      return $storage->get_event($id);
+
+    if ($cal) {
+      if ($storage = $this->calendars[$cal]) {
+        return $storage->get_event($id);
+      }
     }
     // iterate over all calendar folders and search for the event ID
-    else if (!$cal) {
-      foreach ($this->calendars as $storage) {
-        if ($writeable && $storage->readonly)
-          continue;
-        if ($result = $storage->get_event($id)) {
+    else {
+      foreach ($this->filter_calendars($writeable, $active, $personal) as $calendar) {
+        if ($result = $calendar->get_event($id)) {
           return $result;
         }
       }
