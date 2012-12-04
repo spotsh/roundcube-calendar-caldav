@@ -450,7 +450,7 @@ class kolab_delegation_engine
      *
      * @return array User data
      */
-    public function user()
+    public function user($parsed = false)
     {
         if (!isset($this->cache['user'])) {
             $ldap = $this->ldap();
@@ -465,7 +465,7 @@ class kolab_delegation_engine
             $this->cache['user'] = $ldap->get_record($this->ldap_dn, true);
         }
 
-        return $this->cache['user'];
+        return $parsed ? $this->parse_ldap_record($this->cache['user']) : $this->cache['user'];
     }
 
     /**

@@ -88,16 +88,12 @@ class kolab_delegation extends rcube_plugin
         //       or alias email if 'kolab_delegation_purge_identities' is set.
 
         $engine     = $this->engine();
-        $delegators = $engine->list_delegators();
-
-        if (empty($delegators)) {
-            return $args;
-        }
-
         $storage    = $this->rc->get_storage();
+        $delegators = $engine->list_delegators();
         $other_ns   = $storage->get_namespace('other');
         $folders    = $storage->list_folders();
         $identities = $this->rc->user->list_identities();
+        $emails     = array();
 
         // convert identities to simpler format for faster access
         foreach ($identities as $idx => $ident) {
@@ -110,16 +106,17 @@ class kolab_delegation extends rcube_plugin
 //                    'html_signature' => $ident['html_signature'],
                 );
             }
-            $identities[$idx] = $ident['email'];
+            $emails[$ident['identity_id']] = $ident['email'];
         }
 
         // for every delegator...
         foreach ($delegators as $delegator) {
-            $email_arr = (array)$delegator['email'];
-            $diff      = array_intersect($identities, $email_arr);
+            $email_arr = $delegator['email'];
+            $diff      = array_intersect($emails, $email_arr);
 
             // identity with delegator's email already exist, do nothing
             if (count($diff)) {
+                $emails = array_diff($emails, $email_arr);
                 continue;
             }
 
@@ -143,6 +140,16 @@ class kolab_delegation extends rcube_plugin
                         $storage->subscribe($folder);
                     }
                 }
+            }
+        }
+
+        // remove identities that "do not belong" to user nor delegators
+        if ($this->rc->config->get('kolab_delegation_purge_identities')) {
+            $user = $engine->user(true);
+            $emails = array_diff($emails, $user['email']);
+
+            foreach (array_keys($emails) as $idx) {
+                $this->rc->user->delete_identity($idx);
             }
         }
 
