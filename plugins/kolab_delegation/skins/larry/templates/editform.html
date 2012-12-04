@@ -1,0 +1,25 @@
+<roundcube:object name="doctype" value="html5" />
+<html>
+<head>
+<title><roundcube:object name="pagetitle" /></title>
+<roundcube:include file="/includes/links.html" />
+</head>
+<body class="iframe floatingbuttons">
+
+<h1 class="boxtitle"><roundcube:label name="kolab_delegation.delegate"></h1>
+
+<div id="preferences-details" class="boxcontent">
+	<form action="#" method="post" id="delegateform">
+		<roundcube:object name="plugin.delegateform" form="delegateform" class="propform" />
+		<roundcube:object name="plugin.delegatefolders" form="delegateform" id="delegatefolders" readicon="" writeicon="" />
+	</form>
+</div>
+
+<div class="footerleft formbuttons floating">
+	<roundcube:button type="input" class="button mainaction" command="delegate-save" label="save" />
+</div>
+
+<roundcube:include file="/includes/footer.html" />
+
+</body>
+</html>
