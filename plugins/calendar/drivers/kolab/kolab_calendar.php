@@ -177,7 +177,7 @@ class kolab_calendar
     // event not found, maybe a recurring instance is requested
     if (!$this->events[$id]) {
       $master_id = preg_replace('/-\d+$/', '', $id);
-      if ($record = $this->storage->get_object($master_id))
+      if ($master_id != $id && ($record = $this->storage->get_object($master_id)))
         $this->events[$master_id] = $this->_to_rcube_event($record);
 
       if (($master = $this->events[$master_id]) && $master['recurrence']) {
