@@ -84,3 +84,11 @@ div.foldersblock h3.note {
 	overflow: auto;
 	margin-top: 0.5em;
 }
+
+#delegate-delete-dialog {
+	display: none;
+}
+
+#delegate-delete-dialog p {
+	font-weight: bold;
+}

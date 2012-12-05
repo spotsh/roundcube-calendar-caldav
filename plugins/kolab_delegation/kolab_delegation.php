@@ -51,7 +51,7 @@ class kolab_delegation extends rcube_plugin
             $this->register_action('plugin.delegation-autocomplete', array($this, 'controller_action'));
 
             if ($this->rc->action == 'plugin.delegation' || empty($_REQUEST['_framed'])) {
-                $this->add_texts('localization/', array('tabtitle', 'delegatedeleteconfirm', 'savingdata'));
+                $this->add_texts('localization/', array('tabtitle', 'deleteconfirm', 'savingdata', 'yes', 'no'));
                 $this->include_script('kolab_delegation.js');
                 $skin_path = $this->local_skin_path();
                 $this->include_stylesheet("$skin_path/style.css");
@@ -221,7 +221,7 @@ class kolab_delegation extends rcube_plugin
         // Delegate delete
         if ($this->rc->action == 'plugin.delegation-delete') {
             $id      = get_input_value('id', RCUBE_INPUT_GPC);
-            $success = $engine->delegate_delete($id, true);
+            $success = $engine->delegate_delete($id, (bool) get_input_value('acl', RCUBE_INPUT_GPC));
 
             if ($success) {
                 $this->rc->output->show_message($this->gettext('deletesuccess'), 'confirmation');

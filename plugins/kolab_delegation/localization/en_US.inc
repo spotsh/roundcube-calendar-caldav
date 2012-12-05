@@ -10,12 +10,16 @@ $labels['contact'] = 'Address Books';
 $labels['event'] = 'Calendars';
 $labels['task'] = 'Tasks';
 $labels['note'] = 'Notes';
+$labels['yes'] = 'Yes';
+$labels['no'] = 'No';
 
 $labels['adddelegate'] = 'Add delegate';
 $labels['deletedelegate'] = 'Delete delegate';
 
 $labels['savingdata'] = 'Saving data...';
 $labels['delegatedeleteconfirm'] = 'Do you really want to delete this delegate?';
+$labels['delegateremoveacl'] = 'remove access rights on folders assigned to this user';
+$labels['deleteconfirm'] = 'Confirmation';
 $labels['deletesuccess'] = 'The delegate was successfully removed.';
 $labels['deleteerror'] = 'Could not remove delegate.';
 $labels['updatesuccess'] = 'The delegate was successfully updated.';

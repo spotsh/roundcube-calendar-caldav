@@ -130,10 +130,32 @@ rcube_webmail.prototype.delegate_add = function()
   // handler for delete commands
 rcube_webmail.prototype.delegate_delete = function()
 {
-  if (this.env.active_delegate && confirm(this.gettext('delegatedeleteconfirm', 'kolab_delegation'))) {
-    var lock = this.set_busy(true, 'kolab_delegation.savingdata');
-    this.http_post('plugin.delegation-delete', {id: this.env.active_delegate}, lock);
+  if (!this.env.active_delegate)
+    return;
+
+  var $dialog = $("#delegate-delete-dialog").addClass('uidialog'),
+    buttons = {};
+
+  buttons[this.gettext('no', 'kolab_delegation')] = function() {
+    $dialog.dialog('close');
+  };
+  buttons[this.gettext('yes', 'kolab_delegation')] = function() {
+    $dialog.dialog('close');
+    var lock = rcmail.set_busy(true, 'kolab_delegation.savingdata');
+    rcmail.http_post('plugin.delegation-delete', {id: rcmail.env.active_delegate,
+      acl: $("#delegate-delete-dialog input:checked").length}, lock);
   }
+
+  // open jquery UI dialog
+  $dialog.dialog({
+    modal: true,
+    resizable: false,
+    closeOnEscape: true,
+    title: this.gettext('deleteconfirm', 'kolab_delegation'),
+    close: function() { $dialog.dialog('destroy').hide(); },
+    buttons: buttons,
+    width: 400
+  }).show();
 };
 
   // submit delegate form to the server
