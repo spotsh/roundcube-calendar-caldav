@@ -1,0 +1,45 @@
+[main]
+host = https://www.transifex.com
+lang_map = de: de_DE, es: es_ES, fr: fr_FR, ja: ja_JP, nl: nl_NL
+type = PHP_ALT_ARRAY
+
+[kolab.calendar]
+file_filter = plugins/calendar/localization/<lang>.inc
+source_file = plugins/calendar/localization/en_US.inc
+source_lang = en_US
+
+[kolab.kolab_activesync]
+file_filter = plugins/kolab_activesync/localization/<lang>.inc
+source_file = plugins/kolab_activesync/localization/en_US.inc
+source_lang = en_US
+
+[kolab.kolab_addressbook]
+file_filter = plugins/kolab_addressbook/localization/<lang>.inc
+source_file = plugins/kolab_addressbook/localization/en_US.inc
+source_lang = en_US
+
+[kolab.kolab_auth]
+file_filter = plugins/kolab_auth/localization/<lang>.inc
+source_file = plugins/kolab_auth/localization/en_US.inc
+source_lang = en_US
+
+[kolab.kolab_delegation]
+file_filter = plugins/kolab_delegation/localization/<lang>.inc
+source_file = plugins/kolab_delegation/localization/en_US.inc
+source_lang = en_US
+
+[kolab.kolab_folders]
+file_filter = plugins/kolab_folders/localization/<lang>.inc
+source_file = plugins/kolab_folders/localization/en_US.inc
+source_lang = en_US
+
+[kolab.owncloud]
+file_filter = plugins/owncloud/localization/<lang>.inc
+source_file = plugins/owncloud/localization/en_US.inc
+source_lang = en_US
+
+[kolab.tasklist]
+file_filter = plugins/tasklist/localization/<lang>.inc
+source_file = plugins/tasklist/localization/en_US.inc
+source_lang = en_US
+
