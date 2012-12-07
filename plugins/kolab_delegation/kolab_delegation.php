@@ -41,8 +41,8 @@ class kolab_delegation extends rcube_plugin
         $this->require_plugin('libkolab');
         $this->require_plugin('kolab_auth');
 
-        $this->add_hook('login_after', array($this, 'login_hook'));
-        $this->add_hook('ready',       array($this, 'ready_hook'));
+        $this->add_hook('login_after',  array($this, 'login_hook'));
+        $this->add_hook('check_recent', array($this, 'check_recent_hook'));
 
         if ($this->rc->task == 'settings') {
             $this->register_action('plugin.delegation',              array($this, 'controller_ui'));
@@ -94,6 +94,7 @@ class kolab_delegation extends rcube_plugin
         $folders    = $storage->list_folders();
         $identities = $this->rc->user->list_identities();
         $emails     = array();
+        $uids       = array();
 
         // convert identities to simpler format for faster access
         foreach ($identities as $idx => $ident) {
@@ -111,6 +112,7 @@ class kolab_delegation extends rcube_plugin
 
         // for every delegator...
         foreach ($delegators as $delegator) {
+            $uids[]    = $delegator['imap_uid'];
             $email_arr = $delegator['email'];
             $diff      = array_intersect($emails, $email_arr);
 
@@ -153,13 +155,15 @@ class kolab_delegation extends rcube_plugin
             }
         }
 
+        $_SESSION['delegator_uids'] = $uids;
+
         return $args;
     }
 
     /**
-     * On-ready action
+     * Check-recent action
      */
-    public function ready_hook($args)
+    public function check_recent_hook($args)
     {
         // Checking for new messages shall be extended to Inbox folders of all
         // delegators if 'check_all_folders' is set to false.
@@ -168,18 +172,26 @@ class kolab_delegation extends rcube_plugin
             return $args;
         }
 
-        if ($this->rc->action != 'refresh') {
+        if (!empty($args['all'])) {
             return $args;
         }
 
-        if ($this->rc->config->get('check_all_folders')) {
+        if (empty($_SESSION['delegator_uids'])) {
             return $args;
         }
 
-        $engine = $this->engine();
+        $storage  = $this->rc->get_storage();
+        $other_ns = $storage->get_namespace('other');
+        $folders  = $storage->list_folders_subscribed('', '*', 'mail');
 
-        // @TODO
-        // new plugin API hook required in core
+        foreach ($_SESSION['delegator_uids'] as $uid) {
+            foreach ($other_ns as $ns) {
+                $folder = $ns[0] . $uid;
+                if (in_array($folder, $folders) && !in_array($folder, $args['folders'])) {
+                    $args['folders'][] = $folder;
+                }
+            }
+        }
 
         return $args;
     }
