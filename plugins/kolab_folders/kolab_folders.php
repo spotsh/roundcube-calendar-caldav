@@ -420,7 +420,7 @@ class kolab_folders extends rcube_plugin
                 $opt_name = 'kolab_folders_' . $type . '_' . $subtype;
                 if ($folder = $this->rc->config->get($opt_name)) {
                     // convert configuration value to UTF7-IMAP charset
-                    $folder = rcube_charset::convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
+                    $folder = rcube_charset::convert($folder, RCUBE_CHARSET, 'UTF7-IMAP');
                     // and namespace prefix if needed
                     if ($prefix && strpos($folder, $prefix) === false && $folder != 'INBOX') {
                         $folder = $prefix . $folder;
