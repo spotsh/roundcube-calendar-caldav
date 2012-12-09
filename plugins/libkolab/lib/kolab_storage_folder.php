@@ -818,7 +818,7 @@ class kolab_storage_folder
             false,                  // is_file
             '8bit',                 // encoding
             'attachment',           // disposition
-            RCMAIL_CHARSET          // charset
+            RCUBE_CHARSET          // charset
         );
         $part_id++;
 
@@ -840,15 +840,15 @@ class kolab_storage_folder
                 }
             }
 
-            $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $key . '>', RCMAIL_CHARSET, 'quoted-printable'));
+            $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $key . '>', RCUBE_CHARSET, 'quoted-printable'));
             $name = !empty($att['name']) ? $att['name'] : $key;
 
             if (!empty($att['content'])) {
-                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
+                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
                 $part_id++;
             }
             else if (!empty($att['path'])) {
-                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
+                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
                 $part_id++;
             }
 

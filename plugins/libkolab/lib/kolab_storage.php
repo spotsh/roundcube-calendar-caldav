@@ -257,7 +257,7 @@ class kolab_storage
     {
         self::setup();
 
-        $folder    = rcube_charset::convert($prop['name'], RCMAIL_CHARSET, 'UTF7-IMAP');
+        $folder    = rcube_charset::convert($prop['name'], RCUBE_CHARSET, 'UTF7-IMAP');
         $oldfolder = $prop['oldname']; // UTF7
         $parent    = $prop['parent']; // UTF7
         $delimiter = self::$imap->get_hierarchy_delimiter();
