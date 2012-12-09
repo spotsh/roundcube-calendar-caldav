@@ -619,13 +619,19 @@ class kolab_storage_folder
             }
         }
 
-        if ($raw_msg = $this->build_message($object, $type)) {
+        // check IMAP BINARY extension support for 'file' objects
+        // allow configuration to workaround bug in Cyrus < 2.4.17
+        $rcmail = rcube::get_instance();
+        $binary = $type == 'file' && !$rcmail->config->get('kolab_binary_disable') && $this->imap->get_capability('BINARY');
+
+        // generate and save object message
+        if ($raw_msg = $this->build_message($object, $type, $binary)) {
             if (is_array($raw_msg)) {
-                $result = $this->imap->save_message($this->name, $raw_msg[0], $raw_msg[1], true);
+                $result = $this->imap->save_message($this->name, $raw_msg[0], $raw_msg[1], true, null, null, $binary);
                 @unlink($raw_msg[0]);
             }
             else {
-                $result = $this->imap->save_message($this->name, $raw_msg);
+                $result = $this->imap->save_message($this->name, $raw_msg, null, false, null, null, $binary);
             }
 
             // delete old message
@@ -738,7 +744,7 @@ class kolab_storage_folder
      * @return mixed Message as string or array with two elements
      *               (one for message file path, second for message headers)
      */
-    private function build_message(&$object, $type)
+    private function build_message(&$object, $type, $binary)
     {
         // load old object to preserve data we don't understand/process
         if (is_object($object['_formatobj']))
@@ -762,10 +768,11 @@ class kolab_storage_folder
             return false;
         }
 
-        $mime    = new Mail_mime("\r\n");
-        $rcmail  = rcube::get_instance();
-        $headers = array();
-        $part_id = 1;
+        $mime     = new Mail_mime("\r\n");
+        $rcmail   = rcube::get_instance();
+        $headers  = array();
+        $part_id  = 1;
+        $encoding = $binary ? 'binary' : 'base64';
 
         if ($ident = $rcmail->user->get_identity()) {
             $headers['From'] = $ident['email'];
@@ -788,7 +795,7 @@ class kolab_storage_folder
             }
 
             // 1.33 is for base64, we need at least 2x more memory than the message size
-            if ($memory * 1.33 * 2 > $mem_limit) {
+            if ($memory * ($binary ? 1 : 1.33) * 2 > $mem_limit) {
                 $is_file  = true;
                 $temp_dir = unslashify($rcmail->config->get('temp_dir'));
                 $mime->setParam('delay_file_io', true);
@@ -837,11 +844,11 @@ class kolab_storage_folder
             $name = !empty($att['name']) ? $att['name'] : $key;
 
             if (!empty($att['content'])) {
-                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, 'base64', 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
+                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
                 $part_id++;
             }
             else if (!empty($att['path'])) {
-                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, 'base64', 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
+                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCMAIL_CHARSET, $headers);
                 $part_id++;
             }
 
