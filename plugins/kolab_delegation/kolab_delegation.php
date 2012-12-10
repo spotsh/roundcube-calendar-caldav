@@ -53,8 +53,8 @@ class kolab_delegation extends rcube_plugin
             if ($this->rc->action == 'plugin.delegation' || empty($_REQUEST['_framed'])) {
                 $this->add_texts('localization/', array('tabtitle', 'deleteconfirm', 'savingdata', 'yes', 'no'));
                 $this->include_script('kolab_delegation.js');
-                $skin_path = $this->local_skin_path();
-                $this->include_stylesheet("$skin_path/style.css");
+                $this->skin_path = $this->local_skin_path();
+                $this->include_stylesheet($this->skin_path . '/style.css');
             }
         }
     }
@@ -400,8 +400,9 @@ class kolab_delegation extends rcube_plugin
      */
     private function delegate_folders_block($a_folders, $attrib, $rights)
     {
-        $read_ico  = $attrib['readicon'] ? html::img(array('src' => $this->skin_path . $attrib['readicon'], 'title' => $this->gettext('read'))) : '';
-        $write_ico = $attrib['writeicon'] ? html::img(array('src' => $this->skin_path . $attrib['writeicon'], 'title' => $this->gettext('write'))) : '';
+        $path      = 'plugins/kolab_delegation/' . $this->skin_path . '/';
+        $read_ico  = $attrib['readicon'] ? html::img(array('src' =>  $path . $attrib['readicon'], 'title' => $this->gettext('read'))) : '';
+        $write_ico = $attrib['writeicon'] ? html::img(array('src' => $path . $attrib['writeicon'], 'title' => $this->gettext('write'))) : '';
 
         $table = new html_table(array('cellspacing' => 0));
         $table->add_header('read', $read_ico);

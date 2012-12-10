@@ -12,10 +12,10 @@ $labels['task'] = 'Tasks';
 $labels['note'] = 'Notes';
 $labels['yes'] = 'Yes';
 $labels['no'] = 'No';
-
+$labels['read'] = 'Read-only';
+$labels['write'] = 'Write';
 $labels['adddelegate'] = 'Add delegate';
 $labels['deletedelegate'] = 'Delete delegate';
-
 $labels['savingdata'] = 'Saving data...';
 $labels['delegatedeleteconfirm'] = 'Do you really want to delete this delegate?';
 $labels['delegateremoveacl'] = 'remove access rights on folders assigned to this user';
