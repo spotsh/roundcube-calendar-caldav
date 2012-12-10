@@ -5,6 +5,7 @@
  *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
+ * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
@@ -236,46 +237,47 @@ class kolab_storage_folder
     }
 
     /**
+     * Check activation status of this folder
+     *
+     * @return boolean True if enabled, false if not
+     */
+    public function is_active()
+    {
+        return kolab_storage::folder_is_active($this->name);
+    }
+
+    /**
+     * Change activation status of this folder
+     *
+     * @param boolean The desired subscription status: true = active, false = not active
+     *
+     * @return True on success, false on error
+     */
+    public function activate($active)
+    {
+        return $active ? kolab_storage::folder_activate($this->name) : kolab_storage::folder_deactivate($this->name);
+    }
+
+    /**
      * Check subscription status of this folder
      *
-     * @param string Subscription type (kolab_storage::SERVERSIDE_SUBSCRIPTION or kolab_storage::CLIENTSIDE_SUBSCRIPTION)
      * @return boolean True if subscribed, false if not
      */
-    public function is_subscribed($type = 0)
+    public function is_subscribed()
     {
-        static $subscribed;  // local cache
-
-        if ($type == kolab_storage::SERVERSIDE_SUBSCRIPTION) {
-            if (!$subscribed)
-                $subscribed = $this->imap->list_folders_subscribed();
-
-            return in_array($this->name, $subscribed);
-        }
-        else if (kolab_storage::CLIENTSIDE_SUBSCRIPTION) {
-            // TODO: implement this
-            return true;
-        }
-
-        return false;
+        return kolab_storage::folder_is_subscribed($this->name);
     }
 
     /**
      * Change subscription status of this folder
      *
      * @param boolean The desired subscription status: true = subscribed, false = not subscribed
-     * @param string  Subscription type (kolab_storage::SERVERSIDE_SUBSCRIPTION or kolab_storage::CLIENTSIDE_SUBSCRIPTION)
+     *
      * @return True on success, false on error
      */
-    public function subscribe($subscribed, $type = 0)
+    public function subscribe($subscribed)
     {
-        if ($type == kolab_storage::SERVERSIDE_SUBSCRIPTION) {
-            return $subscribed ? $this->imap->subscribe($this->name) : $this->imap->unsubscribe($this->name);
-        }
-        else {
-          // TODO: implement this
-        }
-
-        return false;
+        return $subscribed ? kolab_storage::folder_subscribe($this->name) : kolab_storage::folder_unsubscribe($this->name);
     }
 
 

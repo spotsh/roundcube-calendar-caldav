@@ -92,6 +92,7 @@ class kolab_delegation extends rcube_plugin
         $delegators = $engine->list_delegators();
         $other_ns   = $storage->get_namespace('other');
         $folders    = $storage->list_folders();
+        $use_subs   = $this->rc->config->get('kolab_use_subscriptions');
         $identities = $this->rc->user->list_identities();
         $emails     = array();
         $uids       = array();
@@ -139,7 +140,16 @@ class kolab_delegation extends rcube_plugin
                     $prefix = $ns[0] . $delegator['imap_uid'];
                     // subscribe delegator's folder
                     if ($folder === $prefix || strpos($folder, $prefix . substr($ns[0], -1)) === 0) {
-                        $storage->subscribe($folder);
+                        // Event/Task folders need client-side activation
+                        $type = kolab_storage::folder_type($folder);
+                        if (preg_match('/^(event|task)/i', $type)) {
+                            kolab_storage::folder_activate($folder);
+                        }
+                        // Subscribe to mail folders and (if system is configured
+                        // to display only subscribed folders) to other
+                        if ($use_subs || preg_match('/^mail/i', $type)) {
+                            $storage->subscribe($folder);
+                        }
                     }
                 }
             }

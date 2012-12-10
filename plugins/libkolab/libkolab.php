@@ -59,6 +59,4 @@ class libkolab extends rcube_plugin
         $p['fetch_headers'] = trim($p['fetch_headers'] .' X-KOLAB-TYPE X-KOLAB-MIME-VERSION');
         return $p;
     }
-
-
 }

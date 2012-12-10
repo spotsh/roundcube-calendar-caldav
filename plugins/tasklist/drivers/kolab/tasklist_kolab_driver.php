@@ -119,7 +119,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 'color' => $folder->get_color('0000CC'),
                 'showalarms' => isset($prefs[$list_id]['showalarms']) ? $prefs[$list_id]['showalarms'] : $alarms,
                 'editable' => !$readonly,
-                'active' => $folder->is_subscribed(kolab_storage::SERVERSIDE_SUBSCRIPTION),
+                'active' => $folder->is_active(),
                 'parentfolder' => $path_imap,
                 'default' => $folder->default,
                 'class_name' => trim($folder->get_namespace() . ($folder->default ? ' default' : '')),
@@ -155,7 +155,7 @@ class tasklist_kolab_driver extends tasklist_driver
     public function create_list($prop)
     {
         $prop['type'] = 'task' . ($prop['default'] ? '.default' : '');
-        $prop['subscribed'] = kolab_storage::SERVERSIDE_SUBSCRIPTION; // subscribe to folder by default
+        $prop['active'] = true; // activate folder by default
         $folder = kolab_storage::folder_update($prop);
 
         if ($folder === false) {
@@ -229,7 +229,7 @@ class tasklist_kolab_driver extends tasklist_driver
     public function subscribe_list($prop)
     {
         if ($prop['id'] && ($folder = $this->folders[$prop['id']])) {
-            return $folder->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
+            return $folder->activate($prop['active']);
         }
         return false;
     }

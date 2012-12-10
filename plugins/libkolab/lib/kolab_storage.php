@@ -5,6 +5,7 @@
  *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
+ * @author Aleksander Machniak <machniak@kolabsys.com>
  *
  * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
  *
@@ -28,13 +29,13 @@ class kolab_storage
     const CTYPE_KEY_PRIVATE = '/private/vendor/kolab/folder-type';
     const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
     const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
-    const SERVERSIDE_SUBSCRIPTION = 0;
-    const CLIENTSIDE_SUBSCRIPTION = 1;
 
     public static $version = '3.0';
     public static $last_error;
 
     private static $ready = false;
+    private static $subscriptions;
+    private static $states;
     private static $config;
     private static $cache;
     private static $imap;
@@ -92,7 +93,7 @@ class kolab_storage
         $folders = $folderdata = array();
 
         if (self::setup()) {
-            foreach ((array)self::list_folders('', '*', $type, false, $folderdata) as $foldername) {
+            foreach ((array)self::list_folders('', '*', $type, null, $folderdata) as $foldername) {
                 $folders[$foldername] = new kolab_storage_folder($foldername, $folderdata[$foldername]);
             }
         }
@@ -192,13 +193,14 @@ class kolab_storage
     /**
      * Creates IMAP folder
      *
-     * @param string $name        Folder name (UTF7-IMAP)
-     * @param string $type        Folder type
-     * @param bool   $subscribed  Sets folder subscription
+     * @param string $name       Folder name (UTF7-IMAP)
+     * @param string $type       Folder type
+     * @param bool   $subscribed Sets folder subscription
+     * @param bool   $active     Sets folder state (client-side subscription)
      *
      * @return bool True on success, false on failure
      */
-    public static function folder_create($name, $type = null, $subscribed = false)
+    public static function folder_create($name, $type = null, $subscribed = false, $active = false)
     {
         self::setup();
 
@@ -211,6 +213,10 @@ class kolab_storage
                 if (!$saved) {
                     self::$imap->delete_folder($name);
                 }
+                // activate folder
+                else if ($active) {
+                    self::set_state($name, true);
+                }
             }
         }
 
@@ -221,6 +227,7 @@ class kolab_storage
         self::$last_error = self::$imap->get_error_str();
         return false;
     }
+
 
     /**
      * Renames IMAP folder
@@ -247,10 +254,12 @@ class kolab_storage
      * Does additional checks for permissions and folder name restrictions
      *
      * @param array Hash array with folder properties and metadata
-     *  - name: Folder name
-     *  - oldname: Old folder name when changed
-     *  - parent: Parent folder to create the new one in
-     *  - type: Folder type to create
+     *  - name:       Folder name
+     *  - oldname:    Old folder name when changed
+     *  - parent:     Parent folder to create the new one in
+     *  - type:       Folder type to create
+     *  - subscribed: Subscribed flag (IMAP subscription)
+     *  - active:     Activation flag (client-side subscription)
      * @return mixed New folder name or False on failure
      */
     public static function folder_update(&$prop)
@@ -319,7 +328,7 @@ class kolab_storage
         }
         // create new folder
         else {
-            $result = self::folder_create($folder, $prop['type'], $prop['subscribed'] === self::SERVERSIDE_SUBSCRIPTION);
+            $result = self::folder_create($folder, $prop['type'], $prop['subscribed'], $prop['active']);
         }
 
         // save color in METADATA
@@ -532,15 +541,20 @@ class kolab_storage
      * @param string  Optional root folder
      * @param string  Optional name pattern
      * @param string  Data type to list folders for (contact,distribution-list,event,task,note,mail)
-     * @param string  Enable to return subscribed folders only
+     * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
      * @param array   Will be filled with folder-types data
      *
      * @return array List of folders
      */
-    public static function list_folders($root = '', $mbox = '*', $filter = null, $subscribed = false, &$folderdata = array())
+    public static function list_folders($root = '', $mbox = '*', $filter = null, $subscribed = null, &$folderdata = array())
     {
         if (!self::setup()) {
             return null;
+        }
+
+        // use IMAP subscriptions
+        if ($subscribed === null && self::$config->get('kolab_use_subscriptions')) {
+            $subscribed = true;
         }
 
         if (!$filter) {
@@ -566,7 +580,7 @@ class kolab_storage
         $regexp     = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // In some conditions we can skip LIST command (?)
-        if ($subscribed == false && $filter != 'mail' && $prefix == '*') {
+        if (!$subscribed && $filter != 'mail' && $prefix == '*') {
             foreach ($folderdata as $folder => $type) {
                 if (!preg_match($regexp, $type)) {
                     unset($folderdata[$folder]);
@@ -644,6 +658,7 @@ class kolab_storage
         return 'mail';
     }
 
+
     /**
      * Sets folder content-type.
      *
@@ -664,5 +679,157 @@ class kolab_storage
             $success |= self::$imap->set_metadata($folder, array(self::CTYPE_KEY_PRIVATE => $type));
 
         return $success;
+    }
+
+
+    /**
+     * Check subscription status of this folder
+     *
+     * @param string $folder Folder name
+     *
+     * @return boolean True if subscribed, false if not
+     */
+    public static function folder_is_subscribed($folder)
+    {
+        if (self::$subscriptions === null) {
+            self::setup();
+            self::$subscriptions = self::$imap->list_folders_subscribed();
+        }
+
+        return in_array($folder, self::$subscriptions);
+    }
+
+
+    /**
+     * Change subscription status of this folder
+     *
+     * @param string $folder Folder name
+     *
+     * @return True on success, false on error
+     */
+    public static function folder_subscribe($folder)
+    {
+        self::setup();
+
+        if (self::$imap->subscribe($folder)) {
+            self::$subscriptions === null;
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Change subscription status of this folder
+     *
+     * @param string $folder Folder name
+     *
+     * @return True on success, false on error
+     */
+    public static function folder_unsubscribe($folder)
+    {
+        self::setup();
+
+        if (self::$imap->unsubscribe($folder)) {
+            self::$subscriptions === null;
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Check activation status of this folder
+     *
+     * @param string $folder Folder name
+     *
+     * @return boolean True if active, false if not
+     */
+    public static function folder_is_active($folder)
+    {
+        $active_folders = self::get_states();
+
+        return in_array($folder, $active_folders);
+    }
+
+
+    /**
+     * Change activation status of this folder
+     *
+     * @param string $folder Folder name
+     *
+     * @return True on success, false on error
+     */
+    public static function folder_activate($folder)
+    {
+        return self::set_state($folder, true);
+    }
+
+
+    /**
+     * Change activation status of this folder
+     *
+     * @param string $folder Folder name
+     *
+     * @return True on success, false on error
+     */
+    public static function folder_deactivate($folder)
+    {
+        return self::set_state($folder, false);
+    }
+
+
+    /**
+     * Return list of active folders
+     */
+    private static function get_states()
+    {
+        if (self::$states !== null) {
+            return self::$states;
+        }
+
+        $rcube   = rcube::get_instance();
+        $folders = $rcube->config->get('kolab_active_folders');
+
+        if ($folders !== null) {
+            self::$states = !empty($folders) ? explode('**', $folders) : array();
+        }
+        // for backward-compatibility copy server-side subscriptions to activation states
+        else {
+            self::setup();
+            if (self::$subscriptions === null) {
+                self::$subscriptions = self::$imap->list_folders_subscribed();
+            }
+            self::$states = self::$subscriptions;
+            $folders = implode(self::$states, '**');
+            $rcube->user->save_prefs(array('kolab_active_folders' => $folders));
+        }
+
+        return self::$states;
+    }
+
+
+    /**
+     * Update list of active folders
+     */
+    private static function set_state($folder, $state)
+    {
+        self::get_states();
+
+        // update in-memory list
+        $idx = array_search($folder, self::$states);
+        if ($state && $idx === false) {
+            self::$states[] = $folder;
+        }
+        else if (!$state && $idx !== false) {
+            unset(self::$states[$idx]);
+        }
+
+        // update user preferences
+        $folders = implode(self::$states, '**');
+        $rcube   = rcube::get_instance();
+        return $rcube->user->save_prefs(array('kolab_active_folders' => $folders));
     }
 }

@@ -127,7 +127,7 @@ class kolab_driver extends calendar_driver
         'showalarms' => $cal->alarms,
         'class_name' => $cal->get_namespace(),
         'default'  => $cal->storage->default,
-        'active'   => $cal->storage->is_subscribed(),
+        'active'   => $cal->storage->is_active(),
       );
     }
 
@@ -154,7 +154,7 @@ class kolab_driver extends calendar_driver
       if ($writeable && $cal->readonly) {
         continue;
       }
-      if ($active && !$cal->storage->is_subscribed()) {
+      if ($active && !$cal->storage->is_active()) {
         continue;
       }
       if ($personal && $cal->get_namespace() != 'personal') {
@@ -177,7 +177,6 @@ class kolab_driver extends calendar_driver
   public function create_calendar($prop)
   {
     $prop['type'] = 'event';
-    $prop['subscribed'] = $prop['active'] ? kolab_storage::SERVERSIDE_SUBSCRIPTION : null;
     $folder = kolab_storage::folder_update($prop);
 
     if ($folder === false) {
@@ -249,7 +248,7 @@ class kolab_driver extends calendar_driver
   public function subscribe_calendar($prop)
   {
     if ($prop['id'] && ($cal = $this->calendars[$prop['id']])) {
-      return $cal->storage->subscribe($prop['active'], kolab_storage::SERVERSIDE_SUBSCRIPTION);
+      return $cal->storage->activate($prop['active']);
     }
 
     return false;

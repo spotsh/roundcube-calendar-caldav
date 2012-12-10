@@ -1,10 +1,22 @@
 <?php
-    /* Configuration for libkolab */
 
-    $rcmail_config['kolab_cache'] = true;
-    $rcmail_config['kolab_format_version']  = '3.0';
+/* Configuration for libkolab */
 
-    $rcmail_config['kolab_freebusy_server'] = 'https://' . $_SESSION['imap_host'] . '/freebusy';
-    $rcmail_config['kolab_ssl_verify_peer'] = true;
+// Enable caching of Kolab objects in local database
+$rcmail_config['kolab_cache'] = true;
+
+// Specify format version to write Kolab objects (must be a string value!)
+$rcmail_config['kolab_format_version']  = '3.0';
+
+// Optional override of the URL to read and trigger Free/Busy information of Kolab users
+// Defaults to https://<imap-server->/freebusy
+$rcmail_config['kolab_freebusy_server'] = 'https://<some-host>/<freebusy-path>';
+
+// Set this option to disable SSL certificate checks when triggering Free/Busy (enabled by default)
+$rcmail_config['kolab_ssl_verify_peer'] = false;
+
+// Enables listing of only subscribed folders. This e.g. will limit
+// folders in calendar view or available addressbooks
+$rcmail_config['kolab_use_subscriptions'] = false;
 
 ?>
