@@ -46,12 +46,16 @@
 			<file name="localization/en_US.inc" role="data"></file>
 			<file name="skins/classic/deviceactions.png" role="data"></file>
 			<file name="skins/classic/foldertypes.png" role="data"></file>
+			<file name="skins/classic/read.png" role="data"></file>
 			<file name="skins/classic/style.css" role="data"></file>
+			<file name="skins/classic/write.png" role="data"></file>
 			<file name="skins/classic/templates/editform.html" role="data"></file>
 			<file name="skins/classic/templates/settings.html" role="data"></file>
 			<file name="skins/larry/delegation.png" role="data"></file>
 			<file name="skins/larry/foldertypes.png" role="data"></file>
+			<file name="skins/larry/read.png" role="data"></file>
 			<file name="skins/larry/style.css" role="data"></file>
+			<file name="skins/larry/write.png" role="data"></file>
 			<file name="skins/larry/templates/editform.html" role="data"></file>
 			<file name="skins/larry/templates/settings.html" role="data"></file>
 		</dir>
