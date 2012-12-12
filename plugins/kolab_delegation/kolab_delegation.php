@@ -79,93 +79,12 @@ class kolab_delegation extends rcube_plugin
      */
     public function login_hook($args)
     {
-        // Fetch all delegators from LDAP who assigned the
-        // current user as their delegate and create identities
-        //  a) if identity with delegator's email exists, continue
-        //  b) create identity ($delegate on behalf of $delegator
-        //        <$delegator-email>) for new delegators
-        //  c) remove all other identities which do not match the user's primary
-        //       or alias email if 'kolab_delegation_purge_identities' is set.
+        // Manage (create) identities for delegator's email addresses
+        // and subscribe to delegator's folders. Also remove identities
+        // after delegation is removed
 
-        $engine     = $this->engine();
-        $storage    = $this->rc->get_storage();
-        $delegators = $engine->list_delegators();
-        $other_ns   = $storage->get_namespace('other');
-        $folders    = $storage->list_folders();
-        $use_subs   = $this->rc->config->get('kolab_use_subscriptions');
-        $identities = $this->rc->user->list_identities();
-        $emails     = array();
-        $uids       = array();
-
-        // convert identities to simpler format for faster access
-        foreach ($identities as $idx => $ident) {
-            // get user name from default identity
-            if (!$idx) {
-                $default = array(
-                    'name'           => $ident['name'],
-//                    'organization'   => $ident['organization'],
-//                    'signature'      => $ident['signature'],
-//                    'html_signature' => $ident['html_signature'],
-                );
-            }
-            $emails[$ident['identity_id']] = $ident['email'];
-        }
-
-        // for every delegator...
-        foreach ($delegators as $delegator) {
-            $uids[]    = $delegator['imap_uid'];
-            $email_arr = $delegator['email'];
-            $diff      = array_intersect($emails, $email_arr);
-
-            // identity with delegator's email already exist, do nothing
-            if (count($diff)) {
-                $emails = array_diff($emails, $email_arr);
-                continue;
-            }
-
-            // create identities for delegator emails
-            foreach ($email_arr as $email) {
-                $default['email'] = $email;
-                $this->rc->user->insert_identity($default);
-            }
-
-            // IMAP folders shared by new delegators shall be subscribed on login,
-            // as well as existing subscriptions of previously shared folders shall
-            // be removed. I suppose the latter one is already done in Roundcube.
-
-            // for every accessible folder...
-            foreach ($folders as $folder) {
-                // for every 'other' namespace root...
-                foreach ($other_ns as $ns) {
-                    $prefix = $ns[0] . $delegator['imap_uid'];
-                    // subscribe delegator's folder
-                    if ($folder === $prefix || strpos($folder, $prefix . substr($ns[0], -1)) === 0) {
-                        // Event/Task folders need client-side activation
-                        $type = kolab_storage::folder_type($folder);
-                        if (preg_match('/^(event|task)/i', $type)) {
-                            kolab_storage::folder_activate($folder);
-                        }
-                        // Subscribe to mail folders and (if system is configured
-                        // to display only subscribed folders) to other
-                        if ($use_subs || preg_match('/^mail/i', $type)) {
-                            $storage->subscribe($folder);
-                        }
-                    }
-                }
-            }
-        }
-
-        // remove identities that "do not belong" to user nor delegators
-        if ($this->rc->config->get('kolab_delegation_purge_identities')) {
-            $user = $engine->user(true);
-            $emails = array_diff($emails, $user['email']);
-
-            foreach (array_keys($emails) as $idx) {
-                $this->rc->user->delete_identity($idx);
-            }
-        }
-
-        $_SESSION['delegator_uids'] = $uids;
+        $engine = $this->engine();
+        $engine->delegation_init();
 
         return $args;
     }
