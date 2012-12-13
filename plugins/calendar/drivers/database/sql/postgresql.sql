@@ -43,7 +43,7 @@ CREATE TABLE events (
     event_id integer DEFAULT nextval('event_ids'::regclass) NOT NULL,
     calendar_id integer NOT NULL
         REFERENCES calendars (calendar_id) ON UPDATE CASCADE ON DELETE CASCADE,
-    recurence_id integer NOT NULL DEFAULT 0,
+    recurrence_id integer NOT NULL DEFAULT 0,
     uid varchar(255) NOT NULL DEFAULT '',
     created timestamp without time zone DEFAULT now() NOT NULL,
     changed timestamp without time zone DEFAULT now(),
@@ -61,7 +61,7 @@ CREATE TABLE events (
     sensitivity smallint NOT NULL DEFAULT 0,
     alarms varchar(255) DEFAULT NULL,
     attendees text DEFAULT NULL,
-    notifyat timestamp without time zone DEFAULT NULL
+    notifyat timestamp without time zone DEFAULT NULL,
     PRIMARY KEY (event_id)
 );
 
@@ -79,7 +79,7 @@ CREATE SEQUENCE attachment_ids
 CREATE TABLE attachments (
     attachment_id integer DEFAULT nextval('attachment_ids'::regclass) NOT NULL,
     event_id integer NOT NULL
-        REFERENCES  events (event_id) ON DELETE CASCADE ON UPDATE CASCADE,
+        REFERENCES events (event_id) ON DELETE CASCADE ON UPDATE CASCADE,
     filename varchar(255) NOT NULL DEFAULT '',
     mimetype varchar(255) NOT NULL DEFAULT '',
     size integer NOT NULL DEFAULT 0,
@@ -87,7 +87,7 @@ CREATE TABLE attachments (
     PRIMARY KEY (attachment_id)
 );
 
-CREATE INDEX attachments_user_id_idx ON attachments (user_id);
+CREATE INDEX attachments_user_id_idx ON attachments (event_id);
 
 
 CREATE TABLE itipinvitations (
