@@ -25,7 +25,7 @@
 
 class kolab_delegation extends rcube_plugin
 {
-    public $task = 'login|mail|settings';
+    public $task = 'login|mail|settings|calendar';
 
     private $rc;
     private $engine;
@@ -41,10 +41,19 @@ class kolab_delegation extends rcube_plugin
         $this->require_plugin('libkolab');
         $this->require_plugin('kolab_auth');
 
-        $this->add_hook('login_after',  array($this, 'login_hook'));
+        // on-login delegation initialization
+        $this->add_hook('login_after', array($this, 'login_hook'));
+        // on-check-recent delegation support
         $this->add_hook('check_recent', array($this, 'check_recent_hook'));
 
+        // delegation support in Calendar plugin
+        $this->add_hook('message_load', array($this, 'message_load'));
+        $this->add_hook('calendar_user_emails', array($this, 'calendar_user_emails'));
+        $this->add_hook('calendar_list_filter', array($this, 'calendar_list_filter'));
+        $this->add_hook('calendar_load_itip', array($this, 'calendar_load_itip'));
+
         if ($this->rc->task == 'settings') {
+            // delegation management interface
             $this->register_action('plugin.delegation',              array($this, 'controller_ui'));
             $this->register_action('plugin.delegation-delete',       array($this, 'controller_action'));
             $this->register_action('plugin.delegation-save',         array($this, 'controller_action'));
@@ -105,7 +114,7 @@ class kolab_delegation extends rcube_plugin
             return $args;
         }
 
-        if (empty($_SESSION['delegator_uids'])) {
+        if (empty($_SESSION['delegators'])) {
             return $args;
         }
 
@@ -113,13 +122,86 @@ class kolab_delegation extends rcube_plugin
         $other_ns = $storage->get_namespace('other');
         $folders  = $storage->list_folders_subscribed('', '*', 'mail');
 
-        foreach ($_SESSION['delegator_uids'] as $uid) {
+        foreach (array_keys($_SESSION['delegators']) as $uid) {
             foreach ($other_ns as $ns) {
                 $folder = $ns[0] . $uid;
                 if (in_array($folder, $folders) && !in_array($folder, $args['folders'])) {
                     $args['folders'][] = $folder;
                 }
             }
+        }
+
+        return $args;
+    }
+
+    /**
+     * E-mail message loading action
+     */
+    public function message_load($args)
+    {
+        // This is a place where we detect delegate context
+        // So we can handle event invitations on behalf of delegator
+        // @TODO: should we do this only in delegators' folders?
+
+        $engine = $this->engine();
+        $context = $engine->delegator_context_from_message($args['object']);
+
+        if ($context) {
+            $this->rc->output->set_env('delegator_context', $context);
+            $this->include_script('kolab_delegation.js');
+        }
+
+        return $args;
+    }
+
+    /**
+     * calendar::get_user_emails() handler
+     */
+    public function calendar_user_emails($args)
+    {
+        // In delegator context we'll use delegator's addresses
+        // instead of current user addresses
+
+        $engine = $this->engine();
+
+        if ($context = $engine->delegator_context()) {
+            $args['emails'] = $_SESSION['delegators'][$context];
+            $args['abort']  = true;
+        }
+
+        return $args;
+    }
+
+    /**
+     * calendar_driver::list_calendars() handler
+     */
+    public function calendar_list_filter($args)
+    {
+        // In delegator context we'll use delegator's folders
+        // instead of current user folders
+
+        $engine = $this->engine();
+
+        if ($engine->delegator_context()) {
+            $args['calendars'] = $engine->delegator_folder_filter($args);
+            $args['abort']     = true;
+        }
+
+        return $args;
+    }
+
+    /**
+     * calendar::load_itip() handler
+     */
+    public function calendar_load_itip($args)
+    {
+        // In delegator context we'll use delegator's address/name
+        // for invitation responses
+
+        $engine = $this->engine();
+
+        if ($engine->delegator_context()) {
+            $args['identity'] = $engine->delegator_identity();
         }
 
         return $args;

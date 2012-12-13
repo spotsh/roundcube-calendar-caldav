@@ -25,6 +25,8 @@
 
 class kolab_delegation_engine
 {
+    public $context;
+
     private $rc;
     private $ldap_filter;
     private $ldap_delegate_field;
@@ -532,9 +534,8 @@ class kolab_delegation_engine
 
         // for every delegator...
         foreach ($delegators as $delegator) {
-            $uids[]    = $delegator['imap_uid'];
-            $email_arr = $delegator['email'];
-            $diff      = array_intersect($emails, $email_arr);
+            $uids[$delegator['imap_uid']] = $email_arr = $delegator['email'];
+            $diff = array_intersect($emails, $email_arr);
 
             // identity with delegator's email already exist, do nothing
             if (count($diff)) {
@@ -545,6 +546,8 @@ class kolab_delegation_engine
             // create identities for delegator emails
             foreach ($email_arr as $email) {
                 $default['email'] = $email;
+                // @TODO: "Username" or "Delegatorname" or "Username on behalf of Delegatorname"
+                //$default['name']  = $delegator['email'];
                 $this->rc->user->insert_identity($default);
             }
 
@@ -584,7 +587,124 @@ class kolab_delegation_engine
             }
         }
 
-        $_SESSION['delegator_uids'] = $uids;
+        $_SESSION['delegators'] = $uids;
+    }
+
+    /**
+     * Sets delegator context according to email message recipient
+     *
+     * @param rcube_message $message Email message object
+     */
+    public function delegator_context_from_message($message)
+    {
+        if (empty($_SESSION['delegators'])) {
+            return;
+        }
+
+        // Match delegators' addresses with message To: address
+        // @TODO: Is this reliable enough?
+        // Roundcube sends invitations to every attendee separately,
+        // but maybe there's a software which sends with CC header or many addresses in To:
+
+        $emails = $message->get_header('to');
+        $emails = rcube_mime::decode_address_list($emails, null, false);
+
+        foreach ($emails as $email) {
+            foreach ($_SESSION['delegators'] as $uid => $addresses) {
+                if (in_array($email['mailto'], $addresses)) {
+                    return $this->context = $uid;
+                }
+            }
+        }
+    }
+
+    /**
+     * Return (set) current delegator context
+     *
+     * @return string Delegator UID
+     */
+    public function delegator_context()
+    {
+        if (!$this->context && !empty($_SESSION['delegators'])) {
+            $context = rcube_utils::get_input_value('_context', rcube_utils::INPUT_GPC);
+            if ($context && isset($_SESSION['delegators'][$context])) {
+                $this->context = $context;
+            }
+        }
+
+        return $this->context;
+    }
+
+    /**
+     * Return identity of the current delegator
+     *
+     * @return array Identity data (name and email)
+     */
+    public function delegator_identity()
+    {
+        if (!$this->context) {
+            return;
+        }
+
+        $identities = $this->rc->user->list_identities();
+        $emails     = $_SESSION['delegators'][$this->context];
+
+        foreach ($identities as $ident) {
+            if (in_array($ident['email'], $emails)) {
+                return $ident;
+            }
+        }
+    }
+
+    /**
+     * Filters list of calendars according to delegator context
+     *
+     * @param array $args Plugin hook arguments
+     *
+     * @return array List of calendars
+     */
+    public function delegator_folder_filter($args)
+    {
+        if (empty($this->context)) {
+            return;
+        }
+
+        $storage   = $this->rc->get_storage();
+        $other_ns  = $storage->get_namespace('other');
+        $delim     = $storage->get_hierarchy_delimiter();
+        $calendars = array();
+
+        // code parts derived from kolab_driver::filter_calendars()
+        foreach ($args['list'] as $cal) {
+            if (!$cal->ready) {
+                continue;
+            }
+            if ($args['writeable'] && $cal->readonly) {
+                continue;
+            }
+            if ($args['active'] && !$cal->storage->is_active()) {
+                continue;
+            }
+            if ($args['personal']) {
+                $ns   = $cal->get_namespace();
+                $name = $cal->get_realname(); // UTF-7 IMAP folder name
+
+                if ($ns != 'other') {
+                    continue;
+                }
+
+                foreach ($other_ns as $ns) {
+                    $folder = $ns[0] . $this->context . $delim;
+                    if (strpos($name, $folder) !== 0) {
+                        continue;
+                    }
+                }
+            }
+
+            $calendars[$cal->id] = $cal;
+        }
+
+        return $calendars;
     }
 
     /**

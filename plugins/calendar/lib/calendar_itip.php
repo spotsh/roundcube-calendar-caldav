@@ -28,14 +28,14 @@ class calendar_itip
 {
   private $rc;
   private $cal;
-  private $event;
+  private $sender;
   private $itip_send = false;
 
-  function __construct($cal)
+  function __construct($cal, $identity = null)
   {
     $this->cal = $cal;
     $this->rc = $cal->rc;
-    $this->sender = $this->rc->user->get_identity();
+    $this->sender = $identity ? $identity : $this->rc->user->get_identity();
 
     $this->cal->add_hook('smtp_connect', array($this, 'smtp_connect_hook'));
   }

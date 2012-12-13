@@ -147,6 +147,16 @@ class kolab_driver extends calendar_driver
   protected function filter_calendars($writable = false, $active = false, $personal = false)
   {
     $calendars = array();
+
+    $plugin = $this->rc->plugins->exec_hook('calendar_list_filter', array(
+      'list' => $this->calendars, 'calendars' => $calendars,
+      'writable' => $writable, 'active' => $active, 'personal' => $personal,
+    ));
+
+    if ($plugin['abort']) {
+      return $plugin['calendars'];
+    }
+
     foreach ($this->calendars as $cal) {
       if (!$cal->ready) {
         continue;

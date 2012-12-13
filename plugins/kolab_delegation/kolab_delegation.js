@@ -22,6 +22,14 @@
  */
 
 window.rcmail && rcmail.addEventListener('init', function(evt) {
+  if (rcmail.env.task == 'mail') {
+    // set delegator context for calendar requests on invitation message
+    rcmail.addEventListener('requestcalendar/event', function(o) { rcmail.event_delegator_request(o); });
+    rcmail.addEventListener('requestcalendar/mailimportevent', function(o) { rcmail.event_delegator_request(o); });
+  }
+  else if (rcmail.env.task != 'settings')
+    return;
+
   // add Delegation section to the list
   var tab = $('<span>').attr('id', 'settingstabplugindelegation').addClass('tablink'),
     button = $('<a>').attr('href', rcmail.env.comm_path+'&_action=plugin.delegation')
@@ -217,4 +225,17 @@ rcube_webmail.prototype.delegate_save_complete = function(p)
     this.delegatelist.remove_row(p.deleted);
     this.enable_command('delegate-delete', false);
   }
+};
+
+rcube_webmail.prototype.event_delegator_request = function(data)
+{
+  if (!this.env.delegator_context)
+    return;
+
+  if (typeof data === 'object')
+    data._context = this.env.delegator_context;
+  else
+    data += '&_context=' + this.env.delegator_context;
+
+  return data;
 };

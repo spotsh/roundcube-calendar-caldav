@@ -209,9 +209,13 @@ class calendar extends rcube_plugin
   {
     if (!$this->itip) {
       require_once($this->home . '/lib/calendar_itip.php');
-      $this->itip = new calendar_itip($this);
+
+      $plugin = $this->rc->plugins->exec_hook('calendar_load_itip',
+        array('identity' => null));
+
+      $this->itip = new calendar_itip($this, $plugin['identity']);
     }
-    
+
     return $this->itip;
   }
 
@@ -727,7 +731,7 @@ class calendar extends rcube_plugin
           if ($numcals <= 1)
             $calendar_select = null;
         }
-        
+
         if ($status == 'unknown') {
           $html = html::div('rsvp-status', $this->gettext('notanattendee'));
           $action = 'import';
@@ -738,7 +742,7 @@ class calendar extends rcube_plugin
             $action = '';  // nothing to do here
          }
         }
-        
+
         $default_calendar = $calendar_select ? $this->get_default_calendar(true) : null;
         $this->rc->output->command('plugin.update_event_rsvp_status', array(
           'uid' => $event['uid'],
@@ -1974,7 +1978,15 @@ class calendar extends rcube_plugin
    */
   private function get_user_emails()
   {
-    $emails = array($this->rc->user->get_username());
+    $emails = array();
+    $plugin = $this->rc->plugins->exec_hook('calendar_user_emails', array('emails' => $emails));
+    $emails = $plugin['emails'];
+
+    if ($plugin['abort']) {
+      return $emails;
+    }
+
+    $emails[] = $this->rc->user->get_username();
     foreach ($this->rc->user->list_identities() as $identity)
       $emails[] = $identity['email'];
     
