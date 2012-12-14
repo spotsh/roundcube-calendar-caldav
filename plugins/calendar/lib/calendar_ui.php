@@ -72,6 +72,7 @@ class calendar_ui
     $this->cal->register_handler('plugin.calendar_css', array($this, 'calendar_css'));
     $this->cal->register_handler('plugin.calendar_list', array($this, 'calendar_list'));
     $this->cal->register_handler('plugin.calendar_select', array($this, 'calendar_select'));
+    $this->cal->register_handler('plugin.identity_select', array($this, 'identity_select'));
     $this->cal->register_handler('plugin.category_select', array($this, 'category_select'));
     $this->cal->register_handler('plugin.freebusy_select', array($this, 'freebusy_select'));
     $this->cal->register_handler('plugin.priority_select', array($this, 'priority_select'));
@@ -255,6 +256,22 @@ class calendar_ui
     foreach ((array)$this->cal->driver->list_calendars() as $id => $prop) {
       if (!$prop['readonly'])
         $select->add($prop['name'], $id);
+    }
+
+    return $select->show(null);
+  }
+
+  /**
+   * Render a HTML select box for user identity selection
+   */
+  function identity_select($attrib = array())
+  {
+    $attrib['name'] = 'identity';
+    $select         = new html_select($attrib);
+    $identities     = $this->rc->user->list_identities();
+
+    foreach ($identities as $id => $ident) {
+        $select->add(format_email_recipient($ident['email'], $ident['name']), $ident['identity_id']);
     }
 
     return $select->show(null);
