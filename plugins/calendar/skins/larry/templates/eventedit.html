@@ -31,9 +31,9 @@
 				<input type="text" name="enddate" size="10" id="edit-enddate" /> &nbsp;
 				<input type="text" name="endtime" size="6"	id="edit-endtime" />
 			</div>
-			<div class="event-section" id="edit-identities">
-				<label for="edit-identity"><roundcube:label name="calendar.roleorganizer" /></label>
-				<roundcube:object name="plugin.identity_select" />
+			<div class="event-section" id="edit-alarms">
+				<label for="edit-alarm"><roundcube:label name="calendar.alarms" /></label>
+				<roundcube:object name="plugin.alarm_select" />
 			</div>
 			<div class="event-section" id="calendar-select">
 				<label for="edit-calendar"><roundcube:label name="calendar.calendar" /></label>
@@ -54,10 +54,6 @@
 			<div class="event-section">
 				<label for="edit-sensitivity"><roundcube:label name="calendar.sensitivity" /></label>
 				<roundcube:object name="plugin.sensitivity_select" id="edit-sensitivity" />
-			</div>
-			<div class="event-section" id="edit-alarms">
-				<label for="edit-alarm"><roundcube:label name="calendar.alarms" /></label>
-				<roundcube:object name="plugin.alarm_select" />
 			</div>
 		</div>
 		<!-- recurrence settings -->

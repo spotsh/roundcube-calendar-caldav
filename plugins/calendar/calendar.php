@@ -277,6 +277,7 @@ class calendar extends rcube_plugin
 
     $this->rc->output->set_env('calendar_driver', $this->rc->config->get('calendar_driver'), false);
     $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
+    $this->rc->output->set_env('identities-selector', $this->ui->identity_select(array('id' => 'edit-identities-list')));
 
     $view = get_input_value('view', RCUBE_INPUT_GPC);
     if (in_array($view, array('agendaWeek', 'agendaDay', 'month', 'table')))
@@ -1058,6 +1059,7 @@ class calendar extends rcube_plugin
         if (!$identity)
           $identity = $rec;
         $identity['emails'][] = $rec['email'];
+        $settings['identities'][$rec['identity_id']] = $rec['email'];
       }
       $identity['emails'][] = $this->rc->user->get_username();
       $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
@@ -1278,24 +1280,32 @@ class calendar extends rcube_plugin
     $event['attachments'] = $attachments;
 
     // check for organizer in attendees
-    if ($event['attendees'] && ($action == 'new' || $action == 'edit')) {
+    if (!$event['attendees'])
+      $event['attendees'] = array();
+    if ($action == 'new' || $action == 'edit') {
       $emails = $this->get_user_emails();
       $organizer = $owner = false;
-      foreach ($event['attendees'] as $i => $attendee) {
+      foreach ((array)$event['attendees'] as $i => $attendee) {
         if ($attendee['role'] == 'ORGANIZER')
-          $organizer = true;
+          $organizer = $i;
         if ($attendee['email'] == in_array($attendee['email'], $emails))
           $owner = $i;
         else if (!isset($attendee['rsvp']))
           $event['attendees'][$i]['rsvp'] = true;
       }
-      
+
+      // set new organizer identity
+      if ($organizer !== false && !empty($event['_identity']) && ($identity = $this->rc->user->get_identity($event['_identity']))) {
+        $event['attendees'][$organizer]['name'] = $identity['name'];
+        $event['attendees'][$organizer]['email'] = $identity['email'];
+      }
+
       // set owner as organizer if yet missing
-      if (!$organizer && $owner !== false) {
+      if ($organizer === false && $owner !== false) {
         $event['attendees'][$owner]['role'] = 'ORGANIZER';
         unset($event['attendees'][$owner]['rsvp']);
       }
-      else if (!$organizer && $action == 'new' && ($identity = $this->rc->user->get_identity()) && $identity['email']) {
+      else if ($organizer === false && $action == 'new' && ($identity = $this->rc->user->get_identity($event['_identity'])) && $identity['email']) {
         array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
       }
     }

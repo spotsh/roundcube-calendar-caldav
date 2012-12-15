@@ -796,7 +796,7 @@ td.topalign {
 }
 
 .attendees-list .attendee {
-	padding: 3px 4px 3px 1px;
+	padding: 4px 4px 4px 1px;
 	background: url(images/attendee-status.gif) 2px -97px no-repeat;
 	white-space: nowrap;
 }
@@ -851,7 +851,7 @@ td.topalign {
 }
 
 #schedule-freebusy-times td {
-	padding: 3px;
+	padding: 4px;
 	border: 1px solid #ccc;
 }
 

@@ -159,7 +159,7 @@ function rcube_calendar_ui(settings)
     {
       for (var i=0; event.attendees && i < event.attendees.length; i++) {
         if ((!role || event.attendees[i].role == role) && event.attendees[i].email && settings.identity.emails.indexOf(';'+event.attendees[i].email) >= 0)
-          return true;
+          return event.attendees[i];
       }
       return false;
     };
@@ -521,6 +521,15 @@ function rcube_calendar_ui(settings)
             add_attendee(event.attendees[j], !organizer);
         }
 
+        // select the correct organizer identity
+        var identity_id = 0;
+        $.each(settings.identities, function(i,v){
+          if (organizer && v == organizer.email) {
+            identity_id = i;
+            return false;
+          }
+        });
+        $('#edit-identities-list').val(identity_id);
         $('#edit-attendees-form')[(organizer?'show':'hide')]();
         $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
       };
@@ -598,6 +607,9 @@ function rcube_calendar_ui(settings)
           if (data.attendees[i])
             data.attendees[i].role = $(elem).val();
         });
+        
+        if (organizer)
+          data._identity = $('#edit-identities-list option:selected').val();
         
         // don't submit attendees if only myself is added as organizer
         if (data.attendees.length == 1 && data.attendees[0].role == 'ORGANIZER' && data.attendees[0].email == settings.identity.email)
@@ -1370,6 +1382,9 @@ function rcube_calendar_ui(settings)
       opts['REQ-PARTICIPANT'] = rcmail.gettext('calendar.rolerequired');
       opts['OPT-PARTICIPANT'] = rcmail.gettext('calendar.roleoptional');
       opts['CHAIR'] =  rcmail.gettext('calendar.roleresource');
+      
+      if (organizer && !readonly)
+          dispname = rcmail.env['identities-selector'];
       
       var select = '<select class="edit-attendee-role"' + (organizer || readonly ? ' disabled="true"' : '') + '>';
       for (var r in opts)
