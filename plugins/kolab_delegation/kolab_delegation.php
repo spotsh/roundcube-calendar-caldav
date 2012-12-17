@@ -166,11 +166,9 @@ class kolab_delegation extends rcube_plugin
         // In delegator context we'll use delegator's addresses
         // instead of current user addresses
 
-        $engine = $this->engine();
-
-        if ($context = $engine->delegator_context()) {
-            $args['emails'] = $_SESSION['delegators'][$context];
-            $args['abort']  = true;
+        if (!empty($_SESSION['delegators'])) {
+            $engine = $this->engine();
+            $engine->delegator_emails_filter($args);
         }
 
         return $args;
@@ -184,11 +182,9 @@ class kolab_delegation extends rcube_plugin
         // In delegator context we'll use delegator's folders
         // instead of current user folders
 
-        $engine = $this->engine();
-
-        if ($engine->delegator_context()) {
-            $args['calendars'] = $engine->delegator_folder_filter($args);
-            $args['abort']     = true;
+        if (!empty($_SESSION['delegators'])) {
+            $engine = $this->engine();
+            $engine->delegator_folder_filter($args);
         }
 
         return $args;
@@ -202,10 +198,9 @@ class kolab_delegation extends rcube_plugin
         // In delegator context we'll use delegator's address/name
         // for invitation responses
 
-        $engine = $this->engine();
-
-        if ($engine->delegator_context()) {
-            $args['identity'] = $engine->delegator_identity();
+        if (!empty($_SESSION['delegators'])) {
+            $engine = $this->engine();
+            $engine->delegator_identity_filter($args);
         }
 
         return $args;

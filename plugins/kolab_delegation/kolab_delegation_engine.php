@@ -681,39 +681,72 @@ class kolab_delegation_engine
     }
 
     /**
-     * Return identity of the current delegator
+     * Set user identity according to delegator delegator
      *
-     * @return array Identity data (name and email)
+     * @param array $args Reference to plugin hook arguments
      */
-    public function delegator_identity()
+    public function delegator_identity_filter(&$args)
     {
-        if (!$this->context) {
+        $context = $this->delegator_context();
+
+        if (!$context) {
             return;
         }
 
         $identities = $this->rc->user->list_identities();
-        $emails     = $_SESSION['delegators'][$this->context];
+        $emails     = $_SESSION['delegators'][$context];
 
         foreach ($identities as $ident) {
             if (in_array($ident['email'], $emails)) {
-                return $ident;
+                $args['identity'] = $ident;
+                return;
             }
+        }
+
+        // fallback to default identity
+        $args['identity'] = array_shift($identities);
+    }
+
+    /**
+     * Filter user emails according to delegator context
+     *
+     * @param array $args Reference to plugin hook arguments
+     */
+    public function delegator_emails_filter(&$args)
+    {
+        $context = $this->delegator_context();
+
+        // return delegator's addresses
+        if ($context) {
+            $args['emails'] = $_SESSION['delegators'][$context];
+            $args['abort']  = true;
+        }
+        // return only user addresses (exclude all delegators addresses)
+        else if (!empty($_SESSION['delegators'])) {
+            $identities = $this->rc->user->list_identities();
+            $emails[]   = $this->rc->user->get_username();
+
+            foreach ($this->rc->user->list_identities() as $identity) {
+                $emails[] = $identity['email'];
+            }
+
+            foreach ($_SESSION['delegators'] as $delegator_emails) {
+                $emails = array_diff($emails, $delegator_emails);
+            }
+
+            $args['emails'] = array_unique($emails);
+            $args['abort']  = true;
         }
     }
 
     /**
      * Filters list of calendars according to delegator context
      *
-     * @param array $args Plugin hook arguments
-     *
-     * @return array List of calendars
+     * @param array $args Reference to plugin hook arguments
      */
-    public function delegator_folder_filter($args)
+    public function delegator_folder_filter(&$args)
     {
-        if (empty($this->context)) {
-            return;
-        }
-
+        $context   = $this->delegator_context();
         $storage   = $this->rc->get_storage();
         $other_ns  = $storage->get_namespace('other');
         $delim     = $storage->get_hierarchy_delimiter();
@@ -734,14 +767,21 @@ class kolab_delegation_engine
                 $ns   = $cal->get_namespace();
                 $name = $cal->get_realname(); // UTF-7 IMAP folder name
 
-                if ($ns != 'other') {
-                    continue;
-                }
-
-                foreach ($other_ns as $ns) {
-                    $folder = $ns[0] . $this->context . $delim;
-                    if (strpos($name, $folder) !== 0) {
+                if (empty($context)) {
+                    if ($ns != 'personal') {
                         continue;
+                    }
+                }
+                else {
+                    if ($ns != 'other') {
+                        continue;
+                    }
+
+                    foreach ($other_ns as $ns) {
+                        $folder = $ns[0] . $context . $delim;
+                        if (strpos($name, $folder) !== 0) {
+                            continue;
+                        }
                     }
                 }
             }
@@ -749,7 +789,8 @@ class kolab_delegation_engine
             $calendars[$cal->id] = $cal;
         }
 
-        return $calendars;
+        $args['calendars'] = $calendars;
+        $args['abort']     = true;
     }
 
     /**
