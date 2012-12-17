@@ -516,6 +516,21 @@ class kolab_delegation_engine
     }
 
     /**
+     * Returns current user identities
+     *
+     * @return array List of identities
+     */
+    public function user_identities()
+    {
+        // cache result in-memory, we need it more than once
+        if ($this->identities === null) {
+            $this->identities = $this->rc->user->list_identities();
+        }
+
+        return $this->identities;
+    }
+
+    /**
      * Update LDAP record of current user
      *
      * @param array User data
@@ -559,7 +574,7 @@ class kolab_delegation_engine
         $other_ns   = $storage->get_namespace('other');
         $folders    = $storage->list_folders();
         $use_subs   = $this->rc->config->get('kolab_use_subscriptions');
-        $identities = $this->rc->user->list_identities();
+        $identities = $this->user_identities();
         $emails     = array();
         $uids       = array();
 
@@ -693,7 +708,7 @@ class kolab_delegation_engine
             return;
         }
 
-        $identities = $this->rc->user->list_identities();
+        $identities = $this->user_identities();
         $emails     = $_SESSION['delegators'][$context];
 
         foreach ($identities as $ident) {
@@ -723,10 +738,10 @@ class kolab_delegation_engine
         }
         // return only user addresses (exclude all delegators addresses)
         else if (!empty($_SESSION['delegators'])) {
-            $identities = $this->rc->user->list_identities();
+            $identities = $this->user_identities();
             $emails[]   = $this->rc->user->get_username();
 
-            foreach ($this->rc->user->list_identities() as $identity) {
+            foreach ($identities as $identity) {
                 $emails[] = $identity['email'];
             }
 
