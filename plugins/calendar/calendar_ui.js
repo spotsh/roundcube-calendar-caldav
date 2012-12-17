@@ -253,6 +253,9 @@ function rcube_calendar_ui(settings)
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:false };
       me.selected_event = event;
 
+      // allow other plugins to do actions when event form is opened
+      rcmail.triggerEvent('calendar-event-init', {o: event});
+
       $dialog.find('div.event-section, div.event-line').hide();
       $('#event-title').html(Q(event.title)).show();
       
@@ -298,7 +301,7 @@ function rcube_calendar_ui(settings)
       else if (calendar.attachments) {
         // fetch attachments, some drivers doesn't set 'attachments' prop of the event?
       }
-      
+
       // list event attendees
       if (calendar.attendees && event.attendees) {
         var data, dispname, organizer = false, rsvp = false, html = '';
@@ -383,7 +386,7 @@ function rcube_calendar_ui(settings)
     {
       // close show dialog first
       $("#eventshow:ui-dialog").dialog('close');
-      
+
       var $dialog = $('<div>');
       var calendar = event.calendar && me.calendars[event.calendar] ? me.calendars[event.calendar] : { editable:action=='new' };
       me.selected_event = $.extend($.extend({}, event_defaults), event);  // clone event object (with defaults)
@@ -392,6 +395,9 @@ function rcube_calendar_ui(settings)
 
       // reset dialog first
       $('#eventtabs').get(0).reset();
+
+      // allow other plugins to do actions when event form is opened
+      rcmail.triggerEvent('calendar-event-init', {o: event});
 
       // event details
       var title = $('#edit-title').val(event.title || '');
@@ -551,7 +557,6 @@ function rcube_calendar_ui(settings)
           // fetch attachments, some drivers doesn't set 'attachments' array for event?
         }
       };
-      
       
       // init dialog buttons
       var buttons = {};
@@ -1411,6 +1416,10 @@ function rcube_calendar_ui(settings)
       
       tr.find('a.deletelink').click({ id:(data.email || data.name) }, function(e) { remove_attendee(this, e.data.id); return false; });
       tr.find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
+
+      // select organizer identity
+      if (data.identity_id)
+        $('#edit-identities-list').val(data.identity_id);
       
       // check free-busy status
       if (avail == 'loading') {
@@ -2607,14 +2616,14 @@ function rcube_calendar_ui(settings)
 
       $('#event-rsvp input.button').click(function(){
         event_rsvp($(this).attr('rel'))
-      })
+      });
 
       $('#agenda-listrange').change(function(e){
         settings['agenda_range'] = parseInt($(this).val());
         fc.fullCalendar('option', 'listRange', settings['agenda_range']).fullCalendar('render');
         // TODO: save new settings in prefs
       }).val(settings['agenda_range']);
-      
+
       $('#agenda-listsections').change(function(e){
         settings['agenda_sections'] = $(this).val();
         fc.fullCalendar('option', 'listSections', settings['agenda_sections']).fullCalendar('render');

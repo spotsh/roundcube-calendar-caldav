@@ -297,6 +297,51 @@ class kolab_delegation_engine
     }
 
     /**
+     * List current user delegators in format compatible with Calendar plugin
+     *
+     * @return array List of delegators
+     */
+    public function list_delegators_js()
+    {
+        $list   = $this->list_delegators();
+        $result = array();
+
+        foreach ($list as $delegator) {
+            $name = $delegator['name'];
+            if ($pos = strrpos($name, '(')) {
+                $name = trim(substr($name, 0, $pos));
+            }
+
+            $result[$delegator['imap_uid']] = array(
+                'emails' => ';' . implode(';', $delegator['email']),
+                'email'  => $delegator['email'][0],
+                'name'   => $name,
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Prepare namespace prefixes for JS environment
+     *
+     * @return array List of prefixes
+     */
+    public function namespace_js()
+    {
+        $storage = $this->rc->get_storage();
+        $ns      = $storage->get_namespace('other');
+
+        if ($ns) {
+            foreach ($ns as $idx => $nsval) {
+                $ns[$idx] = kolab_storage::folder_id($nsval[0]);
+            }
+        }
+
+        return $ns;
+    }
+
+    /**
      * Get all folders to which current user has admin access
      *
      * @param string $delegate IMAP user identifier

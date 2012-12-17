@@ -66,6 +66,10 @@ class kolab_delegation extends rcube_plugin
                 $this->include_stylesheet($this->skin_path . '/style.css');
             }
         }
+        // Calendar plugin UI bindings
+        else if ($this->rc->task == 'calendar' && empty($_REQUEST['_framed'])) {
+            $this->calendar_ui();
+        }
     }
 
     /**
@@ -205,6 +209,21 @@ class kolab_delegation extends rcube_plugin
         }
 
         return $args;
+    }
+
+    /**
+     * Delegation support in Calendar plugin UI
+     */
+    public function calendar_ui()
+    {
+        // Initialize handling of delegators' identities in event form
+
+        if (!empty($_SESSION['delegators'])) {
+            $engine = $this->engine();
+            $this->rc->output->set_env('namespace', $engine->namespace_js());
+            $this->rc->output->set_env('delegators', $engine->list_delegators_js());
+            $this->include_script('kolab_delegation.js');
+        }
     }
 
     /**
