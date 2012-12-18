@@ -636,7 +636,7 @@ class calendar extends rcube_plugin
       case "move":
         $this->prepare_event($event, $action);
         $success = $this->driver->move_event($event);
-        $reload =  $success && $event['_savemode'] ? 2 : 1;
+        $reload  = $success && $event['_savemode'] ? 2 : 1;
         break;
       
       case "remove":
@@ -1261,6 +1261,11 @@ class calendar extends rcube_plugin
     // convert dates into DateTime objects in user's current timezone
     $event['start'] = new DateTime($event['start'], $this->timezone);
     $event['end'] = new DateTime($event['end'], $this->timezone);
+
+    // start/end is all we need for 'move' action (#1480)
+    if ($action == 'move') {
+      return;
+    }
 
     if ($event['recurrence']['UNTIL'])
       $event['recurrence']['UNTIL'] = new DateTime($event['recurrence']['UNTIL'], $this->timezone);
