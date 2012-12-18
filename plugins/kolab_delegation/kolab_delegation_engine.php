@@ -470,6 +470,7 @@ class kolab_delegation_engine
             }
         }
 
+        $realname = $name;
         if ($uid && $name) {
             $name .= ' (' . $uid . ')';
         }
@@ -486,6 +487,7 @@ class kolab_delegation_engine
         return array(
             'uid'      => $uid,
             'name'     => $name,
+            'realname' => $realname,
             'imap_uid' => $imap_uid,
             'email'    => $email,
             'ID'       => $data['ID'],
@@ -605,9 +607,9 @@ class kolab_delegation_engine
 
             // create identities for delegator emails
             foreach ($email_arr as $email) {
+                // @TODO: "Delegatorname" or "Username on behalf of Delegatorname"?
+                $default['name']  = $delegator['realname'];
                 $default['email'] = $email;
-                // @TODO: "Username" or "Delegatorname" or "Username on behalf of Delegatorname"
-                //$default['name']  = $delegator['email'];
                 $this->rc->user->insert_identity($default);
             }
 
@@ -806,6 +808,40 @@ class kolab_delegation_engine
 
         $args['calendars'] = $calendars;
         $args['abort']     = true;
+    }
+
+    /**
+     * Filters/updates message headers according to delegator context
+     *
+     * @param array $args Reference to plugin hook arguments
+     */
+    public function delegator_delivery_filter(&$args)
+    {
+        // no context, but message still can be send on behalf of...
+        if (!empty($_SESSION['delegators'])) {
+            $message = $args['message'];
+            $headers = $message->headers();
+
+            // get email address from From: header
+            $from = rcube_mime::decode_address_list($headers['From']);
+            $from = array_shift($from);
+            $from = $from['mailto'];
+
+            foreach ($_SESSION['delegators'] as $uid => $addresses) {
+                if (in_array($from, $addresses)) {
+                    $context = $uid;
+                    break;
+                }
+            }
+
+            // add Sender: header with current user default identity
+            if ($context) {
+                $identity = $this->rc->user->get_identity();
+                $sender   = format_email_recipient($identity['email'], $identity['name']);
+
+                $message->headers(array('Sender' => $sender), false, true);
+            }
+        }
     }
 
     /**

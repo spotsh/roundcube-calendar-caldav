@@ -46,6 +46,9 @@ class kolab_delegation extends rcube_plugin
         // on-check-recent delegation support
         $this->add_hook('check_recent', array($this, 'check_recent_hook'));
 
+        // on-message-send delegation support
+        $this->add_hook('message_before_send', array($this, 'message_before_send'));
+
         // delegation support in Calendar plugin
         $this->add_hook('message_load', array($this, 'message_load'));
         $this->add_hook('calendar_user_emails', array($this, 'calendar_user_emails'));
@@ -133,6 +136,22 @@ class kolab_delegation extends rcube_plugin
                     $args['folders'][] = $folder;
                 }
             }
+        }
+
+        return $args;
+    }
+
+    /**
+     * Mail send action
+     */
+    public function message_before_send($args)
+    {
+        // Checking headers of email being send, we'll add
+        // Sender: header if mail is send on behalf of someone else
+
+        if (!empty($_SESSION['delegators'])) {
+            $engine = $this->engine();
+            $engine->delegator_delivery_filter($args);
         }
 
         return $args;
