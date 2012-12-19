@@ -208,7 +208,19 @@ class kolab_auth extends rcube_plugin
         if (!empty($this->data['user_email'])) {
             // addresses list is supported
             if (array_key_exists('email_list', $args)) {
-                $args['email_list'] = array_unique($this->data['user_email']);
+                $email_list = array_unique($this->data['user_email']);
+
+                // add organization to the list
+                if (!empty($this->data['user_organization'])) {
+                    foreach ($email_list as $idx => $email) {
+                        $email_list[$idx] = array(
+                            'organization' => $this->data['user_organization'],
+                            'email'        => $email,
+                        );
+                    }
+                }
+
+                $args['email_list'] = $email_list;
             }
             else {
                 $args['user_email'] = $this->data['user_email'][0];
@@ -256,19 +268,6 @@ class kolab_auth extends rcube_plugin
      */
     public function authenticate($args)
     {
-        $ldap = self::ldap();
-        if (!$ldap || !$ldap->ready) {
-            $args['abort'] = true;
-            return $args;
-        }
-
-        $rcmail      = rcube::get_instance();
-        $admin_login = $rcmail->config->get('kolab_auth_admin_login');
-        $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
-        $login_attr  = $rcmail->config->get('kolab_auth_login');
-        $name_attr   = $rcmail->config->get('kolab_auth_name');
-        $email_attr  = $rcmail->config->get('kolab_auth_email');
-
         // get username and host
         $host    = $args['host'];
         $user    = $args['user'];
@@ -276,6 +275,12 @@ class kolab_auth extends rcube_plugin
         $loginas = trim(rcube_utils::get_input_value('_loginas', rcube_utils::INPUT_POST));
 
         if (empty($user) || empty($pass)) {
+            $args['abort'] = true;
+            return $args;
+        }
+
+        $ldap = self::ldap();
+        if (!$ldap || !$ldap->ready) {
             $args['abort'] = true;
             return $args;
         }
@@ -288,7 +293,14 @@ class kolab_auth extends rcube_plugin
             return $args;
         }
 
-        $role_attr = $rcmail->config->get('kolab_auth_role');
+        $rcmail      = rcube::get_instance();
+        $admin_login = $rcmail->config->get('kolab_auth_admin_login');
+        $admin_pass  = $rcmail->config->get('kolab_auth_admin_password');
+        $login_attr  = $rcmail->config->get('kolab_auth_login');
+        $name_attr   = $rcmail->config->get('kolab_auth_name');
+        $email_attr  = $rcmail->config->get('kolab_auth_email');
+        $org_attr    = $rcmail->config->get('kolab_auth_organization');
+        $role_attr   = $rcmail->config->get('kolab_auth_role');
 
         if (!empty($role_attr) && !empty($record[$role_attr])) {
             $_SESSION['user_roledns'] = (array)($record[$role_attr]);
@@ -387,6 +399,14 @@ class kolab_auth extends rcube_plugin
             $email = is_array($record[$field]) ? array_filter($record[$field]) : $record[$field];
             if (!empty($email)) {
                 $this->data['user_email'] = array_merge((array)$this->data['user_email'], (array)$email);
+            }
+        }
+        // Organization name for identity (first log in)
+        foreach ((array)$org_attr as $field) {
+            $organization = is_array($record[$field]) ? $record[$field][0] : $record[$field];
+            if (!empty($organization)) {
+                $this->data['user_organization'] = $organization;
+                break;
             }
         }
 
