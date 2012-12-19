@@ -33,6 +33,7 @@ class kolab_delegation_engine
     private $ldap_login_field;
     private $ldap_name_field;
     private $ldap_email_field;
+    private $ldap_org_field;
     private $ldap_dn;
     private $cache = array();
     private $folder_types = array('mail', 'event', 'task');
@@ -46,19 +47,6 @@ class kolab_delegation_engine
     public function __construct()
     {
         $this->rc = rcube::get_instance();
-
-        // Default filter of LDAP queries
-        $this->ldap_filter = $this->rc->config->get('kolab_delegation_filter');
-        // Name of the LDAP field for delegates list
-        $this->ldap_delegate_field = $this->rc->config->get('kolab_delegation_delegate_field');
-        // Name of the LDAP field with authentication ID
-        $this->ldap_login_field = $this->rc->config->get('kolab_delegation_login_field');
-        // Name of the LDAP field with user name used for identities
-        $this->ldap_name_field = $this->rc->config->get('kolab_delegation_name_field');
-        // Name of the LDAP field with email addresses used for identities
-        $this->ldap_email_field = $this->rc->config->get('kolab_delegation_email_field');
-        // Encoded LDAP DN of current user, set on login by kolab_auth plugin
-        $this->ldap_dn = $_SESSION['kolab_dn'];
     }
 
     /**
@@ -233,6 +221,22 @@ class kolab_delegation_engine
         if (!$ldap || !$ldap->ready) {
             return null;
         }
+
+        // Default filter of LDAP queries
+        $this->ldap_filter = $this->rc->config->get('kolab_delegation_filter');
+        // Name of the LDAP field for delegates list
+        $this->ldap_delegate_field = $this->rc->config->get('kolab_delegation_delegate_field');
+        // Encoded LDAP DN of current user, set on login by kolab_auth plugin
+        $this->ldap_dn = $_SESSION['kolab_dn'];
+
+        // Name of the LDAP field with authentication ID
+        $this->ldap_login_field = $this->rc->config->get('kolab_auth_login');
+        // Name of the LDAP field with user name used for identities
+        $this->ldap_name_field = $this->rc->config->get('kolab_auth_name');
+        // Name of the LDAP field with email addresses used for identities
+        $this->ldap_email_field = $this->rc->config->get('kolab_auth_email');
+        // Name of the LDAP field with organization name for identities
+        $this->ldap_org_field = $this->rc->config->get('kolab_auth_organization');
 
         $ldap->set_filter($this->ldap_filter);
 
@@ -470,6 +474,14 @@ class kolab_delegation_engine
             }
         }
 
+        // Organization for identity
+        foreach ((array)$this->ldap_org_field as $field) {
+            $organization = is_array($data[$field]) ? $data[$field][0] : $data[$field];
+            if (!empty($organization)) {
+                break;
+            }
+        }
+
         $realname = $name;
         if ($uid && $name) {
             $name .= ' (' . $uid . ')';
@@ -491,6 +503,7 @@ class kolab_delegation_engine
             'imap_uid' => $imap_uid,
             'email'    => $email,
             'ID'       => $data['ID'],
+            'organization' => $organization,
         );
     }
 
@@ -610,6 +623,7 @@ class kolab_delegation_engine
                 // @TODO: "Delegatorname" or "Username on behalf of Delegatorname"?
                 $default['name']  = $delegator['realname'];
                 $default['email'] = $email;
+                $default['organization'] = $delegator['organization'];
                 $this->rc->user->insert_identity($default);
             }
 
