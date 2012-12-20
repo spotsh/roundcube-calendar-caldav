@@ -946,6 +946,9 @@ function rcube_tasklist_ui(settings)
           minWidth: 500,
           width: 580
         }).show();
+
+        // set dialog size according to content
+        me.dialog_resize($dialog.get(0), $dialog.height(), 580);
     }
 
     /**
@@ -1139,6 +1142,9 @@ function rcube_tasklist_ui(settings)
         }).append(editform.show());  // adding form content AFTERWARDS massively speeds up opening on IE
 
         title.select();
+
+        // set dialog size according to content
+        me.dialog_resize($dialog.get(0), $dialog.height(), 580);
     }
 
 
@@ -1578,6 +1584,14 @@ function rcube_tasklist_ui(settings)
         }
         return active;
     }
+
+    // resize and reposition (center) the dialog window
+    this.dialog_resize = function(id, height, width)
+    {
+        var win = $(window), w = win.width(), h = win.height();
+            $(id).dialog('option', { height: Math.min(h-20, height+130), width: Math.min(w-20, width+50) })
+                .dialog('option', 'position', ['center', 'center']);  // only works in a separate call (!?)
+    };
 
     /**
      * Register event handlers on a tasklist (folder) item
