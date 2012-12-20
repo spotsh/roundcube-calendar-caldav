@@ -78,6 +78,14 @@
 			<pearinstaller>
 				<min>1.7.0</min>
 			</pearinstaller>
+			<package>
+			<name>libkolab</name>
+				<uri>http://git.kolab.org/roundcubemail-plugins-kolab/tree/plugins/libkolab</uri>
+			</package>
+			<package>
+				<name>libcalendaring</name>
+				<uri>http://git.kolab.org/roundcubemail-plugins-kolab/tree/plugins/libcalendaring</uri>
+			</package>
 		</required>
 	</dependencies>
 	<phprelease/>
