@@ -621,7 +621,7 @@ function rcube_calendar_ui(settings)
           data.attendees = [];
         
         // tell server to send notifications
-        if (data.attendees.length && organizer && ((event.id && notify.checked) || (!event.id && invite.checked))) {
+        if ((data.attendees.length || (event.id && event.attendees.length)) && organizer && (notify.checked || invite.checked)) {
           data._notify = 1;
         }
 
