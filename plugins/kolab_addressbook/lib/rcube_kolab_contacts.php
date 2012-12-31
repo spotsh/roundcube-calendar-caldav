@@ -559,7 +559,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
             // generate new Kolab contact item
             $object = $this->_from_rcube_contact($save_data);
-            $saved = $this->storagefolder->save($object, 'contact');
+            $saved  = $this->storagefolder->save($object, 'contact');
 
             if (!$saved) {
                 rcube::raise_error(array(
@@ -605,7 +605,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             else {
                 $this->contacts[$id] = $this->_to_rcube_contact($object);
                 $updated = true;
-                
+
                 // TODO: update data in groups this contact is member of
             }
         }
@@ -1161,6 +1161,14 @@ class rcube_kolab_contacts extends rcube_addressbook
         foreach ((array)$old as $key => $val) {
             if (!isset($contact[$key]) && $key[0] == '_')
                 $contact[$key] = $val;
+        }
+
+        // convert one-item-array elements into string element
+        // this is needed e.g. to properly import birthday field
+        foreach ($this->coltypes as $type => $col_def) {
+            if ($col_def['limit'] == 1 && is_array($contact[$type])) {
+                $contact[$type] = array_shift(array_filter($contact[$type]));
+            }
         }
 
         // add empty values for some fields which can be removed in the UI
