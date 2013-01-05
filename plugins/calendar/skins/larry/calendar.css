@@ -277,8 +277,6 @@ pre {
 }
 
 body.calendarmain #quicksearchbar {
-	top: -7px;
-	right: 2px;
 	z-index: 200;
 }
 
@@ -1185,11 +1183,11 @@ a.dropdown-link:after {
 
 .calendarmain .fc-header-right {
 	padding-right: 252px;
-	padding-top: 2px;
+	padding-top: 9px;
 }
 
 .fc-header-title {
-	padding-top: 6px;
+	padding-top: 10px;
 }
 
 .fc-event {
