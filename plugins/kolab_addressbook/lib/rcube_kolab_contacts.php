@@ -82,6 +82,11 @@ class rcube_kolab_contacts extends rcube_addressbook
       'pgppublickey'   => 'KEY',
     );
 
+    /**
+     * List of date type fields
+     */
+    public $date_cols = array('birthday', 'anniversary');
+
     private $gid;
     private $storagefolder;
     private $contacts;
@@ -386,32 +391,12 @@ class rcube_kolab_contacts extends rcube_addressbook
 
             $found = array();
             foreach (preg_grep($regexp, array_keys($contact)) as $col) {
-                if ($advanced) {
-                    $pos     = strpos($col, ':');
-                    $colname = $pos ? substr($col, 0, $pos) : $col;
-                    $search  = $value[array_search($colname, $fields)];
-                }
-                else {
-                    $search = $value;
-                }
+                $pos     = strpos($col, ':');
+                $colname = $pos ? substr($col, 0, $pos) : $col;
+                $search  = $advanced ? $value[array_search($colname, $fields)] : $value;
 
                 foreach ((array)$contact[$col] as $val) {
-                    foreach ((array)$val as $str) {
-                        $str = mb_strtolower($str);
-                        switch ($mode) {
-                        case 1:
-                            $got = ($str == $search);
-                            break;
-                        case 2:
-                            $got = ($search == substr($str, 0, strlen($search)));
-                            break;
-                        default:
-                            $got = (strpos($str, $search) !== false);
-                            break;
-                        }
-                    }
-
-                    if ($got) {
+                    if ($this->compare_search_value($colname, $val, $search, $mode)) {
                         if (!$advanced) {
                             $this->filter['ids'][] = $id;
                             break 2;
