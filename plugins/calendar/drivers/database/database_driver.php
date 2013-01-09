@@ -363,11 +363,11 @@ class database_driver extends calendar_driver
             
             // use start date from master but try to be smart on time or duration changes
             $old_start_date = $old['start']->format('Y-m-d');
-            $old_start_time = $old['start']->format('H:i');
+            $old_start_time = $old['allday'] ? '' : $old['start']->format('H:i');
             $old_duration = $old['end']->format('U') - $old['start']->format('U');
             
             $new_start_date = $event['start']->format('Y-m-d');
-            $new_start_time = $event['start']->format('H:i');
+            $new_start_time = $event['allday'] ? '' : $event['start']->format('H:i');
             $new_duration = $event['end']->format('U') - $event['start']->format('U');
             
             $diff = $old_start_date != $new_start_date || $old_start_time != $new_start_time || $old_duration != $new_duration;
