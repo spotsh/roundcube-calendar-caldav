@@ -181,9 +181,7 @@ class kolab_calendar
         $this->events[$master_id] = $this->_to_rcube_event($record);
 
       if (($master = $this->events[$master_id]) && $master['recurrence']) {
-        $limit = clone $master['start'];
-        $limit->add(new DateInterval('P10Y'));
-        $this->_get_recurring_events($record, $master['start'], $limit, $id);
+        $this->_get_recurring_events($record, $master['start'], null, $id);
       }
     }
 
@@ -248,7 +246,21 @@ class kolab_calendar
       // list events in requested time window
       if ($event['start'] <= $end && $event['end'] >= $start) {
         unset($event['_attendees']);
-        $events[] = $event;
+        $add = true;
+
+        // skip the first instance of a recurring event if listed in exdate
+        if ($virtual && !empty($event['recurrence']['EXDATE'])) {
+          $event_date = $event['start']->format('Ymd');
+          foreach ($event['recurrence']['EXDATE'] as $exdate) {
+            if ($exdate->format('Ymd') == $event_date) {
+              $add = false;
+              break;
+            }
+          }
+        }
+
+        if ($add)
+          $events[] = $event;
       }
       
       // resolve recurring events
@@ -372,8 +384,14 @@ class kolab_calendar
 
   /**
    * Create instances of a recurring event
+   *
+   * @param array  Hash array with event properties
+   * @param object DateTime Start date of the recurrence window
+   * @param object DateTime End date of the recurrence window
+   * @param string ID of a specific recurring event instance
+   * @return array List of recurring event instances
    */
-  public function _get_recurring_events($event, $start, $end, $event_id = null)
+  public function _get_recurring_events($event, $start, $end = null, $event_id = null)
   {
     $object = $event['_formatobj'];
     if (!$object) {
@@ -383,6 +401,19 @@ class kolab_calendar
     if (!is_object($object))
       return array();
 
+    // determine a reasonable end date if none given
+    if (!$end) {
+      switch ($event['recurrence']['FREQ']) {
+        case 'YEARLY':  $intvl = 'P100Y'; break;
+        case 'MONTHLY': $intvl = 'P20Y';  break;
+        default:        $intvl = 'P10Y';  break;
+      }
+
+      $end = clone $event['start'];
+      $end->add(new DateInterval($intvl));
+    }
+
+    // use libkolab to compute recurring events
     $recurrence = new kolab_date_recurrence($object);
 
     $i = 0;
@@ -409,9 +440,9 @@ class kolab_calendar
       else if ($next_event['start'] > $end)  // stop loop if out of range
         break;
 
-	  // avoid endless recursion loops
-	  if ($i > 1000)
-		  break;
+      // avoid endless recursion loops
+      if ($i > 1000)
+          break;
     }
     
     return $events;
@@ -457,6 +488,10 @@ class kolab_calendar
     // Roundcube only supports one category assignment
     if (is_array($record['categories']))
       $record['categories'] = $record['categories'][0];
+
+    // remove empty recurrence array
+    if (empty($record['recurrence']))
+      unset($record['recurrence']);
 
     // remove internals
     unset($record['_mailbox'], $record['_msguid'], $record['_formatobj'], $record['_attachments']);
