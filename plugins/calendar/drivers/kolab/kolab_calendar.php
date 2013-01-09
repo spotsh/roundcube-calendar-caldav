@@ -248,7 +248,21 @@ class kolab_calendar
       // list events in requested time window
       if ($event['start'] <= $end && $event['end'] >= $start) {
         unset($event['_attendees']);
-        $events[] = $event;
+        $add = true;
+
+        // skip the first instance of a recurring event if listed in exdate
+        if ($virtual && !empty($event['recurrence']['EXDATE'])) {
+          $event_date = $event['start']->format('Ymd');
+          foreach ($event['recurrence']['EXDATE'] as $exdate) {
+            if ($exdate->format('Ymd') == $event_date) {
+              $add = false;
+              break;
+            }
+          }
+        }
+
+        if ($add)
+          $events[] = $event;
       }
       
       // resolve recurring events
@@ -409,9 +423,9 @@ class kolab_calendar
       else if ($next_event['start'] > $end)  // stop loop if out of range
         break;
 
-	  // avoid endless recursion loops
-	  if ($i > 1000)
-		  break;
+      // avoid endless recursion loops
+      if ($i > 1000)
+          break;
     }
     
     return $events;
@@ -457,6 +471,10 @@ class kolab_calendar
     // Roundcube only supports one category assignment
     if (is_array($record['categories']))
       $record['categories'] = $record['categories'][0];
+
+    // remove empty recurrence array
+    if (empty($record['recurrence']))
+      unset($record['recurrence']);
 
     // remove internals
     unset($record['_mailbox'], $record['_msguid'], $record['_formatobj'], $record['_attachments']);
