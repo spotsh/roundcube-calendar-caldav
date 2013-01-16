@@ -27,6 +27,7 @@ class kolab_format_file extends kolab_format
 {
     public $CTYPE = 'application/x-vnd.kolab.file';
 
+    protected $objclass = 'File';
     protected $read_func = 'kolabformat::readKolabFile';
     protected $write_func = 'kolabformat::writeKolabFile';
 
@@ -35,12 +36,6 @@ class kolab_format_file extends kolab_format
         'private'      => kolabformat::ClassPrivate,
         'confidential' => kolabformat::ClassConfidential,
     );
-
-    function __construct($xmldata = null)
-    {
-        $this->obj = new File;
-        $this->xmldata = $xmldata;
-    }
 
     /**
      * Set properties to the kolabformat object
@@ -101,9 +96,11 @@ class kolab_format_file extends kolab_format
     /**
      * Convert the Configuration object into a hash array data structure
      *
+     * @param array Additional data for merge
+     *
      * @return array  Config object data as hash array
      */
-    public function to_array()
+    public function to_array($data = array())
     {
         // return cached result
         if (!empty($this->data))
@@ -123,12 +120,19 @@ class kolab_format_file extends kolab_format
             'notes'       => $this->obj->note(),
         );
 
-        // attachments are mime message parts handled by kolab_storage_folder
-        // @TODO: handle inline attachments
+        // merge with additional data, e.g. attachments from the message
+        if ($data) {
+            foreach ($data as $idx => $value) {
+                if (is_array($value)) {
+                    $object[$idx] = array_merge((array)$object[$idx], $value);
+                }
+                else {
+                    $object[$idx] = $value;
+                }
+            }
+        }
 
-        $this->data = $object;
-
-        return $this->data;
+        return $this->data = $object;
     }
 
     /**
@@ -155,6 +159,10 @@ class kolab_format_file extends kolab_format
     public function get_words()
     {
         // Store filename in 'words' for fast access to file by name
+        if (empty($this->data['_attachments'])) {
+            return array();
+        }
+
         $attachment = array_shift($this->data['_attachments']);
         return array($attachment['name']);
     }

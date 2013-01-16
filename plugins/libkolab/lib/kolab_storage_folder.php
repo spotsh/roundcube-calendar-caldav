@@ -524,11 +524,10 @@ class kolab_storage_folder
         $format->load($xml);
 
         if ($format->is_valid()) {
-            $object = $format->to_array();
-            $object['_type'] = $object_type;
-            $object['_msguid'] = $msguid;
-            $object['_mailbox'] = $this->name;
-            $object['_attachments'] = array_merge((array)$object['_attachments'], $attachments);
+            $object = $format->to_array(array('_attachments' => $attachments));
+            $object['_type']      = $object_type;
+            $object['_msguid']    = $msguid;
+            $object['_mailbox']   = $this->name;
             $object['_formatobj'] = $format;
 
             return $object;
@@ -766,7 +765,7 @@ class kolab_storage_folder
         $object['uid'] = $format->uid;  // read UID from format
         $object['_formatobj'] = $format;
 
-        if (!$format->is_valid() || empty($object['uid'])) {
+        if (empty($xml) || !$format->is_valid() || empty($object['uid'])) {
             return false;
         }
 

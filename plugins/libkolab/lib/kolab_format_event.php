@@ -106,9 +106,11 @@ class kolab_format_event extends kolab_format_xcal
     /**
      * Convert the Event object into a hash array data structure
      *
+     * @param array Additional data for merge
+     *
      * @return array  Event data as hash array
      */
-    public function to_array()
+    public function to_array($data = array())
     {
         // return cached result
         if (!empty($this->data))
@@ -158,8 +160,19 @@ class kolab_format_event extends kolab_format_xcal
             }
         }
 
-        $this->data = $object;
-        return $this->data;
+        // merge with additional data, e.g. attachments from the message
+        if ($data) {
+            foreach ($data as $idx => $value) {
+                if (is_array($value)) {
+                    $object[$idx] = array_merge((array)$object[$idx], $value);
+                }
+                else {
+                    $object[$idx] = $value;
+                }
+            }
+        }
+
+        return $this->data = $object;
     }
 
     /**

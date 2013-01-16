@@ -266,9 +266,11 @@ class kolab_format_contact extends kolab_format
     /**
      * Convert the Contact object into a hash array data structure
      *
+     * @param array Additional data for merge
+     *
      * @return array  Contact data as hash array
      */
-    public function to_array()
+    public function to_array($data = array())
     {
         // return cached result
         if (!empty($this->data))
@@ -341,7 +343,7 @@ class kolab_format_contact extends kolab_format
         if ($this->obj->photoMimetype())
             $object['photo'] = $this->obj->photo();
         else if ($this->xmlobject && ($photo_name = $this->xmlobject->pictureAttachmentName()))
-        	$object['photo'] = $photo_name;
+            $object['photo'] = $photo_name;
 
         // relateds -> spouse, children
         $this->read_relateds($this->obj->relateds(), $object);

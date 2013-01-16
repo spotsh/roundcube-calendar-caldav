@@ -83,9 +83,11 @@ class kolab_format_distributionlist extends kolab_format
     /**
      * Convert the Distlist object into a hash array data structure
      *
+     * @param array Additional data for merge
+     *
      * @return array  Distribution list data as hash array
      */
-    public function to_array()
+    public function to_array($data = array())
     {
         // return cached result
         if (!empty($this->data))

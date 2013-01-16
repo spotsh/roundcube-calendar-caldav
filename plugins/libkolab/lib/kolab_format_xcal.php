@@ -88,9 +88,11 @@ abstract class kolab_format_xcal extends kolab_format
     /**
      * Convert common xcard properties into a hash array data structure
      *
+     * @param array Additional data for merge
+     *
      * @return array  Object data as hash array
      */
-    public function to_array()
+    public function to_array($data = array())
     {
         $status_map = array_flip($this->status_map);
         $sensitivity_map = array_flip($this->sensitivity_map);

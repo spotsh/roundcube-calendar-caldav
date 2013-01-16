@@ -66,9 +66,11 @@ class kolab_format_note extends kolab_format
     /**
      * Convert the Configuration object into a hash array data structure
      *
+     * @param array Additional data for merge
+     *
      * @return array  Config object data as hash array
      */
-    public function to_array()
+    public function to_array($data = array())
     {
         // return cached result
         if (!empty($this->data))
@@ -82,7 +84,6 @@ class kolab_format_note extends kolab_format
             'created'   => self::php_datetime($this->obj->created()),
             'changed'   => self::php_datetime($this->obj->lastModified()),
         );
-
 
         // TODO: read object properties
 
