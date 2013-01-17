@@ -138,13 +138,13 @@ class kolab_driver extends calendar_driver
   /**
    * Get list of calendars according to specified filters
    *
-   * @param bool $writable Return only writeable calendars
+   * @param bool $writeable Return only writeable calendars
    * @param bool $active   Return only active calendars
    * @param bool $personal Return only personal calendars
    *
    * @return array List of calendars
    */
-  protected function filter_calendars($writable = false, $active = false, $personal = false)
+  protected function filter_calendars($writeable = false, $active = false, $personal = false)
   {
     $calendars = array();
 
