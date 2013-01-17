@@ -150,7 +150,7 @@ class kolab_driver extends calendar_driver
 
     $plugin = $this->rc->plugins->exec_hook('calendar_list_filter', array(
       'list' => $this->calendars, 'calendars' => $calendars,
-      'writable' => $writable, 'active' => $active, 'personal' => $personal,
+      'writeable' => $writeable, 'active' => $active, 'personal' => $personal,
     ));
 
     if ($plugin['abort']) {
