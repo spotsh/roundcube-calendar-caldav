@@ -15,15 +15,11 @@ REQUIREMENTS
 * PEAR: HTTP/Request2
 * PEAR: Net/URL2
 
-* Optional for old format support:
-  Horde Kolab_Format package and all of its dependencies
-  which are at least Horde_(Browser,DOM,NLS,String,Utils)
-
 
 INSTALLATION
 ------------
 To use local cache you need to create a dedicated table in Roundcube's database.
-To do so, execute the SQL commands in SQL/<yourdatabase>.sql
+To do so, execute the SQL commands in SQL/<yourdatabase>.initial.sql
 
 
 CONFIGURATION

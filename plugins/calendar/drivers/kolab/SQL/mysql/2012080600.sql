@@ -1,7 +1,3 @@
-/**
- * Kolab backend SQL updates
- **/
-
 DROP TABLE IF EXISTS `kolab_alarms`;
 
 CREATE TABLE `kolab_alarms` (

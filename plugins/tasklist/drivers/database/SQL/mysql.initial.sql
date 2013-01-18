@@ -47,3 +47,5 @@ CREATE TABLE `tasks` (
   CONSTRAINT `fk_tasks_tasklist_id` FOREIGN KEY (`tasklist_id`)
     REFERENCES `tasklists`(`tasklist_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci */;
+
+INSERT INTO `system` (`name`, `value`) VALUES ('tasklist-database-version', '2013011000');
