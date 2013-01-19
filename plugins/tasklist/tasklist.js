@@ -1319,7 +1319,7 @@ function rcube_tasklist_ui(settings)
         rcmail.http_post('task', { action:'delete', t:{ id:rec.id, list:rec.list }, mode:mode, filter:filtermask });
 
         // move childs to parent/root
-        if (mode != 1) {
+        if (mode != 1 && rec.children !== undefined) {
             var parent_node = rec.parent_id ? $('li[rel="'+rec.parent_id+'"] > .childtasks', rcmail.gui_objects.resultlist) : null;
             if (!parent_node || !parent_node.length)
                 parent_node = rcmail.gui_objects.resultlist;
