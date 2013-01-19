@@ -23,3 +23,5 @@ CREATE TABLE `kolab_cache` (
   `words` TEXT NOT NULL,
   PRIMARY KEY(`resource`,`type`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
+
+INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013011000');
