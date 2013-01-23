@@ -449,7 +449,8 @@ class calendar_ical
     else {
       // <ATTR>;TZID=Europe/Zurich:20120706T210000
       $tz = $dt->getTimezone();
-      $tzid = $tz && $tz->getName() != 'UTC' ? ';TZID=' . $tz->getName() : '';
+      $tzname = $tz ? $tz->getName() : null;
+      $tzid = $tzname && $tzname != 'UTC' && $tzname != '+00:00' ? ';TZID=' . $tzname : '';
       return $attr . $tzid . ':' . $dt->format('Ymd\THis' . ($tzid ? '' : '\Z'));
     }
   }
