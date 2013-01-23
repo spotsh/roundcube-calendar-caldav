@@ -421,6 +421,7 @@ class kolab_calendar
     // add recurrence exceptions to output
     $i = 0;
     $events = array();
+    $exdates = array();
     if (is_array($event['recurrence']['EXCEPTIONS'])) {
         foreach ($event['recurrence']['EXCEPTIONS'] as $exception) {
             $rec_event = $this->_to_rcube_event($exception);
@@ -429,10 +430,14 @@ class kolab_calendar
             $rec_event['_instance'] = $i;
             $events[] = $rec_event;
 
+            // found the specifically requested instance, exiting...
             if ($rec_event['id'] == $event_id) {
               $this->events[$rec_event['id']] = $rec_event;
               return $events;
             }
+
+            // remember this exception's date
+            $exdates[$rec_event['start']->format('Y-m-d')] = $rec_event['id'];
         }
     }
 
@@ -447,11 +452,12 @@ class kolab_calendar
     }
 
     while ($next_event = $recurrence->next_instance()) {
-      $rec_start = $next_event['start']->format('U');
-      $rec_end = $next_event['end']->format('U');
-      $rec_id = $event['uid'] . '-' . ++$i;
+      // skip if there's an exception at this date
+      if ($exdates[$next_event['start']->format('Y-m-d')])
+        continue;
 
       // add to output if in range
+      $rec_id = $event['uid'] . '-' . ++$i;
       if (($next_event['start'] <= $end && $next_event['end'] >= $start) || ($event_id && $rec_id == $event_id)) {
         $rec_event = $this->_to_rcube_event($next_event);
         $rec_event['id'] = $rec_id;
