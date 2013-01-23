@@ -414,7 +414,14 @@ class kolab_calendar
     }
 
     // use libkolab to compute recurring events
-    $recurrence = new kolab_date_recurrence($object);
+    if (class_exists('kolabcalendaring')) {
+        $recurrence = new kolab_date_recurrence($object);
+    }
+    else {
+        // fallback to local recurrence implementation
+        require_once($this->cal->home . '/lib/calendar_recurrence.php');
+        $recurrence = new calendar_recurrence($this->cal, $event);
+    }
 
     $i = 0;
     $events = array();

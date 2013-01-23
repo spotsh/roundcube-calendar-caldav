@@ -41,6 +41,10 @@ class calendar_recurrence
    */
   function __construct($cal, $event)
   {
+    // use Horde classes to compute recurring instances
+    // TODO: replace with something that has less than 6'000 lines of code
+    require_once(__DIR__ . '/Horde_Date_Recurrence.php');
+
     $this->cal = $cal;
     $this->event = $event;
     $this->next = new Horde_Date($event['start'], $cal->timezone->getName());
@@ -48,10 +52,6 @@ class calendar_recurrence
 
     if (is_object($event['start']) && is_object($event['end']))
       $this->duration = $event['start']->diff($event['end']);
-
-    // use Horde classes to compute recurring instances
-    // TODO: replace with something that has less than 6'000 lines of code
-    require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
 
     $this->engine = new Horde_Date_Recurrence($event['start']);
     $this->engine->fromRRule20(libcalendaring::to_rrule($event['recurrence']));
@@ -81,6 +81,29 @@ class calendar_recurrence
     }
 
     return $time;
+  }
+
+  /**
+   * Get the next recurring instance of this event
+   *
+   * @return mixed Array with event properties or False if recurrence ended
+   */
+  public function next_instance()
+  {
+    if ($next_start = $this->next_start()) {
+      $next_end = clone $next_start;
+      $next_end->add($this->duration);
+
+      $next = $this->event;
+      $next['recurrence_id'] = $next_start->format('Y-m-d');
+      $next['start'] = $next_start;
+      $next['end'] = $next_end;
+      unset($next['_formatobj']);
+
+      return $next;
+    }
+
+    return false;
   }
 
 }
