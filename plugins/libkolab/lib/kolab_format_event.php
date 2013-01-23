@@ -30,6 +30,19 @@ class kolab_format_event extends kolab_format_xcal
     protected $read_func = 'readEvent';
     protected $write_func = 'writeEvent';
 
+    /**
+     * Default constructor
+     */
+    function __construct($data = null, $version = 3.0)
+    {
+        parent::__construct(is_string($data) ? $data : null, $version);
+
+        // got an Event object as argument
+        if (is_object($data) && is_a($data, $this->objclass)) {
+            $this->obj = $data;
+            $this->loaded = true;
+        }
+    }
 
     /**
      * Clones into an instance of libcalendaring's extended EventCal class
@@ -89,6 +102,18 @@ class kolab_format_event extends kolab_format_xcal
             $vattach->push($attach);
         }
         $this->obj->setAttachments($vattach);
+
+        // save recurrence exceptions
+        if ($object['recurrence']['EXCEPTIONS']) {
+            $vexceptions = new vectorevent;
+            foreach((array)$object['recurrence']['EXCEPTIONS'] as $exception) {
+                $exevent = new kolab_format_event;
+                $exevent->set($this->compact_exception($exception, $object));  // only save differing values
+                $exevent->obj->setRecurrenceID(self::get_datetime($exception['start'], null, true), false);
+                $vexceptions->push($exevent->obj);
+            }
+            $this->obj->setExceptions($vexceptions);
+        }
 
         // cache this data
         $this->data = $object;
@@ -160,6 +185,18 @@ class kolab_format_event extends kolab_format_xcal
             }
         }
 
+        // read exception event objects
+        if ($exceptions = $this->obj->exceptions()) {
+            for ($i=0; $i < $exceptions->size(); $i++) {
+                if (($exobj = $exceptions->get($i))) {
+                    $exception = new kolab_format_event($exobj);
+                    if ($exception->is_valid()) {
+                        $object['recurrence']['EXCEPTIONS'][] = $this->expand_exception($exception->to_array(), $object);
+                    }
+                }
+            }
+        }
+
         // merge with additional data, e.g. attachments from the message
         if ($data) {
             foreach ($data as $idx => $value) {
@@ -193,6 +230,47 @@ class kolab_format_event extends kolab_format_xcal
         }
 
         return $tags;
+    }
+
+    /**
+     * Reduce the exception container to attributes which differ from the master event
+     */
+    private function compact_exception($exception, $master)
+    {
+      static $mandatory = array('uid','created','start');
+      static $forbidden = array('recurrence','attendees','sequence');
+
+      $out = $exception;
+      foreach ($exception as $prop => $val) {
+        if (in_array($prop, $mandatory))
+          continue;
+
+        if (is_object($exception[$prop]) && is_a($exception[$prop], 'DateTime'))
+          $equals = $exception[$prop] <> $master[$prop];
+        else
+          $equals = $exception[$prop] == $master[$prop];
+
+        if ($equals || in_array($prop, $forbidden)) {
+          unset($out[$prop]);
+        }
+      }
+
+      return $out;
+    }
+
+    /**
+     * Copy attributes not specified by the exception from the master event
+     */
+    private function expand_exception($exception, $master)
+    {
+      static $forbidden = array('recurrence');
+
+      foreach ($master as $prop => $value) {
+        if (empty($exception[$prop]) && !in_array($prop, $forbidden))
+          $exception[$prop] = $value;
+      }
+
+      return $exception;
     }
 
 }

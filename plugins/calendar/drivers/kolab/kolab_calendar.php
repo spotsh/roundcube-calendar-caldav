@@ -312,7 +312,7 @@ class kolab_calendar
    * @return boolean True on success, False on error
    */
 
-  public function update_event($event)
+  public function update_event($event, $exception_id = null)
   {
     $updated = false;
     $old = $this->storage->get_object($event['id']);
@@ -333,6 +333,11 @@ class kolab_calendar
     else {
       $updated = true;
       $this->events[$event['id']] = $this->_to_rcube_event($object);
+
+      // refresh local cache with recurring instances
+      if ($exception_id) {
+        $this->_get_recurring_events($object, $event['start'], $event['end'], $exception_id);
+      }
     }
 
     return $updated;
@@ -413,6 +418,24 @@ class kolab_calendar
       $end->add(new DateInterval($intvl));
     }
 
+    // add recurrence exceptions to output
+    $i = 0;
+    $events = array();
+    if (is_array($event['recurrence']['EXCEPTIONS'])) {
+        foreach ($event['recurrence']['EXCEPTIONS'] as $exception) {
+            $rec_event = $this->_to_rcube_event($exception);
+            $rec_event['id'] = $event['uid'] . '-' . ++$i;
+            $rec_event['recurrence_id'] = $event['uid'];
+            $rec_event['_instance'] = $i;
+            $events[] = $rec_event;
+
+            if ($rec_event['id'] == $event_id) {
+              $this->events[$rec_event['id']] = $rec_event;
+              return $events;
+            }
+        }
+    }
+
     // use libkolab to compute recurring events
     if (class_exists('kolabcalendaring')) {
         $recurrence = new kolab_date_recurrence($object);
@@ -423,8 +446,6 @@ class kolab_calendar
         $recurrence = new calendar_recurrence($this->cal, $event);
     }
 
-    $i = 0;
-    $events = array();
     while ($next_event = $recurrence->next_instance()) {
       $rec_start = $next_event['start']->format('U');
       $rec_end = $next_event['end']->format('U');
