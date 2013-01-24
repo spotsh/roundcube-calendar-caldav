@@ -30,6 +30,11 @@ class pdfviewer extends rcube_plugin
 
     private $pdf_mimetypes = array(
         'application/pdf',
+        'application/x-pdf',
+        'application/acrobat',
+        'applications/vnd.pdf',
+        'text/pdf',
+        'text/x-pdf',
     );
 
     /**
@@ -50,7 +55,7 @@ class pdfviewer extends rcube_plugin
         }
 
         // only use pdf.js if the browser doesn't support inline PDF rendering
-       if (empty($_SESSION['browser_caps']['pdf']) || $ua->opera)
+        if (empty($_SESSION['browser_caps']['pdf']) || $ua->opera)
             $this->add_hook('message_part_get', array($this, 'get_part'));
 
         $this->add_hook('message_part_structure', array($this, 'part_structure'));
@@ -61,16 +66,11 @@ class pdfviewer extends rcube_plugin
      */
     public function get_part($args)
     {
-        if (!$args['download'] && $args['mimetype'] && in_array($args['mimetype'], $this->pdf_mimetypes)) {
-            $rcmail = rcube::get_instance();
-            $mimetype = 'application/pdf';
-
-            // redirect to viewer.html
-            if (empty($_GET['_load'])) {
-                $file_url = $this->abs_url($rcmail->url($_GET + array('_load' => 1)));
-                header('Location: ' . $this->abs_url($this->urlbase . 'viewer/viewer.html') . '?file=' . urlencode($file_url));
-                $args['abort'] = true;
-            }
+        // redirect to viewer/viewer.html
+        if (!$args['download'] && $args['mimetype'] && empty($_GET['_load']) && in_array($args['mimetype'], $this->pdf_mimetypes)) {
+            $file_url = $this->abs_url(rcube::get_instance()->url($_GET + array('_load' => 1)));
+            header('Location: ' . $this->abs_url($this->urlbase . 'viewer/viewer.html') . '?file=' . urlencode($file_url));
+            $args['abort'] = true;
         }
 
         return $args;
