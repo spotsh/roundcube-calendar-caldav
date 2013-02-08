@@ -1,0 +1,127 @@
+#files-folder-selector {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  background-color: #f0f0f0;
+  padding: 2px;
+}
+
+#files-compose-dialog #files-folder-selector {
+  right: auto;
+  width: 190px;
+}
+
+#files-file-selector {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 200px;
+  right: 0;
+  background-color: #f0f0f0;
+  padding: 2px;
+  overflow: auto;
+}
+
+#files-folder-selector table {
+  width: 100%;
+  border-spacing: 0;
+}
+
+#files-folder-selector table td span.name {
+  background: url(images/folder.png) 0 0 no-repeat;
+  height: 18px;
+  padding-left: 20px;
+  margin-left: 3px;
+  cursor: pointer;
+}
+
+#files-folder-selector table tr.selected td span.name {
+  font-weight: bold;
+}
+
+#files-folder-selector table tr.virtual td span.name {
+  color: #bbb;
+  cursor: default;
+}
+
+#filelist table {
+  width: 100%;
+  border-spacing: 0;
+}
+
+#filelist td {
+  white-space: nowrap;
+  cursor: default;
+}
+
+#filelist td.filename {
+  width: 98%;
+  height: 20px;
+  padding: 0 4px;
+}
+
+#filelist td.filesize {
+  text-align: right;
+}
+
+#filelist tbody td.filename span {
+  background: url(images/unknown.png) 0 0 no-repeat;
+  padding: 0 0 0 20px;
+  height: 16px;
+}
+
+#filelist tbody td.filename span input {
+  padding: 0 2px;
+  height: 18px;
+}
+/*
+#filelist thead td {
+  cursor: pointer;
+}
+
+#filelist thead td.sorted {
+  padding-right: 16px;
+  text-decoration: underline;
+  background: url(images/buttons.png) right -120px no-repeat;
+}
+
+#filelist thead td.sorted.reverse {
+  background-position: right -140px;
+}
+*/
+
+#filelist tbody tr.selected td {
+  background-color: #d9ecf4;
+}
+
+/***** tree indicators *****/
+
+td span.branch span
+{
+  float: left;
+  height: 16px;
+}
+
+td span.branch span.tree
+{
+  height: 17px;
+  width: 15px;
+  background: url(images/tree.gif) 0 0 no-repeat;
+}
+
+td span.branch span.l1
+{
+  background-position: 0px 0px; /* L */
+}
+
+td span.branch span.l2
+{
+  background-position: -30px 0px; /* | */
+}
+
+td span.branch span.l3
+{
+  background-position: -15px 0px; /* |- */
+}
