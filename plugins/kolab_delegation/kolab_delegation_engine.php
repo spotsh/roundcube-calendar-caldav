@@ -623,7 +623,8 @@ class kolab_delegation_engine
                 // @TODO: "Delegatorname" or "Username on behalf of Delegatorname"?
                 $default['name']  = $delegator['realname'];
                 $default['email'] = $email;
-                $default['organization'] = $delegator['organization'];
+                // Database field for organization is NOT NULL
+                $default['organization'] = empty($delegator['organization']) ? '' : $delegator['organization'];
                 $this->rc->user->insert_identity($default);
             }
 
