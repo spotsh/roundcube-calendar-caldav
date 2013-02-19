@@ -103,4 +103,4 @@ CREATE TABLE itipinvitations (
 
 CREATE INDEX itipinvitations_user_id_event_uid_idx ON itipinvitations (user_id, event_uid);
 
-INSERT INTO system (name, value) VALUES ('calendar-database-version', '2013011000.sql');
+INSERT INTO system (name, value) VALUES ('calendar-database-version', '2013011000');
