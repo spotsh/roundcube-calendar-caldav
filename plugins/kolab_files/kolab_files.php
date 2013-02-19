@@ -103,8 +103,8 @@ class kolab_files extends rcube_plugin
      */
     public function actions()
     {
-        $this->load_config();
-        $engine = $this->engine();
-        $engine->actions();
+        if ($engine = $this->engine()) {
+            $engine->actions();
+        }
     }
 }

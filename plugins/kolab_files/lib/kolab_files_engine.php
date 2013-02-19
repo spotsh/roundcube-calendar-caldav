@@ -51,6 +51,21 @@ class kolab_files_engine
         $this->plugin->include_stylesheet($this->url . '/skins/default/images/mimetypes/style.css');
         $this->plugin->include_script($this->url . '/js/files_api.js');
         $this->plugin->include_script('kolab_files.js');
+
+        // add dialogs
+        if ($this->rc->task = 'mail') {
+            if ($this->rc->action == 'compose') {
+                $template = 'compose_plugin';
+            }
+            else if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
+                $template = 'message_plugin';
+            }
+        }
+
+        if (!empty($template)) {
+            $this->rc->output->add_footer(
+                $this->rc->output->parse('kolab_files.' . $template, false, false));
+        }
     }
 
     /**

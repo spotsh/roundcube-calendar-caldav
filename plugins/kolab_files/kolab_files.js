@@ -15,9 +15,6 @@ window.rcmail && rcmail.addEventListener('init', function() {
         input.val(rcmail.gettext('kolab_files.fromcloud'))
           .click(function() { kolab_files_selector_dialog(); })
           .appendTo(elem);
-
-        var dialog = $('<div id="files-compose-dialog"></div>').hide();
-        $('body').append(dialog);
     }
     // mail preview
     else if (rcmail.env.action == 'show' || rcmail.env.action == 'preview') {
@@ -28,9 +25,6 @@ window.rcmail && rcmail.addEventListener('init', function() {
           .text(rcmail.gettext('kolab_files.saveall'))
           .click(function() { kolab_directory_selector_dialog(); })
           .appendTo(attachment_list);
-
-        var dialog = $('<div id="files-dialog"></div>').hide();
-        $('body').append(dialog);
       }
     }
 
@@ -84,7 +78,7 @@ function kolab_directory_selector_dialog()
     minHeight: 300,
     height: 250,
     width: 250
-    }).html('<div id="files-folder-selector"></div>').show();
+    }).show();
 
   file_api.folder_selector();
 };
@@ -134,7 +128,7 @@ function kolab_files_selector_dialog()
     minHeight: 300,
     width: 600,
     height: 400
-    }).html('<div id="files-folder-selector"></div><div id="files-file-selector"><table id="filelist"><tbody></tbody></table></div>').show();
+    }).show();
 
   file_api.folder_selector();
 };

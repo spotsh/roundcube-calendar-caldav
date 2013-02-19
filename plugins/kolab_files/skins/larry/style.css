@@ -1,3 +1,8 @@
+#files-dialog,
+#files-compose-dialog {
+  display: none;
+}
+
 #files-folder-selector {
   position: absolute;
   top: 5px;
