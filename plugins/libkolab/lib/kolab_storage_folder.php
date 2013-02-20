@@ -775,9 +775,9 @@ class kolab_storage_folder
         $part_id  = 1;
         $encoding = $binary ? 'binary' : 'base64';
 
-        if ($ident = $rcmail->user->get_identity()) {
-            $headers['From'] = $ident['email'];
-            $headers['To'] = $ident['email'];
+        if ($user_email = $rcmail->get_user_email()) {
+            $headers['From'] = $user_email;
+            $headers['To'] = $user_email;
         }
         $headers['Date'] = date('r');
         $headers['X-Kolab-Type'] = kolab_format::KTYPE_PREFIX . $type;
@@ -819,7 +819,7 @@ class kolab_storage_folder
             false,                  // is_file
             '8bit',                 // encoding
             'attachment',           // disposition
-            RCUBE_CHARSET          // charset
+            RCUBE_CHARSET           // charset
         );
         $part_id++;
 
