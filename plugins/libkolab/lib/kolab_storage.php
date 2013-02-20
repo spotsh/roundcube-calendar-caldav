@@ -51,7 +51,7 @@ class kolab_storage
 
         $rcmail = rcube::get_instance();
         self::$config = $rcmail->config;
-        self::$version = $rcmail->config->get('kolab_format_version', self::$version);
+        self::$version = strval($rcmail->config->get('kolab_format_version', self::$version));
         self::$imap = $rcmail->get_storage();
         self::$ready = class_exists('kolabformat') &&
             (self::$imap->get_capability('METADATA') || self::$imap->get_capability('ANNOTATEMORE') || self::$imap->get_capability('ANNOTATEMORE2'));

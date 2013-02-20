@@ -41,7 +41,7 @@ abstract class kolab_format
     protected $xmldata;
     protected $xmlobject;
     protected $loaded = false;
-    protected $version = 3.0;
+    protected $version = '3.0';
 
     const KTYPE_PREFIX = 'application/x-vnd.kolab.';
     const PRODUCT_ID = 'Roundcube-libkolab-0.9';
@@ -54,7 +54,7 @@ abstract class kolab_format
      * @param string Cached xml data to initialize with
      * @return object kolab_format
      */
-    public static function factory($type, $version = 3.0, $xmldata = null)
+    public static function factory($type, $version = '3.0', $xmldata = null)
     {
         if (!isset(self::$timezone))
             self::$timezone = new DateTimeZone('UTC');
@@ -79,7 +79,7 @@ abstract class kolab_format
      */
     public static function supports($version)
     {
-        if ($version == 2.0)
+        if ($version == '2.0')
             return class_exists('kolabobject');
         // default is version 3
         return class_exists('kolabformat');
@@ -299,7 +299,7 @@ abstract class kolab_format
     {
         if (class_exists('kolabobject')) {
             $version = $v ?: $this->version;
-            if ($version <= 2.0)
+            if ($version <= '2.0')
                 return kolabobject::KolabV2;
             else
                 return kolabobject::KolabV3;
