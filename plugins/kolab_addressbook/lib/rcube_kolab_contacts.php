@@ -65,8 +65,8 @@ class rcube_kolab_contacts extends rcube_addressbook
                                 'label' => 'kolab_addressbook.pgppublickey'),
       'pkcs7publickey' => array('type' => 'textarea', 'size' => 70, 'rows' => 10, 'limit' => 1,
                                 'label' => 'kolab_addressbook.pkcs7publickey'),
-      'notes'        => array(),
-      'photo'        => array(),
+      'notes'        => array('limit' => 1),
+      'photo'        => array('limit' => 1),
       // TODO: define more Kolab-specific fields such as: language, latitude, longitude, crypto settings
     );
 
