@@ -66,6 +66,7 @@ class kolab_files_engine
             // register template objects
             $this->rc->output->add_handlers(array(
                 'folder-create-form' => array($this, 'folder_create_form'),
+                'file-search-form' => array($this, 'file_search_form'),
             ));
             // add dialog content at the end of page body
             $this->rc->output->add_footer(
@@ -90,7 +91,7 @@ class kolab_files_engine
     /**
      * Template object for folder creation form in "Save as" dialog
      */
-    public function folder_create_form($attr)
+    public function folder_create_form($attrib)
     {
         $attrib['name'] = 'folder-create-form';
         if (empty($attrib['id'])) {
@@ -112,6 +113,40 @@ class kolab_files_engine
 
         return $out;
     }
+
+    /**
+     * Template object for file search form in "From cloud" dialog
+     */
+    public function file_search_form($attrib)
+    {
+        $attrib['name'] = '_q';
+
+        if (empty($attrib['id'])) {
+            $attrib['id'] = 'filesearchbox';
+        }
+        if ($attrib['type'] == 'search' && !$this->rc->output->browser->khtml) {
+            unset($attrib['type'], $attrib['results']);
+        }
+
+        $input_q = new html_inputfield($attrib);
+        $out = $input_q->show();
+
+        // add some labels to client
+        $this->rc->output->add_label('searching');
+        $this->rc->output->add_gui_object('filesearchbox', $attrib['id']);
+
+        // add form tag around text field
+        if (empty($attrib['form'])) {
+            $out = $this->rc->output->form_tag(array(
+                'name' => "filesearchform",
+                'onsubmit' => "file_api.search(); return false",
+                'style' => "display:inline"),
+                $out);
+        }
+
+        return $out;
+    }
+
 
     /**
      * Get API token for current user session, authenticate if needed

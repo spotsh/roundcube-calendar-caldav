@@ -6,7 +6,7 @@
  */
 
 window.rcmail && rcmail.addEventListener('init', function() {
-  if (rcmail.env.task == 'mail') {
+  if (rcmail.task == 'mail') {
     // mail compose
     if (rcmail.env.action == 'compose') {
       var elem = $('#compose-attachments > div'),
@@ -175,6 +175,18 @@ function kolab_files_ui()
     rcmail.http_error(request, status, err);
   };
 
+  this.file_list = function(params)
+  {
+    if (rcmail.task != 'kolab_files')
+      this.file_selector(params);
+  };
+
+  this.folder_list = function(params)
+  {
+    if (rcmail.task != 'kolab_files')
+      this.folder_selector(params);
+  };
+
   this.folder_selector = function()
   {
     this.req = this.set_busy(true, 'loading');
@@ -244,6 +256,9 @@ function kolab_files_ui()
 
   this.file_selector = function(params)
   {
+    if (!this.env.folder)
+      return;
+
     if (!params)
       params = {};
 
@@ -315,4 +330,25 @@ function kolab_files_ui()
       this.folder_selector();
   };
 
+  this.search = function()
+  {
+    var value = $(rcmail.gui_objects.filesearchbox).val();
+
+    if (value) {
+      this.env.search = {name: value};
+      this.file_list({search: this.env.search});
+    }
+    else
+      this.search_reset();
+  };
+
+  this.search_reset = function()
+  {
+    $(rcmail.gui_objects.filesearchbox).val('');
+
+    if (this.env.search) {
+      this.env.search = null;
+      this.file_list();
+    }
+  };
 };
