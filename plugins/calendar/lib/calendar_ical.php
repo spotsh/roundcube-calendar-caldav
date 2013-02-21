@@ -9,7 +9,7 @@
  * @author Bogomil "Bogo" Shopov <shopov@kolabsys.com>
  *
  * Copyright (C) 2010, Lazlo Westerhof <hello@lazlo.me>
- * Copyright (C) 2011, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2013, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -258,6 +258,10 @@ class calendar_ical
           else if (in_array($attr['value'], array('FREE', 'BUSY', 'TENTATIVE')))
             $event['free_busy'] = strtolower($attr['value']);
           break;
+
+        default:
+          if (substr($attr['name'], 0, 2) == 'X-')
+            $event['x-custom'][] = array($attr['name'], $attr['value']);
       }
     }
 
@@ -415,6 +419,9 @@ class calendar_ical
           $vevent .= "STATUS:CANCELLED" . self::EOL;
         else if ($event['free_busy'] == 'tentative')
           $vevent .= "STATUS:TENTATIVE" . self::EOL;
+        
+        foreach ((array)$event['x-custom'] as $prop)
+          $vevent .= $prop[0] . ':' . $this->escpape($prop[1]) . self::EOL;
         
         // TODO: export attachments
         
