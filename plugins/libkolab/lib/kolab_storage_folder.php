@@ -51,6 +51,7 @@ class kolab_storage_folder
     private $type_annotation;
     private $imap;
     private $info;
+    private $idata;
     private $owner;
     private $resource_uri;
     private $uid2msg = array();
@@ -99,6 +100,16 @@ class kolab_storage_folder
         return $this->info;
     }
 
+    /**
+     * Make IMAP folder data available for this folder
+     */
+    public function get_imap_data()
+    {
+        if (!isset($this->idata))
+            $this->idata = $this->imap->folder_data($this->name);
+
+        return $this->idata;
+    }
 
     /**
      * Returns IMAP metadata/annotations (GETMETADATA/GETANNOTATION)
