@@ -1,5 +1,6 @@
 #files-dialog,
-#files-compose-dialog {
+#files-compose-dialog,
+#files-folder-create {
   display: none;
 }
 
@@ -18,6 +19,10 @@
   width: 190px;
 }
 
+#files-dialog #files-folder-selector {
+  bottom: 40px;
+}
+
 #files-file-selector {
   position: absolute;
   top: 5px;
@@ -27,6 +32,16 @@
   background-color: #f0f0f0;
   padding: 2px;
   overflow: auto;
+}
+
+#files-dialog #files-folder-footer {
+  position: absolute;
+  height: 30px;
+  bottom: 0;
+}
+
+#files-dialog #files-folder-footer form {
+  display: inline;
 }
 
 #files-folder-selector table {

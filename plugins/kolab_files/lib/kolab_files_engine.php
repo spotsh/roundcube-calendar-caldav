@@ -63,6 +63,11 @@ class kolab_files_engine
         }
 
         if (!empty($template)) {
+            // register template objects
+            $this->rc->output->add_handlers(array(
+                'folder-create-form' => array($this, 'folder_create_form'),
+            ));
+            // add dialog content at the end of page body
             $this->rc->output->add_footer(
                 $this->rc->output->parse('kolab_files.' . $template, false, false));
         }
@@ -80,6 +85,32 @@ class kolab_files_engine
             $this->plugin->add_texts('localization/');
             $this->{$method}();
         }
+    }
+
+    /**
+     * Template object for folder creation form in "Save as" dialog
+     */
+    public function folder_create_form($attr)
+    {
+        $attrib['name'] = 'folder-create-form';
+        if (empty($attrib['id'])) {
+            $attrib['id'] = 'folder-create-form';
+        }
+
+        $input_name = new html_inputfield(array('name' => 'folder_name'));
+        $out = $input_name->show();
+
+//        $input_parent = new html_checkbox(array('name' => 'folder_parent', 'checked' => true, 'value' => 1));
+//        $out .= html::label(null, $input_parent->show() . $this->plugin->gettext('assubfolder'));
+
+        // add form tag around text field
+        if (empty($attrib['form'])) {
+            $out = $this->rc->output->form_tag($attrib, $out);
+        }
+
+        $this->rc->output->add_gui_object('folder-create-form', $attrib['id']);
+
+        return $out;
     }
 
     /**
@@ -262,6 +293,8 @@ class kolab_files_engine
         if ($count = count($errors)) {
             $this->rc->output->show_message($this->plugin->gettext('saveallerror', array('n' => $count)), 'error');
         }
+
+        // @TODO: update quota indicator, make this optional in case files aren't stored in IMAP
 
         $this->rc->output->send();
     }

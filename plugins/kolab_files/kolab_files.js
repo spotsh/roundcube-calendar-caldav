@@ -74,10 +74,10 @@ function kolab_directory_selector_dialog()
     title: rcmail.gettext('kolab_files.saveall'),
 //    close: function() { rcmail.dialog_close(); },
     buttons: buttons,
-    minWidth: 300,
+    minWidth: 400,
     minHeight: 300,
-    height: 250,
-    width: 250
+    height: 300,
+    width: 350
     }).show();
 
   file_api.folder_selector();
@@ -220,9 +220,9 @@ function kolab_files_ui()
         first = i;
     });
 
-   // select first folder
-   if (first)
-     this.selector_select(first);
+   // select first folder?
+//   if (first)
+//     this.selector_select(first);
 
     // add tree icons
     this.folder_list_tree(this.env.folders);
@@ -294,4 +294,25 @@ function kolab_files_ui()
 //    $('tr.selected', table).removeClass('selected');
     $(row).addClass('selected');
   };
+
+  // folder create request
+  this.folder_create = function(folder)
+  {
+    this.req = this.set_busy(true, 'creating');
+    this.get('folder_create', {folder: folder}, 'folder_create_response');
+  };
+
+  // folder create response handler
+  this.folder_create_response = function(response)
+  {
+    if (!this.response(response))
+      return;
+
+    // refresh folders list
+    if (rcmail.task == 'kolab_files')
+      this.folder_list();
+    else
+      this.folder_selector();
+  };
+
 };
