@@ -44,14 +44,9 @@ class kolab_format_file extends kolab_format
      */
     public function set(&$object)
     {
-        $this->init();
+        // set common object properties
+        parent::set($object);
 
-        // set some automatic values if missing
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
-
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
         $this->obj->setClassification($this->sensitivity_map[$object['sensitivity']]);
         $this->obj->setCategories(self::array2vector($object['categories']));
 
@@ -106,15 +101,13 @@ class kolab_format_file extends kolab_format
         if (!empty($this->data))
             return $this->data;
 
-        $this->init();
+        // read common object props into local data object
+        $object = parent::to_array();
 
         $sensitivity_map = array_flip($this->sensitivity_map);
 
         // read object properties
-        $object = array(
-            'uid'         => $this->obj->uid(),
-            'created'     => self::php_datetime($this->obj->created()),
-            'changed'     => self::php_datetime($this->obj->lastModified()),
+        $object += array(
             'sensitivity' => $sensitivity_map[$this->obj->classification()],
             'categories'  => self::vector2array($this->obj->categories()),
             'notes'       => $this->obj->note(),

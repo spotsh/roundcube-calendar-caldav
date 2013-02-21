@@ -94,13 +94,13 @@ abstract class kolab_format_xcal extends kolab_format
      */
     public function to_array($data = array())
     {
+        // read common object props
+        $object = parent::to_array();
+
         $status_map = array_flip($this->status_map);
         $sensitivity_map = array_flip($this->sensitivity_map);
 
-        $object = array(
-            'uid'         => $this->obj->uid(),
-            'created'     => self::php_datetime($this->obj->created()),
-            'changed'     => self::php_datetime($this->obj->lastModified()),
+        $object += array(
             'sequence'    => intval($this->obj->sequence()),
             'title'       => $this->obj->summary(),
             'location'    => $this->obj->location(),
@@ -216,20 +216,12 @@ abstract class kolab_format_xcal extends kolab_format
      */
     public function set(&$object)
     {
+        $this->init();
+
         $is_new = !$this->obj->uid();
 
-        // set some automatic values if missing
-        if (!$this->obj->created()) {
-            if (!empty($object['created']))
-                $object['created'] = new DateTime('now', self::$timezone);
-            $this->obj->setCreated(self::get_datetime($object['created']));
-        }
-
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
-
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
+        // set common object properties
+        parent::set($object);
 
         // increment sequence on updates
         $object['sequence'] = !$is_new ? $this->obj->sequence()+1 : 0;

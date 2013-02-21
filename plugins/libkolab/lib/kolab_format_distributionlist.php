@@ -39,14 +39,8 @@ class kolab_format_distributionlist extends kolab_format
      */
     public function set(&$object)
     {
-        $this->init();
-
-        // set some automatic values if missing
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
-
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
+        // set common object properties
+        parent::set($object);
 
         $this->obj->setName($object['name']);
 
@@ -93,12 +87,11 @@ class kolab_format_distributionlist extends kolab_format
         if (!empty($this->data))
             return $this->data;
 
-        $this->init();
+        // read common object props into local data object
+        $object = parent::to_array();
 
-        // read object properties
-        $object = array(
-            'uid'       => $this->obj->uid(),
-            'changed'   => self::php_datetime($this->obj->lastModified()),
+        // add object properties
+        $object += array(
             'name'      => $this->obj->name(),
             'member'    => array(),
             '_type'     => 'distribution-list',

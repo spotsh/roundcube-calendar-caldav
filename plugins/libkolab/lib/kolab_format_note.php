@@ -39,14 +39,8 @@ class kolab_format_note extends kolab_format
      */
     public function set(&$object)
     {
-        $this->init();
-
-        // set some automatic values if missing
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
-
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
+        // set common object properties
+        parent::set($object);
 
         // TODO: set object propeties
 
@@ -76,14 +70,8 @@ class kolab_format_note extends kolab_format
         if (!empty($this->data))
             return $this->data;
 
-        $this->init();
-
-        // read object properties
-        $object = array(
-            'uid'       => $this->obj->uid(),
-            'created'   => self::php_datetime($this->obj->created()),
-            'changed'   => self::php_datetime($this->obj->lastModified()),
-        );
+        // read common object props into local data object
+        $object = parent::to_array();
 
         // TODO: read object properties
 

@@ -38,8 +38,6 @@ class kolab_format_task extends kolab_format_xcal
      */
     public function set(&$object)
     {
-        $this->init();
-
         // set common xcal properties
         parent::set($object);
 
@@ -80,8 +78,6 @@ class kolab_format_task extends kolab_format_xcal
         // return cached result
         if (!empty($this->data))
             return $this->data;
-
-        $this->init();
 
         // read common xcal props
         $object = parent::to_array();

@@ -85,20 +85,8 @@ class kolab_format_contact extends kolab_format
      */
     public function set(&$object)
     {
-        $this->init();
-
-        // set some automatic values if missing
-        if (false && !$this->obj->created()) {
-            if (!empty($object['created']))
-                $object['created'] = new DateTime('now', self::$timezone);
-            $this->obj->setCreated(self::get_datetime($object['created']));
-        }
-
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
-
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
+        // set common object properties
+        parent::set($object);
 
         // do the hard work of setting object values
         $nc = new NameComponents;
@@ -276,14 +264,10 @@ class kolab_format_contact extends kolab_format
         if (!empty($this->data))
             return $this->data;
 
-        $this->init();
+        // read common object props into local data object
+        $object = parent::to_array();
 
-        // read object properties into local data object
-        $object = array(
-            'uid'       => $this->obj->uid(),
-            'name'      => $this->obj->name(),
-            'changed'   => self::php_datetime($this->obj->lastModified()),
-        );
+        $object['name'] = $this->obj->name();
 
         $nc = $this->obj->nameComponents();
         $object['surname']    = join(' ', self::vector2array($nc->surnames()));
