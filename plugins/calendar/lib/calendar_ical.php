@@ -205,7 +205,9 @@ class calendar_ical
         
         case 'STATUS':
           if ($attr['value'] == 'TENTATIVE')
-            $event['free_busy'] == 'tentative';
+            $event['free_busy'] = 'tentative';
+          else if ($attr['value'] == 'CANCELLED')
+            $event['cancelled'] = true;
           break;
         
         case 'PRIORITY':
