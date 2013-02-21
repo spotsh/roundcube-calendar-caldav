@@ -1,5 +1,6 @@
 #files-dialog,
-#files-compose-dialog {
+#files-compose-dialog,
+#files-folder-create {
   display: none;
 }
 
@@ -16,17 +17,32 @@
 #files-compose-dialog #files-folder-selector {
   right: auto;
   width: 190px;
+  top: 45px;
+}
+
+#files-dialog #files-folder-selector {
+  bottom: 40px;
 }
 
 #files-file-selector {
   position: absolute;
-  top: 5px;
+  top: 45px;
   bottom: 5px;
   left: 200px;
   right: 0;
   background-color: #f0f0f0;
   padding: 2px;
   overflow: auto;
+}
+
+#files-dialog #files-folder-footer {
+  position: absolute;
+  height: 30px;
+  bottom: 0;
+}
+
+#files-dialog #files-folder-footer form {
+  display: inline;
 }
 
 #files-folder-selector table {
@@ -49,6 +65,19 @@
 #files-folder-selector table tr.virtual td span.name {
   color: #bbb;
   cursor: default;
+}
+
+#files-compose-dialog #searchmenulink {
+  width: 15px;
+}
+
+#files-compose-dialog #quicksearchbar {
+  top: 10px;
+  right: 5px;
+}
+
+#files-compose-dialog #searchreset {
+  cursor: pointer;
 }
 
 #filelist table {

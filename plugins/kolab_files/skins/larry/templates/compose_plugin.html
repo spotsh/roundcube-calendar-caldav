@@ -1,4 +1,12 @@
 <div id="files-compose-dialog" class="uidialog">
+    <div id="quicksearchbar" class="searchbox">
+        <roundcube:object name="file-search-form" id="filesearchbox" />
+<!--
+        <roundcube:button name="searchmenulink" id="searchmenulink" class="iconbutton searchoptions" onclick="UI.show_popup('searchmenu');return false" title="searchmod" content=" " />
+-->
+        <a id="searchmenulink" class="iconbutton searchoptions"> </a>
+        <a id="searchreset" class="iconbutton reset" title="<roundcube:label name="resetsearch"/>" onclick="file_api.search_reset()"> </a>
+    </div>
     <div id="files-folder-selector"></div>
     <div id="files-file-selector">
         <table id="filelist"><tbody></tbody></table>

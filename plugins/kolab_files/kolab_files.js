@@ -6,7 +6,7 @@
  */
 
 window.rcmail && rcmail.addEventListener('init', function() {
-  if (rcmail.env.task == 'mail') {
+  if (rcmail.task == 'mail') {
     // mail compose
     if (rcmail.env.action == 'compose') {
       var elem = $('#compose-attachments > div'),
@@ -74,10 +74,10 @@ function kolab_directory_selector_dialog()
     title: rcmail.gettext('kolab_files.saveall'),
 //    close: function() { rcmail.dialog_close(); },
     buttons: buttons,
-    minWidth: 300,
+    minWidth: 400,
     minHeight: 300,
-    height: 250,
-    width: 250
+    height: 300,
+    width: 350
     }).show();
 
   file_api.folder_selector();
@@ -175,6 +175,18 @@ function kolab_files_ui()
     rcmail.http_error(request, status, err);
   };
 
+  this.file_list = function(params)
+  {
+    if (rcmail.task != 'kolab_files')
+      this.file_selector(params);
+  };
+
+  this.folder_list = function(params)
+  {
+    if (rcmail.task != 'kolab_files')
+      this.folder_selector(params);
+  };
+
   this.folder_selector = function()
   {
     this.req = this.set_busy(true, 'loading');
@@ -220,9 +232,9 @@ function kolab_files_ui()
         first = i;
     });
 
-   // select first folder
-   if (first)
-     this.selector_select(first);
+   // select first folder?
+//   if (first)
+//     this.selector_select(first);
 
     // add tree icons
     this.folder_list_tree(this.env.folders);
@@ -244,6 +256,9 @@ function kolab_files_ui()
 
   this.file_selector = function(params)
   {
+    if (!this.env.folder)
+      return;
+
     if (!params)
       params = {};
 
@@ -293,5 +308,47 @@ function kolab_files_ui()
     var table = $('#filelist');
 //    $('tr.selected', table).removeClass('selected');
     $(row).addClass('selected');
+  };
+
+  // folder create request
+  this.folder_create = function(folder)
+  {
+    this.req = this.set_busy(true, 'creating');
+    this.get('folder_create', {folder: folder}, 'folder_create_response');
+  };
+
+  // folder create response handler
+  this.folder_create_response = function(response)
+  {
+    if (!this.response(response))
+      return;
+
+    // refresh folders list
+    if (rcmail.task == 'kolab_files')
+      this.folder_list();
+    else
+      this.folder_selector();
+  };
+
+  this.search = function()
+  {
+    var value = $(rcmail.gui_objects.filesearchbox).val();
+
+    if (value) {
+      this.env.search = {name: value};
+      this.file_list({search: this.env.search});
+    }
+    else
+      this.search_reset();
+  };
+
+  this.search_reset = function()
+  {
+    $(rcmail.gui_objects.filesearchbox).val('');
+
+    if (this.env.search) {
+      this.env.search = null;
+      this.file_list();
+    }
   };
 };
