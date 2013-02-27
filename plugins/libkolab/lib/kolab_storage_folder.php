@@ -458,9 +458,37 @@ class kolab_storage_folder
         $this->imap->set_folder($folder);
 
         $headers = $this->imap->get_message_headers($msguid);
+        $message = null;
 
         // Message doesn't exist?
         if (empty($headers)) {
+            return false;
+        }
+
+        // extract the X-Kolab-Type header from the XML attachment part if missing
+        if (empty($headers->others['x-kolab-type'])) {
+            $message = new rcube_message($msguid);
+            foreach ((array)$message->attachments as $part) {
+                if (strpos($part->mimetype, kolab_format::KTYPE_PREFIX) === 0) {
+                    $headers->others['x-kolab-type'] = $part->mimetype;
+                    break;
+                }
+            }
+        }
+        // fix buggy messages stating the X-Kolab-Type header twice
+        else if (is_array($headers->others['x-kolab-type'])) {
+            $headers->others['x-kolab-type'] = reset($headers->others['x-kolab-type']);
+        }
+
+        // no object type header found: abort
+        if (empty($headers->others['x-kolab-type'])) {
+            rcube::raise_error(array(
+                'code' => 600,
+                'type' => 'php',
+                'file' => __FILE__,
+                'line' => __LINE__,
+                'message' => "No X-Kolab-Type information found in message $msguid ($this->name).",
+            ), true);
             return false;
         }
 
@@ -471,7 +499,7 @@ class kolab_storage_folder
         if ($type != '*' && $object_type != $type)
             return false;
 
-        $message = new rcube_message($msguid);
+        if (!$message) $message = new rcube_message($msguid);
         $attachments = array();
 
         // get XML part
