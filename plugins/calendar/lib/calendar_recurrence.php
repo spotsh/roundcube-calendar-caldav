@@ -70,7 +70,13 @@ class calendar_recurrence
   public function next_start()
   {
     $time = false;
-    if ($this->next && ($next = $this->engine->nextActiveRecurrence(array('year' => $this->next->year, 'month' => $this->next->month, 'mday' => $this->next->mday + 1, 'hour' => $this->next->hour, 'min' => $this->next->min, 'sec' => $this->next->sec)))) {
+    $after = clone $this->next;
+    $after->mday = $after->mday + 1;
+    if ($this->next && ($next = $this->engine->nextActiveRecurrence($after))) {
+      if (!$next->after($this->next)) {
+        // avoid endless loops if recurrence computation fails
+        return false;
+      }
       if ($this->event['allday']) {
         $next->hour = $this->hour;  # fix time for all-day events
         $next->min = 0;
