@@ -43,3 +43,8 @@ file_filter = plugins/tasklist/localization/<lang>.inc
 source_file = plugins/tasklist/localization/en_US.inc
 source_lang = en_US
 
+[kolab.libcalendaring]
+file_filter = plugins/libcalendaring/localization/<lang>.inc
+source_file = plugins/libcalendaring/localization/en_US.inc
+source_lang = en_US
+
