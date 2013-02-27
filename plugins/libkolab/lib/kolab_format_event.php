@@ -86,6 +86,13 @@ class kolab_format_event extends kolab_format_xcal
             $attach->setUri('cid:' . $cid, $attr['mimetype']);
             $vattach->push($attach);
         }
+
+        foreach ((array)$object['links'] as $link) {
+            $attach = new Attachment;
+            $attach->setUri($link, null);
+            $vattach->push($attach);
+        }
+
         $this->obj->setAttachments($vattach);
 
         // cache this data
@@ -153,6 +160,9 @@ class kolab_format_event extends kolab_format_xcal
                     'size'     => strlen($data),
                     'content'  => $data,
                 );
+            }
+            else if (substr($attach->uri(), 0, 4) == 'http') {
+                $object['links'][] = $attach->uri();
             }
         }
 
