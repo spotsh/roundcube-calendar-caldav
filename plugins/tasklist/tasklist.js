@@ -1077,7 +1077,7 @@ function rcube_tasklist_ui(settings)
                 }
             }
 
-            $('input[name="tags[]"]', rcmail.gui_objects.edittagline).each(function(i,elem){
+            $('input[type="hidden"]', rcmail.gui_objects.edittagline).each(function(i,elem){
                 if (elem.value)
                     me.selected_task.tags.push(elem.value);
             });
