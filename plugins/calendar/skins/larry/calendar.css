@@ -920,31 +920,21 @@ a.dropdown-link:after {
 .ui-dialog-buttonset a.dropdown-link {
 	margin-right: 1em;
 }
-/*
-.ui-datepicker-calendar .ui-datepicker-today .ui-state-default {
-	border-color: #cccccc;
-	background: #ffffcc;
-	color: #000;
+
+#calendarsidebar .ui-datepicker-calendar {
+	table-layout: fixed;
 }
-*/
+
 .ui-datepicker-calendar .ui-datepicker-week-col {
 	border: 0;
 	color: #999;
 	font-size: 90%;
 	text-align: right;
 	padding-right: 6px;
-}
-/*
-.ui-datepicker th {
-    padding: 0.3em 0;
-    font-size: 10px;
+	width: 20px;
+	overflow: hidden;
 }
 
-.ui-datepicker td span,
-.ui-datepicker td a {
-	padding-left: 0.1em;
-}
-*/
 .ui-autocomplete {
 	max-height: 160px;
 	overflow-y: auto;
