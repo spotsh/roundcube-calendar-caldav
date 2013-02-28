@@ -1,17 +1,17 @@
 /* CSS hacks for IE 7 */
 
-#sidebar,
-#sidebartoggle {
+#calendarsidebar,
+#calendarsidebartoggle {
 	height: expression((parseInt(this.parentNode.offsetHeight)-37)+'px');
 }
 
 #calendar {
-	width: expression((parseInt(this.parentNode.offsetWidth)-parseInt(document.getElementById('sidebartoggle').offsetWidth)-parseInt(document.getElementById('sidebartoggle').offsetLeft)-4)+'px');
+	width: expression((parseInt(this.parentNode.offsetWidth)-parseInt(document.getElementById('calendarsidebartoggle').offsetWidth)-parseInt(document.getElementById('calendarsidebartoggle').offsetLeft)-4)+'px');
 	height: expression((parseInt(this.parentNode.offsetHeight)-30)+'px');
 }
 
 #calendars {
-	height: expression((parseInt(this.parentNode.offsetHeight)-280)+'px');
+	height: expression((parseInt(this.parentNode.offsetHeight)-240)+'px');
 }
 
 #agendaoptions {
