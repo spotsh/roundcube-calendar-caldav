@@ -729,7 +729,7 @@ class libcalendaring extends rcube_plugin
                 $val = join(',', (array)$val);
                 break;
             case 'EXCEPTIONS':
-                continue;
+                continue 2;
             }
             $rrule .= $k . '=' . $val . ';';
         }
