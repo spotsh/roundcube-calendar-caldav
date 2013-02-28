@@ -24,6 +24,9 @@
 
 class kolab_files extends rcube_plugin
 {
+    // all task excluding 'login' and 'logout'
+    public $task = '?(?!login|logout).*';
+
     public $rc;
     public $home;
     private $engine;
@@ -34,18 +37,18 @@ class kolab_files extends rcube_plugin
 
         // Register hooks
         $this->add_hook('keep_alive', array($this, 'keep_alive'));
-        // Plugin actions
+
+        // Plugin actions for other tasks
         $this->register_action('plugin.kolab_files', array($this, 'actions'));
 
-        $ui_actions = array(
-            'mail/compose',
-            'mail/preview',
-            'mail/show',
-        );
+        // Register task
+        $this->register_task('files');
 
-        if (in_array($this->rc->task . '/' . $this->rc->action, $ui_actions)) {
-            $this->ui();
-        }
+        // Register plugin task actions
+        $this->register_action('index', array($this, 'actions'));
+        $this->register_action('prefs', array($this, 'actions'));
+
+        $this->ui();
     }
 
     /**

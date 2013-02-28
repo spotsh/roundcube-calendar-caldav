@@ -27,6 +27,7 @@ class kolab_files_engine
     private $plugin;
     private $rc;
     private $timeout = 60;
+    private $sort_cols = array('name', 'mtime', 'size');
 
     /**
      * Class constructor
@@ -44,16 +45,9 @@ class kolab_files_engine
     public function ui()
     {
         $this->plugin->add_texts('localization/', true);
-        $this->rc->output->set_env('files_url', $this->url . '/api/');
-        $this->rc->output->set_env('files_token', $this->get_api_token());
 
-        $this->plugin->include_stylesheet($this->plugin->local_skin_path().'/style.css');
-        $this->plugin->include_stylesheet($this->url . '/skins/default/images/mimetypes/style.css');
-        $this->plugin->include_script($this->url . '/js/files_api.js');
-        $this->plugin->include_script('kolab_files.js');
-
-        // add dialogs
-        if ($this->rc->task = 'mail') {
+        // set templates of Files UI and widgets
+        if ($this->rc->task == 'mail') {
             if ($this->rc->action == 'compose') {
                 $template = 'compose_plugin';
             }
@@ -61,16 +55,42 @@ class kolab_files_engine
                 $template = 'message_plugin';
             }
         }
+        else if ($this->rc->task == 'files') {
+            $template = 'files';
+        }
+
+        // add taskbar button
+        if (empty($_REQUEST['framed'])) {
+            $this->plugin->add_button(array(
+                'command'    => 'files',
+                'class'      => 'button-files',
+                'classsel'   => 'button-files button-selected',
+                'innerclass' => 'button-inner',
+                'label'      => 'kolab_files.files',
+                ), 'taskbar');
+        }
+
+        $this->plugin->include_stylesheet($this->plugin->local_skin_path().'/style.css');
 
         if (!empty($template)) {
-            // register template objects
-            $this->rc->output->add_handlers(array(
-                'folder-create-form' => array($this, 'folder_create_form'),
-                'file-search-form' => array($this, 'file_search_form'),
-            ));
-            // add dialog content at the end of page body
-            $this->rc->output->add_footer(
-                $this->rc->output->parse('kolab_files.' . $template, false, false));
+            $this->plugin->include_stylesheet($this->url . '/skins/default/images/mimetypes/style.css');
+            $this->plugin->include_script($this->url . '/js/files_api.js');
+            $this->plugin->include_script('kolab_files.js');
+            $this->rc->output->set_env('files_url', $this->url . '/api/');
+            $this->rc->output->set_env('files_token', $this->get_api_token());
+
+            if ($this->rc->task != 'files') {
+                // register template objects for dialogs
+                $this->rc->output->add_handlers(array(
+                    'folder-create-form' => array($this, 'folder_create_form'),
+                    'file-search-form'   => array($this, 'file_search_form'),
+                    'filelist'           => array($this, 'file_list'),
+                ));
+
+                // add dialog content at the end of page body
+                $this->rc->output->add_footer(
+                    $this->rc->output->parse('kolab_files.' . $template, false, false));
+            }
         }
     }
 
@@ -79,8 +99,17 @@ class kolab_files_engine
      */
     public function actions()
     {
-        $action = $_POST['act'];
-        $method = 'action_' . $action;
+        if ($this->rc->task == 'files' && $this->rc->action) {
+            $action = $this->rc->action;
+        }
+        else if ($this->rc->task != 'files' && $_POST['act']) {
+            $action = $_POST['act'];
+        }
+        else {
+            $action = 'index';
+        }
+
+        $method = 'action_' . str_replace('-', '_', $action);
 
         if (method_exists($this, $method)) {
             $this->plugin->add_texts('localization/');
@@ -108,6 +137,8 @@ class kolab_files_engine
         if (empty($attrib['form'])) {
             $out = $this->rc->output->form_tag($attrib, $out);
         }
+
+        $this->rc->output->add_label('kolab_files.foldercreating');
 
         $this->rc->output->add_gui_object('folder-create-form', $attrib['id']);
 
@@ -138,15 +169,171 @@ class kolab_files_engine
         // add form tag around text field
         if (empty($attrib['form'])) {
             $out = $this->rc->output->form_tag(array(
-                'name' => "filesearchform",
-                'onsubmit' => "file_api.search(); return false",
-                'style' => "display:inline"),
-                $out);
+                    'name'     => "filesearchform",
+                    'onsubmit' => rcmail_output::JS_OBJECT_NAME . ".command('files-search'); return false",
+                ), $out);
         }
 
         return $out;
     }
 
+    /**
+     * Template object for files list
+     */
+    public function file_list($attrib)
+    {
+//        $this->rc->output->add_label('');
+
+        // define list of cols to be displayed based on parameter or config
+        if (empty($attrib['columns'])) {
+            $list_cols     = $this->rc->config->get('kolab_files_list_cols');
+            $dont_override = $this->rc->config->get('dont_override');
+            $a_show_cols = is_array($list_cols) ? $list_cols : array('name');
+            $this->rc->output->set_env('col_movable', !in_array('kolab_files_list_cols', (array)$dont_override));
+        }
+        else {
+            $a_show_cols = preg_split('/[\s,;]+/', strip_quotes($attrib['columns']));
+        }
+
+
+        // make sure 'name' and 'options' column is present
+        if (!in_array('name', $a_show_cols)) {
+            array_unshift($a_show_cols, 'name');
+        }
+        if (!in_array('options', $a_show_cols)) {
+            array_unshift($a_show_cols, 'options');
+        }
+
+        $attrib['columns'] = $a_show_cols;
+
+        // save some variables for use in ajax list
+        $_SESSION['kolab_files_list_attrib'] = $attrib;
+
+        // For list in dialog(s) remove all option-like columns
+        if ($this->rc->task != 'files') {
+            $a_show_cols = array_intersect($a_show_cols, $this->sort_cols);
+        }
+
+        // set default sort col/order to session
+        if (!isset($_SESSION['kolab_files_sort_col']))
+            $_SESSION['kolab_files_sort_col'] = $this->rc->config->get('kolab_files_sort_col') ?: 'name';
+        if (!isset($_SESSION['kolab_files_sort_order']))
+            $_SESSION['kolab_files_sort_order'] = strtoupper($this->rc->config->get('kolab_files_sort_order') ?: 'asc');
+
+        // set client env
+        $this->rc->output->add_gui_object('filelist', $attrib['id']);
+        $this->rc->output->set_env('sort_col', $_SESSION['kolab_files_sort_col']);
+        $this->rc->output->set_env('sort_order', $_SESSION['kolab_files_sort_order']);
+        $this->rc->output->set_env('coltypes', $a_show_cols);
+
+        $this->rc->output->include_script('list.js');
+
+        $thead = '';
+        foreach ($this->file_list_head($attrib, $a_show_cols) as $cell) {
+            $thead .= html::tag('td', array('class' => $cell['className'], 'id' => $cell['id']), $cell['html']);
+        }
+
+        return html::tag('table', $attrib,
+            html::tag('thead', null, html::tag('tr', null, $thead)) . html::tag('tbody', null, ''),
+            array('style', 'class', 'id', 'cellpadding', 'cellspacing', 'border', 'summary'));
+    }
+
+    /**
+     * Creates <THEAD> for message list table
+     */
+    protected function file_list_head($attrib, $a_show_cols)
+    {
+        $skin_path = $_SESSION['skin_path'];
+        $image_tag = html::img(array('src' => "%s%s", 'alt' => "%s"));
+
+        // check to see if we have some settings for sorting
+        $sort_col   = $_SESSION['kolab_files_sort_col'];
+        $sort_order = $_SESSION['kolab_files_sort_order'];
+
+        $dont_override  = (array)$this->rc->config->get('dont_override');
+        $disabled_sort  = in_array('message_sort_col', $dont_override);
+        $disabled_order = in_array('message_sort_order', $dont_override);
+
+        $this->rc->output->set_env('disabled_sort_col', $disabled_sort);
+        $this->rc->output->set_env('disabled_sort_order', $disabled_order);
+
+        // define sortable columns
+        if ($disabled_sort)
+            $a_sort_cols = $sort_col && !$disabled_order ? array($sort_col) : array();
+        else
+            $a_sort_cols = $this->sort_cols;
+
+        if (!empty($attrib['optionsmenuicon'])) {
+            $onclick = 'return ' . JS_OBJECT_NAME . ".command('menu-open', 'filelistmenu')";
+            if ($attrib['optionsmenuicon'] === true || $attrib['optionsmenuicon'] == 'true')
+                $list_menu = html::div(array('onclick' => $onclick, 'class' => 'listmenu',
+                    'id' => 'listmenulink', 'title' => $this->rc->gettext('listoptions')));
+            else
+                $list_menu = html::a(array('href' => '#', 'onclick' => $onclick),
+                    html::img(array('src' => $skin_path . $attrib['optionsmenuicon'],
+                        'id' => 'listmenulink', 'title' => $this->rc->gettext('listoptions'))));
+        }
+        else {
+            $list_menu = '';
+        }
+
+        $cells = array();
+
+        foreach ($a_show_cols as $col) {
+            // get column name
+            switch ($col) {
+/*
+            case 'status':
+                $col_name = '<span class="' . $col .'">&nbsp;</span>';
+                break;
+*/
+            case 'options':
+                $col_name = $list_menu;
+                break;
+            default:
+                $col_name = Q($this->plugin->gettext($col));
+            }
+
+            // make sort links
+            if (in_array($col, $a_sort_cols))
+                $col_name = html::a(array('href'=>"#sort", 'onclick' => 'return '.JS_OBJECT_NAME.".command('files-sort','".$col."',this)", 'title' => rcube_label('sortby')), $col_name);
+            else if ($col_name[0] != '<')
+                $col_name = '<span class="' . $col .'">' . $col_name . '</span>';
+
+            $sort_class = $col == $sort_col && !$disabled_order ? " sorted$sort_order" : '';
+            $class_name = $col.$sort_class;
+
+            // put it all together
+            $cells[] = array('className' => $class_name, 'id' => "rcm$col", 'html' => $col_name);
+        }
+
+        return $cells;
+    }
+
+    /**
+     * Update files list object
+     */
+    protected function file_list_update($prefs)
+    {
+        $attrib = $_SESSION['kolab_files_list_attrib'];
+
+        if (!empty($prefs['kolab_files_list_cols'])) {
+            $attrib['columns'] = $prefs['kolab_files_list_cols'];
+            $_SESSION['kolab_files_list_attrib'] = $attrib;
+        }
+
+        $a_show_cols = $attrib['columns'];
+        $head       = '';
+
+        foreach ($this->file_list_head($attrib, $a_show_cols) as $cell) {
+            $head .= html::tag('td', array('class' => $cell['className'], 'id' => $cell['id']), $cell['html']);
+        }
+
+        $head = html::tag('tr', null, $head);
+
+        $this->rc->output->set_env('coltypes', $a_show_cols);
+        $this->rc->output->command('files_list_update', $head);
+    }
 
     /**
      * Get API token for current user session, authenticate if needed
@@ -248,6 +435,61 @@ class kolab_files_engine
         return $this->request;
     }
 
+    protected function action_index()
+    {
+        // register template objects
+        $this->rc->output->add_handlers(array(
+//            'folderlist' => array($this, 'folder_list'),
+            'filelist' => array($this, 'file_list'),
+            'file-search-form' => array($this, 'file_search_form'),
+        ));
+
+
+        $this->rc->output->add_label('deletefolderconfirm', 'folderdeleting',
+          'kolab_files.foldercreating', 'kolab_files.uploading');
+
+        $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
+        $this->rc->output->send('kolab_files.files');
+    }
+
+    /**
+     * Handler for preferences save action
+     */
+    protected function action_prefs()
+    {
+        $dont_override = (array)$this->rc->config->get('dont_override');
+        $prefs = array();
+        $opts  = array(
+            'kolab_files_sort_col' => true,
+            'kolab_files_sort_order' => true,
+            'kolab_files_list_cols' => false,
+        );
+
+        foreach ($opts as $o => $sess) {
+            if (isset($_POST[$o]) && !in_array($o, $dont_override)) {
+                $prefs[$o] = rcube_utils::get_input_value($o, rcube_utils::INPUT_POST);
+                if ($sess) {
+                    $_SESSION[$o] = $prefs[$o];
+                }
+
+                if ($o == 'kolab_files_list_cols') {
+                    $update_list = true;
+                }
+            }
+        }
+
+        // save preference values
+        if (!empty($prefs)) {
+            $this->rc->user->save_prefs($prefs);
+        }
+
+        if (!empty($update_list)) {
+            $this->file_list_update($prefs);
+        }
+
+        $this->rc->output->send();
+    }
+
     /**
      * Handler for "save all attachments into cloud" action
      */
@@ -323,10 +565,12 @@ class kolab_files_engine
         }
 
         if ($count = count($files)) {
-            $this->rc->output->show_message($this->plugin->gettext('saveallnotice', array('n' => $count)), 'confirmation');
+            $msg = $this->plugin->gettext(array('name' => 'saveallnotice', 'vars' => array('n' => $count)));
+            $this->rc->output->show_message($msg, 'confirmation');
         }
         if ($count = count($errors)) {
-            $this->rc->output->show_message($this->plugin->gettext('saveallerror', array('n' => $count)), 'error');
+            $msg = $this->plugin->gettext(array('name' => 'saveallerror', 'vars' => array('n' => $count)));
+            $this->rc->output->show_message($msg, 'error');
         }
 
         // @TODO: update quota indicator, make this optional in case files aren't stored in IMAP
@@ -475,12 +719,12 @@ class kolab_files_engine
                 $errors[] = $attachment['error'];
             }
             else {
-                $errors[] = $this->rc->gettext('fileuploaderror');
+                $errors[] = $this->plugin->gettext('attacherror');
             }
         }
 
         if (!empty($errors)) {
-            $this->rc->output->command('display_message', "Failed to attach file(s) from cloud", 'error');
+            $this->rc->output->command('display_message', $this->plugin->gettext('attacherror'), 'error');
             $this->rc->output->command('remove_from_attachment_list', $uploadid);
         }
 

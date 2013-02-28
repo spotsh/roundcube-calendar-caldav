@@ -1,56 +1,235 @@
+/* Taskbar button */
+#taskbar a.button-files span.button-inner
+{
+  background: url(images/buttons.png) 0 0 no-repeat;
+  height: 22px;
+}
+
+#taskbar a.button-files:hover span.button-inner,
+#taskbar a.button-files.button-selected span.button-inner
+{
+  background: url(images/buttons.png) 0 -26px no-repeat;
+  height: 22px;
+}
+
+
+/* Files main interface */
+#filestoolbar {
+  position: absolute;
+  height: 40px;
+  left: 0;
+  top: -6px;
+  z-index: 10;
+}
+
+#filestoolbar a.button {
+  background-image: url(images/buttons.png);
+}
+
+#filestoolbar a.button.upload {
+  background-position: center -52px;
+}
+
+#filestoolbar a.button.get {
+  background-position: center -94px;
+}
+
+#filestoolbar a.button.view {
+  background-position: center -131px;
+}
+
+#filestoolbar a.button.delete {
+  background-image: url(../../../../skins/larry/images/buttons.png);
+}
+
+#filestoolbar form {
+  display: inline;
+}
+
+#folderlistbox {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  width: 220px;
+  bottom: 0;
+}
+
+#filelistcontainer {
+  position: absolute;
+  top: 42px;
+  left: 232px;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+}
+
+#files-folder-list ul li a {
+  background: url(../../../../skins/larry/images/listicons.png) 6px 3px no-repeat;
+  padding-left: 32px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  width: auto;
+  overflow: hidden;
+}
+
+#files-folder-list ul li span.branch {
+  display: inline-block;
+}
+
+#files-folder-list ul li:first-child {
+  border-radius: 4px 4px 0 0;
+  border-top: 0;
+}
+
+#filelist thead tr td {
+  padding: 0;
+}
+
+#filelist tbody tr td {
+  padding: 2px 7px;
+  height: 18px;
+}
+
+#filelist tr td.size {
+  width: 60px;
+  text-align: right;
+}
+
+#filelist thead tr td.size {
+  text-align: left;
+}
+
+#filelist tr td.mtime {
+  width: 125px;
+}
+
+#filelist tr td.options {
+  width: 26px;
+}
+
+#filelist thead tr td.subject,
+#filelist tbody tr td.subject {
+  width: 99%;
+  white-space: nowrap;
+}
+
+#filelist thead tr td.sortedASC a,
+#filelist thead tr td.sortedDESC a {
+  color: #004458;
+  text-decoration: underline;
+  background: url(../../../../skins/larry/images/listicons.png) right -912px no-repeat;
+}
+
+#filelist thead tr td.sortedASC a {
+  background-position: right -944px;
+}
+
+#filelist td img {
+  vertical-align: middle;
+  display: inline-block;
+}
+
+#filelist tr td.options div.listmenu,
+#filelist tr td.flag span.flagged,
+#filelist tr td.flag span.unflagged,
+#filelist tr td.flag span.unflagged:hover {
+  display: inline-block;
+  vertical-align: middle;
+  height: 18px;
+  width: 20px;
+  padding: 0;
+  background: url(../../../../skins/larry/images/listicons.png) -100px 0 no-repeat;
+}
+
+#filelist thead tr td.options div.listmenu {
+  background-position: 0 -976px;
+  cursor: pointer;
+  width: 26px;
+}
+
+#filelist thead tr td.options {
+  padding: 0 3px;
+}
+
+#filelist td.filename {
+  padding: 0 4px;
+}
+
+#filelist tbody td.filename span {
+  background: url(images/unknown.png) 0 0 no-repeat;
+  padding: 0 0 0 16px;
+  height: 16px;
+}
+
+#filelist tbody td.filename span.drop a {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: url(../../../../skins/larry/images/buttons.png) -20px -1575px no-repeat;
+}
+
+/*
+#filelist tbody td.filename span input {
+  padding: 0 2px;
+  height: 18px;
+}
+*/
+
+
+/* plugin dialogs */
+
 #files-dialog,
-#files-compose-dialog,
-#files-folder-create {
+#files-compose-dialog {
   display: none;
 }
 
-#files-folder-selector {
-  position: absolute;
-  top: 5px;
-  bottom: 5px;
-  left: 0;
-  right: 0;
-  background-color: #f0f0f0;
-  padding: 2px;
-}
-
-#files-compose-dialog #files-folder-selector {
+#files-compose-dialog #folderlistbox {
   right: auto;
   width: 190px;
   top: 45px;
+  bottom: 5px;
+  box-shadow: none;
 }
 
-#files-dialog #files-folder-selector {
-  bottom: 40px;
+#files-dialog #folderlistbox {
+  bottom: 5px;
+  top: 5px;
+  left: 0;
+  right: 0;
+  width: auto;
+  box-shadow: none;
 }
 
-#files-file-selector {
+#files-compose-dialog #filelistcontainer {
   position: absolute;
   top: 45px;
   bottom: 5px;
   left: 200px;
   right: 0;
-  background-color: #f0f0f0;
-  padding: 2px;
-  overflow: auto;
+  box-shadow: none;
 }
 
-#files-dialog #files-folder-footer {
-  position: absolute;
-  height: 30px;
-  bottom: 0;
+#files-folder-create {
+  background-color: white;
+  padding: 10px;
+  bottom: 10px;
+  left: 5px;
+  top: auto;
+  z-index: 1001; /* for use in modal dialog window */
 }
 
-#files-dialog #files-folder-footer form {
-  display: inline;
+#folder-create-form {
+  margin-bottom: 10px;
 }
 
-#files-folder-selector table {
+/*
+#files-folder-list table {
   width: 100%;
   border-spacing: 0;
 }
 
-#files-folder-selector table td span.name {
+#files-folder-list table td span.name {
   background: url(images/folder.png) 0 0 no-repeat;
   height: 18px;
   padding-left: 20px;
@@ -58,15 +237,15 @@
   cursor: pointer;
 }
 
-#files-folder-selector table tr.selected td span.name {
+#files-folder-list table tr.selected td span.name {
   font-weight: bold;
 }
 
-#files-folder-selector table tr.virtual td span.name {
+#files-folder-list table tr.virtual td span.name {
   color: #bbb;
   cursor: default;
 }
-
+*/
 #files-compose-dialog #searchmenulink {
   width: 15px;
 }
@@ -80,82 +259,8 @@
   cursor: pointer;
 }
 
-#filelist table {
-  width: 100%;
-  border-spacing: 0;
-}
-
-#filelist td {
-  white-space: nowrap;
-  cursor: default;
-}
-
-#filelist td.filename {
-  width: 98%;
-  height: 20px;
-  padding: 0 4px;
-}
-
-#filelist td.filesize {
-  text-align: right;
-}
-
-#filelist tbody td.filename span {
-  background: url(images/unknown.png) 0 0 no-repeat;
-  padding: 0 0 0 20px;
-  height: 16px;
-}
-
-#filelist tbody td.filename span input {
-  padding: 0 2px;
-  height: 18px;
-}
-/*
-#filelist thead td {
-  cursor: pointer;
-}
-
-#filelist thead td.sorted {
-  padding-right: 16px;
-  text-decoration: underline;
-  background: url(images/buttons.png) right -120px no-repeat;
-}
-
-#filelist thead td.sorted.reverse {
-  background-position: right -140px;
-}
-*/
-
-#filelist tbody tr.selected td {
-  background-color: #d9ecf4;
-}
-
-/***** tree indicators *****/
-
-td span.branch span
-{
-  float: left;
-  height: 16px;
-}
-
-td span.branch span.tree
-{
-  height: 17px;
-  width: 15px;
-  background: url(images/tree.gif) 0 0 no-repeat;
-}
-
-td span.branch span.l1
-{
-  background-position: 0px 0px; /* L */
-}
-
-td span.branch span.l2
-{
-  background-position: -30px 0px; /* | */
-}
-
-td span.branch span.l3
-{
-  background-position: -15px 0px; /* |- */
+a.filesaveall {
+  display: inline-block;
+  margin-top: .5em;
+  padding: 3px 5px 4px 5px;
 }

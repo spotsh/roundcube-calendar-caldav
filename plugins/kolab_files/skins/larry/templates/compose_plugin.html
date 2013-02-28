@@ -5,10 +5,14 @@
         <roundcube:button name="searchmenulink" id="searchmenulink" class="iconbutton searchoptions" onclick="UI.show_popup('searchmenu');return false" title="searchmod" content=" " />
 -->
         <a id="searchmenulink" class="iconbutton searchoptions"> </a>
-        <a id="searchreset" class="iconbutton reset" title="<roundcube:label name="resetsearch"/>" onclick="file_api.search_reset()"> </a>
+        <roundcube:button command="files-search-reset" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
     </div>
-    <div id="files-folder-selector"></div>
-    <div id="files-file-selector">
-        <table id="filelist"><tbody></tbody></table>
+
+    <div id="folderlistbox" class="uibox listbox">
+        <div id="files-folder-list" class="scroller"></div>
+    </div>
+
+    <div id="filelistcontainer" class="boxlistcontent uibox">
+        <roundcube:object name="filelist" id="filelist" class="records-table sortheader" />
     </div>
 </div>
