@@ -1,10 +1,5 @@
 /* CSS hacks for IE 7 */
 
-#main {
-	width: expression(Math.max(300, parseInt(document.documentElement.clientWidth)-10)+'px');
-	height: expression(Math.max(300, parseInt(document.documentElement.clientHeight)-100)+'px');
-}
-
 #sidebar,
 #sidebartoggle {
 	height: expression((parseInt(this.parentNode.offsetHeight)-37)+'px');
@@ -12,11 +7,11 @@
 
 #calendar {
 	width: expression((parseInt(this.parentNode.offsetWidth)-parseInt(document.getElementById('sidebartoggle').offsetWidth)-parseInt(document.getElementById('sidebartoggle').offsetLeft)-4)+'px');
-	height: expression(parseInt(this.parentNode.offsetHeight)+'px');
+	height: expression((parseInt(this.parentNode.offsetHeight)-30)+'px');
 }
 
 #calendars {
-	height: expression((parseInt(this.parentNode.offsetHeight)-220)+'px');
+	height: expression((parseInt(this.parentNode.offsetHeight)-280)+'px');
 }
 
 #agendaoptions {
@@ -31,19 +26,36 @@
 	filter: alpha(opacity=40);
 }
 
-#datepicker .ui-widget-header {
-	width: 102%;
-}
-
-.fc-day-content {
+.calendarmain .fc-day-content {
 	cursor: default;
 }
 
-.fc-header-title h2 {
+.calendarmain .fc-view-table col.fc-event-date {
+	width: 8em;
+}
+
+.calendarmain .fc-view-table col.fc-event-time {
+	width: 9em;
+}
+
+.calendarmain .fc-header-title h2 {
 	font-size: 16px;
 }
 
-.fc-event-temp .fc-event-bg {
+.calendarmain .fc-header-left {
+	width: 248px;
+}
+
+.calendarmain .fc-header-center {
+	width: auto;
+}
+
+.calendarmain .fc-header-right {
+	width: 144px;
+	white-space: nowrap;
+}
+
+.calendarmain .fc-event-temp .fc-event-bg {
 	display: none; /* nested opacity filters while dragging don't work */
 }
 
