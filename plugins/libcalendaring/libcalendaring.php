@@ -109,6 +109,8 @@ class libcalendaring extends rcube_plugin
             $dt = new DateTime('@'.$td);
         else if (is_string($dt))
             $dt = new DateTime($dt);
+        else
+            return $dt;
 
         $dt->setTimezone($this->timezone);
         return $dt;

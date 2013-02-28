@@ -312,7 +312,7 @@ class kolab_calendar
    * @return boolean True on success, False on error
    */
 
-  public function update_event($event)
+  public function update_event($event, $exception_id = null)
   {
     $updated = false;
     $old = $this->storage->get_object($event['id']);
@@ -333,6 +333,11 @@ class kolab_calendar
     else {
       $updated = true;
       $this->events[$event['id']] = $this->_to_rcube_event($object);
+
+      // refresh local cache with recurring instances
+      if ($exception_id) {
+        $this->_get_recurring_events($object, $event['start'], $event['end'], $exception_id);
+      }
     }
 
     return $updated;
@@ -413,26 +418,67 @@ class kolab_calendar
       $end->add(new DateInterval($intvl));
     }
 
+    // add recurrence exceptions to output
+    $i = 0;
+    $events = array();
+    $exdates = array();
+    $futuredata = array();
+    if (is_array($event['recurrence']['EXCEPTIONS'])) {
+      // copy the recurrence rule from the master event (to be used in the UI)
+      $recurrence_rule = $event['recurrence'];
+      unset($recurrence_rule['EXCEPTIONS'], $recurrence_rule['EXDATE']);
+
+      foreach ($event['recurrence']['EXCEPTIONS'] as $exception) {
+        $rec_event = $this->_to_rcube_event($exception);
+        $rec_event['id'] = $event['uid'] . '-' . ++$i;
+        $rec_event['recurrence_id'] = $event['uid'];
+        $rec_event['recurrence'] = $recurrence_rule;
+        $rec_event['_instance'] = $i;
+        $events[] = $rec_event;
+
+        // found the specifically requested instance, exiting...
+        if ($rec_event['id'] == $event_id) {
+          $this->events[$rec_event['id']] = $rec_event;
+          return $events;
+        }
+
+        // remember this exception's date
+        $exdate = $rec_event['start']->format('Y-m-d');
+        $exdates[$exdate] = $rec_event['id'];
+        if ($rec_event['thisandfuture']) {
+          $futuredata[$exdate] = $rec_event;
+        }
+      }
+    }
+
     // use libkolab to compute recurring events
     if (class_exists('kolabcalendaring')) {
         $recurrence = new kolab_date_recurrence($object);
     }
     else {
-        // fallback to local recurrence implementation
-        require_once($this->cal->home . '/lib/calendar_recurrence.php');
-        $recurrence = new calendar_recurrence($this->cal, $event);
+      // fallback to local recurrence implementation
+      require_once($this->cal->home . '/lib/calendar_recurrence.php');
+      $recurrence = new calendar_recurrence($this->cal, $event);
     }
 
-    $i = 0;
-    $events = array();
     while ($next_event = $recurrence->next_instance()) {
-      $rec_start = $next_event['start']->format('U');
-      $rec_end = $next_event['end']->format('U');
-      $rec_id = $event['uid'] . '-' . ++$i;
+      // skip if there's an exception at this date
+      $datestr = $next_event['start']->format('Y-m-d');
+      if ($exdates[$datestr]) {
+        // use this event data for future recurring instances
+        if ($futuredata[$datestr])
+          $overlay_data = $futuredata[$datestr];
+        continue;
+      }
 
       // add to output if in range
+      $rec_id = $event['uid'] . '-' . ++$i;
       if (($next_event['start'] <= $end && $next_event['end'] >= $start) || ($event_id && $rec_id == $event_id)) {
         $rec_event = $this->_to_rcube_event($next_event);
+
+        if ($overlay_data)  // copy data from a 'this-and-future' exception
+          $this->_merge_event_data($rec_event, $overlay_data);
+
         $rec_event['id'] = $rec_id;
         $rec_event['recurrence_id'] = $event['uid'];
         $rec_event['_instance'] = $i;
@@ -453,6 +499,27 @@ class kolab_calendar
     }
     
     return $events;
+  }
+
+  /**
+   * Merge certain properties from the overlay event to the base event object
+   *
+   * @param array The event object to be altered
+   * @param array The overlay event object to be merged over $event
+   */
+  private function _merge_event_data(&$event, $overlay)
+  {
+    static $forbidden = array('id','uid','created','changed','recurrence','organizer','attendees','sequence');
+
+    foreach ($overlay as $prop => $value) {
+      // adjust time of the recurring event instance
+      if ($prop == 'start' || $prop == 'end') {
+        if (is_object($event[$prop]) && is_a($event[$prop], 'DateTime'))
+          $event[$prop]->setTime($value->format('G'), intval($value->format('i')), intval($value->format('s')));
+      }
+      else if ($prop[0] != '_' && !in_array($prop, $forbidden))
+        $event[$prop] = $value;
+    }
   }
 
   /**

@@ -46,6 +46,7 @@
  *           'COUNT' => 1..n,   // number of times
  *                      // + more properties (see http://www.kanzaki.com/docs/ical/recur.html)
  *          'EXDATE' => array(),  // list of DateTime objects of exception Dates/Times
+ *      'EXCEPTIONS' => array(<event>),  list of event objects which denote exceptions in the recurrence chain
  *    ),
  * 'recurrence_id' => 'ID of the recurrence group',   // usually the ID of the starting event
  *    'categories' => 'Event category',

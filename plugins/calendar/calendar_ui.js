@@ -507,8 +507,9 @@ function rcube_calendar_ui(settings)
       
       // show warning if editing a recurring event
       if (event.id && event.recurrence) {
+        var sel = event.thisandfuture ? 'future' : 'all';
         $('#edit-recurring-warning').show();
-        $('input.edit-recurring-savemode[value="all"]').prop('checked', true);
+        $('input.edit-recurring-savemode[value="'+sel+'"]').prop('checked', true);
       }
       else
         $('#edit-recurring-warning').hide();
