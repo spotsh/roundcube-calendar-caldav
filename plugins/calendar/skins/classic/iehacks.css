@@ -36,7 +36,7 @@ html #calendartoolbar a.buttonPas {
 	filter: alpha(opacity=40);
 }
 
-#calendarslist li span {
+#calendarslist li span.handle {
 	background-image: url(images/calendars.gif);
 }
 
