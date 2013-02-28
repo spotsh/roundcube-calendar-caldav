@@ -108,7 +108,7 @@ function kolab_activesync_config()
     var data = {
       cmd: 'save',
       id: rcmail.env.active_device,
-      devicealias: $('#config-device-alias').val(),
+      devicealias: $('#config-device-alias').val()
 //      syncmode: $('#config-device-mode option:selected').val(),
 //      laxpic: $('#config-device-laxpic').get(0).checked ? 1 : 0
     };
@@ -137,7 +137,7 @@ function kolab_activesync_config()
       parent.window.activesync_object.update_list(p.id, p.alias);
 
     // device deleted
-    if (p.success && p.id && p.delete) {
+    if (p.success && p.id && p['delete']) {
       active_device = null;
       device_select();
       devicelist.remove_row(p.id);
