@@ -931,7 +931,11 @@ class kolab_storage_folder
         case 'event':
             if ($this->get_namespace() == 'personal') {
                 $result = $this->trigger_url(
-                    sprintf('%s/trigger/%s/%s.pfb', kolab_storage::get_freebusy_server(), $owner, $this->imap->mod_folder($this->name)),
+                    sprintf('%s/trigger/%s/%s.pfb',
+                        kolab_storage::get_freebusy_server(),
+                        urlencode($owner),
+                        urlencode($this->imap->mod_folder($this->name))
+                    ),
                     $this->imap->options['user'],
                     $this->imap->options['password']
                 );
