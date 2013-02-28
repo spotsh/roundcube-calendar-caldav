@@ -103,7 +103,7 @@ function kolab_files_upload_input(button)
   file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5})
     .change(function() { rcmail.files_upload('#filesuploadform'); })
     // opacity:0 does the trick, display/visibility doesn't work
-    .css({opacity: 0, cursor: 'pointer', position: 'absolute'});
+    .css({opacity: 0, cursor: 'pointer', position: 'absolute', top: '10000px', left: '10000px'});
 
   // In FF we need to move the browser file-input's button under the cursor
   // Thanks to the size attribute above we know the length of the input field
@@ -118,8 +118,9 @@ function kolab_files_upload_input(button)
         file.css({top: (e.pageY - offset.top - 10) + 'px', left: (e.pageX - offset.left - 10) + 'px'});
       // move the input away if button is disabled
       else
-        file.css({top: '1000px', left: '1000px'});
+        $(this).mouseleave();
     })
+    .mouseleave(function() { file.css({top: '10000px', left: '10000px'}); })
     .attr('onclick', '') // remove default button action
     .append(file);
 };
