@@ -728,6 +728,8 @@ class libcalendaring extends rcube_plugin
                     $val[$i] = $ex->format('Ymd\THis');
                 $val = join(',', (array)$val);
                 break;
+            case 'EXCEPTIONS':
+                continue;
             }
             $rrule .= $k . '=' . $val . ';';
         }
