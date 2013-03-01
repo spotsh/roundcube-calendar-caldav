@@ -36,7 +36,7 @@ class kolab_files extends rcube_plugin
         $this->rc = rcmail::get_instance();
 
         // Register hooks
-        $this->add_hook('keep_alive', array($this, 'keep_alive'));
+        $this->add_hook('refresh', array($this, 'refresh'));
 
         // Plugin actions for other tasks
         $this->register_action('plugin.kolab_files', array($this, 'actions'));
@@ -88,9 +88,9 @@ class kolab_files extends rcube_plugin
     }
 
     /**
-     * Keep_alive hook handler
+     * Refresh hook handler
      */
-    public function keep_alive($args)
+    public function refresh($args)
     {
         // Here we are refreshing API session, so when we need it
         // the session will be active
