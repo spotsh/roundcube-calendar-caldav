@@ -73,7 +73,6 @@ class kolab_files_engine
         $this->plugin->include_stylesheet($this->plugin->local_skin_path().'/style.css');
 
         if (!empty($template)) {
-            $this->plugin->include_stylesheet($this->url . '/skins/default/images/mimetypes/style.css');
             $this->plugin->include_script($this->url . '/js/files_api.js');
             $this->plugin->include_script('kolab_files.js');
             $this->rc->output->set_env('files_url', $this->url . '/api/');
@@ -228,6 +227,9 @@ class kolab_files_engine
 
         $this->rc->output->include_script('list.js');
 
+        // attach css rules for mimetype icons
+        $this->plugin->include_stylesheet($this->url . '/skins/default/images/mimetypes/style.css');
+
         $thead = '';
         foreach ($this->file_list_head($attrib, $a_show_cols) as $cell) {
             $thead .= html::tag('td', array('class' => $cell['className'], 'id' => $cell['id']), $cell['html']);
@@ -338,7 +340,7 @@ class kolab_files_engine
     /**
      * Get API token for current user session, authenticate if needed
      */
-    protected function get_api_token()
+    public function get_api_token()
     {
         $token = $_SESSION['kolab_files_token'];
         $time  = $_SESSION['kolab_files_time'];
