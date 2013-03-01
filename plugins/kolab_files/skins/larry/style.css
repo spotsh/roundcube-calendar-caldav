@@ -63,14 +63,15 @@
   overflow: auto;
 }
 
-#files-folder-list ul li a {
+#files-folder-list ul li span.name {
   background: url(../../../../skins/larry/images/listicons.png) 6px 3px no-repeat;
-  padding-left: 32px;
+  padding: 6px 8px 2px 32px;
   text-overflow: ellipsis;
   white-space: nowrap;
   display: inline-block;
   width: auto;
   overflow: hidden;
+  color: #376572;
 }
 
 #files-folder-list ul li span.branch {
@@ -80,6 +81,11 @@
 #files-folder-list ul li:first-child {
   border-radius: 4px 4px 0 0;
   border-top: 0;
+}
+
+#files-folder-list ul li.virtual {
+  color: #aaa;
+  cursor: default;
 }
 
 #filelist thead tr td {
@@ -108,8 +114,8 @@
   width: 26px;
 }
 
-#filelist thead tr td.subject,
-#filelist tbody tr td.subject {
+#filelist thead tr td.filename,
+#filelist tbody tr td.filename {
   width: 99%;
   white-space: nowrap;
 }
@@ -158,15 +164,8 @@
 
 #filelist tbody td.filename span {
   background: url(images/unknown.png) 0 0 no-repeat;
-  padding: 0 0 0 16px;
+  padding: 0 0 0 20px;
   height: 16px;
-}
-
-#filelist tbody td.filename span.drop a {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background: url(../../../../skins/larry/images/buttons.png) -20px -1575px no-repeat;
 }
 
 /*
@@ -223,29 +222,6 @@
   margin-bottom: 10px;
 }
 
-/*
-#files-folder-list table {
-  width: 100%;
-  border-spacing: 0;
-}
-
-#files-folder-list table td span.name {
-  background: url(images/folder.png) 0 0 no-repeat;
-  height: 18px;
-  padding-left: 20px;
-  margin-left: 3px;
-  cursor: pointer;
-}
-
-#files-folder-list table tr.selected td span.name {
-  font-weight: bold;
-}
-
-#files-folder-list table tr.virtual td span.name {
-  color: #bbb;
-  cursor: default;
-}
-*/
 #files-compose-dialog #searchmenulink {
   width: 15px;
 }

@@ -446,19 +446,17 @@ function kolab_files_ui()
     this.env.folders = this.folder_list_parse(response.result);
 
     $.each(this.env.folders, function(i, f) {
-      var row = $('<li class="mailbox"><span class="branch"></span><a></a></li>'),
-        link = $('a', row);
+      var row = $('<li class="mailbox"><span class="branch"></span></li>');
 
-      link.text(f.name);
-      row.attr('id', f.id);
+      row.attr('id', f.id)
+        .append($('<span class="name">').text(f.name))
+        .click(function() { file_api.folder_select(i); });
 
       if (f.depth)
         $('span.branch', row).width(15 * f.depth);
 
       if (f.virtual)
         row.addClass('virtual');
-      else
-        link.click(function() { file_api.folder_select(i); });
 
       list.append(row);
 
@@ -533,20 +531,15 @@ function kolab_files_ui()
 
       for (c in rcmail.env.coltypes) {
         c = rcmail.env.coltypes[c];
-        if (c == 'name') {
-          if (rcmail.env.task == 'files')
-            col = '<td class="name">' + key + '</td>';
-          else
+        if (c == 'name')
             col = '<td class="name filename ' + file_api.file_type_class(data.type) + '">'
               + '<span>' + key + '</span></td>';
-        }
         else if (c == 'mtime')
           col = '<td class="mtime">' + data.mtime + '</td>';
         else if (c == 'size')
           col = '<td class="size">' + file_api.file_size(data.size) + '</td>';
         else if (c == 'options')
-          col = '<td class="filename ' + file_api.file_type_class(data.type) + '">'
-            + '<span class="drop"><a href="#" onclick="kolab_files_file_menu(' + i + ')"></a></span></td>';
+          col = '<td class="options"></td>'; // @TODO
         else
           col = '<td class="' + c + '"></td>';
 
