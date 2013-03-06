@@ -125,6 +125,14 @@ div.sidebarclosed {
 	border-bottom-color: #ababab;
 }
 
+#calendar .timezonedisplay {
+	position: absolute;
+	bottom: 9px;
+	right: 8px;
+	font-size: 0.85em;
+	color: #666;
+}
+
 #print {
 	width: 680px;
 }

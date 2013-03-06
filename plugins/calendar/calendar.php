@@ -275,6 +275,7 @@ class calendar extends rcube_plugin
     // initialize attendees autocompletion
     rcube_autocomplete_init();
 
+    $this->rc->output->set_env('timezone', $this->timezone->getName());
     $this->rc->output->set_env('calendar_driver', $this->rc->config->get('calendar_driver'), false);
     $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
     $this->rc->output->set_env('identities-selector', $this->ui->identity_select(array('id' => 'edit-identities-list')));
