@@ -2,3 +2,7 @@
 
 // ownCloud URL
 $rcmail_config['owncloud_url'] = 'https://owncloud.webmail.tld';
+
+// authentication exchange secret
+// has to be the same as the value for 'kolabsecret' in owncloud config
+$rcmail_config['owncloud_secret'] = '<shared-secret-string>';
