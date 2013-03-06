@@ -2488,8 +2488,8 @@ function rcube_calendar_ui(settings)
       widget.children().each(function(){
         li = $(this);
         html = li.children().first().html().replace(/\s+\(.+\)$/, '').replace(amregex, '0:$1').replace(pmregex, '1:$1');
-        if (html == val)
-          menu.activate($.Event({ type:'keypress' }), li);
+        if (html.indexOf(val) == 0)
+          menu._scrollIntoView(li);
       });
     };
 
