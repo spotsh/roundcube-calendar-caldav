@@ -2,6 +2,8 @@
 
 $labels['files'] = 'Files';
 $labels['saveall'] = 'Save all to cloud...';
+$labels['saveto'] = 'Save to cloud...';
+$labels['saveas'] = 'Save as:';
 $labels['save'] = 'Save';
 $labels['cancel'] = 'Cancel';
 $labels['fromcloud'] = 'From cloud...';

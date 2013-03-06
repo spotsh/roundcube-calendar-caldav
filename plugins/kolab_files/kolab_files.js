@@ -44,6 +44,8 @@ window.rcmail && rcmail.addEventListener('init', function() {
           .click(function() { kolab_directory_selector_dialog(); })
           .appendTo(attachment_list);
       }
+
+      rcmail.addEventListener('menu-open', kolab_files_attach_menu_open);
     }
 
     kolab_files_init();
@@ -118,18 +120,40 @@ function kolab_files_token()
 /*********  Plugin functionality in other tasks  **********/
 /**********************************************************/
 
-function kolab_directory_selector_dialog()
+function kolab_directory_selector_dialog(id)
 {
-  var dialog = $('#files-dialog'), buttons = {};
+  var dialog = $('#files-dialog'), buttons = {},
+    input = $('#file-save-as-input'),
+    form = $('#file-save-as'),
+    list = $('#folderlistbox');
+
+  // attachment is specified
+  if (id) {
+    var attach = $('#attach'+id), filename = attach.attr('title') || attach.text();
+    form.show();
+    dialog.addClass('saveas');
+    input.val(filename);
+  }
+  else {
+    form.hide();
+    dialog.removeClass('saveas');
+  }
 
   buttons[rcmail.gettext('kolab_files.save')] = function () {
-    var lock = rcmail.set_busy(true, 'saving');
-    rcmail.http_post('plugin.kolab_files', {
-      act: 'saveall',
-      source: rcmail.env.mailbox,
-      uid: rcmail.env.uid,
-      dest: file_api.env.folder
-    }, lock);
+    var lock = rcmail.set_busy(true, 'saving'),
+      request = {
+        act: 'save-file',
+        source: rcmail.env.mailbox,
+        uid: rcmail.env.uid,
+        dest: file_api.env.folder
+      };
+
+    if (id) {
+      request.id = id;
+      request.name = input.val();
+    }
+
+    rcmail.http_post('plugin.kolab_files', request, lock);
     $('#files-dialog').dialog('destroy').hide();
   };
   buttons[rcmail.gettext('kolab_files.cancel')] = function () {
@@ -141,7 +165,7 @@ function kolab_directory_selector_dialog()
     modal: true,
     resizable: !bw.ie6,
     closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
-    title: rcmail.gettext('kolab_files.saveall'),
+    title: rcmail.gettext('kolab_files.' + (id ? 'saveto' : 'saveall')),
 //    close: function() { rcmail.dialog_close(); },
     buttons: buttons,
     minWidth: 250,
@@ -177,7 +201,7 @@ function kolab_files_selector_dialog()
 
       // send request
       rcmail.http_post('plugin.kolab_files', {
-        act: 'attach',
+        act: 'attach-file',
         folder: file_api.env.folder,
         files: list,
         id: rcmail.env.compose_id,
@@ -211,6 +235,17 @@ function kolab_files_selector_dialog()
     rcmail.file_list.clear_selection();
 };
 
+function kolab_files_attach_menu_open(p)
+{
+  if (!p || !p.props || p.props.menu != 'attachmentmenu')
+    return;
+
+  var id = p.props.id;
+
+  $('#attachmenusaveas').unbind('click').attr('onclick', '').click(function(e) {
+    return kolab_directory_selector_dialog(id);
+  });
+};
 
 /***********************************************************/
 /**********          Main functionality           **********/

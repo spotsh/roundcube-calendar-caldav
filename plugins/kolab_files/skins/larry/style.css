@@ -192,12 +192,16 @@
 }
 
 #files-dialog #folderlistbox {
-  bottom: 5px;
   top: 5px;
+  bottom: 5px;
   left: 0;
   right: 0;
   width: auto;
   box-shadow: none;
+}
+
+#files-dialog.saveas #folderlistbox {
+  top: 50px;
 }
 
 #files-compose-dialog #filelistcontainer {
@@ -226,6 +230,10 @@
   width: 15px;
 }
 
+#files-compose-dialog .searchbox input {
+  background-color: white;
+}
+
 #files-compose-dialog #quicksearchbar {
   top: 10px;
   right: 5px;
@@ -239,4 +247,17 @@ a.filesaveall {
   display: inline-block;
   margin-top: .5em;
   padding: 3px 5px 4px 5px;
+}
+
+#file-save-as {
+  height: 25px;
+  white-space: nowrap;
+}
+
+#file-save-as input {
+  width: 200px;
+}
+
+ul.toolbarmenu li span.saveas {
+  background: url(images/buttons.png) -5px -180px no-repeat;
 }
