@@ -1232,10 +1232,10 @@ function rcube_calendar_ui(settings)
     {
       // fix all-day evebt times
       if (me.selected_event.allDay) {
+        var numdays = Math.floor((me.selected_event.end.getTime() - me.selected_event.start.getTime()) / DAY_MS);
         start.setHours(12);
         start.setMinutes(0);
-        if (end.getHours() == 0)
-          end.setHours(-1);
+        end.setTime(start.getTime() + numdays * DAY_MS);
         end.setHours(13);
         end.setMinutes(0);
       }
@@ -1252,13 +1252,13 @@ function rcube_calendar_ui(settings)
     var freebusy_find_slot = function(dir)
     {
       var event = me.selected_event,
-        eventstart = event.start.getTime(),  // calculate with integers
-        eventend = event.end.getTime(),
-        duration = eventend - eventstart,
+        eventstart = clone_date(event.start, event.allDay ? 1 : 0).getTime(),  // calculate with integers
+        eventend = clone_date(event.end, event.allDay ? 2 : 0).getTime(),
+        duration = eventend - eventstart - (event.allDay ? HOUR_MS : 0),  // make sure we don't cross day borders on DST change
         sinterval = freebusy_data.interval * 60000,
         intvlslots = 1,
         numslots = Math.ceil(duration / sinterval),
-        checkdate, slotend, email, ts, slot, slotdate = new Date(), slotenddate = new Date();
+        checkdate, slotend, email, ts, slot, slotdate = new Date();
 
       // shift event times to next possible slot
       eventstart += sinterval * intvlslots * dir;
@@ -1269,9 +1269,13 @@ function rcube_calendar_ui(settings)
       for (slot = dir > 0 ? freebusy_data.start.getTime() : freebusy_data.end.getTime() - sinterval;
             (dir > 0 && slot < freebusy_data.end.getTime()) || (dir < 0 && slot >= freebusy_data.start.getTime());
             slot += sinterval * dir) {
-        slotend = slot + sinterval;
         slotdate.setTime(slot);
-        slotenddate.setTime(slotend);
+        // fix slot if just crossed a DST change
+        if (event.allDay) {
+          fix_date(slotdate);
+          slot = slotdate.getTime();
+        }
+        slotend = slot + sinterval;
 
         if ((dir > 0 && slotend <= eventstart) || (dir < 0 && slot >= eventend))  // skip
           continue;
