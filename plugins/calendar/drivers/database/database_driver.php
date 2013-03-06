@@ -240,8 +240,10 @@ class database_driver extends calendar_driver
       $event = $this->_save_preprocess($event);
       $query = $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
-         (calendar_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, attendees, alarms, notifyat)
+         (calendar_id, created, changed, uid, %s, %s, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, attendees, alarms, notifyat)
          VALUES (?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          $this->rc->db->quote_identifier('start'),
+          $this->rc->db->quote_identifier('end'),
           $this->rc->db->now(),
           $this->rc->db->now()
         ),
@@ -341,9 +343,10 @@ class database_driver extends calendar_driver
                 $sqlresult = $this->rc->db->query(sprintf(
                   "SELECT event_id FROM " . $this->db_events . "
                    WHERE calendar_id IN (%s)
-                   AND start >= ?
+                   AND %s >= ?
                    AND recurrence_id=?",
-                  $this->calendar_ids
+                  $this->calendar_ids,
+                  $this->rc->db->quote_identifier('start')
                   ),
                   $fromdate->format(self::DB_DATE_FORMAT),
                   $master['id']);
@@ -538,9 +541,11 @@ class database_driver extends calendar_driver
         $notify_at = $this->_get_notification(array('alarms' => $event['alarms'], 'start' => $next_start, 'end' => $next_end));
         $query = $this->rc->db->query(sprintf(
           "INSERT INTO " . $this->db_events . "
-           (calendar_id, recurrence_id, created, changed, uid, start, end, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, notifyat)
+           (calendar_id, recurrence_id, created, changed, uid, %s, %s, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, notifyat)
             SELECT calendar_id, ?, %s, %s, uid, ?, ?, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, alarms, ?
             FROM  " . $this->db_events . " WHERE event_id=? AND calendar_id IN (" . $this->calendar_ids . ")",
+            $this->rc->db->quote_identifier('start'),
+            $this->rc->db->quote_identifier('end'),
             $this->rc->db->now(),
             $this->rc->db->now()
           ),
@@ -636,7 +641,7 @@ class database_driver extends calendar_driver
             $query = $this->rc->db->query(
               "DELETE FROM " . $this->db_events . "
                WHERE calendar_id IN (" . $this->calendar_ids . ")
-               AND start >= ?
+               AND " . $this->rc->db->quote_identifier('start') . " >= ?
                AND recurrence_id=?",
               $fromdate->format(self::DB_DATE_FORMAT),
               $master['id']
@@ -836,9 +841,10 @@ class database_driver extends calendar_driver
       $result = $this->rc->db->query(sprintf(
         "SELECT * FROM " . $this->db_events . "
          WHERE calendar_id IN (%s)
-         AND notifyat <= %s AND end > %s",
+         AND notifyat <= %s AND %s > %s",
          join(',', $calendar_ids),
          $this->rc->db->fromunixtime($time),
+         $this->rc->db->quote_identifier('end'),
          $this->rc->db->fromunixtime($time)
        ));
 
