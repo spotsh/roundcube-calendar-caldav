@@ -934,6 +934,7 @@ function rcube_calendar_ui(settings)
         curdate.setTime(t);
         datestr = fc.fullCalendar('formatDate', curdate, date_format);
         if (datestr != lastdate) {
+          if (lastdate && !allday) break;
           dates_row += '<th colspan="' + dayslots + '" class="boxtitle date' + $.fullCalendar.formatDate(curdate, 'ddMMyyyy') + '">' + Q(datestr) + '</th>';
           lastdate = datestr;
         }
