@@ -83,7 +83,10 @@ window.rcmail && rcmail.addEventListener('init', function() {
       kolab_files_list_coltypes();
     }
 
+    // "one file only" commands
     rcmail.env.file_commands = ['files-get'];
+    // "one or more file" commands
+    rcmail.env.file_commands_all = ['files-delete'];
 
     kolab_files_init();
     file_api.folder_list();
@@ -346,11 +349,25 @@ kolab_files_list_select = function(list)
 {
   var selected = list.selection.length;
 
+  rcmail.enable_command(rcmail.env.file_commands_all, selected);
   rcmail.enable_command(rcmail.env.file_commands, selected == 1);
 
     // reset all-pages-selection
 //  if (list.selection.length && list.selection.length != list.rowcount)
 //    rcmail.select_all_mode = false;
+};
+
+kolab_files_selected = function()
+{
+  var files = [];
+  $.each(rcmail.file_list.get_selection(), function(i, v) {
+    var name, row = $('#rcmrow'+v);
+
+    if (row.length == 1 && (name = row.data('file')))
+      files.push(name);
+  });
+
+  return files;
 };
 
 rcube_webmail.prototype.files_sort = function(props)
@@ -392,8 +409,17 @@ rcube_webmail.prototype.files_search_reset = function()
 
 rcube_webmail.prototype.files_folder_delete = function()
 {
-  if (confirm(this.get_label('deletefolderconfirm')))
+  if (confirm(this.get_label('kolab_files.folderdeleteconfirm')))
     file_api.folder_delete(file_api.env.folder);
+};
+
+rcube_webmail.prototype.files_delete = function()
+{
+  if (!confirm(this.get_label('kolab_files.filedeleteconfirm')))
+    return;
+
+  var files = kolab_files_selected();
+  file_api.file_delete(files);
 };
 
 rcube_webmail.prototype.files_upload = function(form)
@@ -414,11 +440,10 @@ rcube_webmail.prototype.files_list_update = function(head)
 
 rcube_webmail.prototype.files_get = function()
 {
-  var id = this.file_list.get_selection();
+  var files = kolab_files_selected();
 
-  if (id = $('#rcmrow'+id).data('file')) {
-    file_api.file_get(id, {'force-download': true});
-  }
+  if (files.length == 1)
+    file_api.file_get(files[0], {'force-download': true});
 };
 
 
@@ -451,9 +476,9 @@ function kolab_files_ui()
   };
 
   // displays error message
-  this.display_message = function(label)
+  this.display_message = function(label, type)
   {
-    return rcmail.display_message(this.t(label));
+    return rcmail.display_message(this.t(label), type);
   };
 
   this.http_error = function(request, status, err)
@@ -544,6 +569,7 @@ function kolab_files_ui()
     this.req = this.set_busy(true, 'loading');
 
     rcmail.enable_command(rcmail.env.file_commands, false);
+    rcmail.enable_command(rcmail.env.file_commands_all, false);
     rcmail.file_list.clear();
 
     this.get('file_list', params, 'file_list_response');
@@ -610,6 +636,8 @@ function kolab_files_ui()
     if (!this.response(response))
       return;
 
+    this.display_message('kolab_files.foldercreatenotice', 'confirmation');
+
     // refresh folders list
     this.folder_list();
   };
@@ -617,7 +645,7 @@ function kolab_files_ui()
   // folder delete request
   this.folder_delete = function(folder)
   {
-    this.req = this.set_busy(true, 'folderdeleting');
+    this.req = this.set_busy(true, 'kolab_files.folderdeleting');
     this.get('folder_delete', {folder: folder}, 'folder_delete_response');
   };
 
@@ -629,6 +657,7 @@ function kolab_files_ui()
 
     this.env.folder = null;
     rcmail.enable_command('files-folder-delete', 'files-folder-rename', false);
+    this.display_message('kolab_files.folderdeletenotice', 'confirmation');
 
     // refresh folders list
     this.folder_list();
@@ -662,6 +691,23 @@ function kolab_files_ui()
     params.file = file;
 
     rcmail.redirect(this.env.url + this.url('file_get', params));
+  };
+
+  // file(s) delete request
+  this.file_delete = function(files)
+  {
+    this.req = this.set_busy(true, 'kolab_files.filedeleting');
+    this.get('file_delete', {folder: this.env.folder, file: files}, 'file_delete_response');
+  };
+
+  // file(s) delete response handler
+  this.file_delete_response = function(response)
+  {
+    if (!this.response(response))
+      return;
+
+    this.display_message('kolab_files.filedeletenotice', 'confirmation');
+    this.file_list();
   };
 
   // file upload request

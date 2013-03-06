@@ -460,8 +460,9 @@ class kolab_files_engine
         ));
 
 
-        $this->rc->output->add_label('deletefolderconfirm', 'folderdeleting',
-          'kolab_files.foldercreating', 'kolab_files.uploading');
+        $this->rc->output->add_label('deletefolderconfirm', 'kolab_files.folderdeleting',
+          'kolab_files.foldercreating', 'kolab_files.uploading', 'kolab_files.filedeleteconfirm',
+          'kolab_files.folderdeleteconfirm', 'kolab_files.filedeleting');
 
         $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
         $this->rc->output->send('kolab_files.files');

@@ -26,8 +26,15 @@ $labels['deletefile'] = 'Delete selected file(s)';
 
 $labels['uploading'] = 'Uploading file(s)...';
 $labels['foldercreating'] = 'Creating folder...';
+$labels['folderdeleting'] = 'Deleting folder...';
+$labels['folderdeleteconfirm'] = 'Are you sure you want to delete selected folder?';
+$labels['folderdeletenotice'] = 'Folder deleted successfully.';
+$labels['foldercreatenotice'] = 'Folder created successfully.';
 $labels['saveallnotice'] = 'Successfully saved $n file(s).';
 $labels['saveallerror'] = 'Saving $n file(s) failed.';
 $labels['attacherror'] = 'Failed to attach file(s) from the cloud';
+$labels['filedeleting'] = 'Deleting file(s)...';
+$labels['filedeleteconfirm'] = 'Are you sure you want to delete selected files?';
+$labels['filedeletenotice'] = 'File(s) deleted successfully.';
 
 ?>
