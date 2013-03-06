@@ -436,6 +436,13 @@ class kolab_driver extends calendar_driver
           // removing the first instance => just move to next occurence
           if ($master['id'] == $event['id']) {
             $recurring = reset($storage->_get_recurring_events($event, $event['start'], null, $event['id'].'-1'));
+
+            // no future instances found: delete the master event (bug #1677)
+            if (!$recurring['start']) {
+              $success = $storage->delete_event($master, $force);
+              break;
+            }
+
             $master['start'] = $recurring['start'];
             $master['end'] = $recurring['end'];
             if ($master['recurrence']['COUNT'])
@@ -455,6 +462,11 @@ class kolab_driver extends calendar_driver
             $master['recurrence']['UNTIL'] = clone $event['start'];
             $master['recurrence']['UNTIL']->sub(new DateInterval('P1D'));
             unset($master['recurrence']['COUNT']);
+
+            // if all future instances are deleted, remove recurrence rule entirely (bug #1677)
+            if ($master['recurrence']['UNTIL']->format('Ymd') == $master['start']->format('Ymd'))
+              $master['recurrence'] = array();
+
             $success = $storage->update_event($master);
             break;
           }
