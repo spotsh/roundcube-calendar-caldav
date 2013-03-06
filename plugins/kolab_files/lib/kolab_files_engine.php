@@ -53,6 +53,19 @@ class kolab_files_engine
             }
             else if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
                 $template = 'message_plugin';
+
+                // add "Save as" button into attachment menu
+                $this->plugin->add_button(array(
+                    'id'         => 'attachmenusaveas',
+                    'name'       => 'attachmenusaveas',
+                    'type'       => 'link',
+                    'wrapper'    => 'li',
+                    'onclick'    => 'return false',
+                    'class'      => 'icon active saveas',
+                    'classact'   => 'icon active saveas',
+                    'innerclass' => 'icon active saveas',
+                    'label'      => 'kolab_files.saveto',
+                    ), 'attachmentmenu');
             }
         }
         else if ($this->rc->task == 'files') {
@@ -495,11 +508,13 @@ class kolab_files_engine
     /**
      * Handler for "save all attachments into cloud" action
      */
-    protected function action_saveall()
+    protected function action_save_file()
     {
         $source = rcube_utils::get_input_value('source', rcube_utils::INPUT_POST);
         $uid    = rcube_utils::get_input_value('uid', rcube_utils::INPUT_POST);
         $dest   = rcube_utils::get_input_value('dest', rcube_utils::INPUT_POST);
+        $id     = rcube_utils::get_input_value('id', rcube_utils::INPUT_POST);
+        $name   = rcube_utils::get_input_value('name', rcube_utils::INPUT_POST);
 
         $temp_dir = unslashify($this->rc->config->get('temp_dir'));
         $storage  = $this->rc->get_storage();
@@ -508,18 +523,25 @@ class kolab_files_engine
         $url      = $request->getUrl();
         $files    = array();
         $errors   = array();
+        $attachments = array();
 
         $request->setMethod(HTTP_Request2::METHOD_POST);
         $request->setHeader('X-Session-Token', $this->get_api_token());
         $url->setQueryVariables(array('method' => 'file_create', 'folder' => $dest));
         $request->setUrl($url);
 
+        foreach ($message->attachments as $attach_prop) {
+            if (empty($id) || $id == $attach_prop->mime_id) {
+                $filename = strlen($name) ? $name : rcmail_attachment_name($attach_prop, true);
+                $attachments[$filename] = $attach_prop;
+            }
+        }
+
         // @TODO: handle error
         // @TODO: implement file upload using file URI instead of body upload
 
-        foreach ($message->attachments as $attach_prop) {
-            $filename = rcmail_attachment_name($attach_prop, true);
-            $path     = tempnam($temp_dir, 'rcmAttmnt');
+        foreach ($attachments as $attach_name => $attach_prop) {
+            $path = tempnam($temp_dir, 'rcmAttmnt');
 
             // save attachment to file
             if ($fp = fopen($path, 'w+')) {
@@ -539,13 +561,13 @@ class kolab_files_engine
             // send request to the API
             try {
                 $request->setBody('');
-                $request->addUpload('file[]', $path, $filename, $attach_prop->mimetype);
+                $request->addUpload('file[]', $path, $attach_name, $attach_prop->mimetype);
                 $response = $request->send();
                 $status   = $response->getStatus();
                 $body     = @json_decode($response->getBody(), true);
 
                 if ($status == 200 && $body['status'] == 'OK') {
-                    $files[] = $filename;
+                    $files[] = $attach_name;
                 }
                 else {
                     throw new Exception($body['reason']);
@@ -583,7 +605,7 @@ class kolab_files_engine
     /**
      * Handler for "add attachments from the cloud" action
      */
-    protected function action_attach()
+    protected function action_attach_file()
     {
         $folder     = rcube_utils::get_input_value('folder', rcube_utils::INPUT_POST);
         $files      = rcube_utils::get_input_value('files', rcube_utils::INPUT_POST);
