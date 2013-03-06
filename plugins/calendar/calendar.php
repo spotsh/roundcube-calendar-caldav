@@ -1383,6 +1383,16 @@ class calendar extends rcube_plugin
     $start = get_input_value('start', RCUBE_INPUT_GPC);
     $end = get_input_value('end', RCUBE_INPUT_GPC);
     
+    // convert dates into unix timestamps
+    if (!empty($start) && !is_numeric($start)) {
+      $dts = new DateTime($start, $this->timezone);
+      $start = $dts->format('U');
+    }
+    if (!empty($end) && !is_numeric($end)) {
+      $dte = new DateTime($end, $this->timezone);
+      $end = $dte->format('U');
+    }
+    
     if (!$start) $start = time();
     if (!$end) $end = $start + 3600;
     
@@ -1420,10 +1430,26 @@ class calendar extends rcube_plugin
     $start = get_input_value('start', RCUBE_INPUT_GPC);
     $end = get_input_value('end', RCUBE_INPUT_GPC);
     $interval = intval(get_input_value('interval', RCUBE_INPUT_GPC));
-    
+    $strformat = $interval > 60 ? 'Ymd' : 'YmdHis';
+
+    // convert dates into unix timestamps
+    if (!empty($start) && !is_numeric($start)) {
+      $dts = new DateTime($start, $this->timezone);
+      $start = $dts->format('U');
+    }
+    if (!empty($end) && !is_numeric($end)) {
+      $dte = new DateTime($end, $this->timezone);
+      $end = $dte->format('U');
+    }
+
     if (!$start) $start = time();
     if (!$end)   $end = $start + 86400 * 30;
     if (!$interval) $interval = 60;  // 1 hour
+    
+    if (!$dte) {
+      $dts = new DateTime('@'.$start);
+      $dts->setTimezone($this->timezone);
+    }
     
     $fblist = $this->driver->get_freebusy_list($email, $start, $end);
     $slots = array();
@@ -1432,7 +1458,9 @@ class calendar extends rcube_plugin
     for ($s = 0, $t = $start; $t <= $end; $s++) {
       $status = self::FREEBUSY_UNKNOWN;
       $t_end = $t + $interval * 60;
-        
+      $dt = new DateTime('@'.$t);
+      $dt->setTimezone($this->timezone);
+
       // determine attendee's status
       if (is_array($fblist)) {
         $status = self::FREEBUSY_FREE;
@@ -1447,13 +1475,24 @@ class calendar extends rcube_plugin
       }
       
       $slots[$s] = $status;
+      $times[$s] = intval($dt->format($strformat));
       $t = $t_end;
     }
+    
+    $dte = new DateTime('@'.$t_end);
+    $dte->setTimezone($this->timezone);
     
     // let this information be cached for 5min
     send_future_expire_header(300);
     
-    echo json_encode(array('email' => $email, 'start' => intval($start), 'end' => intval($t_end), 'interval' => $interval, 'slots' => $slots));
+    echo json_encode(array(
+      'email' => $email,
+      'start' => $dts->format('c'),
+      'end'   => $dte->format('c'),
+      'interval' => $interval,
+      'slots' => $slots,
+      'times' => $times,
+    ));
     exit;
   }
   

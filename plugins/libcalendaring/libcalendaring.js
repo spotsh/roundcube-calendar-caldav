@@ -110,7 +110,7 @@ function rcube_libcalendaring(settings)
      * Convert an ISO 8601 formatted date string from the server into a Date object.
      * Timezone information will be ignored, the server already provides dates in user's timezone.
      */
-    function parseISO8601(s)
+    this.parseISO8601 = function(s)
     {
         // force d to be on check's YMD, for daylight savings purposes
         var fixDate = function(d, check) {
@@ -319,8 +319,8 @@ function rcube_libcalendaring(settings)
         var actions, adismiss, asnooze, alarm, html, event_ids = [];
         for (var i=0; i < alarms.length; i++) {
             alarm = alarms[i];
-            alarm.start = parseISO8601(alarm.start);
-            alarm.end = parseISO8601(alarm.end);
+            alarm.start = this.parseISO8601(alarm.start);
+            alarm.end = this.parseISO8601(alarm.end);
             event_ids.push(alarm.id);
 
             html = '<h3 class="event-title">' + Q(alarm.title) + '</h3>';

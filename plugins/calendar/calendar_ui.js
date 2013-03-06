@@ -74,6 +74,7 @@ function rcube_calendar_ui(settings)
     var parse_datetime = this.parse_datetime;
     var date2unixtime = this.date2unixtime;
     var fromunixtime = this.fromunixtime;
+    var parseISO8601 = this.parseISO8601;
     var init_alarms_edit = this.init_alarms_edit;
 
 
@@ -122,11 +123,25 @@ function rcube_calendar_ui(settings)
       return d;
     };
 
+    // fix date if jumped over a DST change
+    var fix_date = function(date)
+    {
+      if (date.getHours() == 23)
+        date.setTime(date.getTime() + HOUR_MS);
+      else if (date.getHours() > 0)
+        date.setHours(0);
+    };
+
     // turn the given date into an ISO 8601 date string understandable by PHPs strtotime()
     var date2servertime = function(date)
     {
       return date.getFullYear()+'-'+zeropad(date.getMonth()+1)+'-'+zeropad(date.getDate())
           + 'T'+zeropad(date.getHours())+':'+zeropad(date.getMinutes())+':'+zeropad(date.getSeconds());
+    }
+
+    var date2timestring = function(date, dateonly)
+    {
+      return date2servertime(date).replace(/[^0-9]/g, '').substr(0, (dateonly ? 8 : 14));
     }
 
     var zeropad = function(num)
@@ -469,7 +484,7 @@ function rcube_calendar_ui(settings)
         recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();
         interval = $('#eventedit select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
         rrtimes = $('#edit-recurrence-repeat-times').val(event.recurrence ? event.recurrence.COUNT : 1);
-        rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate($.fullCalendar.parseISO8601(event.recurrence.UNTIL), settings['date_format']) : '');
+        rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate(parseISO8601(event.recurrence.UNTIL), settings['date_format']) : '');
         $('#eventedit input.edit-recurrence-until:checked').prop('checked', false);
       
         var weekdays = ['SU','MO','TU','WE','TH','FR','SA'];
@@ -894,10 +909,13 @@ function rcube_calendar_ui(settings)
     {
       if (delta) {
         freebusy_ui.start.setTime(freebusy_ui.start.getTime() + DAY_MS * delta);
+        fix_date(freebusy_ui.start);
+        
         // skip weekends if in workinhoursonly-mode
         if (Math.abs(delta) == 1 && freebusy_ui.workinhoursonly) {
           while (is_weekend(freebusy_ui.start))
             freebusy_ui.start.setTime(freebusy_ui.start.getTime() + DAY_MS * delta);
+          fix_date(freebusy_ui.start);
         }
         
         freebusy_ui.end = new Date(freebusy_ui.start.getTime() + DAY_MS * freebusy_ui.numdays);
@@ -966,7 +984,7 @@ function rcube_calendar_ui(settings)
       
       // if we have loaded free-busy data, show it
       if (!freebusy_ui.loading) {
-        if (date2unixtime(freebusy_ui.start) < freebusy_data.start || date2unixtime(freebusy_ui.end) > freebusy_data.end || freebusy_ui.interval != freebusy_data.interval) {
+        if (freebusy_ui.start < freebusy_data.start || freebusy_ui.end > freebusy_data.end || freebusy_ui.interval != freebusy_data.interval) {
           load_freebusy_data(freebusy_ui.start, freebusy_ui.interval);
         }
         else {
@@ -1070,12 +1088,13 @@ function rcube_calendar_ui(settings)
     // fetch free-busy information for each attendee from server
     var load_freebusy_data = function(from, interval)
     {
-      var start = new Date(from.getTime() - DAY_MS * 2);  // start 1 days before event
+      var start = new Date(from.getTime() - DAY_MS * 2);  // start 2 days before event
+      fix_date(start);
       var end = new Date(start.getTime() + DAY_MS * Math.max(14, freebusy_ui.numdays + 7));   // load min. 14 days
       freebusy_ui.numrequired = 0;
       freebusy_data.all = [];
       freebusy_data.required = [];
-      
+
       // load free-busy information for every attendee
       var domid, email;
       for (var i=0; i < event_attendees.length; i++) {
@@ -1088,7 +1107,7 @@ function rcube_calendar_ui(settings)
             type: 'GET',
             dataType: 'json',
             url: rcmail.url('freebusy-times'),
-            data: { email:email, start:date2unixtime(clone_date(start, 1)), end:date2unixtime(clone_date(end, 2)), interval:interval, _remote:1 },
+            data: { email:email, start:date2servertime(clone_date(start, 1)), end:date2servertime(clone_date(end, 2)), interval:interval, _remote:1 },
             success: function(data) {
               freebusy_ui.loading--;
               
@@ -1102,11 +1121,11 @@ function rcube_calendar_ui(settings)
               }
               
               // copy data to member var
-              var req = attendee.role != 'OPT-PARTICIPANT';
-              var ts = data.start - 0;
-              freebusy_data.start = ts;
+              var ts, req = attendee.role != 'OPT-PARTICIPANT';
+              freebusy_data.start = parseISO8601(data.start);
               freebusy_data[data.email] = {};
               for (var i=0; i < data.slots.length; i++) {
+                ts = data.times[i] + '';
                 freebusy_data[data.email][ts] = data.slots[i];
                 
                 // set totals
@@ -1118,10 +1137,8 @@ function rcube_calendar_ui(settings)
                 if (!freebusy_data.all[ts])
                   freebusy_data.all[ts] = [0,0,0,0];
                 freebusy_data.all[ts][data.slots[i]]++;
-                
-                ts += data.interval * 60;
               }
-              freebusy_data.end = ts;
+              freebusy_data.end = parseISO8601(data.end);
               freebusy_data.interval = data.interval;
 
               // hide loading indicator
@@ -1178,13 +1195,18 @@ function rcube_calendar_ui(settings)
       var domid = String(email).replace(rcmail.identifier_expr, '');
       var row = $('#fbrow' + domid);
       var rowall = $('#fbrowall').children();
-      var ts = date2unixtime(freebusy_ui.start);
-      var fbdata = freebusy_data[email];
-      
+      var dateonly = freebusy_ui.interval > 60,
+        t, ts = date2timestring(freebusy_ui.start, dateonly),
+        curdate = new Date(),
+        fbdata = freebusy_data[email];
+
       if (fbdata && fbdata[ts] !== undefined && row.length) {
+        t = freebusy_ui.start.getTime();
         row.children().each(function(i, cell){
+          curdate.setTime(t);
+          ts = date2timestring(curdate, dateonly);
           cell.className = cell.className.replace('unknown', fbdata[ts] ? status_classes[fbdata[ts]] : 'unknown');
-          
+
           // also update total row if all data was loaded
           if (freebusy_ui.loading == 0 && freebusy_data.all[ts] && (cell = rowall.get(i))) {
             var workinghours = cell.className.indexOf('workinghours') >= 0;
@@ -1200,7 +1222,7 @@ function rcube_calendar_ui(settings)
             cell.className = (workinghours ? 'workinghours ' : 'offhours ') + req_status +  ' all-' + all_status;
           }
           
-          ts += freebusy_ui.interval * 60;
+          t += freebusy_ui.interval * 60000;
         });
       }
     };
@@ -1208,9 +1230,12 @@ function rcube_calendar_ui(settings)
     // write changed event date/times back to form fields
     var update_freebusy_dates = function(start, end)
     {
+      // fix all-day evebt times
       if (me.selected_event.allDay) {
         start.setHours(12);
         start.setMinutes(0);
+        if (end.getHours() == 0)
+          end.setHours(-1);
         end.setHours(13);
         end.setMinutes(0);
       }
@@ -1227,13 +1252,13 @@ function rcube_calendar_ui(settings)
     var freebusy_find_slot = function(dir)
     {
       var event = me.selected_event,
-        eventstart = date2unixtime(event.start),  // calculate with unixtimes
-        eventend = date2unixtime(event.end),
+        eventstart = event.start.getTime(),  // calculate with integers
+        eventend = event.end.getTime(),
         duration = eventend - eventstart,
-        sinterval = freebusy_data.interval * 60,
+        sinterval = freebusy_data.interval * 60000,
         intvlslots = 1,
         numslots = Math.ceil(duration / sinterval),
-        checkdate, slotend, email, curdate;
+        checkdate, slotend, email, ts, slot, slotdate = new Date(), slotenddate = new Date();
 
       // shift event times to next possible slot
       eventstart += sinterval * intvlslots * dir;
@@ -1241,27 +1266,32 @@ function rcube_calendar_ui(settings)
 
       // iterate through free-busy slots and find candidates
       var candidatecount = 0, candidatestart = candidateend = success = false;
-      for (var slot = dir > 0 ? freebusy_data.start : freebusy_data.end - sinterval; (dir > 0 && slot < freebusy_data.end) || (dir < 0 && slot >= freebusy_data.start); slot += sinterval * dir) {
+      for (slot = dir > 0 ? freebusy_data.start.getTime() : freebusy_data.end.getTime() - sinterval;
+            (dir > 0 && slot < freebusy_data.end.getTime()) || (dir < 0 && slot >= freebusy_data.start.getTime());
+            slot += sinterval * dir) {
         slotend = slot + sinterval;
+        slotdate.setTime(slot);
+        slotenddate.setTime(slotend);
+
         if ((dir > 0 && slotend <= eventstart) || (dir < 0 && slot >= eventend))  // skip
           continue;
-        
+
         // respect workingours setting
         if (freebusy_ui.workinhoursonly) {
-          curdate = fromunixtime(dir > 0 || !candidateend ? slot : (candidateend - duration));
-          if (is_weekend(curdate) || (freebusy_data.interval <= 60 && !is_workinghour(curdate))) {  // skip off-hours
+          if (is_weekend(slotdate) || (freebusy_data.interval <= 60 && !is_workinghour(slotdate))) {  // skip off-hours
             candidatestart = candidateend = false;
             candidatecount = 0;
             continue;
           }
         }
-        
+
         if (!candidatestart)
           candidatestart = slot;
-        
+
         // check freebusy data for all attendees
+        ts = date2timestring(slotdate, freebusy_data.interval > 60);
         for (var i=0; i < event_attendees.length; i++) {
-          if (freebusy_ui.attendees[i].role != 'OPT-PARTICIPANT' && (email = freebusy_ui.attendees[i].email) && freebusy_data[email] && freebusy_data[email][slot] > 1) {
+          if (freebusy_ui.attendees[i].role != 'OPT-PARTICIPANT' && (email = freebusy_ui.attendees[i].email) && freebusy_data[email] && freebusy_data[email][ts] > 1) {
             candidatestart = candidateend = false;
             break;
           }
@@ -1282,12 +1312,12 @@ function rcube_calendar_ui(settings)
         // if candidate is big enough, this is it!
         if (candidatecount == numslots) {
           if (dir > 0) {
-            event.start = fromunixtime(candidatestart);
-            event.end = fromunixtime(candidatestart + duration);
+            event.start.setTime(candidatestart);
+            event.end.setTime(candidatestart + duration);
           }
           else {
-            event.end = fromunixtime(candidateend);
-            event.start = fromunixtime(candidateend - duration);
+            event.end.setTime(candidateend);
+            event.start.setTime(candidateend - duration);
           }
           success = true;
           break;
@@ -1457,7 +1487,7 @@ function rcube_calendar_ui(settings)
         type: 'GET',
         dataType: 'html',
         url: rcmail.url('freebusy-status'),
-        data: { email:email, start:date2unixtime(clone_date(event.start, event.allDay?1:0)), end:date2unixtime(clone_date(event.end, event.allDay?2:0)), _remote: 1 },
+        data: { email:email, start:date2servertime(clone_date(event.start, event.allDay?1:0)), end:date2servertime(clone_date(event.end, event.allDay?2:0)), _remote: 1 },
         success: function(status){
           icon.removeClass('loading').addClass(String(status).toLowerCase());
         },
