@@ -656,7 +656,7 @@ class tasklist_database_driver extends tasklist_driver
     private function _get_notification($task)
     {
         if ($task['alarms'] && $task['complete'] < 1 || strpos($task['alarms'], '@') !== false) {
-            $alarm = libcalendaring::get_next_alarm($task);
+            $alarm = libcalendaring::get_next_alarm($task, 'task');
 
         if ($alarm['time'] && $alarm['action'] == 'DISPLAY')
           return date('Y-m-d H:i:s', $alarm['time']);

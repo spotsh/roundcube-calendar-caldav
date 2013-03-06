@@ -100,7 +100,6 @@ function rcube_tasklist_ui(settings)
     var Q = this.quote_html;
     var text2html = this.text2html;
     var event_date_text = this.event_date_text;
-    var format_datetime = this.format_datetime;
     var parse_datetime = this.parse_datetime;
     var date2unixtime = this.date2unixtime;
     var fromunixtime = this.fromunixtime;
@@ -1019,8 +1018,8 @@ function rcube_tasklist_ui(settings)
               if (alarm[0].match(/@(\d+)/)) {
                   var ondate = fromunixtime(parseInt(RegExp.$1));
                   $('#taskedit select.edit-alarm-offset').val('@');
-                  $('#taskedit input.edit-alarm-date').val(format_datetime(ondate, 1));
-                  $('#taskedit input.edit-alarm-time').val(format_datetime(ondate, 2));
+                  $('#taskedit input.edit-alarm-date').val(me.format_datetime(ondate, 1));
+                  $('#taskedit input.edit-alarm-time').val(me.format_datetime(ondate, 2));
               }
               else if (alarm[0].match(/([-+])(\d+)([MHD])/)) {
                   $('#taskedit input.edit-alarm-value').val(RegExp.$2);
