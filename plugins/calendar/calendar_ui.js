@@ -1252,6 +1252,10 @@ function rcube_calendar_ui(settings)
     // attempt to find a time slot where all attemdees are available
     var freebusy_find_slot = function(dir)
     {
+      // exit if free-busy data isn't available yet
+      if (!freebusy_data || !freebusy_data.start)
+        return false;
+
       var event = me.selected_event,
         eventstart = clone_date(event.start, event.allDay ? 1 : 0).getTime(),  // calculate with integers
         eventend = clone_date(event.end, event.allDay ? 2 : 0).getTime(),
