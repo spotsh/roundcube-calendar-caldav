@@ -97,6 +97,7 @@ class kolab_format_contact extends kolab_format
         $nc->setSuffixes(self::array2vector($object['suffix']));
         $this->obj->setNameComponents($nc);
         $this->obj->setName($object['name']);
+        $this->obj->setCategories(self::array2vector($object['categories']));
 
         if (isset($object['nickname']))
             $this->obj->setNickNames(self::array2vector($object['nickname']));
@@ -277,6 +278,7 @@ class kolab_format_contact extends kolab_format
         $object['suffix']     = join(' ', self::vector2array($nc->suffixes()));
         $object['nickname']   = join(' ', self::vector2array($this->obj->nickNames()));
         $object['profession'] = join(' ', self::vector2array($this->obj->titles()));
+        $object['categories'] = self::vector2array($this->obj->categories());
 
         // organisation related properties (affiliation)
         $orgs = $this->obj->affiliations();
