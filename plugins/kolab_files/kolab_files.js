@@ -205,7 +205,6 @@ function kolab_files_selector_dialog()
       // send request
       rcmail.http_post('plugin.kolab_files', {
         act: 'attach-file',
-        folder: file_api.env.folder,
         files: list,
         id: rcmail.env.compose_id,
         uploadid: id
@@ -586,7 +585,7 @@ function kolab_files_ui()
     $('tbody', table).empty();
 
     $.each(response.result, function(key, data) {
-      var c, row = '', col;
+      var c, col, row = '';
 
       i++;
 
@@ -594,7 +593,7 @@ function kolab_files_ui()
         c = rcmail.env.coltypes[c];
         if (c == 'name')
             col = '<td class="name filename ' + file_api.file_type_class(data.type) + '">'
-              + '<span>' + key + '</span></td>';
+              + '<span>' + data.name + '</span></td>';
         else if (c == 'mtime')
           col = '<td class="mtime">' + data.mtime + '</td>';
         else if (c == 'size')
@@ -609,7 +608,7 @@ function kolab_files_ui()
 
       row = $('<tr>')
         .html(row)
-        .attr({id: 'rcmrow' + i, 'data-file': urlencode(key)});
+        .attr({id: 'rcmrow' + i, 'data-file': key});
 
 //      table.append(row);
       rcmail.file_list.insert_row(row.get([0]));
@@ -686,7 +685,6 @@ function kolab_files_ui()
     if (!params)
       params = {};
 
-    params.folder = this.env.folder;
     params.token = this.env.token;
     params.file = file;
 
@@ -697,7 +695,7 @@ function kolab_files_ui()
   this.file_delete = function(files)
   {
     this.req = this.set_busy(true, 'kolab_files.filedeleting');
-    this.get('file_delete', {folder: this.env.folder, file: files}, 'file_delete_response');
+    this.get('file_delete', {file: files}, 'file_delete_response');
   };
 
   // file(s) delete response handler

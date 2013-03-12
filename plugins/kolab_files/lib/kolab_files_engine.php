@@ -608,7 +608,6 @@ class kolab_files_engine
      */
     protected function action_attach_file()
     {
-        $folder     = rcube_utils::get_input_value('folder', rcube_utils::INPUT_POST);
         $files      = rcube_utils::get_input_value('files', rcube_utils::INPUT_POST);
         $uploadid   = rcube_utils::get_input_value('uploadid', rcube_utils::INPUT_POST);
         $COMPOSE_ID = rcube_utils::get_input_value('id', rcube_utils::INPUT_POST);
@@ -648,7 +647,7 @@ class kolab_files_engine
 
             // get file information
             try {
-                $url->setQueryVariables(array('method' => 'file_info', 'folder' => $folder, 'file' => $file));
+                $url->setQueryVariables(array('method' => 'file_info', 'file' => $file));
                 $request->setUrl($url);
                 $response = $request->send();
                 $status   = $response->getStatus();
@@ -676,7 +675,7 @@ class kolab_files_engine
 
             // download file
             try {
-                $url->setQueryVariables(array('method' => 'file_get', 'folder' => $folder, 'file' => $file));
+                $url->setQueryVariables(array('method' => 'file_get', 'file' => $file));
                 $request->setUrl($url);
                 $request->attach($observer);
                 $response = $request->send();
