@@ -718,26 +718,49 @@ class kolab_storage_folder
 
             // save every exception as individual object
             foreach((array)$object['recurrence']['EXCEPTIONS'] as $exception) {
-                $exception['uid'] = $object['uid'] . '-' . $exception['start']->format('Ymd');
-                $exception['recurrence-id'] = $exception['start']->format('Y-m-d');
+                $exception['uid'] = self::recurrence_exception_uid($object['uid'], $exception['start']->format('Ymd'));
                 $exception['sequence'] = $object['sequence'] + 1;
 
-                unset($exception['recurrence'], $exception['organizer'], $exception['attendees']);
-                $this->save($exception, $type, $exception['uid']);
-
-                // set UNTIL date if we have a thisandfuture exception
                 if ($exception['thisandfuture']) {
+                    $exception['recurrence'] = $object['recurrence'];
+
+                    // adjust the recurrence duration of the exception
+                    if ($object['recurrence']['COUNT']) {
+                        $recurrence = new kolab_date_recurrence($object['_formatobj']);
+                        if ($end = $recurrence->end()) {
+                            unset($exception['recurrence']['COUNT']);
+                            $exception['recurrence']['UNTIL'] = new DateTime('@'.$end);
+                        }
+                    }
+
+                    // set UNTIL date if we have a thisandfuture exception
                     $untildate = clone $exception['start'];
                     $untildate->sub(new DateInterval('P1D'));
                     $object['recurrence']['UNTIL'] = $untildate;
                     unset($object['recurrence']['COUNT']);
                 }
-                else if (!$exdates[$exception['start']->format('Y-m-d')])
-                    $object['recurrence']['EXDATE'][] = clone $exception['start'];
+                else {
+                    if (!$exdates[$exception['start']->format('Y-m-d')])
+                        $object['recurrence']['EXDATE'][] = clone $exception['start'];
+                    unset($exception['recurrence']);
+                }
+
+                unset($exception['recurrence']['EXCEPTIONS'], $exception['_formatobj'], $exception['_msguid']);
+                $this->save($exception, $type, $exception['uid']);
             }
 
             unset($object['recurrence']['EXCEPTIONS']);
         }
+    }
+
+    /**
+     * Generate an object UID with the given recurrence-ID in a way that it is
+     * unique (the original UID is not a substring) but still recoverable.
+     */
+    private static function recurrence_exception_uid($uid, $recurrence_id)
+    {
+        $offset = -2;
+        return substr($uid, 0, $offset) . '-' . $recurrence_id . '-' . substr($uid, $offset);
     }
 
     /**
