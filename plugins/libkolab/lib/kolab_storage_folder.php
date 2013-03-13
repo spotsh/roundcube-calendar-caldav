@@ -548,9 +548,9 @@ class kolab_storage_folder
 
             // detect old Kolab 2.0 format
             if (strpos($xmlhead, '<' . $xmltype) !== false && strpos($xmlhead, 'xmlns=') === false)
-                $format_version = 2.0;
+                $format_version = '2.0';
             else
-                $format_version = 3.0; // assume 3.0
+                $format_version = '3.0'; // assume 3.0
         }
 
         // get Kolab format handler for the given type
@@ -587,7 +587,6 @@ class kolab_storage_folder
 
         return false;
     }
-
 
     /**
      * Save an object in this folder.
@@ -659,6 +658,11 @@ class kolab_storage_folder
             }
         }
 
+        // save recurrence exceptions as individual objects due to lack of support in Kolab v2 format
+        if (kolab_storage::$version == '2.0' && $object['recurrence']['EXCEPTIONS']) {
+            $this->save_recurrence_exceptions($object, $type);
+        }
+
         // check IMAP BINARY extension support for 'file' objects
         // allow configuration to workaround bug in Cyrus < 2.4.17
         $rcmail = rcube::get_instance();
@@ -666,6 +670,12 @@ class kolab_storage_folder
 
         // generate and save object message
         if ($raw_msg = $this->build_message($object, $type, $binary)) {
+            // resolve old msguid before saving
+            if ($uid && empty($object['_msguid']) && ($msguid = $this->cache->uid2msguid($uid))) {
+                $object['_msguid'] = $msguid;
+                $object['_mailbox'] = $this->name;
+            }
+
             if (is_array($raw_msg)) {
                 $result = $this->imap->save_message($this->name, $raw_msg[0], $raw_msg[1], true, null, null, $binary);
                 @unlink($raw_msg[0]);
@@ -679,10 +689,6 @@ class kolab_storage_folder
                 $this->imap->delete_message($object['_msguid'], $object['_mailbox']);
                 $this->cache->set($object['_msguid'], false, $object['_mailbox']);
             }
-            else if ($result && $uid && ($msguid = $this->cache->uid2msguid($uid))) {
-                $this->imap->delete_message($msguid, $this->name);
-                $this->cache->set($object['_msguid'], false);
-            }
 
             // update cache with new UID
             if ($result) {
@@ -694,6 +700,45 @@ class kolab_storage_folder
         return $result;
     }
 
+    /**
+     * Save recurrence exceptions as individual objects.
+     * The Kolab v2 format doesn't allow us to save fully embedded exception objects.
+     *
+     * @param array Hash array with event properties
+     * @param string Object type
+     */
+    private function save_recurrence_exceptions(&$object, $type = null)
+    {
+        if ($object['recurrence']['EXCEPTIONS']) {
+            $exdates = array();
+            foreach ((array)$object['recurrence']['EXDATE'] as $exdate) {
+                $key = is_a($exdate, 'DateTime') ? $exdate->format('Y-m-d') : strval($exdate);
+                $exdates[$key] = 1;
+            }
+
+            // save every exception as individual object
+            foreach((array)$object['recurrence']['EXCEPTIONS'] as $exception) {
+                $exception['uid'] = $object['uid'] . '-' . $exception['start']->format('Ymd');
+                $exception['recurrence-id'] = $exception['start']->format('Y-m-d');
+                $exception['sequence'] = $object['sequence'] + 1;
+
+                unset($exception['recurrence'], $exception['organizer'], $exception['attendees']);
+                $this->save($exception, $type, $exception['uid']);
+
+                // set UNTIL date if we have a thisandfuture exception
+                if ($exception['thisandfuture']) {
+                    $untildate = clone $exception['start'];
+                    $untildate->sub(new DateInterval('P1D'));
+                    $object['recurrence']['UNTIL'] = $untildate;
+                    unset($object['recurrence']['COUNT']);
+                }
+                else if (!$exdates[$exception['start']->format('Y-m-d')])
+                    $object['recurrence']['EXDATE'][] = clone $exception['start'];
+            }
+
+            unset($object['recurrence']['EXCEPTIONS']);
+        }
+    }
 
     /**
      * Delete the specified object from this folder.
