@@ -34,7 +34,7 @@ class database_driver extends calendar_driver
   public $attendees = true;
   public $freebusy = false;
   public $attachments = true;
-  public $alarm_types = array('DISPLAY','EMAIL');
+  public $alarm_types = array('DISPLAY');
 
   private $rc;
   private $cal;

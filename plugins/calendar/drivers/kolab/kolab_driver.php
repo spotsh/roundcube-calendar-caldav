@@ -33,7 +33,7 @@ class kolab_driver extends calendar_driver
   public $freebusy = true;
   public $attachments = true;
   public $undelete = true;
-  public $alarm_types = array('DISPLAY','EMAIL');
+  public $alarm_types = array('DISPLAY');
   public $categoriesimmutable = true;
 
   private $rc;
@@ -128,6 +128,7 @@ class kolab_driver extends calendar_driver
         'class_name' => $cal->get_namespace(),
         'default'  => $cal->storage->default,
         'active'   => $cal->storage->is_active(),
+        'owner'    => $cal->get_owner(),
       );
     }
 

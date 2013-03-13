@@ -2,67 +2,68 @@
 
 $labels = array();
 $labels['navtitle'] = 'Aufgaben';
-$labels['lists'] = 'Tasklists';
-$labels['list'] = 'Tasklist';
+$labels['lists'] = 'Aufgabenlisten';
+$labels['list'] = 'Liste';
 $labels['tags'] = 'Tags';
 
-$labels['newtask'] = 'New Task';
-$labels['createnewtask'] = 'Create new Task (e.g. Saturday, Mow the lawn)';
-$labels['createfrommail'] = 'Save as task';
-$labels['mark'] = 'Mark';
-$labels['unmark'] = 'Unmark';
-$labels['edit'] = 'Edit';
+$labels['newtask'] = 'Neue Aufgabe';
+$labels['createnewtask'] = 'Neue Aufgabe eingeben (z.B. Samstag, Rasenmähen)';
+$labels['createfrommail'] = 'Als Aufgabe speichern';
+$labels['mark'] = 'Markieren';
+$labels['unmark'] = 'Markierung aufheben';
+$labels['edit'] = 'Bearbeiten';
 $labels['delete'] = 'Löschen';
 $labels['title'] = 'Titel';
-$labels['description'] = 'Description';
-$labels['datetime'] = 'Date/Time';
-$labels['start'] = 'Start';
-$labels['alarms'] = 'Reminder';
+$labels['description'] = 'Beschreibung';
+$labels['datetime'] = 'Fällig';
+$labels['start'] = 'Beginn';
+$labels['alarms'] = 'Erinnerung';
 
-$labels['all'] = 'All';
-$labels['flagged'] = 'Flagged';
-$labels['complete'] = 'Complete';
-$labels['overdue'] = 'Overdue';
-$labels['today'] = 'Today';
-$labels['tomorrow'] = 'Tomorrow';
-$labels['next7days'] = 'Next 7 days';
-$labels['later'] = 'Later';
-$labels['nodate'] = 'no date';
-$labels['removetag'] = 'Remove';
+$labels['all'] = 'Alle';
+$labels['flagged'] = 'Markiert';
+$labels['complete'] = 'Erledigt';
+$labels['overdue'] = 'Überfällig';
+$labels['today'] = 'Heute';
+$labels['tomorrow'] = 'Morgen';
+$labels['next7days'] = 'Nächste 7 Tage';
+$labels['later'] = 'Später';
+$labels['nodate'] = 'kein Datum';
+$labels['removetag'] = 'Löschen';
 
 $labels['taskdetails'] = 'Details';
-$labels['newtask'] = 'New Task';
-$labels['edittask'] = 'Edit Task';
+$labels['newtask'] = 'Neue Aufgabe';
+$labels['edittask'] = 'Aufgabe bearbeiten';
 $labels['save'] = 'Speichern';
-$labels['cancel'] = 'Cancel';
-$labels['addsubtask'] = 'Add subtask';
-$labels['deletetask'] = 'Delete task';
-$labels['deletethisonly'] = 'Delete this task only';
-$labels['deletewithchilds'] = 'Delete with all subtasks';
+$labels['cancel'] = 'Abbrechen';
+$labels['addsubtask'] = 'Neue Teilaufgabe';
+$labels['deletetask'] = 'Aufgabe löschen';
+$labels['deletethisonly'] = 'Nur diese Aufgabe löschen';
+$labels['deletewithchilds'] = 'Mit allen Teilaufhaben löschen';
 
-$labels['tabsummary'] = 'Summary';
-$labels['tabrecurrence'] = 'Recurrence';
-$labels['tabattachments'] = 'Attachments';
-$labels['tabsharing'] = 'Sharing';
 
-$labels['editlist'] = 'Edit list';
-$labels['createlist'] = 'Add list';
-$labels['listactions'] = 'List options...';
+$labels['tabsummary'] = 'Übersicht';
+$labels['tabrecurrence'] = 'Wiederholung';
+$labels['tabattachments'] = 'Anhänge';
+$labels['tabsharing'] = 'Freigabe';
+
+$labels['editlist'] = 'Liste bearbeiten';
+$labels['createlist'] = 'Neue Liste';
+$labels['listactions'] = 'Listenoptionen...';
 $labels['listname'] = 'Name';
-$labels['showalarms'] = 'Show alarms';
-$labels['import'] = 'Import';
+$labels['showalarms'] = 'Erinnerungen anzeigen';
+$labels['import'] = 'Importieren';
 
 // date words
-$labels['on'] = 'on';
-$labels['at'] = 'at';
-$labels['this'] = 'this';
-$labels['next'] = 'next';
+$labels['on'] = 'am';
+$labels['at'] = 'um';
+$labels['this'] = 'diesen';
+$labels['next'] = 'nächsten';
 
 // mesages
 $labels['savingdata'] = 'Daten werden gespeichert...';
-$labels['errorsaving'] = 'Failed to save data.';
-$labels['notasksfound'] = 'No tasks found for the given criteria';
-$labels['invalidstartduedates'] = 'Start date must not be greater than due date.';
-$labels['deletetasktconfirm'] = 'Do you really want to delete this task?';
-$labels['deleteparenttasktconfirm'] = 'Do you really want to delete this task and all its subtasks?';
-$labels['deletelistconfirm'] = 'Do you really want to delete this list with all its tasks?';
+$labels['errorsaving'] = 'Fehler beim Speichern.';
+$labels['notasksfound'] = 'Für die aktuellen Kriterien wurden keine Aufgaben gefunden.';
+$labels['invalidstartduedates'] = 'Beginn der Aufgabe darf nicht größer als das Enddatum sein.';
+$labels['deletetasktconfirm'] = 'Möchten Sie diese Aufgabe wirklich löschen?';
+$labels['deleteparenttasktconfirm'] = 'Möchten Sie diese Aufgabe inklusive aller Teilaufgaben wirklich löschen?';
+$labels['deletelistconfirm'] = 'Möchten Sie diese Liste mit allen Aufgaben wirklich löschen?';
