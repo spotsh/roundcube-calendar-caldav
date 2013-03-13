@@ -63,6 +63,15 @@
   overflow: auto;
 }
 
+#filelistbox {
+  bottom: 28px;
+  overflow: auto;
+  top: 0;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}
+
 #files-folder-list ul li span.name {
   background: url(../../../../skins/larry/images/listicons.png) 6px 3px no-repeat;
   padding: 6px 8px 2px 32px;
