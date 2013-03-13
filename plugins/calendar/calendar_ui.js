@@ -170,19 +170,20 @@ function rcube_calendar_ui(settings)
     };
     
     // check if the current user is an attendee of this event
-    var is_attendee = function(event, role)
+    var is_attendee = function(event, role, email)
     {
+      var emails = email ? ';'+email : settings.identity.emails;
       for (var i=0; event.attendees && i < event.attendees.length; i++) {
-        if ((!role || event.attendees[i].role == role) && event.attendees[i].email && settings.identity.emails.indexOf(';'+event.attendees[i].email) >= 0)
+        if ((!role || event.attendees[i].role == role) && event.attendees[i].email && emails.indexOf(';'+event.attendees[i].email) >= 0)
           return event.attendees[i];
       }
       return false;
     };
     
     // check if the current user is the organizer
-    var is_organizer = function(event)
+    var is_organizer = function(event, email)
     {
-      return is_attendee(event, 'ORGANIZER') || !event.id;
+      return is_attendee(event, 'ORGANIZER', email) || !event.id;
     };
 
     var load_attachment = function(event, att)
@@ -534,7 +535,7 @@ function rcube_calendar_ui(settings)
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
       $('#edit-attendees-notify')[(notify.checked && organizer ? 'show' : 'hide')]();
-      $('#edit-localchanges-warning')[(has_attendees(event) && !organizer ? 'show' : 'hide')]();
+      $('#edit-localchanges-warning')[(has_attendees(event) && !(organizer || (calendar.owner && is_organizer(event, calendar.owner))) ? 'show' : 'hide')]();
 
       var load_attendees_tab = function()
       {
