@@ -15,7 +15,7 @@ $labels['edit'] = 'Edit';
 $labels['delete'] = 'Delete';
 $labels['title'] = 'Title';
 $labels['description'] = 'Description';
-$labels['datetime'] = 'Date/Time';
+$labels['datetime'] = 'Due';
 $labels['start'] = 'Start';
 $labels['alarms'] = 'Reminder';
 
