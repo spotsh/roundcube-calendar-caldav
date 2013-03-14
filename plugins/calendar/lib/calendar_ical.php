@@ -482,7 +482,7 @@ class calendar_ical
   }
 
   /**
-   * Escape values according to RFC 2426 2.5
+   * Escape values according to RFC 2445 4.3.11
    */
   private function escape($str)
   {
