@@ -192,7 +192,7 @@ class kolab_format_event extends kolab_format_xcal
         }
 
         // read exception event objects
-        if (($exceptions = $this->obj->exceptions()) && $exceptions->size()) {
+        if (($exceptions = $this->obj->exceptions()) && is_object($exceptions) && $exceptions->size()) {
             for ($i=0; $i < $exceptions->size(); $i++) {
                 if (($exobj = $exceptions->get($i))) {
                     $exception = new kolab_format_event($exobj);

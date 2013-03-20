@@ -103,12 +103,12 @@ function kolab_files_upload_input(button)
   file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5})
     .change(function() { rcmail.files_upload('#filesuploadform'); })
     // opacity:0 does the trick, display/visibility doesn't work
-    .css({opacity: 0, cursor: 'pointer', position: 'absolute', top: '10000px', left: '10000px'});
+    .css({opacity: 0, cursor: 'pointer', outline: 'none', position: 'absolute', top: '10000px', left: '10000px'});
 
-  // In FF we need to move the browser file-input's button under the cursor
+  // In FF and IE we need to move the browser file-input's button under the cursor
   // Thanks to the size attribute above we know the length of the input field
-  if (bw.mz)
-    file.css({marginLeft: '-75px'});
+  if (bw.mz || bw.ie)
+    file.css({marginLeft: '-80px'});
 
   // Note: now, I observe problem with cursor style on FF < 4 only
   link.css({overflow: 'hidden', cursor: 'pointer'})
