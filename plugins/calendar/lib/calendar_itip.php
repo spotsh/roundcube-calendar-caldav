@@ -159,7 +159,7 @@ class calendar_itip
     // attach ics file for this event
     $ical = $this->cal->get_ical();
     $ics = $ical->export(array($event), $method);
-    $message->addAttachment($ics, 'text/calendar', 'event.ics', false, '8bit', 'attachment', RCMAIL_CHARSET . "; method=" . $method);
+    $message->addAttachment($ics, 'text/calendar', 'event.ics', false, '8bit', '', RCMAIL_CHARSET . "; method=" . $method);
     
     return $message;
   }
