@@ -246,7 +246,7 @@ abstract class kolab_format_xcal extends kolab_format
 
                 $att = new Attendee;
                 $att->setContact($cr);
-                $att->setPartStat($this->status_map[$attendee['status']]);
+                $att->setPartStat($this->part_status_map[$attendee['status']]);
                 $att->setRole($this->role_map[$attendee['role']] ? $this->role_map[$attendee['role']] : kolabformat::Required);
                 $att->setRSVP((bool)$attendee['rsvp']);
 
