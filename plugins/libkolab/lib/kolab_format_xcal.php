@@ -126,13 +126,15 @@ abstract class kolab_format_xcal extends kolab_format
         for ($i=0; $i < $attvec->size(); $i++) {
             $attendee = $attvec->get($i);
             $cr = $attendee->contact();
-            $object['attendees'][] = array(
-                'role' => $role_map[$attendee->role()],
-                'status' => $part_status_map[$attendee->partStat()],
-                'rsvp' => $attendee->rsvp(),
-                'email' => $cr->email(),
-                'name' => $cr->name(),
-            );
+            if ($cr->email() != $object['organizer']['email']) {
+                $object['attendees'][] = array(
+                    'role' => $role_map[$attendee->role()],
+                    'status' => $part_status_map[$attendee->partStat()],
+                    'rsvp' => $attendee->rsvp(),
+                    'email' => $cr->email(),
+                    'name' => $cr->name(),
+                );
+            }
         }
 
         // read recurrence rule
@@ -240,7 +242,7 @@ abstract class kolab_format_xcal extends kolab_format
             if ($attendee['role'] == 'ORGANIZER') {
                 $object['organizer'] = $attendee;
             }
-            else {
+            else if ($attendee['email'] != $object['organizer']['email']) {
                 $cr = new ContactReference(ContactReference::EmailReference, $attendee['email']);
                 $cr->setName($attendee['name']);
 
