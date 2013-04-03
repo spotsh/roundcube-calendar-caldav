@@ -93,6 +93,12 @@ window.rcmail && rcmail.addEventListener('init', function() {
   }
 });
 
+
+/**********************************************************/
+/*********          Shared functionality         **********/
+/**********************************************************/
+
+// Initializes API object
 function kolab_files_init()
 {
   if (window.file_api)
@@ -111,6 +117,7 @@ function kolab_files_init()
   file_api.translations = rcmail.labels;
 };
 
+// returns API authorization token
 function kolab_files_token()
 {
   // consider the token from parent window more reliable (fresher) than in framed window
@@ -118,11 +125,7 @@ function kolab_files_token()
   return (window.parent && parent.rcmail && parent.rcmail.env.files_token) || rcmail.env.files_token;
 };
 
-
-/**********************************************************/
-/*********  Plugin functionality in other tasks  **********/
-/**********************************************************/
-
+// folder selection dialog
 function kolab_directory_selector_dialog(id)
 {
   var dialog = $('#files-dialog'), buttons = {},
@@ -157,10 +160,10 @@ function kolab_directory_selector_dialog(id)
     }
 
     rcmail.http_post('plugin.kolab_files', request, lock);
-    $('#files-dialog').dialog('destroy').hide();
+    dialog.dialog('destroy').hide();
   };
   buttons[rcmail.gettext('kolab_files.cancel')] = function () {
-    $('#files-dialog').dialog('destroy').hide();
+    dialog.dialog('destroy').hide();
   };
 
   // show dialog window
@@ -183,6 +186,7 @@ function kolab_directory_selector_dialog(id)
   }
 };
 
+// file selection dialog
 function kolab_files_selector_dialog()
 {
   var dialog = $('#files-compose-dialog'), buttons = {};
@@ -193,7 +197,7 @@ function kolab_files_selector_dialog()
       list.push($(this).data('file'));
     });
 
-    $('#files-compose-dialog').dialog('destroy').hide();
+    dialog.dialog('destroy').hide();
 
     if (list.length) {
       // display upload indicator and cancel button
@@ -212,7 +216,7 @@ function kolab_files_selector_dialog()
     }
   };
   buttons[rcmail.gettext('kolab_files.cancel')] = function () {
-    $('#files-compose-dialog').dialog('destroy').hide();
+    dialog.dialog('destroy').hide();
   };
 
   // show dialog window
@@ -248,6 +252,94 @@ function kolab_files_attach_menu_open(p)
     return kolab_directory_selector_dialog(id);
   });
 };
+
+// folder creation dialog
+function kolab_files_folder_create_dialog()
+{
+  var dialog = $('#files-folder-create-dialog'),
+    buttons = {},
+    select = $('select[name="parent"]', dialog).html(''),
+    input = $('input[name="name"]', dialog).val('');
+
+  buttons[rcmail.gettext('kolab_files.create')] = function () {
+    var folder = '', name = input.val(), parent = select.val();
+
+    if (!name)
+      return;
+
+    if (parent)
+      folder = parent + file_api.env.directory_separator;
+
+    folder += name;
+
+    file_api.folder_create(folder);
+    dialog.dialog('destroy').hide();
+  };
+  buttons[rcmail.gettext('kolab_files.cancel')] = function () {
+    dialog.dialog('destroy').hide();
+  };
+
+  // show dialog window
+  dialog.dialog({
+    modal: true,
+    resizable: !bw.ie6,
+    closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
+    title: rcmail.gettext('kolab_files.foldercreate'),
+//    close: function() { rcmail.dialog_close(); },
+    buttons: buttons,
+    minWidth: 400,
+    minHeight: 300,
+    width: 500,
+    height: 400
+    }).show();
+
+  // build parent selector
+  select.append($('<option>').val('').text('---'));
+  $.each(file_api.env.folders, function(i, f) {
+    var n, option = $('<option>'), name = escapeHTML(f.name);
+
+    for (n=0; n<f.depth; n++)
+      name = '&nbsp;&nbsp;&nbsp;' + name;
+
+    option.val(i).html(name).appendTo(select);
+
+    if (i == file_api.env.folder)
+      option.attr('selected', true);
+  });
+};
+
+// smart upload button
+function kolab_files_upload_input(button)
+{
+  var link = $(button),
+    file = $('<input>'),
+    offset = link.offset();
+
+  file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5})
+    .change(function() { rcmail.files_upload('#filesuploadform'); })
+    // opacity:0 does the trick, display/visibility doesn't work
+    .css({opacity: 0, cursor: 'pointer', outline: 'none', position: 'absolute', top: '10000px', left: '10000px'});
+
+  // In FF and IE we need to move the browser file-input's button under the cursor
+  // Thanks to the size attribute above we know the length of the input field
+  if (bw.mz || bw.ie)
+    file.css({marginLeft: '-80px'});
+
+  // Note: now, I observe problem with cursor style on FF < 4 only
+  link.css({overflow: 'hidden', cursor: 'pointer'})
+    // place button under the cursor
+    .mousemove(function(e) {
+      if (rcmail.commands['files-upload'])
+        file.css({top: (e.pageY - offset.top - 10) + 'px', left: (e.pageX - offset.left - 10) + 'px'});
+      // move the input away if button is disabled
+      else
+        $(this).mouseleave();
+    })
+    .mouseleave(function() { file.css({top: '10000px', left: '10000px'}); })
+    .attr('onclick', '') // remove default button action
+    .append(file);
+};
+
 
 /***********************************************************/
 /**********          Main functionality           **********/
@@ -534,12 +626,12 @@ function kolab_files_ui()
         row.addClass('virtual');
       else
         row.mouseenter(function() {
-          if (rcmail.file_list.drag_active)
-            $(this).addClass('droptarget');
+            if (rcmail.file_list && rcmail.file_list.drag_active)
+              $(this).addClass('droptarget');
           })
           .mouseleave(function() {
-          if (rcmail.file_list.drag_active)
-            $(this).removeClass('droptarget');
+            if (rcmail.file_list && rcmail.file_list.drag_active)
+              $(this).removeClass('droptarget');
           });
 
       list.append(row);
@@ -658,7 +750,7 @@ function kolab_files_ui()
         c = rcmail.env.coltypes[c];
         if (c == 'name')
             col = '<td class="name filename ' + file_api.file_type_class(data.type) + '">'
-              + '<span>' + data.name + '</span></td>';
+              + '<span>' + escapeHTML(data.name) + '</span></td>';
         else if (c == 'mtime')
           col = '<td class="mtime">' + data.mtime + '</td>';
         else if (c == 'size')

@@ -188,7 +188,8 @@
 /* plugin dialogs */
 
 #files-dialog,
-#files-compose-dialog {
+#files-compose-dialog,
+#files-folder-create-dialog {
   display: none;
 }
 
@@ -220,19 +221,6 @@
   left: 200px;
   right: 0;
   box-shadow: none;
-}
-
-#files-folder-create {
-  background-color: white;
-  padding: 10px;
-  bottom: 10px;
-  left: 5px;
-  top: auto;
-  z-index: 1001; /* for use in modal dialog window */
-}
-
-#folder-create-form {
-  margin-bottom: 10px;
 }
 
 #files-compose-dialog #searchmenulink {

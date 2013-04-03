@@ -4,6 +4,7 @@ $labels['files'] = 'Files';
 $labels['saveall'] = 'Save all to cloud...';
 $labels['saveto'] = 'Save to cloud...';
 $labels['saveas'] = 'Save as:';
+$labels['create'] = 'Create';
 $labels['save'] = 'Save';
 $labels['cancel'] = 'Cancel';
 $labels['fromcloud'] = 'From cloud...';
@@ -13,6 +14,8 @@ $labels['foldercreate'] = 'Create folder';
 $labels['folderrename'] = 'Rename folder';
 $labels['folderdelete'] = 'Delete folder';
 
+$labels['folderinside'] = 'Insert inside';
+$labels['foldername'] = 'Folder name';
 $labels['name'] = 'Name';
 $labels['mtime'] = 'Modified';
 
