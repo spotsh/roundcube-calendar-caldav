@@ -6,13 +6,11 @@
     <div id="folderlistbox" class="uibox listbox">
         <div id="files-folder-list" class="scroller withfooter"></div>
         <div id="folderlist-footer" class="boxfooter">
-            <roundcube:button name="foldercreatelink" id="foldercreatelink" type="link" onclick="kolab_files_folder_form()" title="createfolder" class="listbutton add" classAct="listbutton add" innerClass="inner" content="+" />
+            <roundcube:button name="foldercreatelink" id="foldercreatelink" type="link" onclick="kolab_files_folder_create_dialog()" title="createfolder" class="listbutton add" classAct="listbutton add" innerClass="inner" content="+" />
         </div>
     </div>
-    <div id="files-folder-create" class="popupmenu">
-        <roundcube:object name="folder-create-form" />
-        <input id="folder-create-save-button" onclick="kolab_directory_create()" type="button" class="button mainaction" value="<roundcube:label name="create" />">
-        <input id="folder-create-cancel-button" onclick="kolab_directory_cancel()" type="button" class="button" value="<roundcube:label name="cancel" />">
-    </div>
+</div>
+<div id="files-folder-create-dialog">
+    <roundcube:object name="folder-create-form" />
 </div>
 <script src="plugins/kolab_files/skins/larry/ui.js" type="text/javascript"></script>

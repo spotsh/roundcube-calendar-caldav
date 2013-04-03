@@ -91,14 +91,14 @@ class kolab_files_engine
             $this->rc->output->set_env('files_url', $this->url . '/api/');
             $this->rc->output->set_env('files_token', $this->get_api_token());
 
-            if ($this->rc->task != 'files') {
-                // register template objects for dialogs
-                $this->rc->output->add_handlers(array(
-                    'folder-create-form' => array($this, 'folder_create_form'),
-                    'file-search-form'   => array($this, 'file_search_form'),
-                    'filelist'           => array($this, 'file_list'),
-                ));
+            // register template objects for dialogs (and main interface)
+            $this->rc->output->add_handlers(array(
+                'folder-create-form' => array($this, 'folder_create_form'),
+                'file-search-form'   => array($this, 'file_search_form'),
+                'filelist'           => array($this, 'file_list'),
+            ));
 
+            if ($this->rc->task != 'files') {
                 // add dialog content at the end of page body
                 $this->rc->output->add_footer(
                     $this->rc->output->parse('kolab_files.' . $template, false, false));
@@ -130,7 +130,7 @@ class kolab_files_engine
     }
 
     /**
-     * Template object for folder creation form in "Save as" dialog
+     * Template object for folder creation form
      */
     public function folder_create_form($attrib)
     {
@@ -139,19 +139,23 @@ class kolab_files_engine
             $attrib['id'] = 'folder-create-form';
         }
 
-        $input_name = new html_inputfield(array('name' => 'folder_name'));
-        $out = $input_name->show();
+        $input_name    = new html_inputfield(array('id' => 'folder-name', 'name' => 'name', 'size' => 30));
+        $select_parent = new html_select(array('id' => 'folder-parent', 'name' => 'parent'));
+        $table         = new html_table(array('cols' => 2, 'class' => 'propform'));
 
-//        $input_parent = new html_checkbox(array('name' => 'folder_parent', 'checked' => true, 'value' => 1));
-//        $out .= html::label(null, $input_parent->show() . $this->plugin->gettext('assubfolder'));
+        $table->add('title', html::label('folder-name', Q($this->plugin->gettext('foldername'))));
+        $table->add(null, $input_name->show());
+        $table->add('title', html::label('folder-parent', Q($this->plugin->gettext('folderinside'))));
+        $table->add(null, $select_parent->show());
+
+        $out = $table->show();
 
         // add form tag around text field
         if (empty($attrib['form'])) {
             $out = $this->rc->output->form_tag($attrib, $out);
         }
 
-        $this->rc->output->add_label('kolab_files.foldercreating');
-
+        $this->rc->output->add_label('kolab_files.foldercreating', 'kolab_files.create');
         $this->rc->output->add_gui_object('folder-create-form', $attrib['id']);
 
         return $out;
@@ -452,14 +456,6 @@ class kolab_files_engine
 
     protected function action_index()
     {
-        // register template objects
-        $this->rc->output->add_handlers(array(
-//            'folderlist' => array($this, 'folder_list'),
-            'filelist' => array($this, 'file_list'),
-            'file-search-form' => array($this, 'file_search_form'),
-        ));
-
-
         $this->rc->output->add_label('deletefolderconfirm', 'kolab_files.folderdeleting',
           'kolab_files.foldercreating', 'kolab_files.uploading', 'kolab_files.filedeleteconfirm',
           'kolab_files.folderdeleteconfirm', 'kolab_files.filedeleting', 'kolab_files.filedeletenotice',

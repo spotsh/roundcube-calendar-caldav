@@ -3,9 +3,6 @@
 <head>
 <title><roundcube:object name="pagetitle" /></title>
 <roundcube:include file="/includes/links.html" />
-<!--
-<link rel="stylesheet" type="text/css" href="/settings.css" />
--->
 <script src="plugins/kolab_files/skins/larry/ui.js" type="text/javascript"></script>
 </head>
 <body class="files noscroll">
@@ -36,7 +33,7 @@
     <div id="files-folder-list" class="scroller withfooter">
     </div>
     <div id="folderlist-footer" class="boxfooter">
-        <roundcube:button name="folder-create" type="link" title="kolab_files.foldercreate" class="listbutton add" classAct="listbutton add" innerClass="inner" content="+" onclick="kolab_files_folder_create()" /><roundcube:button name="folderoptions" id="folderoptionslink" type="link" title="moreactions" class="listbutton groupactions" onclick="UI.show_popup('folderoptions', undefined, {above: 1});return false" innerClass="inner" content="&#9881;" />
+        <roundcube:button name="folder-create" type="link" title="kolab_files.foldercreate" class="listbutton add" classAct="listbutton add" innerClass="inner" content="+" onclick="kolab_files_folder_create_dialog()" /><roundcube:button name="folderoptions" id="folderoptionslink" type="link" title="moreactions" class="listbutton groupactions" onclick="UI.show_popup('folderoptions', undefined, {above: 1});return false" innerClass="inner" content="&#9881;" />
     </div>
 </div>
 
@@ -51,11 +48,17 @@
 
 <div id="folderoptions" class="popupmenu">
     <ul id="folderoptionsmenu" class="toolbarmenu">
+<!--
         <li><roundcube:button command="files-folder-edit" label="edit" classAct="active" /></li>
+-->
         <li><roundcube:button command="files-folder-delete" label="delete" classAct="active" /></li>
         <li><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
         <roundcube:container name="filesfolderoptions" id="folderoptionsmenu" />
     </ul>
+</div>
+
+<div id="files-folder-create-dialog">
+    <roundcube:object name="folder-create-form" />
 </div>
 
 <div id="listoptions" class="propform popupdialog">
