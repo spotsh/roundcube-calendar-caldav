@@ -27,8 +27,10 @@ class kolab_storage
 {
     const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
     const CTYPE_KEY_PRIVATE = '/private/vendor/kolab/folder-type';
-    const COLOR_KEY_SHARED = '/shared/vendor/kolab/color';
+    const COLOR_KEY_SHARED  = '/shared/vendor/kolab/color';
     const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
+    const NAME_KEY_SHARED   = '/shared/vendor/kolab/name';
+    const NAME_KEY_PRIVATE  = '/private/vendor/kolab/name';
 
     public static $version = '3.0';
     public static $last_error;
@@ -331,18 +333,25 @@ class kolab_storage
             $result = self::folder_create($folder, $prop['type'], $prop['subscribed'], $prop['active']);
         }
 
-        // save color in METADATA
+        // save displayname and color in METADATA
         // TODO: also save 'showalarams' and other properties here
+        if ($result) {
+            $ns = null;
+            foreach (array('color'       => array(self::COLOR_KEY_SHARED,self::COLOR_KEY_PRIVATE),
+                           'displayname' => array(self::NAME_KEY_SHARED,self::NAME_KEY_PRIVATE)) as $key => $metakeys) {
+                if (!empty($prop[$key])) {
+                    if (!isset($ns))
+                        $ns = self::$imap->folder_namespace($folder);
 
-        if ($result && $prop['color']) {
-            $meta_saved = false;
-            $ns = self::$imap->folder_namespace($folder);
-            if ($ns == 'personal')  // save in shared namespace for personal folders
-                $meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_SHARED => $prop['color']));
-            if (!$meta_saved)    // try in private namespace
-                $meta_saved = self::$imap->set_metadata($folder, array(self::COLOR_KEY_PRIVATE => $prop['color']));
-            if ($meta_saved)
-                unset($prop['color']);  // unsetting will prevent fallback to local user prefs
+                    $meta_saved = false;
+                    if ($ns == 'personal')  // save in shared namespace for personal folders
+                        $meta_saved = self::$imap->set_metadata($folder, array($metakeys[0] => $prop[$key]));
+                    if (!$meta_saved)    // try in private namespace
+                        $meta_saved = self::$imap->set_metadata($folder, array($metakeys[1] => $prop[$key]));
+                    if ($meta_saved)
+                        unset($prop[$key]);  // unsetting will prevent fallback to local user prefs
+                }
+            }
         }
 
         return $result ? $folder : false;
@@ -361,6 +370,12 @@ class kolab_storage
     public static function object_name($folder, &$folder_ns=null)
     {
         self::setup();
+
+        // find custom display name in folder METADATA
+        $metadata = self::$imap->get_metadata($folder, array(self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED));
+        if (($name = $metadata[$folder][self::NAME_KEY_PRIVATE]) || ($name = $metadata[$folder][self::NAME_KEY_SHARED])) {
+            return $name;
+        }
 
         $found     = false;
         $namespace = self::$imap->get_namespace();
@@ -493,33 +508,30 @@ class kolab_storage
                 }
             }
 
-            $names[$name] = rcube_charset::convert($name, 'UTF7-IMAP');
+            $names[$name] = self::object_name($name);
         }
 
         // Make sure parent folder is listed (might be skipped e.g. if it's namespace root)
         if ($p_len && !isset($names[$parent])) {
-            $names[$parent] = rcube_charset::convert($parent, 'UTF7-IMAP');
+            $names[$parent] = self::object_name($parent);
         }
 
         // Sort folders list
         asort($names, SORT_LOCALE_STRING);
-
-        $folders = array_keys($names);
-        $names   = array();
 
         // Build SELECT field of parent folder
         $attrs['is_escaped'] = true;
         $select = new html_select($attrs);
         $select->add('---', '');
 
-        foreach ($folders as $name) {
-            $imap_name = $name;
-            $name      = $origname = self::object_name($name);
+        $listnames = array();
+        foreach (array_keys($names) as $imap_name) {
+            $name = $origname = $names[$imap_name];
 
             // find folder prefix to truncate
-            for ($i = count($names)-1; $i >= 0; $i--) {
-                if (strpos($name, $names[$i].' &raquo; ') === 0) {
-                    $length = strlen($names[$i].' &raquo; ');
+            for ($i = count($listnames)-1; $i >= 0; $i--) {
+                if (strpos($name, $listnames[$i].' &raquo; ') === 0) {
+                    $length = strlen($listnames[$i].' &raquo; ');
                     $prefix = substr($name, 0, $length);
                     $count  = count(explode(' &raquo; ', $prefix));
                     $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
@@ -527,7 +539,7 @@ class kolab_storage
                 }
             }
 
-            $names[] = $origname;
+            $listnames[] = $origname;
             $select->add($name, $imap_name);
         }
 

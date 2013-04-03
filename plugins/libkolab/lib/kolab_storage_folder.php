@@ -49,6 +49,7 @@ class kolab_storage_folder
     public $cache;
 
     private $type_annotation;
+    private $namespace;
     private $imap;
     private $info;
     private $idata;
@@ -182,7 +183,9 @@ class kolab_storage_folder
      */
     public function get_namespace()
     {
-        return $this->imap->folder_namespace($this->name);
+        if (!isset($this->namespace))
+            $this->namespace = $this->imap->folder_namespace($this->name);
+        return $this->namespace;
     }
 
 
@@ -203,7 +206,18 @@ class kolab_storage_folder
 
 
     /**
-     * Get the color value stores in metadata
+     * Get the display name value of this folder
+     *
+     * @return string Folder name
+     */
+    public function get_name()
+    {
+        return kolab_storage::object_name($this->name, $this->namespace);
+    }
+
+
+    /**
+     * Get the color value stored in metadata
      *
      * @param string Default color value to return if not set
      * @return mixed Color value from IMAP metadata or $default is not set
