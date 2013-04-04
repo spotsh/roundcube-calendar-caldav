@@ -86,7 +86,7 @@ window.rcmail && rcmail.addEventListener('init', function() {
     // "one file only" commands
     rcmail.env.file_commands = ['files-get'];
     // "one or more file" commands
-    rcmail.env.file_commands_all = ['files-delete'];
+    rcmail.env.file_commands_all = ['files-delete', 'files-move', 'files-copy'];
 
     kolab_files_init();
     file_api.folder_list();
@@ -448,15 +448,35 @@ kolab_files_list_select = function(list)
 //    rcmail.select_all_mode = false;
 };
 
-kolab_files_drag_end = function()
+kolab_files_drag_end = function(e)
 {
   var folder = $('#files-folder-list li.droptarget').removeClass('droptarget');
 
   if (folder.length) {
     folder = folder.data('folder');
 
-    file_api.file_move(kolab_files_selected(), folder);
+    var modkey = rcube_event.get_modifier(e),
+      menu = rcmail.gui_objects.file_dragmenu;
+
+    if (menu && modkey == SHIFT_KEY && rcmail.commands['files-copy']) {
+      var pos = rcube_event.get_mouse_pos(e);
+      rcmail.env.drag_target = folder;
+      $(menu).css({top: (pos.y-10)+'px', left: (pos.x-10)+'px'}).show();
+      return;
+    }
+
+    rcmail.command('files-move', folder);
   }
+};
+
+kolab_files_drag_menu_action = function(command)
+{
+  var menu = rcmail.gui_objects.file_dragmenu;
+
+  if (menu)
+    $(menu).hide();
+
+  rcmail.command(command, rcmail.env.drag_target);
 };
 
 kolab_files_selected = function()
@@ -527,6 +547,18 @@ rcube_webmail.prototype.files_delete = function()
 
   var files = kolab_files_selected();
   file_api.file_delete(files);
+};
+
+rcube_webmail.prototype.files_move = function(folder)
+{
+  var files = kolab_files_selected();
+  file_api.file_move(files, folder);
+};
+
+rcube_webmail.prototype.files_copy = function(folder)
+{
+  var files = kolab_files_selected();
+  file_api.file_copy(files, folder);
 };
 
 rcube_webmail.prototype.files_upload = function(form)
@@ -848,6 +880,30 @@ function kolab_files_ui()
 
     this.display_message('kolab_files.filemovenotice', 'confirmation');
     this.file_list();
+  };
+
+  // file(s) copy request
+  this.file_copy = function(files, folder)
+  {
+    if (!files || !files.length || !folder)
+      return;
+
+    var list = {};
+    $.each(files, function(i, v) {
+      list[v] = folder + file_api.env.directory_separator + file_api.file_name(v);
+    });
+
+    this.req = this.set_busy(true, 'kolab_files.filecopying');
+    this.get('file_copy', {file: list}, 'file_copy_response');
+  };
+
+  // file(s) copy response handler
+  this.file_copy_response = function(response)
+  {
+    if (!this.response(response))
+      return;
+
+    this.display_message('kolab_files.filecopynotice', 'confirmation');
   };
 
   // file upload request

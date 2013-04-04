@@ -37,9 +37,11 @@ $labels['saveallnotice'] = 'Successfully saved $n file(s).';
 $labels['saveallerror'] = 'Saving $n file(s) failed.';
 $labels['attacherror'] = 'Failed to attach file(s) from the cloud';
 $labels['filemoving'] = 'Moving file(s)...';
+$labels['filecopying'] = 'Copying file(s)...';
 $labels['filedeleting'] = 'Deleting file(s)...';
 $labels['filedeleteconfirm'] = 'Are you sure you want to delete selected files?';
 $labels['filedeletenotice'] = 'File(s) deleted successfully.';
 $labels['filemovenotice'] = 'File(s) moved successfully.';
+$labels['filecopynotice'] = 'File(s) copied successfully.';
 
 ?>

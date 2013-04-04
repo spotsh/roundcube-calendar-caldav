@@ -99,6 +99,13 @@
 	</div>
 </div>
 
+<div id="dragfilemenu" class="popupmenu">
+	<ul class="toolbarmenu">
+		<li><roundcube:button command="files-move" onclick="return kolab_files_drag_menu_action('files-move')" label="move" classAct="active" /></li>
+		<li><roundcube:button command="files-copy" onclick="return kolab_files_drag_menu_action('files-copy')" label="copy" classAct="active" /></li>
+	</ul>
+</div>
+
 <roundcube:include file="/includes/footer.html" />
 <script type="text/javascript">
 kolab_files_ui_init();

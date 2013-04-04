@@ -6,6 +6,12 @@ function kolab_files_ui_init()
   $(document).ready(function() {
     rcmail.addEventListener('menu-open', kolab_files_show_listoptions);
     rcmail.addEventListener('menu-save', kolab_files_save_listoptions);
+
+    var dragmenu = $('#dragfilemenu');
+    if (dragmenu.length) {
+      rcmail.gui_object('file_dragmenu', 'dragfilemenu');
+      UI.add_popup('dragfilemenu', {sticky: 1});
+    }
   });
 
   kolab_files_upload_input('#filestoolbar a.upload');
