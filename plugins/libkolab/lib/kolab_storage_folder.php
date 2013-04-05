@@ -947,10 +947,11 @@ class kolab_storage_folder
         // save object attachments as separate parts
         foreach ((array)$object['_attachments'] as $key => $att) {
             if (empty($att['content']) && !empty($att['id'])) {
+                // @TODO: use IMAP CATENATE to skip attachment fetch+push operation
                 $msguid = !empty($object['_msguid']) ? $object['_msguid'] : $object['uid'];
                 if ($is_file) {
                     $att['path'] = tempnam($temp_dir, 'rcmAttmnt');
-                    if (($fp = fopen($att['path'], 'w')) && $this->get_attachment($msguid, $att['id'], $object['_mailbox'], false, $fp)) {
+                    if (($fp = fopen($att['path'], 'w')) && $this->get_attachment($msguid, $att['id'], $object['_mailbox'], false, $fp, true)) {
                         fclose($fp);
                     }
                     else {
@@ -958,7 +959,7 @@ class kolab_storage_folder
                     }
                 }
                 else {
-                    $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox']);
+                    $att['content'] = $this->get_attachment($msguid, $att['id'], $object['_mailbox'], false, null, true);
                 }
             }
 
