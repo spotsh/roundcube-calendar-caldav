@@ -178,7 +178,7 @@ class kolab_folders extends rcube_plugin
         // Don't allow changing type of shared folder, according to ACL
         if (strlen($mbox)) {
             $options = $storage->folder_info($mbox);
-            if ($options['namespace'] != 'personal' && !in_array('a', $options['rights'])) {
+            if ($options['namespace'] != 'personal' && !in_array('a', (array)$options['rights'])) {
                 if (in_array($ctype, $this->types)) {
                     $value = $this->gettext('foldertype'.$ctype);
                 }
