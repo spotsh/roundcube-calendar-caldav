@@ -29,5 +29,12 @@ $labels['notsupported'] = 'Your server does not support metadata/annotations';
 $labels['devicedeleteconfirm'] = 'Do you really want to delete the configuration for this device?';
 $labels['successfullydeleted'] = 'The device configuration was successfully removed';
 $labels['devicenotfound'] = 'Unable to read device configuration';
+$labels['devicetype'] = 'Device type';
+$labels['acsversion'] = 'Protocol version';
+$labels['useragent'] = 'User agent';
+$labels['friendlyname'] = 'Friendly name';
+$labels['os'] = 'Operating system';
+$labels['oslanguage'] = 'OS language';
+$labels['phonenumber'] = 'Phone number';
 
 ?>

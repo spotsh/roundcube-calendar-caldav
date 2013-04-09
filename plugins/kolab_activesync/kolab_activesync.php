@@ -330,7 +330,14 @@ class kolab_activesync extends rcube_plugin
             self::ASYNC_KEY => $this->serialize_metadata($metadata)));
     }
 
-
+    /**
+     * Device update
+     *
+     * @param array  $device Device data
+     * @param string $id     Device ID
+     *
+     * @return bool True on success, False on failure
+     */
     public function device_update($device, $id)
     {
         $devices_list = $this->list_devices();
@@ -361,7 +368,6 @@ class kolab_activesync extends rcube_plugin
 
         return $result;
     }
-
 
     /**
      * Device delete.
@@ -427,6 +433,31 @@ class kolab_activesync extends rcube_plugin
         return $result;
     }
 
+    /**
+     * Device information (from syncroton database)
+     *
+     * @param string $id  Device ID
+     *
+     * @return array Device data
+     */
+    public function device_info($id)
+    {
+        $db    = $this->rc->get_dbh();
+        $table = $db->table_name('syncroton_device');
+
+        if (in_array($table, $db->list_tables())) {
+            $fields = array('devicetype', 'acsversion', 'useragent', 'friendlyname', 'os',
+                'oslanguage', 'phonenumber');
+
+            $result = $db->query("SELECT " . $db->array2list($fields, 'ident')
+                . " FROM $table WHERE owner_id = ? AND id = ?",
+                $this->rc->user->ID, $id);
+
+            if ($result && ($sql_arr = $db->fetch_assoc($result))) {
+                return $sql_arr;
+            }
+        }
+    }
 
     /**
      * Helper method to decode saved IMAP metadata

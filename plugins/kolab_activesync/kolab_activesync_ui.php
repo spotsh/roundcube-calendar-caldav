@@ -80,6 +80,18 @@ class kolab_activesync_ui
         $table->add('title', $this->plugin->gettext('imageformat'));
         $table->add(null, html::label($field_id, $checkbox->show() . ' ' . $this->plugin->gettext('laxpiclabel')));
 */
+        // read-only device information
+        $info = $this->plugin->device_info($this->device['ID']);
+
+        if (!empty($info)) {
+            foreach ($info as $key => $value) {
+                if ($value) {
+                    $table->add('title', Q($this->plugin->gettext($key)));
+                    $table->add(null, Q($value));
+                }
+            }
+        }
+
         if ($attrib['form']) {
             $this->rc->output->add_gui_object('editform', $attrib['form']);
         }
