@@ -54,6 +54,9 @@ class kolab_folders extends rcube_plugin
         $this->add_hook('folder_delete', array($this, 'folder_save'));
         $this->add_hook('folder_rename', array($this, 'folder_save'));
         $this->add_hook('folders_list', array($this, 'folders_list'));
+
+        // Special folders setting
+        $this->add_hook('preferences_save', array($this, 'prefs_save'));
     }
 
     /**
@@ -310,6 +313,86 @@ class kolab_folders extends rcube_plugin
         $args['record']['class'] = self::folder_class_name($ctype);
         $args['record']['subscribe'] = $subscribe;
         $args['result'] = $result;
+
+        return $args;
+    }
+
+    /**
+     * Handler for user preferences save (preferences_save hook)
+     *
+     * @param array $args Hash array with hook parameters
+     *
+     * @return array Hash array with modified hook parameters
+     */
+    public function prefs_save($args)
+    {
+        if ($args['section'] != 'folders') {
+            return $args;
+        }
+
+        // Load configuration
+        $this->load_config();
+
+        // Check that configuration is not disabled
+        $dont_override  = (array) $this->rc->config->get('dont_override', array());
+
+        // special handling for 'default_folders'
+        if (in_array('default_folders', $dont_override)) {
+            return $args;
+        }
+
+        // map config option name to kolab folder type annotation
+        $opts = array(
+            'drafts_mbox' => 'mail.drafts',
+            'sent_mbox'   => 'mail.sentitems',
+            'junk_mbox'   => 'mail.junkemail',
+            'trash_mbox'  => 'mail.wastebasket',
+        );
+
+        // check if any of special folders has been changed
+        foreach ($opts as $opt_name => $type) {
+            $new = $args['prefs'][$opt_name];
+            $old = $this->rc->config->get($opt_name);
+            if ($new === $old) {
+                unset($opts[$opt_name]);
+            }
+        }
+
+        if (empty($opts)) {
+            return $args;
+        }
+
+        $storage    = $this->rc->get_storage();
+        $folderdata = $storage->get_metadata('*', array(kolab_storage::CTYPE_KEY_PRIVATE, kolab_storage::CTYPE_KEY));
+
+        if (!is_array($folderdata)) {
+             return $args;
+        }
+
+        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
+
+        foreach ($opts as $opt_name => $type) {
+            $foldername = $args['prefs'][$opt_name];
+            if (strlen($foldername)) {
+
+                // get all folders of specified type
+                $folders = array_intersect($folderdata, array($type));
+
+                // folder already annotated with specified type
+                if (!empty($folders[$foldername])) {
+                    continue;
+                }
+
+                // set type to the new folder
+                $this->set_folder_type($foldername, $type);
+
+                // unset old folder(s) type annotation
+                list($maintype, $subtype) = explode('.', $type);
+                foreach (array_keys($folders) as $folder) {
+                    $this->set_folder_type($folder, $maintype);
+                }
+            }
+        }
 
         return $args;
     }
