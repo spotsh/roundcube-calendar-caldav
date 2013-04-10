@@ -22,7 +22,7 @@ $labels['configuration'] = 'Configuración';
 $labels['deletedevice'] = 'Delete device';
 $labels['imageformat'] = 'Image format';
 $labels['laxpiclabel'] = 'Allow PNG and GIF images';
-$labels['nodevices'] = 'There are currently no devices registered.<br/><br/>In order to register a device, please connect it to the server first, using <a href="http://wiki.kolab.org/Z_push#Clients">the instructions in the Wiki</a>. Afterwards the device should become available for configuration here.';
+$labels['nodevices'] = 'There are currently no devices registered.<br/><br/>In order to register a device, please connect it to the server first, using <a href="http://wiki.kolab.org/Setup_ActiveSync">the instructions in the Wiki</a>. Afterwards the device should become available for configuration here.';
 $labels['savingdata'] = 'Guardando datos...';
 $labels['savingerror'] = 'Failed to save configuration';
 $labels['notsupported'] = 'Your server does not support metadata/annotations';

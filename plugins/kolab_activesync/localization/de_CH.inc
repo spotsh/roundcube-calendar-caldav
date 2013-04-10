@@ -21,7 +21,7 @@ $labels['note'] = 'Notizen';
 $labels['deletedevice'] = 'Gerät löschen';
 $labels['imageformat'] = 'Bildformat';
 $labels['laxpiclabel'] = 'PNG- und GIF-Bilder erlauben';
-$labels['nodevices'] = 'Es sind noch keine Geräte registriert.<br/><br/>Um ein neues Gerät anzumelden, verbinden Sie dieses zuerst mit dem Server. Eine Anleitung dazu finden Sie im <a href="http://wiki.kolab.org/Z_push#Clients">Wiki</a>. Anschliessend laden Sie diese Seite neu und das Gerät wird hier aufgelistet.';
+$labels['nodevices'] = 'Es sind noch keine Geräte registriert.<br/><br/>Um ein neues Gerät anzumelden, verbinden Sie dieses zuerst mit dem Server. Eine Anleitung dazu finden Sie im <a href="http://wiki.kolab.org/Setup_ActiveSync">Wiki</a>. Anschliessend laden Sie diese Seite neu und das Gerät wird hier aufgelistet.';
 $labels['savingdata'] = 'Daten werden gespeichert...';
 $labels['savingerror'] = 'Fehler beim Speichern';
 $labels['notsupported'] = 'Ihr Server unterstützt keine Activesync-Konfiguration';
