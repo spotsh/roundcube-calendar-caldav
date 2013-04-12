@@ -1156,6 +1156,9 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
         }
 
+        // When importing contacts 'vcard' data is added, we don't need it (Bug #1711)
+        unset($contact['vcard']);
+
         // add empty values for some fields which can be removed in the UI
         return array_filter($contact) + array('nickname' => '', 'birthday' => '', 'anniversary' => '', 'freebusyurl' => '', 'photo' => $contact['photo']);
     }
