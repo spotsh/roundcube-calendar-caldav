@@ -434,6 +434,7 @@ class kolab_calendar
         $rec_event['recurrence_id'] = $event['uid'];
         $rec_event['recurrence'] = $recurrence_rule;
         $rec_event['_instance'] = $i;
+        $rec_event['isexception'] = 1;
         $events[] = $rec_event;
 
         // found the specifically requested instance, exiting...
