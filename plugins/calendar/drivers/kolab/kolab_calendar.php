@@ -580,10 +580,8 @@ class kolab_calendar
    */
   private function _from_rcube_event($event, $old = array())
   {
-    $object = &$event;
-
     // in kolab_storage attachments are indexed by content-id
-    $object['_attachments'] = array();
+    $event['_attachments'] = array();
     if (is_array($event['attachments'])) {
       foreach ($event['attachments'] as $idx => $attachment) {
         $key = null;
@@ -600,15 +598,15 @@ class kolab_calendar
 
         // flagged for deletion => set to false
         if ($attachment['_deleted']) {
-          $object['_attachments'][$key] = false;
+          $event['_attachments'][$key] = false;
         }
         // replace existing entry
         else if ($key) {
-          $object['_attachments'][$key] = $attachment;
+          $event['_attachments'][$key] = $attachment;
         }
         // append as new attachment
         else {
-          $object['_attachments'][] = $attachment;
+          $event['_attachments'][] = $attachment;
         }
       }
 
@@ -624,6 +622,9 @@ class kolab_calendar
       $event['attendees'] = array(array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email']));
 
     $event['_owner'] = $identity['email'];
+
+    // remove some internal properties which should not be saved
+    unset($event['_savemode'], $event['_fromcalendar'], $event['_identity']);
 
     // copy meta data (starting with _) from old object
     foreach ((array)$old as $key => $val) {

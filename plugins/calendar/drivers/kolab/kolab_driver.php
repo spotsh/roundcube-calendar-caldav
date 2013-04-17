@@ -610,6 +610,9 @@ class kolab_driver extends calendar_driver
         $event['recurrence'] = array();
         $event['thisandfuture'] = $savemode == 'future';
 
+        // remove some internal properties which should not be saved
+        unset($event['_savemode'], $event['_fromcalendar'], $event['_identity']);
+
         // save properties to a recurrence exception instance
         if ($old['recurrence_id']) {
             $i = $old['_instance'] - 1;
