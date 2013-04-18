@@ -44,7 +44,7 @@ function rcube_calendar_ui(settings)
     var client_timezone = new Date().getTimezoneOffset();
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
-    var event_defaults = { free_busy:'busy' };
+    var event_defaults = { free_busy:'busy', alarms:'' };
     var event_attendees = [];
     var attendees_list;
     var freebusy_ui = { workinhoursonly:false, needsupdate:false };
@@ -446,7 +446,7 @@ function rcube_calendar_ui(settings)
       
       // set alarm(s)
       // TODO: support multiple alarm entries
-      if (event.alarms) {
+      if (event.alarms || action != 'new') {
         if (typeof event.alarms == 'string')
           event.alarms = event.alarms.split(';');
         
