@@ -966,7 +966,8 @@ function rcube_tasklist_ui(settings)
         if (rcmail.busy || !list.editable || (action == 'edit' && (!rec || rec.readonly)))
             return false;
 
-        me.selected_task = $.extend({}, rec);  // clone task object
+        me.selected_task = $.extend({ alarms:'' }, rec);  // clone task object
+        rec =  me.selected_task;
 
         // assign temporary id
         if (!me.selected_task.id)
@@ -1006,12 +1007,13 @@ function rcube_tasklist_ui(settings)
         });
 
         // set alarm(s)
-        if (rec.alarms) {
+        if (rec.alarms || action != 'new') {
             if (typeof rec.alarms == 'string')
                 rec.alarms = rec.alarms.split(';');
 
-          for (var alarm, i=0; i < rec.alarms.length; i++) {
-              alarm = String(rec.alarms[i]).split(':');
+          var valarms = rec.alarms || [''];
+          for (var alarm, i=0; i < valarms.length; i++) {
+              alarm = String(valarms[i]).split(':');
               if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
               $('#taskedit select.edit-alarm-type').val(alarm[1]);
 

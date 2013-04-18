@@ -44,7 +44,7 @@ function rcube_calendar_ui(settings)
     var client_timezone = new Date().getTimezoneOffset();
     var day_clicked = day_clicked_ts = 0;
     var ignore_click = false;
-    var event_defaults = { free_busy:'busy' };
+    var event_defaults = { free_busy:'busy', alarms:'' };
     var event_attendees = [];
     var attendees_list;
     var freebusy_ui = { workinhoursonly:false, needsupdate:false };
@@ -446,12 +446,13 @@ function rcube_calendar_ui(settings)
       
       // set alarm(s)
       // TODO: support multiple alarm entries
-      if (event.alarms) {
+      if (event.alarms || action != 'new') {
         if (typeof event.alarms == 'string')
           event.alarms = event.alarms.split(';');
         
-        for (var alarm, i=0; i < event.alarms.length; i++) {
-          alarm = String(event.alarms[i]).split(':');
+        var valarms = event.alarms || [''];
+        for (var alarm, i=0; i < valarms.length; i++) {
+          alarm = String(valarms[i]).split(':');
           if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
           $('#eventedit select.edit-alarm-type').val(alarm[1]);
           
@@ -523,7 +524,7 @@ function rcube_calendar_ui(settings)
       
       // show warning if editing a recurring event
       if (event.id && event.recurrence) {
-        var sel = event.thisandfuture ? 'future' : 'all';
+        var sel = event.thisandfuture ? 'future' : (event.isexception ? 'current' : 'all');
         $('#edit-recurring-warning').show();
         $('input.edit-recurring-savemode[value="'+sel+'"]').prop('checked', true);
       }
