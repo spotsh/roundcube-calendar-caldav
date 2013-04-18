@@ -1080,7 +1080,12 @@ class rcube_kolab_contacts extends rcube_addressbook
             $record['pgppublickey'] = substr($record['pgppublickey'], 0, 140) . '...';
 
         // remove empty fields
-        return array_filter($record);
+        $record = array_filter($record);
+
+        // remove kolab_storage internal data
+        unset($record['_msguid'], $record['_formatobj'], $record['_mailbox'], $record['_type'], $record['_size']);
+
+        return $record;
     }
 
     /**
