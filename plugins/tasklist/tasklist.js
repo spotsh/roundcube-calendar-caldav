@@ -1011,8 +1011,9 @@ function rcube_tasklist_ui(settings)
             if (typeof rec.alarms == 'string')
                 rec.alarms = rec.alarms.split(';');
 
-          for (var alarm, i=0; i < rec.alarms.length; i++) {
-              alarm = String(rec.alarms[i]).split(':');
+          var valarms = rec.alarms || [''];
+          for (var alarm, i=0; i < valarms.length; i++) {
+              alarm = String(valarms[i]).split(':');
               if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
               $('#taskedit select.edit-alarm-type').val(alarm[1]);
 

@@ -450,8 +450,9 @@ function rcube_calendar_ui(settings)
         if (typeof event.alarms == 'string')
           event.alarms = event.alarms.split(';');
         
-        for (var alarm, i=0; i < event.alarms.length; i++) {
-          alarm = String(event.alarms[i]).split(':');
+        var valarms = event.alarms || [''];
+        for (var alarm, i=0; i < valarms.length; i++) {
+          alarm = String(valarms[i]).split(':');
           if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
           $('#eventedit select.edit-alarm-type').val(alarm[1]);
           
