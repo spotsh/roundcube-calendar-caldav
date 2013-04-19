@@ -88,7 +88,7 @@ class kolab_format_distributionlist extends kolab_format
             return $this->data;
 
         // read common object props into local data object
-        $object = parent::to_array();
+        $object = parent::to_array($data);
 
         // add object properties
         $object += array(

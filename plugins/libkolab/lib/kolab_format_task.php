@@ -80,7 +80,7 @@ class kolab_format_task extends kolab_format_xcal
             return $this->data;
 
         // read common xcal props
-        $object = parent::to_array();
+        $object = parent::to_array($data);
 
         $object['complete'] = intval($this->obj->percentComplete());
 

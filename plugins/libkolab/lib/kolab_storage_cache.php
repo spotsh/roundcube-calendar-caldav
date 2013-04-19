@@ -238,8 +238,8 @@ class kolab_storage_cache
 
             $result = $this->db->query(
                 "INSERT INTO kolab_cache ".
-                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words)".
-                " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?, ?)",
+                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words, filename)".
+                " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?, ?, ?)",
                 $this->resource_uri,
                 $objtype,
                 $msguid,
@@ -250,7 +250,8 @@ class kolab_storage_cache
                 $sql_data['dtstart'],
                 $sql_data['dtend'],
                 $sql_data['tags'],
-                $sql_data['words']
+                $sql_data['words'],
+                $sql_data['filename']
             );
 
             if (!$this->db->affected_rows($result)) {
@@ -515,9 +516,9 @@ class kolab_storage_cache
      */
     private function _serialize($object)
     {
-        $bincols = array_flip($this->binary_cols);
+        $bincols  = array_flip($this->binary_cols);
         $sql_data = array('changed' => null, 'dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
-        $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
+        $objtype  = $object['_type'] ? $object['_type'] : $this->folder->type;
 
         // set type specific values
         if ($objtype == 'event') {
@@ -537,14 +538,20 @@ class kolab_storage_cache
             if ($object['due'])
                 $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['due'])   ? $object['due']->format('U')   : $object['due']);
         }
+        else if ($objtype == 'file') {
+            if (!empty($object['_attachments'])) {
+                reset($object['_attachments']);
+                $sql_data['filename'] = $object['_attachments'][key($object['_attachments'])]['name'];
+            }
+        }
 
         if ($object['changed']) {
             $sql_data['changed'] = date('Y-m-d H:i:s', is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);
         }
 
         if ($object['_formatobj']) {
-            $sql_data['xml'] = preg_replace('!(</?[a-z0-9:-]+>)[\n\r\t\s]+!ms', '$1', (string)$object['_formatobj']->write(3.0));
-            $sql_data['tags'] = ' ' . join(' ', $object['_formatobj']->get_tags()) . ' ';  // pad with spaces for strict/prefix search
+            $sql_data['xml']   = preg_replace('!(</?[a-z0-9:-]+>)[\n\r\t\s]+!ms', '$1', (string)$object['_formatobj']->write(3.0));
+            $sql_data['tags']  = ' ' . join(' ', $object['_formatobj']->get_tags()) . ' ';  // pad with spaces for strict/prefix search
             $sql_data['words'] = ' ' . join(' ', $object['_formatobj']->get_words()) . ' ';
         }
 
@@ -625,6 +632,7 @@ class kolab_storage_cache
                 $this->db->quote($sql_data['dtend']),
                 $this->db->quote($sql_data['tags']),
                 $this->db->quote($sql_data['words']),
+                $this->db->quote($sql_data['filename']),
             );
             $line = '(' . join(',', $values) . ')';
         }
@@ -632,7 +640,7 @@ class kolab_storage_cache
         if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet))) {
             $result = $this->db->query(
                 "INSERT INTO kolab_cache ".
-                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words)".
+                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words, filename)".
                 " VALUES $buffer"
             );
             if (!$this->db->affected_rows($result)) {
@@ -728,7 +736,7 @@ class kolab_storage_cache
         if (!isset($this->uid2msg[$uid])) {
             // use IMAP SEARCH to get the right message
             $index = $this->imap->search_once($this->folder->name, ($deleted ? '' : 'UNDELETED ') .
-				'HEADER SUBJECT ' . rcube_imap_generic::escape($uid));
+                'HEADER SUBJECT ' . rcube_imap_generic::escape($uid));
             $results = $index->get();
             $this->uid2msg[$uid] = $results[0];
         }

@@ -95,7 +95,7 @@ abstract class kolab_format_xcal extends kolab_format
     public function to_array($data = array())
     {
         // read common object props
-        $object = parent::to_array();
+        $object = parent::to_array($data);
 
         $status_map = array_flip($this->status_map);
         $sensitivity_map = array_flip($this->sensitivity_map);

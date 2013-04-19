@@ -147,7 +147,7 @@ class kolab_format_event extends kolab_format_xcal
             return $this->data;
 
         // read common xcal props
-        $object = parent::to_array();
+        $object = parent::to_array($data);
 
         // read object properties
         $object += array(
@@ -177,13 +177,13 @@ class kolab_format_event extends kolab_format_xcal
 
             // skip cid: attachments which are mime message parts handled by kolab_storage_folder
             if (substr($attach->uri(), 0, 4) != 'cid:' && $attach->label()) {
-                $name = $attach->label();
-                $data = $attach->data();
+                $name    = $attach->label();
+                $content = $attach->data();
                 $object['_attachments'][$name] = array(
                     'name'     => $name,
                     'mimetype' => $attach->mimetype(),
-                    'size'     => strlen($data),
-                    'content'  => $data,
+                    'size'     => strlen($content),
+                    'content'  => $content,
                 );
             }
             else if (substr($attach->uri(), 0, 4) == 'http') {
@@ -205,18 +205,6 @@ class kolab_format_event extends kolab_format_xcal
         // this is an exception object
         else if ($this->obj->recurrenceID()->isValid()) {
           $object['thisandfuture'] = $this->obj->thisAndFuture();
-        }
-
-        // merge with additional data, e.g. attachments from the message
-        if ($data) {
-            foreach ($data as $idx => $value) {
-                if (is_array($value)) {
-                    $object[$idx] = array_merge((array)$object[$idx], $value);
-                }
-                else {
-                    $object[$idx] = $value;
-                }
-            }
         }
 
         return $this->data = $object;

@@ -98,16 +98,12 @@ class kolab_format_configuration extends kolab_format
         if (!empty($this->data))
             return $this->data;
 
-        $this->init();
+        // read common object props into local data object
+        $object = parent::to_array($data);
+
         $type_map = array_flip($this->type_map);
 
-        // read object properties
-        $object = array(
-            'uid'     => $this->obj->uid(),
-            'created' => self::php_datetime($this->obj->created()),
-            'changed' => self::php_datetime($this->obj->lastModified()),
-            'type'    => $type_map[$this->obj->type()],
-        );
+        $object['type'] = $type_map[$this->obj->type()];
 
         // read type-specific properties
         switch ($object['type']) {

@@ -21,7 +21,9 @@ CREATE TABLE `kolab_cache` (
   `dtend` DATETIME,
   `tags` VARCHAR(255) NOT NULL,
   `words` TEXT NOT NULL,
-  PRIMARY KEY(`resource`,`type`,`msguid`)
+  `filename` varchar(255) DEFAULT NULL,
+  PRIMARY KEY(`resource`,`type`,`msguid`),
+  INDEX `resource_filename` (`resource`, `filename`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013011000');
+INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013041900');

@@ -438,6 +438,18 @@ abstract class kolab_format
             $object['x-custom'][] = array($cp->identifier, $cp->value);
         }
 
+        // merge with additional data, e.g. attachments from the message
+        if ($data) {
+            foreach ($data as $idx => $value) {
+                if (is_array($value)) {
+                    $object[$idx] = array_merge((array)$object[$idx], $value);
+                }
+                else {
+                    $object[$idx] = $value;
+                }
+            }
+        }
+
         return $object;
     }
 

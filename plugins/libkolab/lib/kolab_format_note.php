@@ -71,7 +71,7 @@ class kolab_format_note extends kolab_format
             return $this->data;
 
         // read common object props into local data object
-        $object = parent::to_array();
+        $object = parent::to_array($data);
 
         // TODO: read object properties
 

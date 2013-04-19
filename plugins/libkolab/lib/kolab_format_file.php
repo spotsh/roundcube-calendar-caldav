@@ -98,11 +98,12 @@ class kolab_format_file extends kolab_format
     public function to_array($data = array())
     {
         // return cached result
-        if (!empty($this->data))
+        if (!empty($this->data)) {
             return $this->data;
+        }
 
         // read common object props into local data object
-        $object = parent::to_array();
+        $object = parent::to_array($data);
 
         $sensitivity_map = array_flip($this->sensitivity_map);
 
@@ -112,18 +113,6 @@ class kolab_format_file extends kolab_format
             'categories'  => self::vector2array($this->obj->categories()),
             'notes'       => $this->obj->note(),
         );
-
-        // merge with additional data, e.g. attachments from the message
-        if ($data) {
-            foreach ($data as $idx => $value) {
-                if (is_array($value)) {
-                    $object[$idx] = array_merge((array)$object[$idx], $value);
-                }
-                else {
-                    $object[$idx] = $value;
-                }
-            }
-        }
 
         return $this->data = $object;
     }
@@ -141,22 +130,14 @@ class kolab_format_file extends kolab_format
             $tags[] = rcube_utils::normalize_string($cat);
         }
 
-        return $tags;
-    }
-
-    /**
-     * Callback for kolab_storage_cache to get words to index for fulltext search
-     *
-     * @return array List of words to save in cache
-     */
-    public function get_words()
-    {
-        // Store filename in 'words' for fast access to file by name
-        if (empty($this->data['_attachments'])) {
-            return array();
+        // Add file mimetype to tags
+        if (!empty($this->data['_attachments'])) {
+            $attachment = array_shift($this->data['_attachments']);
+            if ($attachment['mimetype']) {
+                $tags[] = $attachment['mimetype'];
+            }
         }
 
-        $attachment = array_shift($this->data['_attachments']);
-        return array($attachment['name']);
+        return $tags;
     }
 }
