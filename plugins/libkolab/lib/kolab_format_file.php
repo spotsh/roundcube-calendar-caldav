@@ -132,7 +132,10 @@ class kolab_format_file extends kolab_format
 
         // Add file mimetype to tags
         if (!empty($this->data['_attachments'])) {
-            $attachment = array_shift($this->data['_attachments']);
+            reset($this->data['_attachments']);
+            $key        = key($this->data['_attachments']);
+            $attachment = $this->data['_attachments'][$key];
+
             if ($attachment['mimetype']) {
                 $tags[] = $attachment['mimetype'];
             }
