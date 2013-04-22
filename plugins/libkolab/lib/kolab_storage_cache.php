@@ -417,7 +417,17 @@ class kolab_storage_cache
     {
         $sql_where = '';
         foreach ($query as $param) {
-            if ($param[1] == '=' && is_array($param[2])) {
+            if (is_array($param[0])) {
+                $subs = array();
+                foreach ($param[0] as $q) {
+                    $subq[] = preg_replace('/^\s*AND\s+/i', '', $this->_sql_where(array($q)));
+                }
+                if (!empty($subq)) {
+                    $sql_where .= ' AND (' . implode($param[1] == 'OR' ? ' OR ' : ' AND ', $subq) . ')';
+                }
+                continue;
+            }
+            else if ($param[1] == '=' && is_array($param[2])) {
                 $qvalue = '(' . join(',', array_map(array($this->db, 'quote'), $param[2])) . ')';
                 $param[1] = 'IN';
             }
