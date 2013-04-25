@@ -658,7 +658,7 @@ function kolab_files_ui()
         row.addClass('virtual');
       else
         row.mouseenter(function() {
-            if (rcmail.file_list && rcmail.file_list.drag_active)
+            if (rcmail.file_list && rcmail.file_list.drag_active && !$(this).hasClass('selected'))
               $(this).addClass('droptarget');
           })
           .mouseleave(function() {
