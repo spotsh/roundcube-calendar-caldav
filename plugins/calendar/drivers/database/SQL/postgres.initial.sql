@@ -14,14 +14,14 @@
  **/
 
 
-CREATE SEQUENCE calendar_ids
+CREATE SEQUENCE calendars_seq
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
     CACHE 1;
 
 CREATE TABLE calendars (
-    calendar_id integer DEFAULT nextval('calendar_ids'::regclass) NOT NULL,
+    calendar_id integer DEFAULT nextval('calendars_seq'::regclass) NOT NULL,
     user_id integer NOT NULL
         REFERENCES users (user_id) ON UPDATE CASCADE ON DELETE CASCADE,
     name varchar(255) NOT NULL,
@@ -33,14 +33,14 @@ CREATE TABLE calendars (
 CREATE INDEX calendars_user_id_idx ON calendars (user_id, name);
 
 
-CREATE SEQUENCE event_ids
+CREATE SEQUENCE events_seq
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
     CACHE 1;
 
 CREATE TABLE events (
-    event_id integer DEFAULT nextval('event_ids'::regclass) NOT NULL,
+    event_id integer DEFAULT nextval('events_seq'::regclass) NOT NULL,
     calendar_id integer NOT NULL
         REFERENCES calendars (calendar_id) ON UPDATE CASCADE ON DELETE CASCADE,
     recurrence_id integer NOT NULL DEFAULT 0,
@@ -70,14 +70,14 @@ CREATE INDEX events_uid_idx ON events (uid);
 CREATE INDEX events_recurrence_id_idx ON events (recurrence_id);
 
 
-CREATE SEQUENCE attachment_ids
+CREATE SEQUENCE attachments_seq
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
     CACHE 1;
 
 CREATE TABLE attachments (
-    attachment_id integer DEFAULT nextval('attachment_ids'::regclass) NOT NULL,
+    attachment_id integer DEFAULT nextval('attachments_seq'::regclass) NOT NULL,
     event_id integer NOT NULL
         REFERENCES events (event_id) ON DELETE CASCADE ON UPDATE CASCADE,
     filename varchar(255) NOT NULL DEFAULT '',
@@ -103,4 +103,4 @@ CREATE TABLE itipinvitations (
 
 CREATE INDEX itipinvitations_user_id_event_uid_idx ON itipinvitations (user_id, event_uid);
 
-INSERT INTO system (name, value) VALUES ('calendar-database-version', '2013011000');
+INSERT INTO system (name, value) VALUES ('calendar-database-version', '2013042700');
