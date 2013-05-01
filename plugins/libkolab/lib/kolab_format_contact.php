@@ -50,7 +50,7 @@ class kolab_format_contact extends kolab_format
     public $emailtypes = array(
         'home' => Email::Home,
         'work' => Email::Work,
-        'other' => Email::Other,
+        'other' => Email::NoType,
     );
 
     public $addresstypes = array(
