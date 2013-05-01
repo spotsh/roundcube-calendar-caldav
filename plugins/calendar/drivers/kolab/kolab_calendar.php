@@ -37,7 +37,7 @@ class kolab_calendar
   private $cal;
   private $events = array();
   private $imap_folder = 'INBOX/Calendar';
-  private $search_fields = array('title', 'description', 'location', '_attendees');
+  private $search_fields = array('title', 'description', 'location', 'attendees');
   private $sensitivity_map = array('public', 'private', 'confidential');
 
 
@@ -227,7 +227,7 @@ class kolab_calendar
       if (!empty($search)) {
         $hit = false;
         foreach ($this->search_fields as $col) {
-          $sval = is_array($col) ? $event[$col[0]][$col[1]] : $event[$col];
+          $sval = is_array($event[$col]) ? self::_complex2string($event[$col]) : $event[$col];
           if (empty($sval))
             continue;
           
@@ -635,5 +635,29 @@ class kolab_calendar
     return $event;
   }
 
+  /**
+   * Convert a complex event attribute to a string value
+   */
+  private static function _complex2string($prop)
+  {
+      static $ignorekeys = array('role','status','rsvp');
+
+      $out = '';
+      if (is_array($prop)) {
+          foreach ($prop as $key => $val) {
+              if (is_numeric($key)) {
+                  $out .= self::_complex2string($val, $fields);
+              }
+              else if (!in_array($key, $ignorekeys)) {
+                $out .= $val . ' ';
+            }
+          }
+      }
+      else if (is_string($prop) || is_numeric($prop)) {
+          $out .= $prop . ' ';
+      }
+
+      return rtrim($out);
+  }
 
 }
