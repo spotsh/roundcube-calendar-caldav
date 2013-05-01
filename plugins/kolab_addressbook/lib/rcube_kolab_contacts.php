@@ -44,7 +44,7 @@ class rcube_kolab_contacts extends rcube_addressbook
       'jobtitle'     => array('limit' => 1),
       'organization' => array('limit' => 1),
       'department'   => array('limit' => 1),
-      'email'        => array('subtypes' => null),
+      'email'        => array('subtypes' => array('home','work','other')),
       'phone'        => array(),
       'address'      => array('subtypes' => array('home','work','office')),
       'website'      => array('subtypes' => array('homepage','blog')),
@@ -1035,21 +1035,15 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         $record['ID'] = $this->_uid2id($record['uid']);
 
-        if (is_array($record['phone'])) {
-            $phones = $record['phone'];
-            unset($record['phone']);
-            foreach ((array)$phones as $i => $phone) {
-                $key = 'phone' . ($phone['type'] ? ':' . $phone['type'] : '');
-                $record[$key][] = $phone['number'];
-            }
-        }
-
-        if (is_array($record['website'])) {
-            $urls = $record['website'];
-            unset($record['website']);
-            foreach ((array)$urls as $i => $url) {
-                $key = 'website' . ($url['type'] ? ':' . $url['type'] : '');
-                $record[$key][] = $url['url'];
+        // convert email, website, phone values
+        foreach (array('email'=>'address', 'website'=>'url', 'phone'=>'number') as $col => $propname) {
+            if (is_array($record[$col])) {
+                $values = $record[$col];
+                unset($record[$col]);
+                foreach ((array)$values as $i => $val) {
+                    $key = $col . ($val['type'] ? ':' . $val['type'] : '');
+                    $record[$key][] = $val[$propname];
+                }
             }
         }
 
@@ -1098,31 +1092,22 @@ class rcube_kolab_contacts extends rcube_addressbook
         else if (!$contact['uid'] && $old['uid'])
             $contact['uid'] = $old['uid'];
 
-        $contact['email'] = array_filter($this->get_col_values('email', $contact, true));
         $contact['im']    = array_filter($this->get_col_values('im', $contact, true));
 
-        $websites  = array();
-        $phones    = array();
+        // convert email, website, phone values
+        foreach (array('email'=>'address', 'website'=>'url', 'phone'=>'number') as $col => $propname) {
+            $contact[$col] = array();
+            foreach ($this->get_col_values($col, $contact) as $type => $values) {
+                foreach ((array)$values as $val) {
+                    if (!empty($val)) {
+                        $contact[$col][] = array($propname => $val, 'type' => $type);
+                    }
+                }
+                unset($contact[$col.':'.$type]);
+            }
+        }
+
         $addresses = array();
-
-        foreach ($this->get_col_values('website', $contact) as $type => $values) {
-            foreach ((array)$values as $url) {
-                if (!empty($url)) {
-                    $websites[] = array('url' => $url, 'type' => $type);
-                }
-            }
-            unset($contact['website:'.$type]);
-        }
-
-        foreach ($this->get_col_values('phone', $contact) as $type => $values) {
-            foreach ((array)$values as $phone) {
-                if (!empty($phone)) {
-                    $phones[] = array('number' => $phone, 'type' => $type);
-                }
-            }
-            unset($contact['phone:'.$type]);
-        }
-
         foreach ($this->get_col_values('address', $contact) as $type => $values) {
             foreach ((array)$values as $adr) {
                 // skip empty address
@@ -1143,8 +1128,6 @@ class rcube_kolab_contacts extends rcube_addressbook
             unset($contact['address:'.$type]);
         }
 
-        $contact['website'] = $websites;
-        $contact['phone']   = $phones;
         $contact['address'] = $addresses;
 
         // copy meta data (starting with _) from old object
