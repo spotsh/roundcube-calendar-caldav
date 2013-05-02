@@ -7,7 +7,7 @@ by andreasgal. See http://mozilla.github.com/pdf.js/ for more information.
 INSTALLATION
 ------------
 
-Add 'odfviewer' to the list of plugins in the config/main.inc.php file
+Add 'pdfviewer' to the list of plugins in the config/main.inc.php file
 of your Roundcube installation.
 
 
