@@ -91,6 +91,13 @@ abstract class calendar_driver
   public $alarm_absolute = true;
   public $last_error;
 
+  protected $default_categories = array(
+    'Personal' => 'c0c0c0',
+    'Work'     => 'ff0000',
+    'Family'   => '00ff00',
+    'Holiday'  => 'ff6600',
+  );
+
   /**
    * Get a list of available calendars from this source
    *
@@ -328,7 +335,7 @@ abstract class calendar_driver
   public function list_categories()
   {
     $rcmail = rcube::get_instance();
-    return $rcmail->config->get('calendar_categories', array());
+    return $rcmail->config->get('calendar_categories', $this->default_categories);
   }
 
   /**

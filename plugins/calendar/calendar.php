@@ -58,13 +58,6 @@ class calendar extends rcube_plugin
     'calendar_time_indicator'  => true,
   );
 
-  private $default_categories = array(
-    'Personal' => 'c0c0c0',
-    'Work'     => 'ff0000',
-    'Family'   => '00ff00',
-    'Holiday'  => 'ff6600',
-  );
-  
   private $ics_parts = array();
 
 
