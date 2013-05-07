@@ -236,9 +236,10 @@ class database_driver extends calendar_driver
         return false;
       if (!$event['calendar'])
         $event['calendar'] = reset(array_keys($this->calendars));
-      
+
       $event = $this->_save_preprocess($event);
-      $query = $this->rc->db->query(sprintf(
+
+      $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
          (calendar_id, created, changed, uid, %s, %s, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, attendees, alarms, notifyat)
          VALUES (?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -560,6 +561,7 @@ class database_driver extends calendar_driver
           break;
         
         // stop adding events for inifinite recurrence after 20 years
+        $count = 0;
         if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next->year > date('Y') + 20))
           break;
       }
@@ -923,7 +925,6 @@ class database_driver extends calendar_driver
   public function list_attachments($event)
   {
     $attachments = array();
-    $event_id = $event['recurrence_id'] ? $event['recurrence_id'] : $event['event_id'];
 
     if (!empty($this->calendar_ids)) {
       $result = $this->rc->db->query(

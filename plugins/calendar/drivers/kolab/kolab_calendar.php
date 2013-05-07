@@ -583,7 +583,7 @@ class kolab_calendar
     // in kolab_storage attachments are indexed by content-id
     $event['_attachments'] = array();
     if (is_array($event['attachments'])) {
-      foreach ($event['attachments'] as $idx => $attachment) {
+      foreach ($event['attachments'] as $attachment) {
         $key = null;
         // Roundcube ID has nothing to do with the storage ID, remove it
         if ($attachment['content']) {

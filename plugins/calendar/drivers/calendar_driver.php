@@ -379,12 +379,12 @@ abstract class calendar_driver
   public function calendar_form($action, $calendar, $formfields)
   {
     $html = '';
-    foreach ($formfields as $prop => $field) {
+    foreach ($formfields as $field) {
       $html .= html::div('form-section',
         html::label($field['id'], $field['label']) .
         $field['value']);
     }
-    
+
     return $html;
   }
 

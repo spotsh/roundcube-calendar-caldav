@@ -843,7 +843,7 @@ class calendar extends rcube_plugin
   {
     $this->load_driver();
     if ($alarms = $this->driver->pending_alarms($p['time'] ?: time())) {
-      foreach ($alarms as $i => $alarm) {
+      foreach ($alarms as $alarm) {
         $alarm['id'] = 'cal:' . $alarm['id'];  // prefix ID with cal:
         $p['alarms'][] = $alarm;
       }
@@ -886,7 +886,6 @@ class calendar extends rcube_plugin
     }
 
     $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
-    $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
 
     // process uploaded file if there is no error
     $err = $_FILES['_data']['error'];
@@ -903,7 +902,7 @@ class calendar extends rcube_plugin
           continue;
 
         $event['calendar'] = $calendar;
-        if ($success = $this->driver->new_event($event)) {
+        if ($this->driver->new_event($event)) {
           $count++;
         }
         else
@@ -1161,9 +1160,10 @@ class calendar extends rcube_plugin
    */
   public function generate_randomdata()
   {
-    $num = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
-    $cats = array_keys($this->driver->list_categories());
-    $cals = $this->driver->list_calendars(true);
+    $num   = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
+    $cats  = array_keys($this->driver->list_categories());
+    $cals  = $this->driver->list_calendars(true);
+    $count = 0;
 
     while ($count++ < $num) {
       $start = round((time() + rand(-2600, 2600) * 1000) / 300) * 300;
@@ -1183,7 +1183,7 @@ class calendar extends rcube_plugin
       $title = '';
       $len = rand(2, 12);
       $words = explode(" ", "The Hough transform is named after Paul Hough who patented the method in 1962. It is a technique which can be used to isolate features of a particular shape within an image. Because it requires that the desired features be specified in some parametric form, the classical Hough transform is most commonly used for the de- tection of regular curves such as lines, circles, ellipses, etc. A generalized Hough transform can be employed in applications where a simple analytic description of a feature(s) is not possible. Due to the computational complexity of the generalized Hough algorithm, we restrict the main focus of this discussion to the classical Hough transform. Despite its domain restrictions, the classical Hough transform (hereafter referred to without the classical prefix ) retains many applications, as most manufac- tured parts (and many anatomical parts investigated in medical imagery) contain feature boundaries which can be described by regular curves. The main advantage of the Hough transform technique is that it is tolerant of gaps in feature boundary descriptions and is relatively unaffected by image noise.");
-      $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
+//      $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
       for ($i = 0; $i < $len; $i++)
         $title .= $words[rand(0,count($words)-1)] . " ";
       
@@ -1670,7 +1670,7 @@ class calendar extends rcube_plugin
     $itip_part = null;
 
     // check all message parts for .ics files
-    foreach ((array)$this->message->mime_parts as $idx => $part) {
+    foreach ((array)$this->message->mime_parts as $part) {
       if ($this->is_vcalendar($part)) {
         if ($part->ctype_parameters['method'])
           $itip_part = $part->mime_id;
@@ -1739,7 +1739,7 @@ class calendar extends rcube_plugin
           
           // check my status
           $status = 'unknown';
-          foreach ($event['attendees'] as $i => $attendee) {
+          foreach ($event['attendees'] as $attendee) {
             if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
               $status = strtoupper($attendee['status']);
               break;
