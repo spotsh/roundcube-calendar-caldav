@@ -30,7 +30,6 @@ class tasklist_database_driver extends tasklist_driver
 
     private $rc;
     private $plugin;
-    private $cache = array();
     private $lists = array();
     private $list_ids = '';
 
@@ -173,12 +172,13 @@ class tasklist_database_driver extends tasklist_driver
     public function remove_list($prop)
     {
         $list_id = $prop['id'];
+
         if ($this->lists[$list_id]) {
             // delete all tasks linked with this list
             $this->rc->db->query(
                 "DELETE FROM " . $this->db_tasks . "
                  WHERE tasklist_id=?",
-                $lisr_id
+                $list_id
             );
 
             // delete list record
@@ -301,8 +301,6 @@ class tasklist_database_driver extends tasklist_driver
 
         $tasks = array();
         if (!empty($list_ids)) {
-            $datecol = $this->rc->db->quote_identifier('date');
-            $timecol = $this->rc->db->quote_identifier('time');
             $result = $this->rc->db->query(sprintf(
                 "SELECT * FROM " . $this->db_tasks . "
                  WHERE tasklist_id IN (%s)

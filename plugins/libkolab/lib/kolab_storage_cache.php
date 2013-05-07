@@ -157,7 +157,7 @@ class kolab_storage_cache
     {
         // delegate to another cache instance
         if ($foldername && $foldername != $this->folder->name) {
-            return kolab_storage::get_folder($foldername)->cache->get($msguid, $object);
+            return kolab_storage::get_folder($foldername)->cache->get($msguid, $type);
         }
 
         // load object if not in memory
@@ -275,12 +275,12 @@ class kolab_storage_cache
      * @param string Entry's Object UID
      * @param string Target IMAP folder to move it to
      */
-    public function move($msguid, $objuid, $target_folder)
+    public function move($msguid, $uid, $target_folder)
     {
         $target = kolab_storage::get_folder($target_folder);
 
         // resolve new message UID in target folder
-        if ($new_msguid = $target->cache->uid2msguid($objuid)) {
+        if ($new_msguid = $target->cache->uid2msguid($uid)) {
             $this->db->query(
                 "UPDATE kolab_cache SET resource=?, msguid=? ".
                 "WHERE resource=? AND msguid=? AND type<>?",
@@ -418,7 +418,7 @@ class kolab_storage_cache
         $sql_where = '';
         foreach ($query as $param) {
             if (is_array($param[0])) {
-                $subs = array();
+                $subq = array();
                 foreach ($param[0] as $q) {
                     $subq[] = preg_replace('/^\s*AND\s+/i', '', $this->_sql_where(array($q)));
                 }

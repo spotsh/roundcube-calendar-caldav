@@ -266,7 +266,7 @@ abstract class tasklist_driver
     public function tasklist_edit_form($formfields)
     {
         $html = '';
-        foreach ($formfields as $prop => $field) {
+        foreach ($formfields as $field) {
             $html .= html::div('form-section',
                 html::label($field['id'], $field['label']) .
                 $field['value']);

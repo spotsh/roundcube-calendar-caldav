@@ -168,7 +168,7 @@ class kolab_format_event extends kolab_format_xcal
         if ($status == kolabformat::StatusTentative)
           $object['free_busy'] = 'tentative';
         else if ($status == kolabformat::StatusCancelled)
-          $objec['cancelled'] = true;
+          $object['cancelled'] = true;
 
         // handle attachments
         $vattach = $this->obj->attachments();
@@ -235,16 +235,15 @@ class kolab_format_event extends kolab_format_xcal
      */
     private function compact_exception($exception, $master)
     {
-      static $forbidden = array('recurrence','organizer','attendees','sequence');
+      $forbidden = array('recurrence','organizer','attendees','sequence');
 
-      $out = $exception;
-      foreach ($exception as $prop => $val) {
-        if (in_array($prop, $forbidden)) {
-          unset($out[$prop]);
+      foreach ($forbidden as $prop) {
+        if (array_key_exists($prop, $exception)) {
+          unset($exception[$prop]);
         }
       }
 
-      return $out;
+      return $exception;
     }
 
     /**
