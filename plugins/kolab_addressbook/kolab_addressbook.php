@@ -173,7 +173,7 @@ class kolab_addressbook extends rcube_plugin
         }
 
         $kolab_sources = array();
-        foreach ($this->_list_sources() as $abook_id => $abook) {
+        foreach (array_keys($this->_list_sources()) as $abook_id) {
             if (!in_array($abook_id, $sources))
                 $kolab_sources[] = $abook_id;
         }
@@ -250,7 +250,7 @@ class kolab_addressbook extends rcube_plugin
 
             asort($names, SORT_LOCALE_STRING);
 
-            foreach ($names as $utf7name => $name) {
+            foreach (array_keys($names) as $utf7name) {
                 // create instance of rcube_contacts
                 $abook_id = kolab_storage::folder_id($utf7name);
                 $abook = new rcube_kolab_contacts($utf7name);
@@ -305,9 +305,10 @@ class kolab_addressbook extends rcube_plugin
 
     private function _sort_form_fields($contents)
     {
-      $block = array();
+      $block    = array();
       $contacts = reset($this->sources);
-      foreach ($contacts->coltypes as $col => $prop) {
+
+      foreach (array_keys($contacts->coltypes) as $col) {
           if (isset($contents[$col]))
               $block[$col] = $contents[$col];
       }
@@ -441,10 +442,10 @@ class kolab_addressbook extends rcube_plugin
             // create display name for the folder (see self::address_sources())
             if (strpos($folder, $delimiter)) {
                 $names = array();
-                foreach ($this->_list_sources() as $abook_id => $abook) {
+                foreach ($this->_list_sources() as $abook) {
                     $realname = $abook->get_realname();
                     // The list can be not updated yet, handle old folder name
-                    if ($type == 'update' && $realname == $oldfolder) {
+                    if ($type == 'update' && $realname == $prop['oldname']) {
                         $abook    = $kolab_folder;
                         $realname = $folder;
                     }

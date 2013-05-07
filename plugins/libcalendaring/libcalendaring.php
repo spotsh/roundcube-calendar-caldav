@@ -106,7 +106,7 @@ class libcalendaring extends rcube_plugin
     public function adjust_timezone($dt)
     {
         if (is_numeric($dt))
-            $dt = new DateTime('@'.$td);
+            $dt = new DateTime('@'.$dt);
         else if (is_string($dt))
             $dt = new DateTime($dt);
 
@@ -391,10 +391,10 @@ class libcalendaring extends rcube_plugin
         // collect pending alarms from all providers (e.g. calendar, tasks)
         $plugin = $this->rc->plugins->exec_hook('pending_alarms', array(
             'time' => time(),
-            'alarms' => $alarms,
+            'alarms' => array(),
         ));
 
-        if (!$plugin['abort'] && $plugin['alarms']) {
+        if (!$plugin['abort'] && !empty($plugin['alarms'])) {
             // make sure texts and env vars are available on client
             $this->add_texts('localization/', true);
             $this->rc->output->set_env('snooze_select', $this->snooze_select());
@@ -407,7 +407,7 @@ class libcalendaring extends rcube_plugin
      */
     public function alarms_action()
     {
-        $action = get_input_value('action', RCUBE_INPUT_GPC);
+//        $action = get_input_value('action', RCUBE_INPUT_GPC);
         $data  = get_input_value('data', RCUBE_INPUT_POST, true);
 
         $data['ids'] = explode(',', $data['id']);

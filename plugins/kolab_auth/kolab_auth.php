@@ -337,7 +337,7 @@ class kolab_auth extends rcube_plugin
             // check group
             if (!$isadmin && !empty($group)) {
                 $groups = $ldap->get_record_groups($record['ID']);
-                foreach ($groups as $g => $prop) {
+                foreach (array_keys($groups) as $g) {
                     if ($group == rcube_ldap::dn_decode($g)) {
                         $isadmin = true;
                         break;

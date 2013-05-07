@@ -60,10 +60,10 @@ class kolab_delegation_engine
         if (!is_array($delegate)) {
             $delegate = $this->delegate_get($delegate);
         }
-        $dn       = $delegate['ID'];
-        $list     = $this->list_delegates();
-        $user     = $this->user();
-        $ldap     = $this->ldap();
+
+        $dn   = $delegate['ID'];
+        $list = $this->list_delegates();
+        $user = $this->user();
 
         if (empty($delegate) || empty($dn)) {
             return false;
@@ -133,7 +133,6 @@ class kolab_delegation_engine
         $delegate = $this->delegate_get($dn);
         $list     = $this->list_delegates();
         $user     = $this->user();
-        $ldap     = $this->ldap();
 
         if (empty($delegate) || !isset($list[$dn])) {
             return false;

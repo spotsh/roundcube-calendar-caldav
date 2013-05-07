@@ -350,7 +350,6 @@ class kolab_delegation extends rcube_plugin
         asort($list, SORT_LOCALE_STRING);
 
         foreach ($list as $id => $delegate) {
-            $name = $id;
             $table->add_row(array('id' => 'rcmrow' . $id));
             $table->add(null, Q($delegate));
         }
@@ -415,7 +414,6 @@ class kolab_delegation extends rcube_plugin
 
         $folder_data   = $engine->list_folders($delegate['uid']);
         $rights        = array();
-        $folders       = array();
         $folder_groups = array();
 
         foreach ($folder_data as $folder_name => $folder) {
@@ -471,6 +469,7 @@ class kolab_delegation extends rcube_plugin
                 }
             }
 
+            $folder_id = 'rcmf' . html_identifier($folder);
             $names[] = $origname;
             $classes = array('mailbox');
 
@@ -478,9 +477,6 @@ class kolab_delegation extends rcube_plugin
                 $foldername = html::quote($this->rc->gettext($folder_class));
                 $classes[] = $folder_class;
             }
-
-            $folder_id = 'rcmf' . html_identifier($folder);
-            $padding = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
 
             $table->add_row();
             $table->add('read', $checkbox_read->show(
@@ -490,7 +486,7 @@ class kolab_delegation extends rcube_plugin
                 $rights[$folder] >= kolab_delegation_engine::ACL_WRITE ? $folder : null,
                 array('value' => $folder, 'id' => $folder_id)));
 
-            $table->add(join(' ', $classes), html::label($folder_id, $padding . $foldername));
+            $table->add(join(' ', $classes), html::label($folder_id, $foldername));
         }
 
         return $table->show();

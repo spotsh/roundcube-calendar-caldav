@@ -83,7 +83,7 @@ class pdfviewer extends rcube_plugin
     public function part_structure($args)
     {
         if (!empty($args['structure']->parts)) {
-            foreach ($args['structure']->parts as $i => $part) {
+            foreach (array_keys($args['structure']->parts) as $i) {
                 $this->fix_mime_part($args['structure']->parts[$i], $args['object']);
             }
         }

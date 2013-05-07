@@ -143,7 +143,6 @@ class kolab_zpush_ui
             }
 
             $names[] = $origname;
-
             $classes = array('mailbox');
 
             if ($folder_class = $this->rc->folder_classname($folder)) {
@@ -152,9 +151,8 @@ class kolab_zpush_ui
             }
 
             $folder_id = 'rcmf' . html_identifier($folder);
-            $padding = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
 
-            $table->add_row(array('class' => (($level+1) * $idx++) % 2 == 0 ? 'even' : 'odd'));
+            $table->add_row();
             $table->add('subscription', $checkbox_sync->show('', array('value' => $folder, 'id' => $folder_id)));
 
             if ($alarms)
@@ -162,7 +160,7 @@ class kolab_zpush_ui
             else
                 $table->add('alarm', '');
 
-            $table->add(join(' ', $classes), html::label($folder_id, $padding . Q($foldername)));
+            $table->add(join(' ', $classes), html::label($folder_id, Q($foldername)));
         }
 
         return $table->show();

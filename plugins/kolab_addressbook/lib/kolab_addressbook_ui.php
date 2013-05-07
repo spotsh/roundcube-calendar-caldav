@@ -116,8 +116,9 @@ class kolab_addressbook_ui
 
         $hidden_fields[] = array('name' => '_source', 'value' => $folder);
 
-        $folder = rcube_charset::convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
-        $delim  = $_SESSION['imap_delimiter'];
+        $folder  = rcube_charset::convert($folder, RCMAIL_CHARSET, 'UTF7-IMAP');
+        $storage = $this->rc->get_storage();
+        $delim   = $storage->get_hierarchy_delimiter();
 
         if ($this->rc->action == 'plugin.book-save') {
             // save error
@@ -144,7 +145,7 @@ class kolab_addressbook_ui
         if (strlen($folder)) {
             $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
 
-            $options = $this->rc->get_storage()->folder_info($folder);
+            $options = $storage->folder_info($folder);
         }
 
         $form   = array();
@@ -155,7 +156,7 @@ class kolab_addressbook_ui
         );
 
         if (!empty($options) && ($options['norename'] || $options['protected'])) {
-            $foldername = Q(str_replace($delimiter, ' &raquo; ', kolab_storage::object_name($folder)));
+            $foldername = Q(str_replace($delim, ' &raquo; ', kolab_storage::object_name($folder)));
         }
         else {
             $foldername = new html_inputfield(array('name' => '_name', 'id' => '_name', 'size' => 30));

@@ -486,7 +486,6 @@ class kolab_folders extends rcube_plugin
         $storage     = $this->rc->get_storage();
         $namespace   = $storage->get_namespace();
         $defaults    = array();
-        $need_update = false;
         $prefix      = '';
 
         // Find personal namespace prefix

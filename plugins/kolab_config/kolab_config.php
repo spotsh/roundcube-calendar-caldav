@@ -68,7 +68,7 @@ class kolab_config extends rcube_plugin
         $this->require_plugin('libkolab');
 
         $this->folders = kolab_storage::get_folders('configuration');
-        foreach ($this->folders as $i => $folder) {
+        foreach ($this->folders as $folder) {
             if ($folder->default) {
                 $this->default = $folder;
                 break;

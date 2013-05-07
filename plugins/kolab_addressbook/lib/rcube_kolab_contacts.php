@@ -245,11 +245,11 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * List the current set of contact records
      *
-     * @param  array  List of cols to show
      * @param  int    Only return this number of records, use negative values for tail
+     *
      * @return array  Indexed list of contact records, each a hash array
      */
-    public function list_records($cols=null, $subset=0)
+    public function list_records($subset = 0)
     {
         $this->result = new rcube_result_set(0, ($this->list_page-1) * $this->page_size);;
 
@@ -808,8 +808,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         $this->_fetch_groups(true);
         $list = $this->distlists[$gid];
 
-        foreach ((array)$list['member'] as $i => $member)
+        foreach ((array)$list['member'] as $member) {
             $exists[] = $member['ID'];
+        }
 
         // substract existing assignments from list
         $ids = array_diff($ids, $exists);

@@ -63,6 +63,6 @@ class logon_page extends rcube_plugin
             $rcmail->output->add_footer($html);
         }
 
-        return $arg;
+        return $args;
     }
 }
