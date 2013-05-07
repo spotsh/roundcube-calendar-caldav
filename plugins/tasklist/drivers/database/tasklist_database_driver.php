@@ -36,8 +36,6 @@ class tasklist_database_driver extends tasklist_driver
 
     private $db_tasks = 'tasks';
     private $db_lists = 'tasklists';
-    private $sequence_tasks = 'task_ids';
-    private $sequence_lists = 'tasklist_ids';
 
 
     /**
@@ -51,8 +49,6 @@ class tasklist_database_driver extends tasklist_driver
         // read database config
         $this->db_lists = $this->rc->config->get('db_table_lists', $this->db_lists);
         $this->db_tasks = $this->rc->config->get('db_table_tasks', $this->db_tasks);
-        $this->sequence_lists = $this->rc->config->get('db_sequence_lists', $this->sequence_lists);
-        $this->sequence_tasks = $this->rc->config->get('db_sequence_tasks', $this->sequence_tasks);
 
         $this->_read_lists();
     }
@@ -119,7 +115,7 @@ class tasklist_database_driver extends tasklist_driver
         );
 
         if ($result)
-            return $this->rc->db->insert_id($this->sequence_lists);
+            return $this->rc->db->insert_id($this->db_lists);
 
         return false;
     }
@@ -528,7 +524,7 @@ class tasklist_database_driver extends tasklist_driver
         );
 
         if ($result)
-            return $this->rc->db->insert_id($this->sequence_tasks);
+            return $this->rc->db->insert_id($this->db_tasks);
 
         return false;
     }

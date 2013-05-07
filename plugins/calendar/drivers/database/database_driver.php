@@ -47,9 +47,6 @@ class database_driver extends calendar_driver
   private $db_events = 'events';
   private $db_calendars = 'calendars';
   private $db_attachments = 'attachments';
-  private $sequence_events = 'event_ids';
-  private $sequence_calendars = 'calendar_ids';
-  private $sequence_attachments = 'attachment_ids';
 
 
   /**
@@ -68,9 +65,6 @@ class database_driver extends calendar_driver
     $this->db_events = $this->rc->config->get('db_table_events', $this->db_events);
     $this->db_calendars = $this->rc->config->get('db_table_calendars', $this->db_calendars);
     $this->db_attachments = $this->rc->config->get('db_table_attachments', $this->db_attachments);
-    $this->sequence_events = $this->rc->config->get('db_sequence_events', $this->sequence_events);
-    $this->sequence_calendars = $this->rc->config->get('db_sequence_calendars', $this->sequence_calendars);
-    $this->sequence_attachments = $this->rc->config->get('db_sequence_attachments', $this->sequence_attachments);
     
     $this->_read_calendars();
   }
@@ -154,7 +148,7 @@ class database_driver extends calendar_driver
     );
     
     if ($result)
-      return $this->rc->db->insert_id($this->sequence_calendars);
+      return $this->rc->db->insert_id($this->db_calendars);
     
     return false;
   }
@@ -266,7 +260,7 @@ class database_driver extends calendar_driver
         $event['notifyat']
       );
 
-      $event_id = $this->rc->db->insert_id($this->sequence_events);
+      $event_id = $this->rc->db->insert_id($this->db_events);
 
       if ($event_id) {
         $event['id'] = $event_id;
