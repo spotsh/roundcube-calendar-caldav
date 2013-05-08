@@ -379,7 +379,7 @@ class kolab_calendar
         rcube::raise_error(array(
           'code' => 600, 'type' => 'php',
           'file' => __FILE__, 'line' => __LINE__,
-          'message' => "Error undeleting the event object $uid from the Kolab server"),
+          'message' => "Error undeleting the event object $event[id] from the Kolab server"),
         true, false);
     }
 
@@ -646,7 +646,7 @@ class kolab_calendar
       if (is_array($prop)) {
           foreach ($prop as $key => $val) {
               if (is_numeric($key)) {
-                  $out .= self::_complex2string($val, $fields);
+                  $out .= self::_complex2string($val);
               }
               else if (!in_array($key, $ignorekeys)) {
                 $out .= $val . ' ';

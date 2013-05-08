@@ -556,7 +556,7 @@ class database_driver extends calendar_driver
         
         // stop adding events for inifinite recurrence after 20 years
         $count = 0;
-        if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next->year > date('Y') + 20))
+        if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next_start->format('Y') > date('Y') + 20))
           break;
       }
     }
@@ -632,7 +632,7 @@ class database_driver extends calendar_driver
             $update_master = true;
             
             // delete this and all future instances
-            $fromdate = clone $old['start'];
+            $fromdate = clone $event['start'];
             $fromdate->setTimezone($this->server_timezone);
             $query = $this->rc->db->query(
               "DELETE FROM " . $this->db_events . "
