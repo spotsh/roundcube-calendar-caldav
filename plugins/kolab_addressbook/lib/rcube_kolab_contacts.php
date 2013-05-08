@@ -245,11 +245,12 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * List the current set of contact records
      *
-     * @param  int    Only return this number of records, use negative values for tail
+     * @param array List of cols to show
+     * @param  int  Only return this number of records, use negative values for tail
      *
      * @return array  Indexed list of contact records, each a hash array
      */
-    public function list_records($subset = 0)
+    public function list_records($cols = null, $subset = 0)
     {
         $this->result = new rcube_result_set(0, ($this->list_page-1) * $this->page_size);;
 
