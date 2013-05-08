@@ -528,6 +528,7 @@ class database_driver extends calendar_driver
       
       $recurrence = new calendar_recurrence($this->cal, $event);
 
+      $count = 0;
       $duration = $event['start']->diff($event['end']);
       while ($next_start = $recurrence->next_start()) {
         $next_start->setTimezone($this->server_timezone);
@@ -555,7 +556,6 @@ class database_driver extends calendar_driver
           break;
         
         // stop adding events for inifinite recurrence after 20 years
-        $count = 0;
         if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next_start->format('Y') > date('Y') + 20))
           break;
       }
