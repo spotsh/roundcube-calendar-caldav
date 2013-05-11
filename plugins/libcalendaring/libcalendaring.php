@@ -85,10 +85,11 @@ class libcalendaring extends rcube_plugin
 
         // include client scripts and styles
         if ($this->rc->output) {
-            $this->include_script('libcalendaring.js');
-            $this->rc->output->set_env('libcal_settings', $this->load_settings());
-
-            $this->include_stylesheet($this->local_skin_path() . '/libcal.css');
+            if ($this->rc->output->type == 'html') {
+                $this->rc->output->set_env('libcal_settings', $this->load_settings());
+                $this->include_script('libcalendaring.js');
+                $this->include_stylesheet($this->local_skin_path() . '/libcal.css');
+            }
 
             // add hook to display alarms
             $this->add_hook('refresh', array($this, 'refresh'));
