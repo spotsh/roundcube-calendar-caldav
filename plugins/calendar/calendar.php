@@ -507,11 +507,13 @@ class calendar extends rcube_plugin
         foreach ($this->driver->list_categories() as $name => $color) {
           $old_categories[md5($name)] = $name;
         }
-        $categories = get_input_value('_categories', RCUBE_INPUT_POST);
-        $colors = get_input_value('_colors', RCUBE_INPUT_POST);
+
+        $categories = (array) get_input_value('_categories', RCUBE_INPUT_POST);
+        $colors     = (array) get_input_value('_colors', RCUBE_INPUT_POST);
+
         foreach ($categories as $key => $name) {
           $color = preg_replace('/^#/', '', strval($colors[$key]));
-        
+
           // rename categories in existing events -> driver's job
           if ($oldname = $old_categories[$key]) {
             $this->driver->replace_category($oldname, $name, $color);
@@ -519,7 +521,7 @@ class calendar extends rcube_plugin
           }
           else
             $this->driver->add_category($name, $color);
-        
+
           $new_categories[$name] = $color;
         }
 
@@ -527,7 +529,7 @@ class calendar extends rcube_plugin
         foreach ((array)$old_categories[$key] as $key => $name) {
           $this->driver->remove_category($name);
         }
-        
+
         $p['prefs']['calendar_categories'] = $new_categories;
       }
     }
