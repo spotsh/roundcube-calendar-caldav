@@ -137,16 +137,16 @@ class libcalendaring extends rcube_plugin
 
         // localization
         $settings['days'] = array(
-            rcube_label('sunday'),   rcube_label('monday'),
-            rcube_label('tuesday'),  rcube_label('wednesday'),
-            rcube_label('thursday'), rcube_label('friday'),
-            rcube_label('saturday')
+            $this->rc->gettext('sunday'),   $this->rc->gettext('monday'),
+            $this->rc->gettext('tuesday'),  $this->rc->gettext('wednesday'),
+            $this->rc->gettext('thursday'), $this->rc->gettext('friday'),
+            $this->rc->gettext('saturday')
         );
         $settings['days_short'] = array(
-            rcube_label('sun'), rcube_label('mon'),
-            rcube_label('tue'), rcube_label('wed'),
-            rcube_label('thu'), rcube_label('fri'),
-            rcube_label('sat')
+            $this->rc->gettext('sun'), $this->rc->gettext('mon'),
+            $this->rc->gettext('tue'), $this->rc->gettext('wed'),
+            $this->rc->gettext('thu'), $this->rc->gettext('fri'),
+            $this->rc->gettext('sat')
         );
         $settings['months'] = array(
             $this->rc->gettext('longjan'), $this->rc->gettext('longfeb'),
@@ -310,20 +310,25 @@ class libcalendaring extends rcube_plugin
         list($trigger, $action) = explode(':', $alarm);
 
         $text = '';
+        $rcube = rcube::get_instance();
+
         switch ($action) {
         case 'EMAIL':
-            $text = rcube_label('libcalendaring.alarmemail');
+            $text = $rcube->gettext('libcalendaring.alarmemail');
             break;
         case 'DISPLAY':
-            $text = rcube_label('libcalendaring.alarmdisplay');
+            $text = $rcube->gettext('libcalendaring.alarmdisplay');
             break;
         }
 
         if (preg_match('/@(\d+)/', $trigger, $m)) {
-            $text .= ' ' . rcube_label(array('name' => 'libcalendaring.alarmat', 'vars' => array('datetime' => format_date($m[1]))));
+            $text .= ' ' . $rcube->gettext(array(
+                'name' => 'libcalendaring.alarmat',
+                'vars' => array('datetime' => $rcube->format_date($m[1]))
+            ));
         }
         else if ($val = self::parse_alaram_value($trigger)) {
-            $text .= ' ' . intval($val[0]) . ' ' . rcube_label('libcalendaring.trigger' . $val[1]);
+            $text .= ' ' . intval($val[0]) . ' ' . $rcube->gettext('libcalendaring.trigger' . $val[1]);
         }
         else
             return false;
@@ -408,8 +413,8 @@ class libcalendaring extends rcube_plugin
      */
     public function alarms_action()
     {
-//        $action = get_input_value('action', RCUBE_INPUT_GPC);
-        $data  = get_input_value('data', RCUBE_INPUT_POST, true);
+//        $action = rcube_utils::get_input_value('action', rcube_utils::INPUT_GPC);
+        $data  = rcube_utils::get_input_value('data', rcube_utils::INPUT_POST, true);
 
         $data['ids'] = explode(',', $data['id']);
         $plugin = $this->rc->plugins->exec_hook('dismiss_alarms', $data);
@@ -477,11 +482,11 @@ class libcalendaring extends rcube_plugin
     {
         // Upload progress update
         if (!empty($_GET['_progress'])) {
-            rcube_upload_progress();
+            $this->rc->upload_progress();
         }
 
-        $recid = $id_prefix . get_input_value('_id', RCUBE_INPUT_GPC);
-        $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
+        $recid = $id_prefix . rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC);
+        $uploadid = rcube_utils::get_input_value('_uploadid', rcube_utils::INPUT_GPC);
 
         if (!is_array($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $recid) {
             $_SESSION[$session_key] = array();
@@ -502,7 +507,7 @@ class libcalendaring extends rcube_plugin
                     'path' => $filepath,
                     'size' => $_FILES['_attachments']['size'][$i],
                     'name' => $_FILES['_attachments']['name'][$i],
-                    'mimetype' => rc_mime_content_type($filepath, $_FILES['_attachments']['name'][$i], $_FILES['_attachments']['type'][$i]),
+                    'mimetype' => rcube_mime::file_content_type($filepath, $_FILES['_attachments']['name'][$i], $_FILES['_attachments']['type'][$i]),
                     'group' => $recid,
                 );
 
@@ -519,18 +524,18 @@ class libcalendaring extends rcube_plugin
                   if (($icon = $_SESSION[$session_key . '_deleteicon']) && is_file($icon)) {
                       $button = html::img(array(
                           'src' => $icon,
-                          'alt' => rcube_label('delete')
+                          'alt' => $this->rc->gettext('delete')
                       ));
                   }
                   else {
-                      $button = Q(rcube_label('delete'));
+                      $button = Q($this->rc->gettext('delete'));
                   }
 
                   $content = html::a(array(
                       'href' => "#delete",
                       'class' => 'delete',
                       'onclick' => sprintf("return %s.remove_from_attachment_list('rcmfile%s')", JS_OBJECT_NAME, $id),
-                      'title' => rcube_label('delete'),
+                      'title' => $this->rc->gettext('delete'),
                   ), $button);
 
                   $content .= Q($attachment['name']);
@@ -544,14 +549,14 @@ class libcalendaring extends rcube_plugin
               }
               else {  // upload failed
                   if ($err == UPLOAD_ERR_INI_SIZE || $err == UPLOAD_ERR_FORM_SIZE) {
-                    $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+                    $msg = $this->rc->gettext(array('name' => 'filesizeerror', 'vars' => array(
                         'size' => show_bytes(parse_bytes(ini_get('upload_max_filesize'))))));
                   }
                   else if ($attachment['error']) {
                       $msg = $attachment['error'];
                   }
                   else {
-                      $msg = rcube_label('fileuploaderror');
+                      $msg = $this->rc->gettext('fileuploaderror');
                   }
 
                   $this->rc->output->command('display_message', $msg, 'error');
@@ -563,10 +568,10 @@ class libcalendaring extends rcube_plugin
             // if filesize exceeds post_max_size then $_FILES array is empty,
             // show filesizeerror instead of fileuploaderror
             if ($maxsize = ini_get('post_max_size'))
-                $msg = rcube_label(array('name' => 'filesizeerror', 'vars' => array(
+                $msg = $this->rc->gettext(array('name' => 'filesizeerror', 'vars' => array(
                     'size' => show_bytes(parse_bytes($maxsize)))));
             else
-                $msg = rcube_label('fileuploaderror');
+                $msg = $this->rc->gettext('fileuploaderror');
 
             $this->rc->output->command('display_message', $msg, 'error');
             $this->rc->output->command('remove_from_attachment_list', $uploadid);
@@ -660,7 +665,7 @@ class libcalendaring extends rcube_plugin
     public function attachment_loading_page()
     {
         $url = str_replace('&_preload=1', '', $_SERVER['REQUEST_URI']);
-        $message = rcube_label('loadingdata');
+        $message = $this->rc->gettext('loadingdata');
 
         header('Content-Type: text/html; charset=' . RCMAIL_CHARSET);
         print "<html>\n<head>\n"
@@ -691,13 +696,13 @@ class libcalendaring extends rcube_plugin
         $table = new html_table(array('cols' => 3));
 
         if (!empty($this->attachment['name'])) {
-            $table->add('title', Q(rcube_label('filename')));
+            $table->add('title', Q($this->rc->gettext('filename')));
             $table->add('header', Q($this->attachment['name']));
-            $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q(rcube_label('download'))));
+            $table->add('download-link', html::a('?'.str_replace('_frame=', '_download=', $_SERVER['QUERY_STRING']), Q($this->rc->gettext('download'))));
         }
 
         if (!empty($this->attachment['size'])) {
-            $table->add('title', Q(rcube_label('filesize')));
+            $table->add('title', Q($this->rc->gettext('filesize')));
             $table->add('header', Q(show_bytes($this->attachment['size'])));
         }
 
