@@ -83,7 +83,7 @@ class kolab_driver extends calendar_driver
 
     asort($names, SORT_LOCALE_STRING);
 
-    foreach ($names as $utf7name => $name) {
+    foreach (array_keys($names) as $utf7name) {
       $calendar = new kolab_calendar($utf7name, $this->cal);
       $this->calendars[$calendar->id] = $calendar;
       if (!$calendar->readonly)
@@ -689,7 +689,7 @@ class kolab_driver extends calendar_driver
       $calendars = explode(',', $calendars);
 
     $events = $categories = array();
-    foreach ($this->calendars as $cid => $calendar) {
+    foreach (array_keys($this->calendars) as $cid) {
       if ($calendars && !in_array($cid, $calendars))
         continue;
 
@@ -698,7 +698,7 @@ class kolab_driver extends calendar_driver
     }
     
     // add new categories to user prefs
-    $old_categories = $this->rc->config->get('calendar_categories', array());
+    $old_categories = $this->rc->config->get('calendar_categories', $this->default_categories);
     if ($newcats = array_diff(array_map('strtolower', array_keys($categories)), array_map('strtolower', array_keys($old_categories)))) {
       foreach ($newcats as $category)
         $old_categories[$category] = '';  // no color set yet
@@ -867,7 +867,7 @@ class kolab_driver extends calendar_driver
   public function list_categories()
   {
     // FIXME: complete list with categories saved in config objects (KEP:12)
-    return $this->rc->config->get('calendar_categories', array());
+    return $this->rc->config->get('calendar_categories', $this->default_categories);
   }
 
   /**
@@ -1040,7 +1040,7 @@ class kolab_driver extends calendar_driver
     // Disable folder name input
     if (!empty($options) && ($options['norename'] || $options['protected'])) {
       $input_name = new html_hiddenfield(array('name' => 'name', 'id' => 'calendar-name'));
-      $formfields['name']['value'] = Q(str_replace($delimiter, ' &raquo; ', kolab_storage::object_name($folder)))
+      $formfields['name']['value'] = Q(str_replace($delim, ' &raquo; ', kolab_storage::object_name($folder)))
         . $input_name->show($folder);
     }
 
@@ -1178,8 +1178,6 @@ class kolab_driver extends calendar_driver
       $color  = '';
     }
 
-    $hidden_fields[] = array('name' => 'oldname', 'value' => $folder);
-
     $storage = $this->rc->get_storage();
     $delim   = $storage->get_hierarchy_delimiter();
     $form   = array();
@@ -1190,7 +1188,7 @@ class kolab_driver extends calendar_driver
       $path_imap = implode($path_imap, $delim);
 
       $options = $storage->folder_info($folder);
-    
+
       // Allow plugins to modify the form content (e.g. with ACL form)
       $plugin = $this->rc->plugins->exec_hook('calendar_form_kolab',
         array('form' => $form, 'options' => $options, 'name' => $folder));

@@ -136,8 +136,6 @@ class odfviewer extends rcube_plugin
    */
   function gc_cleanup()
   {
-    $rcmail = rcube::get_instance();
-
     $tmp = unslashify($this->tempdir);
     $expire = mktime() - 172800;  // expire in 48 hours
 

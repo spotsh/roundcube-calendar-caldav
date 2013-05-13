@@ -55,7 +55,6 @@ class kolab_storage_folder
     private $idata;
     private $owner;
     private $resource_uri;
-    private $uid2msg = array();
 
 
     /**
@@ -161,7 +160,6 @@ class kolab_storage_folder
             break;
 
         default:
-            $owner = '';
             list($prefix, $user) = explode($this->imap->get_hierarchy_delimiter(), $info['name']);
             if (strpos($user, '@') === false) {
                 $domain = strstr($rcmail->get_user_name(), '@');
@@ -635,7 +633,7 @@ class kolab_storage_folder
         }
 
         // save contact photo to attachment for Kolab2 format
-        if (kolab_storage::$version == '2.0' && $object['photo'] && !$existing_photo) {
+        if (kolab_storage::$version == '2.0' && $object['photo']) {
             $attkey = 'kolab-picture.png';  // this file name is hard-coded in libkolab/kolabformatV2/contact.cpp
             $object['_attachments'][$attkey] = array(
                 'mimetype'=> rc_image_content_type($object['photo']),
@@ -843,7 +841,7 @@ class kolab_storage_folder
     public function move($uid, $target_folder)
     {
         if ($msguid = $this->cache->uid2msguid($uid)) {
-            if ($success = $this->imap->move_message($msguid, $target_folder, $this->name)) {
+            if ($this->imap->move_message($msguid, $target_folder, $this->name)) {
                 $this->cache->move($msguid, $uid, $target_folder);
                 return true;
             }

@@ -166,15 +166,15 @@ function rcube_calendar_ui(settings)
     // check if the event has 'real' attendees, excluding the current user
     var has_attendees = function(event)
     {
-      return (event.attendees && event.attendees.length && (event.attendees.length > 1 || event.attendees[0].email != settings.identity.email));
+      return (event.attendees && event.attendees.length && (event.attendees.length > 1 || String(event.attendees[0].email).toLowerCase() != settings.identity.email));
     };
     
     // check if the current user is an attendee of this event
     var is_attendee = function(event, role, email)
     {
-      var emails = email ? ';'+email : settings.identity.emails;
+      var emails = email ? ';'+email.toLowerCase() : settings.identity.emails;
       for (var i=0; event.attendees && i < event.attendees.length; i++) {
-        if ((!role || event.attendees[i].role == role) && event.attendees[i].email && emails.indexOf(';'+event.attendees[i].email) >= 0)
+        if ((!role || event.attendees[i].role == role) && event.attendees[i].email && emails.indexOf(';'+event.attendees[i].email.toLowerCase()) >= 0)
           return event.attendees[i];
       }
       return false;
@@ -635,7 +635,7 @@ function rcube_calendar_ui(settings)
           data._identity = $('#edit-identities-list option:selected').val();
         
         // don't submit attendees if only myself is added as organizer
-        if (data.attendees.length == 1 && data.attendees[0].role == 'ORGANIZER' && data.attendees[0].email == settings.identity.email)
+        if (data.attendees.length == 1 && data.attendees[0].role == 'ORGANIZER' && String(data.attendees[0].email).toLowerCase() == settings.identity.email)
           data.attendees = [];
         
         // tell server to send notifications
@@ -1522,7 +1522,7 @@ function rcube_calendar_ui(settings)
         // update attendee status
         for (var data, i=0; i < me.selected_event.attendees.length; i++) {
           data = me.selected_event.attendees[i];
-          if (settings.identity.emails.indexOf(';'+data.email) >= 0)
+          if (settings.identity.emails.indexOf(';'+String(data.email).toLowerCase()) >= 0)
             data.status = response.toUpperCase();
         }
         event_show_dialog(me.selected_event);

@@ -68,7 +68,7 @@ class tasklist_kolab_driver extends tasklist_driver
         // convert to UTF8 and sort
         $names = array();
         $default_folder = null;
-        foreach ($this->folders as $i => $folder) {
+        foreach ($this->folders as $folder) {
             $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
             $this->folders[$folder->name] = $folder;
             if ($folder->default)

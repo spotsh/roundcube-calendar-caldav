@@ -270,7 +270,7 @@ class calendar_ui
     $select         = new html_select($attrib);
     $identities     = $this->rc->user->list_identities();
 
-    foreach ($identities as $id => $ident) {
+    foreach ($identities as $ident) {
         $select->add(format_email_recipient($ident['email'], $ident['name']), $ident['identity_id']);
     }
 
@@ -285,7 +285,7 @@ class calendar_ui
     $attrib['name'] = 'categories';
     $select = new html_select($attrib);
     $select->add('---', '');
-    foreach ((array)$this->cal->driver->list_categories() as $cat => $color) {
+    foreach (array_keys((array)$this->cal->driver->list_categories()) as $cat) {
       $select->add($cat, $cat);
     }
 
@@ -530,7 +530,6 @@ class calendar_ui
     // Get max filesize, enable upload progress bar
     $max_filesize = rcube_upload_init();
 
-    $button = new html_inputfield(array('type' => 'button'));
     $input = new html_inputfield(array(
       'type' => 'file', 'name' => '_data', 'size' => $attrib['uploadfieldsize']));
 
@@ -543,12 +542,12 @@ class calendar_ui
         $this->cal->gettext('all'),
       ),
       array('1','2','6','12',0));
-    
+
     $html .= html::div('form-section',
       html::div(null, $input->show()) .
       html::div('hint', rcube_label(array('name' => 'maxuploadsize', 'vars' => array('size' => $max_filesize))))
     );
-    
+
     $html .= html::div('form-section',
       html::label('event-import-calendar', $this->cal->gettext('calendar')) .
       $this->calendar_select(array('name' => 'calendar', 'id' => 'event-import-calendar'))
@@ -641,7 +640,7 @@ class calendar_ui
     $formfields = array(
       'name' => array(
         'label' => $this->cal->gettext('name'),
-        'value' => $input_name->show($name),
+        'value' => $input_name->show($calendar['name']),
         'id' => 'calendar-name',
       ),
       'color' => array(

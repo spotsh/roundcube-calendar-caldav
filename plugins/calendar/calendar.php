@@ -58,13 +58,6 @@ class calendar extends rcube_plugin
     'calendar_time_indicator'  => true,
   );
 
-  private $default_categories = array(
-    'Personal' => 'c0c0c0',
-    'Work'     => 'ff0000',
-    'Family'   => '00ff00',
-    'Holiday'  => 'ff6600',
-  );
-  
   private $ics_parts = array();
 
 
@@ -514,11 +507,13 @@ class calendar extends rcube_plugin
         foreach ($this->driver->list_categories() as $name => $color) {
           $old_categories[md5($name)] = $name;
         }
-        $categories = get_input_value('_categories', RCUBE_INPUT_POST);
-        $colors = get_input_value('_colors', RCUBE_INPUT_POST);
+
+        $categories = (array) get_input_value('_categories', RCUBE_INPUT_POST);
+        $colors     = (array) get_input_value('_colors', RCUBE_INPUT_POST);
+
         foreach ($categories as $key => $name) {
           $color = preg_replace('/^#/', '', strval($colors[$key]));
-        
+
           // rename categories in existing events -> driver's job
           if ($oldname = $old_categories[$key]) {
             $this->driver->replace_category($oldname, $name, $color);
@@ -526,7 +521,7 @@ class calendar extends rcube_plugin
           }
           else
             $this->driver->add_category($name, $color);
-        
+
           $new_categories[$name] = $color;
         }
 
@@ -534,7 +529,7 @@ class calendar extends rcube_plugin
         foreach ((array)$old_categories[$key] as $key => $name) {
           $this->driver->remove_category($name);
         }
-        
+
         $p['prefs']['calendar_categories'] = $new_categories;
       }
     }
@@ -676,7 +671,7 @@ class calendar extends rcube_plugin
           foreach ($old['attendees'] as $i => $attendee) {
             if ($attendee['role'] == 'ORGANIZER')
               $organizer = $attendee;
-            else if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+            else if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
               $old['attendees'][$i]['status'] = 'DECLINED';
             }
           }
@@ -713,7 +708,7 @@ class calendar extends rcube_plugin
         if ($existing = $this->driver->get_event($event, true, false, true)) {
           $emails = $this->get_user_emails();
           foreach ($existing['attendees'] as $i => $attendee) {
-            if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+            if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
               $status = $attendee['status'];
               break;
             }
@@ -850,7 +845,7 @@ class calendar extends rcube_plugin
   {
     $this->load_driver();
     if ($alarms = $this->driver->pending_alarms($p['time'] ?: time())) {
-      foreach ($alarms as $i => $alarm) {
+      foreach ($alarms as $alarm) {
         $alarm['id'] = 'cal:' . $alarm['id'];  // prefix ID with cal:
         $p['alarms'][] = $alarm;
       }
@@ -893,7 +888,6 @@ class calendar extends rcube_plugin
     }
 
     $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
-    $uploadid = get_input_value('_uploadid', RCUBE_INPUT_GPC);
 
     // process uploaded file if there is no error
     $err = $_FILES['_data']['error'];
@@ -910,7 +904,7 @@ class calendar extends rcube_plugin
           continue;
 
         $event['calendar'] = $calendar;
-        if ($success = $this->driver->new_event($event)) {
+        if ($this->driver->new_event($event)) {
           $count++;
         }
         else
@@ -1063,7 +1057,7 @@ class calendar extends rcube_plugin
         $settings['identities'][$rec['identity_id']] = $rec['email'];
       }
       $identity['emails'][] = $this->rc->user->get_username();
-      $settings['identity'] = array('name' => $identity['name'], 'email' => $identity['email'], 'emails' => ';' . join(';', $identity['emails']));
+      $settings['identity'] = array('name' => $identity['name'], 'email' => strtolower($identity['email']), 'emails' => ';' . strtolower(join(';', $identity['emails'])));
     }
 
     return $settings;
@@ -1168,9 +1162,10 @@ class calendar extends rcube_plugin
    */
   public function generate_randomdata()
   {
-    $num = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
-    $cats = array_keys($this->driver->list_categories());
-    $cals = $this->driver->list_calendars(true);
+    $num   = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
+    $cats  = array_keys($this->driver->list_categories());
+    $cals  = $this->driver->list_calendars(true);
+    $count = 0;
 
     while ($count++ < $num) {
       $start = round((time() + rand(-2600, 2600) * 1000) / 300) * 300;
@@ -1190,7 +1185,7 @@ class calendar extends rcube_plugin
       $title = '';
       $len = rand(2, 12);
       $words = explode(" ", "The Hough transform is named after Paul Hough who patented the method in 1962. It is a technique which can be used to isolate features of a particular shape within an image. Because it requires that the desired features be specified in some parametric form, the classical Hough transform is most commonly used for the de- tection of regular curves such as lines, circles, ellipses, etc. A generalized Hough transform can be employed in applications where a simple analytic description of a feature(s) is not possible. Due to the computational complexity of the generalized Hough algorithm, we restrict the main focus of this discussion to the classical Hough transform. Despite its domain restrictions, the classical Hough transform (hereafter referred to without the classical prefix ) retains many applications, as most manufac- tured parts (and many anatomical parts investigated in medical imagery) contain feature boundaries which can be described by regular curves. The main advantage of the Hough transform technique is that it is tolerant of gaps in feature boundary descriptions and is relatively unaffected by image noise.");
-      $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
+//      $chars = "!# abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890";
       for ($i = 0; $i < $len; $i++)
         $title .= $words[rand(0,count($words)-1)] . " ";
       
@@ -1296,7 +1291,7 @@ class calendar extends rcube_plugin
       foreach ((array)$event['attendees'] as $i => $attendee) {
         if ($attendee['role'] == 'ORGANIZER')
           $organizer = $i;
-        if ($attendee['email'] == in_array($attendee['email'], $emails))
+        if ($attendee['email'] == in_array(strtolower($attendee['email']), $emails))
           $owner = $i;
         else if (!isset($attendee['rsvp']))
           $event['attendees'][$i]['rsvp'] = true;
@@ -1358,7 +1353,7 @@ class calendar extends rcube_plugin
     $sent = 0;
     foreach ((array)$event['attendees'] as $attendee) {
       // skip myself for obvious reasons
-      if (!$attendee['email'] || in_array($attendee['email'], $emails))
+      if (!$attendee['email'] || in_array(strtolower($attendee['email']), $emails))
         continue;
       
       // which template to use for mail text
@@ -1677,7 +1672,7 @@ class calendar extends rcube_plugin
     $itip_part = null;
 
     // check all message parts for .ics files
-    foreach ((array)$this->message->mime_parts as $idx => $part) {
+    foreach ((array)$this->message->mime_parts as $part) {
       if ($this->is_vcalendar($part)) {
         if ($part->ctype_parameters['method'])
           $itip_part = $part->mime_id;
@@ -1746,8 +1741,8 @@ class calendar extends rcube_plugin
           
           // check my status
           $status = 'unknown';
-          foreach ($event['attendees'] as $i => $attendee) {
-            if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+          foreach ($event['attendees'] as $attendee) {
+            if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
               $status = strtoupper($attendee['status']);
               break;
             }
@@ -1856,7 +1851,7 @@ class calendar extends rcube_plugin
           if ($attendee['role'] == 'ORGANIZER') {
             $organizer = $attendee;
           }
-          else if ($attendee['email'] && in_array($attendee['email'], $emails)) {
+          else if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
             $event['attendees'][$i]['status'] = strtoupper($status);
           }
         }
@@ -1940,7 +1935,7 @@ class calendar extends rcube_plugin
 
 
     // send iTip reply
-    if ($this->ical->method == 'REQUEST' && $organizer && !in_array($organizer['email'], $emails) && !$error_msg) {
+    if ($this->ical->method == 'REQUEST' && $organizer && !in_array(strtolower($organizer['email']), $emails) && !$error_msg) {
       $itip = $this->load_itip();
       if ($itip->send_itip_message($event, 'REPLY', $organizer, 'itipsubject' . $status, 'itipmailbody' . $status))
         $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name'] ? $organizer['name'] : $organizer['email']))), 'confirmation');
@@ -2037,7 +2032,7 @@ class calendar extends rcube_plugin
   {
     $emails = array();
     $plugin = $this->rc->plugins->exec_hook('calendar_user_emails', array('emails' => $emails));
-    $emails = $plugin['emails'];
+    $emails = array_map('strtolower', $plugin['emails']);
 
     if ($plugin['abort']) {
       return $emails;
@@ -2045,7 +2040,7 @@ class calendar extends rcube_plugin
 
     $emails[] = $this->rc->user->get_username();
     foreach ($this->rc->user->list_identities() as $identity)
-      $emails[] = $identity['email'];
+      $emails[] = strtolower($identity['email']);
     
     return array_unique($emails);
   }

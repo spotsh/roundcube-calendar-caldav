@@ -47,9 +47,6 @@ class database_driver extends calendar_driver
   private $db_events = 'events';
   private $db_calendars = 'calendars';
   private $db_attachments = 'attachments';
-  private $sequence_events = 'event_ids';
-  private $sequence_calendars = 'calendar_ids';
-  private $sequence_attachments = 'attachment_ids';
 
 
   /**
@@ -68,9 +65,6 @@ class database_driver extends calendar_driver
     $this->db_events = $this->rc->config->get('db_table_events', $this->db_events);
     $this->db_calendars = $this->rc->config->get('db_table_calendars', $this->db_calendars);
     $this->db_attachments = $this->rc->config->get('db_table_attachments', $this->db_attachments);
-    $this->sequence_events = $this->rc->config->get('db_sequence_events', $this->sequence_events);
-    $this->sequence_calendars = $this->rc->config->get('db_sequence_calendars', $this->sequence_calendars);
-    $this->sequence_attachments = $this->rc->config->get('db_sequence_attachments', $this->sequence_attachments);
     
     $this->_read_calendars();
   }
@@ -154,7 +148,7 @@ class database_driver extends calendar_driver
     );
     
     if ($result)
-      return $this->rc->db->insert_id($this->sequence_calendars);
+      return $this->rc->db->insert_id($this->db_calendars);
     
     return false;
   }
@@ -236,9 +230,10 @@ class database_driver extends calendar_driver
         return false;
       if (!$event['calendar'])
         $event['calendar'] = reset(array_keys($this->calendars));
-      
+
       $event = $this->_save_preprocess($event);
-      $query = $this->rc->db->query(sprintf(
+
+      $this->rc->db->query(sprintf(
         "INSERT INTO " . $this->db_events . "
          (calendar_id, created, changed, uid, %s, %s, all_day, recurrence, title, description, location, categories, free_busy, priority, sensitivity, attendees, alarms, notifyat)
          VALUES (?, %s, %s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -265,7 +260,7 @@ class database_driver extends calendar_driver
         $event['notifyat']
       );
 
-      $event_id = $this->rc->db->insert_id($this->sequence_events);
+      $event_id = $this->rc->db->insert_id($this->db_events);
 
       if ($event_id) {
         $event['id'] = $event_id;
@@ -533,6 +528,7 @@ class database_driver extends calendar_driver
       
       $recurrence = new calendar_recurrence($this->cal, $event);
 
+      $count = 0;
       $duration = $event['start']->diff($event['end']);
       while ($next_start = $recurrence->next_start()) {
         $next_start->setTimezone($this->server_timezone);
@@ -560,7 +556,7 @@ class database_driver extends calendar_driver
           break;
         
         // stop adding events for inifinite recurrence after 20 years
-        if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next->year > date('Y') + 20))
+        if (++$count > 999 || (!$recurrence->recurEnd && !$recurrence->recurCount && $next_start->format('Y') > date('Y') + 20))
           break;
       }
     }
@@ -636,7 +632,7 @@ class database_driver extends calendar_driver
             $update_master = true;
             
             // delete this and all future instances
-            $fromdate = clone $old['start'];
+            $fromdate = clone $event['start'];
             $fromdate->setTimezone($this->server_timezone);
             $query = $this->rc->db->query(
               "DELETE FROM " . $this->db_events . "
@@ -923,7 +919,6 @@ class database_driver extends calendar_driver
   public function list_attachments($event)
   {
     $attachments = array();
-    $event_id = $event['recurrence_id'] ? $event['recurrence_id'] : $event['event_id'];
 
     if (!empty($this->calendar_ids)) {
       $result = $this->rc->db->query(

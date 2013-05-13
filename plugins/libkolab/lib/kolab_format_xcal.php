@@ -105,7 +105,7 @@ abstract class kolab_format_xcal extends kolab_format
             'title'       => $this->obj->summary(),
             'location'    => $this->obj->location(),
             'description' => $this->obj->description(),
-            'status'      => $this->status_map[$this->obj->status()],
+            'status'      => $status_map[$this->obj->status()],
             'sensitivity' => $sensitivity_map[$this->obj->classification()],
             'priority'    => $this->obj->priority(),
             'categories'  => self::vector2array($this->obj->categories()),

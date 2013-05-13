@@ -1,7 +1,7 @@
 <?php
 
 // URL of kolab-chwala installation
-$rcmail_config['kolab_files_url'] = 'https://localhost/kolab-chwala/public_html';
+$rcmail_config['kolab_files_url'] = 'https://' . $_SERVER["HTTP_HOST"] . '/chwala';
 
 // List of files list columns. Available are: name, size, mtime, type
 $rcmail_config['kolab_files_list_cols'] = array('name', 'mtime', 'size');

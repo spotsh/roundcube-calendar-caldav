@@ -247,7 +247,7 @@ class tasklist extends rcube_plugin
             break;
 
         case 'collapse':
-            if ($collapsed = intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
+            if (intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
                 $this->collapsed_tasks[] = $rec['id'];
             }
             else {
@@ -383,7 +383,7 @@ class tasklist extends rcube_plugin
         }
 
         // alarms cannot work without a date
-        if ($rec['alarms'] && !$rec['date'] && !$rec['startdate'] && strpos($task['alarms'], '@') === false)
+        if ($rec['alarms'] && !$rec['date'] && !$rec['startdate'] && strpos($rec['alarms'], '@') === false)
             $rec['alarms'] = '';
 
         $attachments = array();
