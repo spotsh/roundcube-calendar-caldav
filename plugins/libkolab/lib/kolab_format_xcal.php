@@ -246,6 +246,12 @@ abstract class kolab_format_xcal extends kolab_format
         $this->obj->setClassification($this->sensitivity_map[$object['sensitivity']]);
         $this->obj->setCategories(self::array2vector($object['categories']));
 
+        $vurls = new vectorurl;
+        foreach ((array)$object['url'] as $url) {
+            $vurls->push(new Url(strval($url));
+        }
+        $this->obj->setUrls($vurls);
+
         // process event attendees
         $attendees = new vectorattendee;
         foreach ((array)$object['attendees'] as $attendee) {
