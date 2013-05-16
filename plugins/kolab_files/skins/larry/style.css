@@ -46,6 +46,12 @@
   display: inline;
 }
 
+#quicksearchbar #filesearchmenulink {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+}
+
 #folderlistbox {
   position: absolute;
   top: 42px;
@@ -83,6 +89,34 @@
   color: #376572;
 }
 
+#files-folder-list ul li.mailbox.collection span.name {
+  background: url(images/folders.png) 5px 0 no-repeat;
+}
+#files-folder-list ul li.mailbox.collection.audio span.name {
+  background-position: 5px -95px;
+}
+#files-folder-list ul li.mailbox.collection.video span.name {
+  background-position: 5px -143px;
+}
+#files-folder-list ul li.mailbox.collection.document span.name {
+  background-position: 5px 0;
+}
+#files-folder-list ul li.mailbox.collection.image span.name {
+  background-position: 5px -48px;
+}
+#files-folder-list ul li.mailbox.collection.audio.selected span.name {
+  background-position: 5px -119px;
+}
+#files-folder-list ul li.mailbox.collection.video.selected span.name {
+  background-position: 5px -167px;
+}
+#files-folder-list ul li.mailbox.collection.document.selected span.name {
+  background-position: 5px -24px;
+}
+#files-folder-list ul li.mailbox.collection.image.selected span.name {
+  background-position: 5px -72px;
+}
+
 #files-folder-list ul li span.branch {
   display: inline-block;
 }
@@ -107,7 +141,7 @@
 }
 
 #filelist tr td.size {
-  width: 60px;
+  width: 80px;
   text-align: right;
 }
 

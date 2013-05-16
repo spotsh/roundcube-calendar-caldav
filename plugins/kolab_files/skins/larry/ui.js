@@ -7,10 +7,16 @@ function kolab_files_ui_init()
     rcmail.addEventListener('menu-open', kolab_files_show_listoptions);
     rcmail.addEventListener('menu-save', kolab_files_save_listoptions);
 
-    var dragmenu = $('#dragfilemenu');
-    if (dragmenu.length) {
+    var menu = $('#dragfilemenu');
+    if (menu.length) {
       rcmail.gui_object('file_dragmenu', 'dragfilemenu');
       UI.add_popup('dragfilemenu', {sticky: 1});
+    }
+
+    menu = $('#filesearchmenu');
+    if (menu.length) {
+      rcmail.gui_object('file_searchmenu', 'filesearchmenu');
+      UI.add_popup('filesearchmenu', {sticky: 1});
     }
   });
 

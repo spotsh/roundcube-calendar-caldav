@@ -1,10 +1,7 @@
 <div id="files-compose-dialog" class="uidialog">
     <div id="quicksearchbar" class="searchbox">
         <roundcube:object name="file-search-form" id="filesearchbox" />
-<!--
-        <roundcube:button name="searchmenulink" id="searchmenulink" class="iconbutton searchoptions" onclick="UI.show_popup('searchmenu');return false" title="searchmod" content=" " />
--->
-        <a id="searchmenulink" class="iconbutton searchoptions"> </a>
+        <roundcube:button name="filesearchmenulink" id="filesearchmenulink" class="iconbutton searchoptions" onclick="UI.show_popup('filesearchmenu');return false" title="searchmod" content=" " />
         <roundcube:button command="files-search-reset" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
     </div>
 
@@ -15,4 +12,10 @@
     <div id="filelistcontainer" class="boxlistcontent uibox">
         <roundcube:object name="filelist" id="filelist" class="records-table sortheader" />
     </div>
+</div>
+
+<div id="filesearchmenu" class="popupmenu" style="z-index: 2000">
+    <ul class="toolbarmenu">
+        <li><label><input type="checkbox" name="all_folders" value="1" id="search_all_folders" /> <span><roundcube:label name="kolab_files.allfolders" /></span></label></li>
+    </ul>
 </div>
