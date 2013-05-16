@@ -22,10 +22,7 @@
 
 <div id="quicksearchbar" class="quicksearchbox">
     <roundcube:object name="file-search-form" id="quicksearchbox" />
-<!--
-        <roundcube:button name="searchmenulink" id="searchmenulink" class="iconbutton searchoptions" onclick="UI.show_popup('searchmenu');return false" title="searchmod" content=" " />
--->
-    <a id="searchmenulink" class="iconbutton searchoptions"> </a>
+    <roundcube:button name="filesearchmenulink" id="filesearchmenulink" class="iconbutton searchoptions" onclick="UI.show_popup('filesearchmenu');return false" title="searchmod" content=" " />
     <roundcube:button command="files-search-reset" id="searchreset" class="iconbutton reset" title="resetsearch" content=" " />
 </div>
 
@@ -63,47 +60,53 @@
 
 <div id="listoptions" class="propform popupdialog">
 <roundcube:if condition="!in_array('kolab_files_list_cols', (array)config:dont_override)" />
-	<fieldset class="floating">
-		<legend><roundcube:label name="listcolumns" /></legend>
-		<ul class="proplist">
-			<li><label class="disabled"><input type="checkbox" name="list_col[]" value="options" checked="checked" disabled="disabled" /> <span><roundcube:label name="options" /></span></label></li>
-			<li><label class="disabled"><input type="checkbox" name="list_col[]" value="name" checked="checked" disabled="disabled" /> <span><roundcube:label name="kolab_files.name" /></span></label></li>
-			<li><label><input type="checkbox" name="list_col[]" value="mtime" /> <span><roundcube:label name="kolab_files.mtime" /></span></label></li>
-			<li><label><input type="checkbox" name="list_col[]" value="size" /> <span><roundcube:label name="size" /></span></label></li>
-		</ul>
-	</fieldset>
-	<roundcube:endif />
-	<roundcube:if condition="!in_array('kolab_files_sort_col', (array)config:dont_override)" />
-	<fieldset class="floating">
-		<legend><roundcube:label name="listsorting" /></legend>
-		<ul class="proplist">
-			<li><label><input type="radio" name="sort_col" value="name" /> <span><roundcube:label name="kolab_files.name" /></span></label></li>
-			<li><label><input type="radio" name="sort_col" value="mtime" /> <span><roundcube:label name="kolab_files.mtime" /></span></label></li>
-			<li><label><input type="radio" name="sort_col" value="size" /> <span><roundcube:label name="size" /></span></label></li>
-		</ul>
-	</fieldset>
-	<roundcube:endif />
-	<roundcube:if condition="!in_array('kolab_files_sort_order', (array)config:dont_override)" />
-	<fieldset class="floating">
-		<legend><roundcube:label name="listorder" /></legend>
-		<ul class="proplist">
-			<li><label><input type="radio" name="sort_ord" value="ASC" /> <span><roundcube:label name="asc" /></span></label></li>
-			<li><label><input type="radio" name="sort_ord" value="DESC" /> <span><roundcube:label name="desc" /></span></label></li>
-		</ul>
-	</fieldset>
-	<roundcube:endif />
-	<br style="clear:both" />
-	<div class="formbuttons">
-		<roundcube:button command="menu-save" id="listmenusave" type="input" class="button mainaction" label="save" />
-		<roundcube:button command="menu-open" id="listmenucancel" type="input" class="button" label="cancel" />
-	</div>
+    <fieldset class="floating">
+        <legend><roundcube:label name="listcolumns" /></legend>
+        <ul class="proplist">
+            <li><label class="disabled"><input type="checkbox" name="list_col[]" value="options" checked="checked" disabled="disabled" /> <span><roundcube:label name="options" /></span></label></li>
+            <li><label class="disabled"><input type="checkbox" name="list_col[]" value="name" checked="checked" disabled="disabled" /> <span><roundcube:label name="kolab_files.name" /></span></label></li>
+            <li><label><input type="checkbox" name="list_col[]" value="mtime" /> <span><roundcube:label name="kolab_files.mtime" /></span></label></li>
+            <li><label><input type="checkbox" name="list_col[]" value="size" /> <span><roundcube:label name="size" /></span></label></li>
+        </ul>
+    </fieldset>
+    <roundcube:endif />
+    <roundcube:if condition="!in_array('kolab_files_sort_col', (array)config:dont_override)" />
+    <fieldset class="floating">
+        <legend><roundcube:label name="listsorting" /></legend>
+        <ul class="proplist">
+            <li><label><input type="radio" name="sort_col" value="name" /> <span><roundcube:label name="kolab_files.name" /></span></label></li>
+            <li><label><input type="radio" name="sort_col" value="mtime" /> <span><roundcube:label name="kolab_files.mtime" /></span></label></li>
+            <li><label><input type="radio" name="sort_col" value="size" /> <span><roundcube:label name="size" /></span></label></li>
+        </ul>
+    </fieldset>
+    <roundcube:endif />
+    <roundcube:if condition="!in_array('kolab_files_sort_order', (array)config:dont_override)" />
+    <fieldset class="floating">
+        <legend><roundcube:label name="listorder" /></legend>
+        <ul class="proplist">
+            <li><label><input type="radio" name="sort_ord" value="ASC" /> <span><roundcube:label name="asc" /></span></label></li>
+            <li><label><input type="radio" name="sort_ord" value="DESC" /> <span><roundcube:label name="desc" /></span></label></li>
+        </ul>
+    </fieldset>
+    <roundcube:endif />
+    <br style="clear:both" />
+    <div class="formbuttons">
+        <roundcube:button command="menu-save" id="listmenusave" type="input" class="button mainaction" label="save" />
+        <roundcube:button command="menu-open" id="listmenucancel" type="input" class="button" label="cancel" />
+    </div>
 </div>
 
 <div id="dragfilemenu" class="popupmenu">
-	<ul class="toolbarmenu">
-		<li><roundcube:button command="files-move" onclick="return kolab_files_drag_menu_action('files-move')" label="move" classAct="active" /></li>
-		<li><roundcube:button command="files-copy" onclick="return kolab_files_drag_menu_action('files-copy')" label="copy" classAct="active" /></li>
-	</ul>
+    <ul class="toolbarmenu">
+        <li><roundcube:button command="files-move" onclick="return kolab_files_drag_menu_action('files-move')" label="move" classAct="active" /></li>
+        <li><roundcube:button command="files-copy" onclick="return kolab_files_drag_menu_action('files-copy')" label="copy" classAct="active" /></li>
+    </ul>
+</div>
+
+<div id="filesearchmenu" class="popupmenu">
+    <ul class="toolbarmenu">
+        <li><label><input type="checkbox" name="all_folders" value="1" id="search_all_folders" /> <span><roundcube:label name="kolab_files.allfolders" /></span></label></li>
+    </ul>
 </div>
 
 <roundcube:include file="/includes/footer.html" />

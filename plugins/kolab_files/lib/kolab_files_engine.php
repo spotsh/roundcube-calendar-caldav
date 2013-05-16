@@ -44,7 +44,7 @@ class kolab_files_engine
      */
     public function ui()
     {
-        $this->plugin->add_texts('localization/', true);
+        $this->plugin->add_texts('localization/');
 
         // set templates of Files UI and widgets
         if ($this->rc->task == 'mail') {
@@ -67,6 +67,11 @@ class kolab_files_engine
                     'label'      => 'kolab_files.saveto',
                     ), 'attachmentmenu');
             }
+
+            $this->plugin->add_label('save', 'cancel',
+                'saveall', 'fromcloud', 'attachsel', 'selectfiles', 'attaching',
+                'collection_audio', 'collection_video', 'collection_image', 'collection_document'
+            );
         }
         else if ($this->rc->task == 'files') {
             $template = 'files';
@@ -155,7 +160,7 @@ class kolab_files_engine
             $out = $this->rc->output->form_tag($attrib, $out);
         }
 
-        $this->rc->output->add_label('kolab_files.foldercreating', 'kolab_files.create');
+        $this->plugin->add_label('foldercreating', 'create', 'foldercreate', 'cancel');
         $this->rc->output->add_gui_object('folder-create-form', $attrib['id']);
 
         return $out;
@@ -185,6 +190,7 @@ class kolab_files_engine
         // add form tag around text field
         if (empty($attrib['form'])) {
             $out = $this->rc->output->form_tag(array(
+                    'action'   => '?_task=files',
                     'name'     => "filesearchform",
                     'onsubmit' => rcmail_output::JS_OBJECT_NAME . ".command('files-search'); return false",
                 ), $out);
@@ -198,8 +204,6 @@ class kolab_files_engine
      */
     public function file_list($attrib)
     {
-//        $this->rc->output->add_label('');
-
         // define list of cols to be displayed based on parameter or config
         if (empty($attrib['columns'])) {
             $list_cols     = $this->rc->config->get('kolab_files_list_cols');
@@ -210,7 +214,6 @@ class kolab_files_engine
         else {
             $a_show_cols = preg_split('/[\s,;]+/', strip_quotes($attrib['columns']));
         }
-
 
         // make sure 'name' and 'options' column is present
         if (!in_array('name', $a_show_cols)) {
@@ -241,6 +244,7 @@ class kolab_files_engine
         $this->rc->output->set_env('sort_col', $_SESSION['kolab_files_sort_col']);
         $this->rc->output->set_env('sort_order', $_SESSION['kolab_files_sort_order']);
         $this->rc->output->set_env('coltypes', $a_show_cols);
+        $this->rc->output->set_env('search_threads', $this->rc->config->get('kolab_files_search_threads'));
 
         $this->rc->output->include_script('list.js');
 
@@ -263,7 +267,7 @@ class kolab_files_engine
     protected function file_list_head($attrib, $a_show_cols)
     {
         $skin_path = $_SESSION['skin_path'];
-        $image_tag = html::img(array('src' => "%s%s", 'alt' => "%s"));
+//        $image_tag = html::img(array('src' => "%s%s", 'alt' => "%s"));
 
         // check to see if we have some settings for sorting
         $sort_col   = $_SESSION['kolab_files_sort_col'];
@@ -456,12 +460,12 @@ class kolab_files_engine
 
     protected function action_index()
     {
-        $this->rc->output->add_label(
-            'kolab_files.folderdeleting', 'kolab_files.folderdeleteconfirm',
-            'kolab_files.foldercreating', 'kolab_files.uploading',
-            'kolab_files.filedeleting', 'kolab_files.filedeletenotice', 'kolab_files.filedeleteconfirm',
-            'kolab_files.filemoving', 'kolab_files.filemovenotice',
-            'kolab_files.filecopying', 'kolab_files.filecopynotice'
+        $this->plugin->add_label(
+            'folderdeleting', 'folderdeleteconfirm', 'foldercreating', 'uploading', 'attaching',
+            'filedeleting', 'filedeletenotice', 'filedeleteconfirm',
+            'filemoving', 'filemovenotice', 'filecopying', 'filecopynotice',
+            'collection_audio', 'collection_video', 'collection_image', 'collection_document',
+            'fileskip', 'fileskipall', 'fileoverwrite', 'fileoverwriteall', 'filemoveconfirm'
         );
 
         $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
@@ -511,14 +515,13 @@ class kolab_files_engine
      */
     protected function action_save_file()
     {
-        $source = rcube_utils::get_input_value('source', rcube_utils::INPUT_POST);
+//        $source = rcube_utils::get_input_value('source', rcube_utils::INPUT_POST);
         $uid    = rcube_utils::get_input_value('uid', rcube_utils::INPUT_POST);
         $dest   = rcube_utils::get_input_value('dest', rcube_utils::INPUT_POST);
         $id     = rcube_utils::get_input_value('id', rcube_utils::INPUT_POST);
         $name   = rcube_utils::get_input_value('name', rcube_utils::INPUT_POST);
 
         $temp_dir = unslashify($this->rc->config->get('temp_dir'));
-        $storage  = $this->rc->get_storage();
         $message  = new rcube_message($uid);
         $request  = $this->get_request();
         $url      = $request->getUrl();
@@ -528,7 +531,7 @@ class kolab_files_engine
 
         $request->setMethod(HTTP_Request2::METHOD_POST);
         $request->setHeader('X-Session-Token', $this->get_api_token());
-        $url->setQueryVariables(array('method' => 'file_create', 'folder' => $dest));
+        $url->setQueryVariables(array('method' => 'file_upload', 'folder' => $dest));
         $request->setUrl($url);
 
         foreach ($message->attachments as $attach_prop) {

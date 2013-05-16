@@ -27,7 +27,13 @@ $labels['view'] = 'View';
 $labels['viewfile'] = 'View file';
 $labels['deletefile'] = 'Delete selected file(s)';
 
+$labels['collection_audio'] = 'Audio';
+$labels['collection_video'] = 'Video';
+$labels['collection_image'] = 'Images';
+$labels['collection_document'] = 'Documents';
+
 $labels['uploading'] = 'Uploading file(s)...';
+$labels['attaching'] = 'Attaching file(s)...';
 $labels['foldercreating'] = 'Creating folder...';
 $labels['folderdeleting'] = 'Deleting folder...';
 $labels['folderdeleteconfirm'] = 'Are you sure you want to delete selected folder?';
@@ -43,5 +49,12 @@ $labels['filedeleteconfirm'] = 'Are you sure you want to delete selected files?'
 $labels['filedeletenotice'] = 'File(s) deleted successfully.';
 $labels['filemovenotice'] = 'File(s) moved successfully.';
 $labels['filecopynotice'] = 'File(s) copied successfully.';
+
+$labels['allfolders'] = 'search in all folders';
+$labels['fileskip'] = 'Skip';
+$labels['fileskipall'] = 'Skip all';
+$labels['fileoverwrite'] = 'Overwrite';
+$labels['fileoverwriteall'] = 'Overwrite all';
+$labels['filemoveconfirm'] = 'This action is going to overwrite the destination file: <b>$file</b>.';
 
 ?>
