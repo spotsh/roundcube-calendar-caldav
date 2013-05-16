@@ -19,10 +19,10 @@
 		<email>machniak@kolabsys.com</email>
 		<active>yes</active>
 	</developer>
-	<date>2012-11-08</date>
+	<date>2013-05-16</date>
 	<version>
-		<release>0.9-beta</release>
-		<api>0.9-beta</api>
+		<release>0.9.1</release>
+		<api>0.9.1</api>
 	</version>
 	<stability>
 		<release>stable</release>

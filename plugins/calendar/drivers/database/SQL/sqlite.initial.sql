@@ -38,6 +38,7 @@ CREATE TABLE events (
   description text NOT NULL,
   location varchar(255) NOT NULL default '',
   categories varchar(255) NOT NULL default '',
+  url varchar(255) NOT NULL default '',
   all_day tinyint(1) NOT NULL default '0',
   free_busy tinyint(1) NOT NULL default '0',
   priority tinyint(1) NOT NULL default '0',

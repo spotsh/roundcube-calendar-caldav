@@ -55,6 +55,7 @@ CREATE TABLE events (
     description text NOT NULL,
     location character varying(255) NOT NULL,
     categories character varying(255) NOT NULL,
+    url character varying(255) NOT NULL,
     all_day smallint NOT NULL DEFAULT 0,
     free_busy smallint NOT NULL DEFAULT 0,
     priority smallint NOT NULL DEFAULT 0,

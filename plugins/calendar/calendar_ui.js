@@ -146,7 +146,20 @@ function rcube_calendar_ui(settings)
 
     var zeropad = function(num)
     {
-        return (num < 10 ? '0' : '') + num;
+      return (num < 10 ? '0' : '') + num;
+    }
+
+    var render_link = function(url)
+    {
+      var islink = false, href = url;
+      if (url.match(/^[fhtpsmailo]+?:\/\//i)) {
+        islink = true;
+      }
+      else if (url.match(/^[a-z0-9.-:]+(\/|$)/i)) {
+        islink = true;
+        href = 'http://' + url;
+      }
+      return islink ? '<a href="' + Q(href) + '" target="_blank">' + Q(url) + '</a>' : Q(url);
     }
 
     // determine whether the given date is on a weekend
@@ -279,6 +292,8 @@ function rcube_calendar_ui(settings)
         $('#event-location').html('@ ' + text2html(event.location)).show();
       if (event.description)
         $('#event-description').show().children('.event-text').html(text2html(event.description, 300, 6));
+      if (event.vurl)
+        $('#event-url').show().children('.event-text').html(render_link(event.vurl));
       
       // render from-to in a nice human-readable way
       // -> now shown in dialog title
@@ -347,7 +362,7 @@ function rcube_calendar_ui(settings)
             .find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
         }
         
-        $('#event-rsvp')[(rsvp?'show':'hide')]();
+        $('#event-rsvp')[(rsvp&&!organizer?'show':'hide')]();
         $('#event-rsvp .rsvp-buttons input').prop('disabled', false).filter('input[rel='+rsvp+']').prop('disabled', true);
       }
 
@@ -419,6 +434,7 @@ function rcube_calendar_ui(settings)
       var title = $('#edit-title').val(event.title || '');
       var location = $('#edit-location').val(event.location || '');
       var description = $('#edit-description').html(event.description || '');
+      var vurl = $('#edit-url').val(event.vurl || '');
       var categories = $('#edit-categories').val(event.categories);
       var calendars = $('#edit-calendar').val(event.calendar);
       var freebusy = $('#edit-free-busy').val(event.free_busy);
@@ -579,6 +595,7 @@ function rcube_calendar_ui(settings)
       // init dialog buttons
       var buttons = {};
       
+      // save action
       buttons[rcmail.gettext('save', 'calendar')] = function() {
         var start = parse_datetime(allday.checked ? '12:00' : starttime.val(), startdate.val());
         var end   = parse_datetime(allday.checked ? '13:00' : endtime.val(), enddate.val());
@@ -599,6 +616,7 @@ function rcube_calendar_ui(settings)
           description: description.val(),
           location: location.val(),
           categories: categories.val(),
+          vurl: vurl.val(),
           free_busy: freebusy.val(),
           priority: priority.val(),
           sensitivity: sensitivity.val(),
@@ -1428,7 +1446,7 @@ function rcube_calendar_ui(settings)
         opts.ORGANIZER = rcmail.gettext('calendar.roleorganizer');
       opts['REQ-PARTICIPANT'] = rcmail.gettext('calendar.rolerequired');
       opts['OPT-PARTICIPANT'] = rcmail.gettext('calendar.roleoptional');
-      opts['CHAIR'] =  rcmail.gettext('calendar.roleresource');
+      opts['CHAIR'] =  rcmail.gettext('calendar.rolechair');
       
       if (organizer && !readonly)
           dispname = rcmail.env['identities-selector'];

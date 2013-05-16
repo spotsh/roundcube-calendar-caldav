@@ -243,6 +243,7 @@ class calendar_ical
         
         case 'DESCRIPTION':
         case 'LOCATION':
+        case 'URL':
           $event[strtolower($attr['name'])] = $attr['value'];
           break;
         
@@ -393,6 +394,9 @@ class calendar_ical
 
         if (!empty($event['location'])) {
           $vevent .= "LOCATION:" . self::escape($event['location']) . self::EOL;
+        }
+        if (!empty($event['url'])) {
+          $vevent .= "URL:" . self::escape($event['url']) . self::EOL;
         }
         if ($event['recurrence'] && !$recurrence_id) {
           $vevent .= "RRULE:" . libcalendaring::to_rrule($event['recurrence'], self::EOL) . self::EOL;

@@ -39,6 +39,7 @@
  *         'title' => 'Event title/summary',
  *      'location' => 'Location string',
  *   'description' => 'Event description',
+ *           'url' => 'URL to more information',
  *    'recurrence' => array(   // Recurrence definition according to iCalendar (RFC 2445) specification as list of key-value pairs
  *            'FREQ' => 'DAILY|WEEKLY|MONTHLY|YEARLY',
  *        'INTERVAL' => 1...n,

@@ -1098,6 +1098,10 @@ class calendar extends rcube_plugin
       $event['attachments'][$k]['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
     }
 
+    // mapping url => vurl because of the fullcalendar client script
+    $event['vurl'] = $event['url'];
+    unset($event['url']);
+
     return array(
       '_id'   => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
       'start' => $this->lib->adjust_timezone($event['start'])->format('c'),
@@ -1312,6 +1316,10 @@ class calendar extends rcube_plugin
         array_unshift($event['attendees'], array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email'], 'status' => 'ACCEPTED'));
       }
     }
+
+    // mapping url => vurl because of the fullcalendar client script
+    $event['url'] = $event['vurl'];
+    unset($event['vurl']);
   }
 
   /**
