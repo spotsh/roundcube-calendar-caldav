@@ -43,6 +43,14 @@ abstract class kolab_format_xcal extends kolab_format
         'CHAIR' => kolabformat::Chair,
     );
 
+    protected $cutype_map = array(
+        'INDIVIDUAL' => kolabformat::CutypeIndividual,
+        'GROUP'      => kolabformat::CutypeGroup,
+        'ROOM'       => kolabformat::CutypeRoom,
+        'RESOURCE'   => kolabformat::CutypeResource,
+        'UNKNOWN'    => kolabformat::CutypeUnknown,
+    );
+
     protected $rrule_type_map = array(
         'MINUTELY' => RecurrenceRule::Minutely,
         'HOURLY' => RecurrenceRule::Hourly,
@@ -121,6 +129,7 @@ abstract class kolab_format_xcal extends kolab_format
         }
 
         $role_map = array_flip($this->role_map);
+        $cutype_map = array_flip($this->cutype_map);
         $part_status_map = array_flip($this->part_status_map);
         $attvec = $this->obj->attendees();
         for ($i=0; $i < $attvec->size(); $i++) {
@@ -129,6 +138,7 @@ abstract class kolab_format_xcal extends kolab_format
             if ($cr->email() != $object['organizer']['email']) {
                 $object['attendees'][] = array(
                     'role' => $role_map[$attendee->role()],
+                    'cutype' => $cutype_map[$attendee->cutype()],
                     'status' => $part_status_map[$attendee->partStat()],
                     'rsvp' => $attendee->rsvp(),
                     'email' => $cr->email(),
@@ -250,6 +260,7 @@ abstract class kolab_format_xcal extends kolab_format
                 $att->setContact($cr);
                 $att->setPartStat($this->part_status_map[$attendee['status']]);
                 $att->setRole($this->role_map[$attendee['role']] ? $this->role_map[$attendee['role']] : kolabformat::Required);
+                $att->setCutype($this->cutype_map[$attendee['cutype']] ? $this->cutype_map[$attendee['cutype']] : kolabformat::CutypeIndividual);
                 $att->setRSVP((bool)$attendee['rsvp']);
 
                 if ($att->isValid()) {
