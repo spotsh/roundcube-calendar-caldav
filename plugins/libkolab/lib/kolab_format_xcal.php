@@ -248,7 +248,7 @@ abstract class kolab_format_xcal extends kolab_format
 
         $vurls = new vectorurl;
         foreach ((array)$object['url'] as $url) {
-            $vurls->push(new Url(strval($url));
+            $vurls->push(new Url(strval($url)));
         }
         $this->obj->setUrls($vurls);
 
