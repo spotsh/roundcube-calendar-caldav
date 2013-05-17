@@ -1098,6 +1098,23 @@ class calendar extends rcube_plugin
       $event['attachments'][$k]['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
     }
 
+    // check for organizer in attendees list
+    $organizer = null;
+    foreach ((array)$event['attendees'] as $i => $attendee) {
+      if ($attendee['role'] == 'ORGANIZER') {
+        $organizer = $attendee;
+        break;
+      }
+    }
+
+    if ($organizer === null && !empty($event['organizer'])) {
+      $organizer = $event['organizer'];
+      $organizer['role'] = 'ORGANIZER';
+      if (!is_array($event['attendees']))
+        $event['attendees'] = array();
+      array_unshift($event['attendees'], $organizer);
+    }
+
     // mapping url => vurl because of the fullcalendar client script
     $event['vurl'] = $event['url'];
     unset($event['url']);
