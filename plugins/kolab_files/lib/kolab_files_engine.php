@@ -346,7 +346,7 @@ class kolab_files_engine
         }
 
         $a_show_cols = $attrib['columns'];
-        $head       = '';
+        $head        = '';
 
         foreach ($this->file_list_head($attrib, $a_show_cols) as $cell) {
             $head .= html::tag('td', array('class' => $cell['className'], 'id' => $cell['id']), $cell['html']);
@@ -356,6 +356,64 @@ class kolab_files_engine
 
         $this->rc->output->set_env('coltypes', $a_show_cols);
         $this->rc->output->command('files_list_update', $head);
+    }
+
+    /**
+     * Template object for file info box
+     */
+    public function file_info_box($attrib)
+    {
+        // print_r($this->file_data, true);
+        $table = new html_table(array('cols' => 2, 'class' => $attrib['class']));
+
+        // file name
+        $table->add('label', $this->plugin->gettext('name').':');
+        $table->add('data filename', $this->file_data['name']);
+
+        // file type
+        // @TODO: human-readable type name
+        $table->add('label', $this->plugin->gettext('type').':');
+        $table->add('data filetype', $this->file_data['type']);
+
+        // file size
+        $table->add('label', $this->plugin->gettext('size').':');
+        $table->add('data filesize', $this->rc->show_bytes($this->file_data['size']));
+
+        // file modification time
+        $table->add('label', $this->plugin->gettext('mtime').':');
+        $table->add('data filemtime', $this->file_data['mtime']);
+
+        // @TODO: for images: width, height, color depth, etc.
+        // @TODO: for text files: count of characters, lines, words
+
+        return $table->show();
+    }
+
+    /**
+     * Template object for file preview frame
+     */
+    public function file_preview_frame($attrib)
+    {
+        if (empty($attrib['id'])) {
+            $attrib['id'] = 'filepreviewframe';
+        }
+
+        if ($frame = $this->file_data['viewer']['frame']) {
+            return $frame;
+        }
+
+        if ($href = $this->file_data['viewer']['href']) {
+        }
+        else {
+            $token = $this->get_api_token();
+            $href  = $this->url . '/api/?method=file_get'
+                . '&file=' . urlencode($this->file_data['filename'])
+                . '&token=' . urlencode($token);
+        }
+
+        $this->rc->output->add_gui_object('preview_frame', $attrib['id']);
+
+        return html::iframe(array('id' => 'file-content', 'src' => $href));
     }
 
     /**
@@ -421,7 +479,7 @@ class kolab_files_engine
     /**
      * Initialize HTTP_Request object
      */
-    protected function get_request()
+    protected function get_request($get = null, $token = null)
     {
         $url = $this->url . '/api/';
 
@@ -441,23 +499,37 @@ class kolab_files_engine
             catch (Exception $e) {
                 rcube::raise_error($e, true, true);
             }
+
+            // proxy User-Agent string
+            $this->request->setHeader('user-agent', $_SERVER['HTTP_USER_AGENT']);
         }
 
-        if ($this->request) {
-            // cleanup
-            try {
-                $this->request->setBody('');
-                $this->request->setUrl($url);
-                $this->request->setMethod(HTTP_Request2::METHOD_GET);
-            }
-            catch (Exception $e) {
-                rcube::raise_error($e, true, true);
-            }
+        // cleanup
+        try {
+            $this->request->setBody('');
+            $this->request->setUrl($url);
+            $this->request->setMethod(HTTP_Request2::METHOD_GET);
+        }
+        catch (Exception $e) {
+            rcube::raise_error($e, true, true);
+        }
+
+        if ($token) {
+            $this->request->setHeader('X-Session-Token', $token);
+        }
+
+        if (!empty($get)) {
+            $url = $this->request->getUrl();
+            $url->setQueryVariables($get);
+            $this->request->setUrl($url);
         }
 
         return $this->request;
     }
 
+    /**
+     * Handler for main files interface (Files task)
+     */
     protected function action_index()
     {
         $this->plugin->add_label(
@@ -469,6 +541,7 @@ class kolab_files_engine
         );
 
         $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
+        $this->rc->output->set_env('file_mimetypes', $this->get_mimetypes());
         $this->rc->output->send('kolab_files.files');
     }
 
@@ -508,6 +581,60 @@ class kolab_files_engine
         }
 
         $this->rc->output->send();
+    }
+
+    /**
+     * Handler for file open action
+     */
+    protected function action_open()
+    {
+        $file = rcube_utils::get_input_value('file', rcube_utils::INPUT_GET);
+
+        // get file info
+        $token   = $this->get_api_token();
+        $request = $this->get_request(array(
+            'method' => 'file_info',
+            'file'   => $file,
+            'viewer' => !empty($_GET['viewer']),
+            ), $token);
+
+        // send request to the API
+        try {
+            $response = $request->send();
+            $status   = $response->getStatus();
+            $body     = @json_decode($response->getBody(), true);
+
+            if ($status == 200 && $body['status'] == 'OK') {
+                $this->file_data = $body['result'];
+            }
+            else {
+                throw new Exception($body['reason']);
+            }
+        }
+        catch (Exception $e) {
+            rcube::raise_error(array(
+                'code' => 500, 'type' => 'php', 'line' => __LINE__, 'file' => __FILE__,
+                'message' => $e->getMessage()),
+                true, true);
+        }
+
+        $this->file_data['filename'] = $file;
+
+        $this->plugin->add_label('filedeleteconfirm', 'filedeleting', 'filedeletenotice');
+
+        // this one is for styling purpose
+        $this->rc->output->set_env('extwin', true);
+
+        // register template objects for dialogs (and main interface)
+        $this->rc->output->add_handlers(array(
+            'fileinfobox'      => array($this, 'file_info_box'),
+            'filepreviewframe' => array($this, 'file_preview_frame'),
+        ));
+
+        $this->rc->output->set_env('file', $file);
+        $this->rc->output->set_env('file_data', $this->file_data);
+        $this->rc->output->set_pagetitle(rcube::Q($file));
+        $this->rc->output->send('kolab_files.filepreview');
     }
 
     /**
@@ -758,5 +885,36 @@ class kolab_files_engine
         // send html page with JS calls as response
         $this->rc->output->command('auto_save_start', false);
         $this->rc->output->send();
+    }
+
+    /**
+     * Returns mimetypes supported by File API viewers
+     */
+    protected function get_mimetypes()
+    {
+        $token   = $this->get_api_token();
+        $request = $this->get_request(array('method' => 'mimetypes'), $token);
+
+        // send request to the API
+        try {
+            $response = $request->send();
+            $status   = $response->getStatus();
+            $body     = @json_decode($response->getBody(), true);
+
+            if ($status == 200 && $body['status'] == 'OK') {
+                $mimetypes = $body['result'];
+            }
+            else {
+                throw new Exception($body['reason']);
+            }
+        }
+        catch (Exception $e) {
+            rcube::raise_error(array(
+                'code' => 500, 'type' => 'php', 'line' => __LINE__, 'file' => __FILE__,
+                'message' => $e->getMessage()),
+                true, false);
+        }
+
+        return $mimetypes;
     }
 }

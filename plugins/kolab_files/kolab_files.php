@@ -47,6 +47,7 @@ class kolab_files extends rcube_plugin
         // Register plugin task actions
         $this->register_action('index', array($this, 'actions'));
         $this->register_action('prefs', array($this, 'actions'));
+        $this->register_action('open',  array($this, 'actions'));
 
         $this->ui();
     }

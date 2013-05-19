@@ -18,6 +18,7 @@ $labels['folderinside'] = 'Insert inside';
 $labels['foldername'] = 'Folder name';
 $labels['name'] = 'Name';
 $labels['mtime'] = 'Modified';
+$labels['type'] = 'Type';
 
 $labels['upload'] = 'Upload';
 $labels['uploadfile'] = 'Upload file(s)';

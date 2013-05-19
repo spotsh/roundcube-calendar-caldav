@@ -67,6 +67,7 @@ window.rcmail && rcmail.addEventListener('init', function() {
       rcmail.file_list.addEventListener('dragstart', function(o){ p.drag_start(o); });
       rcmail.file_list.addEventListener('dragmove', function(e){ p.drag_move(e); });
 */
+      rcmail.file_list.addEventListener('dblclick', function(o){ kolab_files_list_dblclick(o); });
       rcmail.file_list.addEventListener('select', function(o){ kolab_files_list_select(o); });
       rcmail.file_list.addEventListener('dragend', function(e){ kolab_files_drag_end(e); });
       rcmail.file_list.addEventListener('column_replace', function(e){ kolab_files_set_coltypes(e); });
@@ -87,7 +88,14 @@ window.rcmail && rcmail.addEventListener('init', function() {
     rcmail.env.file_commands_all = ['files-delete', 'files-move', 'files-copy'];
 
     kolab_files_init();
-    file_api.folder_list();
+
+    if (rcmail.env.action == 'open') {
+      rcmail.enable_command('files-get', 'files-delete', rcmail.env.file);
+    }
+    else {
+      file_api.folder_list();
+      file_api.browser_capabilities_check();
+    }
   }
 });
 
@@ -110,7 +118,9 @@ function kolab_files_init()
     url: rcmail.env.files_url,
     sort_col: 'name',
     sort_reverse: false,
-    search_threads: rcmail.env.search_threads
+    search_threads: rcmail.env.search_threads,
+    resources_dir: 'program/resources',
+    supported_mimetypes: rcmail.env.file_mimetypes
   });
 
   file_api.translations = rcmail.labels;
@@ -435,6 +445,11 @@ kolab_files_click_on_list = function(e)
   return true;
 };
 
+kolab_files_list_dblclick = function(list)
+{
+  rcmail.command('files-open');
+};
+
 kolab_files_list_select = function(list)
 {
   var selected = list.selection.length;
@@ -445,6 +460,25 @@ kolab_files_list_select = function(list)
     // reset all-pages-selection
 //  if (list.selection.length && list.selection.length != list.rowcount)
 //    rcmail.select_all_mode = false;
+
+  // enable files-
+  if (selected == 1) {
+    // get file mimetype
+    var type = $('tr.selected', list.list).data('type');
+    rcmail.env.viewer = file_api.file_type_supported(type);
+  }
+  else
+    rcmail.env.viewer = 0;
+/*
+    ) {
+//      caps = this.browser_capabilities().join();
+      href = '?' + $.param({_task: 'files', _action: 'open', file: file, viewer: viewer == 2 ? 1 : 0});
+      var win = window.open(href, rcmail.html_identifier('rcubefile'+file));
+      if (win)
+        setTimeout(function() { win.focus(); }, 10);
+    }
+*/
+  rcmail.enable_command('files-open', rcmail.env.viewer);
 };
 
 kolab_files_drag_end = function(e)
@@ -544,7 +578,7 @@ rcube_webmail.prototype.files_delete = function()
   if (!confirm(this.get_label('kolab_files.filedeleteconfirm')))
     return;
 
-  var files = kolab_files_selected();
+  var files = this.env.file ? [this.env.file] : kolab_files_selected();
   file_api.file_delete(files);
 };
 
@@ -584,12 +618,19 @@ rcube_webmail.prototype.files_list_update = function(head)
 
 rcube_webmail.prototype.files_get = function()
 {
-  var files = kolab_files_selected();
+  var files = this.env.file ? [this.env.file] : kolab_files_selected();
 
   if (files.length == 1)
     file_api.file_get(files[0], {'force-download': true});
 };
 
+rcube_webmail.prototype.files_open = function()
+{
+  var files = kolab_files_selected();
+
+  if (files.length == 1)
+    file_api.file_open(files[0], rcmail.env.viewer);
+};
 
 /**********************************************************/
 /*********          Files API handler            **********/
@@ -831,13 +872,18 @@ function kolab_files_ui()
     if (!this.response(response))
       return;
 
-    var i = 0, table = $('#filelist');
+    var i = 0, list = [], table = $('#filelist');
 
     $.each(response.result, function(key, data) {
       i++;
       var row = file_api.file_list_row(key, data, i);
       rcmail.file_list.insert_row(row);
+      data.row = row;
+      data.filename = key;
+      list.push(data);
     });
+
+    this.env.file_list = list;
   };
 
   // call file_list request for every folder (used for search and virt. collections)
@@ -918,6 +964,7 @@ function kolab_files_ui()
         var row = this.file_list_row(i, result[i], index++);
         table.insert_row(row, elem.row);
         result[i].row = row;
+        result[i].filename = i;
         list.push(result[i]);
         delete result[i];
       }
@@ -930,6 +977,7 @@ function kolab_files_ui()
       var row = file_api.file_list_row(key, data, index++);
       table.insert_row(row);
       result[key].row = row;
+      result[key].filename = key;
       list.push(result[key]);
     });
 
@@ -986,7 +1034,7 @@ function kolab_files_ui()
 
     row = $('<tr>')
       .html(row)
-      .attr({id: 'rcmrow' + index, 'data-file': file});
+      .attr({id: 'rcmrow' + index, 'data-file': file, 'data-type': data.type});
 
     // collection (or search) lists files from all folders
     // display file name with full path as title
@@ -1039,7 +1087,12 @@ function kolab_files_ui()
       return;
 
     this.display_message('kolab_files.filedeletenotice', 'confirmation');
-    this.file_list();
+    if (rcmail.env.file) {
+      // @TODO: reload files list in parent window
+      window.close();
+    }
+    else
+      this.file_list();
   };
 
   // file(s) move request
@@ -1269,4 +1322,13 @@ function kolab_files_ui()
       .submit();
   };
 
+  // open file in new window, using file API viewer
+  this.file_open = function(file, viewer)
+  {
+    var href = '?' + $.param({_task: 'files', _action: 'open', file: file, viewer: viewer == 2 ? 1 : 0}),
+      win = window.open(href, rcmail.html_identifier('rcubefile'+file));
+
+    if (win)
+      setTimeout(function() { win.focus(); }, 10);
+  };
 };

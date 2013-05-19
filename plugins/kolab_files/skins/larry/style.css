@@ -34,7 +34,7 @@
   background-position: center -94px;
 }
 
-#filestoolbar a.button.view {
+#filestoolbar a.button.open {
   background-position: center -131px;
 }
 
@@ -52,7 +52,8 @@
   left: 6px;
 }
 
-#folderlistbox {
+#folderlistbox,
+#fileinfobox {
   position: absolute;
   top: 42px;
   left: 0;
@@ -60,7 +61,8 @@
   bottom: 0;
 }
 
-#filelistcontainer {
+#filelistcontainer,
+#filecontent {
   position: absolute;
   top: 42px;
   left: 232px;
@@ -76,6 +78,17 @@
   left: 0;
   position: absolute;
   width: 100%;
+}
+
+#filecontent {
+  overflow: hidden;
+}
+
+#filecontent iframe {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
 }
 
 #files-folder-list ul li span.name {
@@ -218,6 +231,19 @@
 }
 */
 
+#fileinfobox table td.label {
+  width: 1%;
+  font-weight: bold;
+  padding-right: 0;
+}
+
+#fileinfobox table td.data.filename {
+  font-weight: bold;
+}
+
+#fileinfobox table tr:first-child td {
+  border-top: 0;
+}
 
 /* plugin dialogs */
 

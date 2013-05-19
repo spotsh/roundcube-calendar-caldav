@@ -1,7 +1,11 @@
 function kolab_files_ui_init()
 {
-  var filesviewsplit = new rcube_splitter({ id:'filesviewsplitter', p1:'#folderlistbox', p2:'#filelistcontainer',
-    orientation:'v', relative:true, start:226, min:150, size:12 }).init();
+  if (rcmail.env.action == 'open')
+    var filesviewsplit = new rcube_splitter({ id:'filesopensplitter', p1:'#fileinfobox', p2:'#filecontent',
+      orientation:'v', relative:true, start:226, min:150, size:12 }).init();
+  else
+    var filesviewsplit = new rcube_splitter({ id:'filesviewsplitter', p1:'#folderlistbox', p2:'#filelistcontainer',
+      orientation:'v', relative:true, start:226, min:150, size:12 }).init();
 
   $(document).ready(function() {
     rcmail.addEventListener('menu-open', kolab_files_show_listoptions);
