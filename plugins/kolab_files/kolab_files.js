@@ -875,8 +875,7 @@ function kolab_files_ui()
     var i = 0, list = [], table = $('#filelist');
 
     $.each(response.result, function(key, data) {
-      i++;
-      var row = file_api.file_list_row(key, data, i);
+      var row = file_api.file_list_row(key, data, ++i);
       rcmail.file_list.insert_row(row);
       data.row = row;
       data.filename = key;
@@ -961,7 +960,7 @@ function kolab_files_ui()
         if (this.sort_compare(elem, result[i]) < 0)
           break;
 
-        var row = this.file_list_row(i, result[i], index++);
+        var row = this.file_list_row(i, result[i], ++index);
         table.insert_row(row, elem.row);
         result[i].row = row;
         result[i].filename = i;
@@ -974,7 +973,7 @@ function kolab_files_ui()
 
     // add the rest of rows
     $.each(result, function(key, data) {
-      var row = file_api.file_list_row(key, data, index++);
+      var row = file_api.file_list_row(key, data, ++index);
       table.insert_row(row);
       result[key].row = row;
       result[key].filename = key;
