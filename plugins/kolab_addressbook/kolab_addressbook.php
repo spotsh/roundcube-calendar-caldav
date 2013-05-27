@@ -410,10 +410,11 @@ class kolab_addressbook extends rcube_plugin
     public function book_save()
     {
         $prop = array(
-            'name' => trim(get_input_value('_name', RCUBE_INPUT_POST)),
+            'name'    => trim(get_input_value('_name', RCUBE_INPUT_POST)),
             'oldname' => trim(get_input_value('_oldname', RCUBE_INPUT_POST, true)), // UTF7-IMAP
-            'parent' => trim(get_input_value('_parent', RCUBE_INPUT_POST, true)), // UTF7-IMAP
-            'type' => 'contact',
+            'parent'  => trim(get_input_value('_parent', RCUBE_INPUT_POST, true)), // UTF7-IMAP
+            'type'    => 'contact',
+            'subscribed' => true,
         );
 
         $result = $error = false;
