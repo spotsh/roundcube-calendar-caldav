@@ -36,6 +36,7 @@ class kolab_storage_cache
     private $synclock = false;
     private $ready = false;
     private $max_sql_packet = 1046576;  // 1 MB - 2000 bytes
+    private $max_sync_lock_time = 600;
     private $binary_cols = array('photo','pgppublickey','pkcs7publickey');
 
 
@@ -92,7 +93,7 @@ class kolab_storage_cache
             return;
 
         // increase time limit
-        @set_time_limit(500);
+        @set_time_limit($this->max_sync_lock_time);
 
         // lock synchronization for this folder or wait if locked
         $this->_sync_lock();
@@ -674,12 +675,9 @@ class kolab_storage_cache
         if (!$this->ready)
             return;
 
-        $sql_arr = $this->db->fetch_assoc($this->db->query(
-            "SELECT msguid AS locked, ".$this->db->unixtimestamp('created')." AS created FROM kolab_cache ".
-            "WHERE resource=? AND type=?",
-            $this->resource_uri,
-            'lock'
-        ));
+        $sql_query = "SELECT msguid AS locked, ".$this->db->unixtimestamp('created')." AS created FROM kolab_cache ".
+            "WHERE resource=? AND type=?";
+        $sql_arr = $this->db->fetch_assoc($this->db->query($sql_query, $this->resource_uri, 'lock'));
 
         // abort if database is not set-up
         if ($this->db->is_error()) {
@@ -688,6 +686,12 @@ class kolab_storage_cache
         }
 
         $this->synclock = true;
+
+        // wait if locked (expire locks after 10 minutes)
+        while ($sql_arr && intval($sql_arr['locked']) > 0 && $sql_arr['created'] + $this->max_sync_lock_time > time()) {
+            usleep(500000);
+            $sql_arr = $this->db->fetch_assoc($this->db->query($sql_query, $this->resource_uri, 'lock'));
+        }
 
         // create lock record if not exists
         if (!$sql_arr) {
@@ -699,12 +703,6 @@ class kolab_storage_cache
                 date('Y-m-d H:i:s')
             );
         }
-        // wait if locked (expire locks after 10 minutes)
-        else if (intval($sql_arr['locked']) > 0 && (time() - $sql_arr['created']) < 600) {
-            usleep(500000);
-            return $this->_sync_lock();
-        }
-        // set lock
         else {
             $this->db->query(
                 "UPDATE kolab_cache SET msguid=1, created=? ".
