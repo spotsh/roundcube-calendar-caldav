@@ -84,125 +84,137 @@ rcube_webmail.prototype.book_save = function()
 };
 
 // action executed after book delete
-rcube_webmail.prototype.book_delete_done = function(id)
+rcube_webmail.prototype.book_delete_done = function(id, recur)
 {
-    var n, g, li = this.get_folder_li(id), groups = this.env.contactgroups;
+    var n, groups = this.env.contactgroups,
+        sources = this.env.address_sources,
+        olddata = sources[id];
 
-    // remove folder and its groups rows
+    this.treelist.remove(id);
+
     for (n in groups)
-        if (groups[n].source == id && (g = this.get_folder_li(n))) {
-            $(g).remove();
+        if (groups[n].source == id) {
             delete this.env.contactgroups[n];
+            delete this.env.contactfolders[n];
         }
-    $(li).remove();
 
     delete this.env.address_sources[id];
     delete this.env.contactfolders[id];
+
+    if (recur)
+        return;
+
+    // remove subfolders
+    olddata.realname += this.env.delimiter;
+    for (n in sources)
+        if (sources[n].realname && sources[n].realname.indexOf(olddata.realname) == 0)
+            this.book_delete_done(n, true);
 };
 
 // action executed after book create/update
-rcube_webmail.prototype.book_update = function(data, old)
+rcube_webmail.prototype.book_update = function(data, old, recur)
 {
-    var n, i, id, len, link, row, refrow, olddata, name = '', realname = '', sources, level,
-        folders = [], class_name = 'addressbook',
-        list = this.gui_objects.folderlist,
+    var n, i, id, len, link, row, prop, olddata, oldid, name, sources, level,
+        folders = [], classes = ['addressbook'],
         groups = this.env.contactgroups;
 
     this.env.contactfolders[data.id] = this.env.address_sources[data.id] = data;
     this.show_contentframe(false);
 
-    // update
+    // update (remove old row)
     if (old && old != data.id) {
         olddata = this.env.address_sources[old];
         delete this.env.address_sources[old];
         delete this.env.contactfolders[old];
-        refrow = $('#rcmli'+old);
+        this.treelist.remove(old);
     }
 
     sources = this.env.address_sources;
 
     // set row attributes
     if (data.readonly)
-        class_name += ' readonly';
+        classes.push('readonly');
     if (data.class_name)
-        class_name += ' '+data.class_name;
+        classes.push(data.class_name);
     // updated currently selected book
     if (this.env.source != '' && this.env.source == old) {
-        class_name += ' selected';
+        classes.push('selected');
         this.env.source = data.id;
     }
 
-    link = $('<a>').attr({'href': '#', 'rel': data.id}).html(data.name)
-        .click(function() { return rcmail.command('list', data.id, this); });
-    row = $('<li>').attr({id: 'rcmli'+data.id, 'class': class_name})
-        .append(link);
+    link = $('<a>').html(data.name)
+      .attr({
+        href: '#', rel: data.id,
+        onclick: "return rcmail.command('list', '" + data.id + "', this)"
+      });
 
-    // sort kolab folders, to put the new one in order
-    for (n in sources)
-        if (sources[n].kolab && (name = sources[n].realname))
-            folders.push(name);
+    // add row at the end of the list
+    // treelist widget is not very smart, we need
+    // to do sorting and add groups list by ourselves
+    this.treelist.insert({id: data.id, html:link, classes: classes, childlistclass: 'groups'}, '', false);
+    row = $(this.treelist.get_item(data.id));
+    row.append($('<ul class="groups">').hide());
+
+    // we need to sort rows because treelist can't sort by property
+    $.each(sources, function(i, v) {
+        if (v.kolab && v.realname)
+            folders.push(v.realname);
+    });
     folders.sort();
 
-    // find current id
     for (n=0, len=folders.length; n<len; n++)
         if (folders[n] == data.realname)
            break;
 
-    // add row
-    if (n && n < len) {
-        // find the row before
+    // find the row before and re-insert after it
+    if (n && n < len - 1) {
         name = folders[n-1];
         for (n in sources)
             if (sources[n].realname && sources[n].realname == name) {
-                // folder row found
-                n = $('#rcmli'+n);
-                // skip groups
-                while (n.next().hasClass('contactgroup'))
-                    n = n.next();
-                row.insertAfter(n);
+                row.detach().insertAfter(this.treelist.get_item(n));
                 break;
             }
     }
-    else if (olddata) {
-        row.insertBefore(refrow);
-    }
-    else {
-        row.appendTo(list);
-    }
 
     if (olddata) {
-        // remove old row (just after the new row has been inserted)
-        refrow.remove();
-
         // update groups
         for (n in groups) {
             if (groups[n].source == old) {
-                // update existing row
-                refrow = $('#rcmli'+n);
-                refrow.remove().attr({id: 'rcmliG'+data.id+groups[n].id});
-                $('a', refrow).removeAttr('onclick').unbind()
-                    .click({source: data.id, id: groups[n].id}, function(e) {
-                        return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
-                    });
-                refrow.insertAfter(row);
-                row = refrow;
+                prop = groups[n];
+                prop.type = 'group';
+                prop.source = data.id;
+                id = 'G' + prop.source + prop.id;
 
-                // update group data
-                groups[n].source = data.id;
-                this.env.contactgroups['G'+data.id+groups[n].id] = groups[n];
+                link = $('<a>').text(prop.name)
+                  .attr({
+                    href: '#', rel: prop.source + ':' + prop.id,
+                    onclick: "return rcmail.command('listgroup', {source: '"+prop.source+"', id: '"+prop.id+"'}, this)"
+                  });
+
+                this.treelist.insert({id:id, html:link, classes:['contactgroup']}, prop.source, true);
+
+                this.env.contactfolders[id] = this.env.contactgroups[id] = prop;
                 delete this.env.contactgroups[n];
+                delete this.env.contactfolders[n];
             }
         }
 
-        old += '-';
+        if (recur)
+            return;
+
+        // update subfolders
+        old += '_';
         level = olddata.realname.split(this.env.delimiter).length - data.realname.split(this.env.delimiter).length;
-        // update (realname and ID of) subfolders
+        olddata.realname += this.env.delimiter;
+
         for (n in sources) {
-            if (n != data.id && n.indexOf(old) == 0) {
+            if (sources[n].realname && sources[n].realname.indexOf(olddata.realname) == 0) {
+                prop = sources[n];
+                oldid = sources[n].id;
                 // new ID
-                id = data.id + '-' + n.substr(old.length);
-                name = sources[n].name;
-                realname = data.realname + sources[n].realname.substr(olddata.realname.length);
+                prop.id = data.id + '_' + n.substr(old.length);
+                prop.realname = data.realname + prop.realname.substr(olddata.realname.length - 1);
+                name = prop.name;
 
                 // update display name
                 if (level > 0) {
@@ -214,43 +226,8 @@ rcube_webmail.prototype.book_update = function(data, old)
                         name = '&nbsp;&nbsp;' + name;
                 }
 
-                // update existing row
-                refrow = $('#rcmli'+n);
-                refrow.remove().attr({id: 'rcmli'+id});
-                $('a', refrow).html(name).removeAttr('onclick').unbind().attr({rel: id, href: '#'})
-                    .click({id: id}, function(e) { return rcmail.command('list', e.data.id, this); });
-
-                // move the row to the new place
-                refrow.insertAfter(row);
-                row = refrow;
-
-                // update list data
-                sources[n].id = id;
-                sources[n].name = name;
-                sources[n].realname = realname;
-                this.env.address_sources[id] = this.env.contactfolders[id] = sources[n];
-                delete this.env.address_sources[n];
-                delete this.env.contactfolders[n];
-
-                // update groups
-                for (i in groups) {
-                    if (groups[i].source == n) {
-                        // update existing row
-                        refrow = $('#rcmli'+i);
-                        refrow.remove().attr({id: 'rcmliG'+id+groups[i].id});
-                        $('a', refrow).removeAttr('onclick').unbind()
-                            .click({source: id, id: groups[i].id}, function(e) {
-                                return rcmail.command('listgroup', {'source': e.data.source, 'id': e.data.id}, this);
-                            });
-                        refrow.insertAfter(row);
-                        row = refrow;
-
-                        // update group data
-                        groups[i].source = id;
-                        this.env.contactgroups['G'+id+groups[i].id] = groups[i];
-                        delete this.env.contactgroups[i];
-                    }
-                }
+                prop.name = name;
+                this.book_update(prop, oldid, true)
             }
         }
     }
