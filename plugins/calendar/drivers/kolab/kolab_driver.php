@@ -188,6 +188,8 @@ class kolab_driver extends calendar_driver
   public function create_calendar($prop)
   {
     $prop['type'] = 'event';
+    $prop['active'] = true;
+    $prop['subscribed'] = true;
     $folder = kolab_storage::folder_update($prop);
 
     if ($folder === false) {
