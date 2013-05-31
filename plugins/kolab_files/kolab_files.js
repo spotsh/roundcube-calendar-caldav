@@ -1324,10 +1324,7 @@ function kolab_files_ui()
   // open file in new window, using file API viewer
   this.file_open = function(file, viewer)
   {
-    var href = '?' + $.param({_task: 'files', _action: 'open', file: file, viewer: viewer == 2 ? 1 : 0}),
-      win = window.open(href, rcmail.html_identifier('rcubefile'+file));
-
-    if (win)
-      setTimeout(function() { win.focus(); }, 10);
+    var href = '?' + $.param({_task: 'files', _action: 'open', file: file, viewer: viewer == 2 ? 1 : 0});
+    rcmail.open_window(href, false, true);
   };
 };

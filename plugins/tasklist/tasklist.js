@@ -1163,9 +1163,7 @@ function rcube_tasklist_ui(settings)
         // open attachment in frame if it's of a supported mimetype
         // similar as in app.js and calendar_ui.js
         if (att.id && att.mimetype && $.inArray(att.mimetype, settings.mimetypes)>=0) {
-            rcmail.attachment_win = window.open(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', 'rcubetaskattachment');
-            if (rcmail.attachment_win) {
-                window.setTimeout(function() { rcmail.attachment_win.focus(); }, 10);
+            if (rcmail.open_window(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', true, true)) {
                 return;
             }
         }

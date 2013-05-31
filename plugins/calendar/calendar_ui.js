@@ -205,9 +205,7 @@ function rcube_calendar_ui(settings)
 
       // open attachment in frame if it's of a supported mimetype
       if (id && att.mimetype && $.inArray(att.mimetype, settings.mimetypes)>=0) {
-        rcmail.attachment_win = window.open(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', 'rcubeeventattachment');
-        if (rcmail.attachment_win) {
-          window.setTimeout(function() { rcmail.attachment_win.focus(); }, 10);
+        if (rcmail.open_window(rcmail.env.comm_path+'&_action=get-attachment&'+qstring+'&_frame=1', true, true)) {
           return;
         }
       }
@@ -1807,8 +1805,7 @@ function rcube_calendar_ui(settings)
       var date = fc.fullCalendar('getDate') || new Date();
       var range = fc.fullCalendar('option', 'listRange');
       var sections = fc.fullCalendar('option', 'listSections');
-      var printwin = window.open(rcmail.url('print', { view: view, date: date2unixtime(date), range: range, sections: sections, search: this.search_query }), "rc_print_calendars", "toolbar=no,location=yes,menubar=yes,resizable=yes,scrollbars=yes,width=800");
-      window.setTimeout(function(){ printwin.focus() }, 50);
+      rcmail.open_window(rcmail.url('print', { view: view, date: date2unixtime(date), range: range, sections: sections, search: this.search_query }), true, true);
     };
 
     // public method to bring up the new event dialog
