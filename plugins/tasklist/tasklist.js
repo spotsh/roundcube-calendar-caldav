@@ -1008,10 +1008,7 @@ function rcube_tasklist_ui(settings)
 
         // set alarm(s)
         if (rec.alarms || action != 'new') {
-            if (typeof rec.alarms == 'string')
-                rec.alarms = rec.alarms.split(';');
-
-          var valarms = rec.alarms || [''];
+          var valarms = (typeof rec.alarms == 'string' ? rec.alarms.split(';') : rec.alarms) || [''];
           for (var alarm, i=0; i < valarms.length; i++) {
               alarm = String(valarms[i]).split(':');
               if (!alarm[1] && alarm[0]) alarm[1] = 'DISPLAY';
