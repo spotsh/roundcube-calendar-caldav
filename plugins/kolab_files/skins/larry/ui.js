@@ -10,6 +10,7 @@ function kolab_files_ui_init()
   $(document).ready(function() {
     rcmail.addEventListener('menu-open', kolab_files_show_listoptions);
     rcmail.addEventListener('menu-save', kolab_files_save_listoptions);
+    rcmail.addEventListener('setquota', kolab_files_update_quota);
 
     var menu = $('#dragfilemenu');
     if (menu.length) {
@@ -26,6 +27,11 @@ function kolab_files_ui_init()
 
   kolab_files_upload_input('#filestoolbar a.upload');
 };
+
+function kolab_files_update_quota(p)
+{
+    return UI.update_quota(p);
+}
 
 function kolab_files_show_listoptions()
 {

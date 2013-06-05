@@ -101,6 +101,7 @@ class kolab_files_engine
                 'folder-create-form' => array($this, 'folder_create_form'),
                 'file-search-form'   => array($this, 'file_search_form'),
                 'filelist'           => array($this, 'file_list'),
+                'filequotadisplay'   => array($this, 'quota_display'),
             ));
 
             if ($this->rc->task != 'files') {
@@ -417,6 +418,48 @@ class kolab_files_engine
     }
 
     /**
+     * Template object for quota display
+     */
+    public function quota_display($attrib)
+    {
+        if (!$attrib['id']) {
+            $attrib['id'] = 'rcmquotadisplay';
+        }
+
+        $quota_type = !empty($attrib['display']) ? $attrib['display'] : 'text';
+
+        $this->rc->output->add_gui_object('quotadisplay', $attrib['id']);
+        $this->rc->output->set_env('quota_type', $quota_type);
+
+        // get quota
+        $token   = $this->get_api_token();
+        $request = $this->get_request(array('method' => 'quota'), $token);
+
+        // send request to the API
+        try {
+            $response = $request->send();
+            $status   = $response->getStatus();
+            $body     = @json_decode($response->getBody(), true);
+
+            if ($status == 200 && $body['status'] == 'OK') {
+                $quota = $body['result'];
+            }
+            else {
+                throw new Exception($body['reason']);
+            }
+        }
+        catch (Exception $e) {
+            $quota = array('total' => 0, 'percent' => 0);
+        }
+
+        $quota = rcube_output::json_serialize($quota);
+
+        $this->rc->output->add_script(rcmail_output::JS_OBJECT_NAME . ".files_set_quota($quota);", 'docready');
+
+        return html::span($attrib, '');
+    }
+
+    /**
      * Get API token for current user session, authenticate if needed
      */
     public function get_api_token()
@@ -463,6 +506,7 @@ class kolab_files_engine
                 if ($token) {
                     $_SESSION['kolab_files_token'] = $token;
                     $_SESSION['kolab_files_time']  = time();
+                    $_SESSION['kolab_files_caps']  = $body['result']['capabilities'];
                 }
             }
             else {
@@ -542,6 +586,7 @@ class kolab_files_engine
 
         $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
         $this->rc->output->set_env('file_mimetypes', $this->get_mimetypes());
+        $this->rc->output->set_env('files_quota', $_SESSION['kolab_files_caps']['QUOTA']);
         $this->rc->output->send('kolab_files.files');
     }
 

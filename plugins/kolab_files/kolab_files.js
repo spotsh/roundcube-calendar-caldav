@@ -632,6 +632,21 @@ rcube_webmail.prototype.files_open = function()
     file_api.file_open(files[0], rcmail.env.viewer);
 };
 
+rcube_webmail.prototype.files_set_quota = function(p)
+{
+  if (p.total) {
+    p.used *= 1024;
+    p.total *= 1024;
+    p.title = file_api.file_size(p.used) + ' / ' + file_api.file_size(p.total)
+        + ' (' + p.percent + '%)';
+  }
+
+  p.type = this.env.quota_type;
+
+  this.set_quota(p);
+};
+
+
 /**********************************************************/
 /*********          Files API handler            **********/
 /**********************************************************/
@@ -769,6 +784,8 @@ function kolab_files_ui()
       this.env.collection = null;
       rcmail.command('files-list', {folder: folder});
     }
+
+    this.quota();
   };
 
   this.folder_unselect = function()
@@ -778,6 +795,8 @@ function kolab_files_ui()
     rcmail.enable_command('files-folder-delete', 'files-upload', false);
     this.env.folder = null;
     this.env.collection = null;
+
+    this.quota();
   };
 
   // folder create request
@@ -818,6 +837,23 @@ function kolab_files_ui()
 
     // refresh folders list
     this.folder_list();
+    this.quota();
+  };
+
+  // quota request
+  this.quota = function()
+  {
+    if (rcmail.env.files_quota)
+      this.request('quota', {folder: this.env.folder}, 'quota_response');
+  };
+
+  // quota response handler
+  this.quota_response = function(response)
+  {
+    if (!this.response(response))
+      return;
+
+    rcmail.files_set_quota(response.result);
   };
 
   this.file_list = function(params)
@@ -1090,8 +1126,10 @@ function kolab_files_ui()
       // @TODO: reload files list in parent window
       window.close();
     }
-    else
+    else {
       this.file_list();
+      this.quota();
+    }
   };
 
   // file(s) move request
@@ -1164,8 +1202,10 @@ function kolab_files_ui()
 
     if (response.result && response.result.already_exist && response.result.already_exist.length)
       this.file_move_ask_user(response.result.already_exist);
-    else
+    else {
       this.display_message('kolab_files.filecopynotice', 'confirmation');
+      this.quota();
+    }
   };
 
   // when file move/copy operation returns file-exists error
@@ -1274,6 +1314,7 @@ function kolab_files_ui()
         // refresh the list on upload success
         if (file_api.response_parse(response))
           file_api.file_list();
+          file_api.quota();
       });
     }
   };

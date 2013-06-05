@@ -31,6 +31,9 @@
     </div>
     <div id="folderlist-footer" class="boxfooter">
         <roundcube:button name="folder-create" type="link" title="kolab_files.foldercreate" class="listbutton add" classAct="listbutton add" innerClass="inner" content="+" onclick="kolab_files_folder_create_dialog()" /><roundcube:button name="folderoptions" id="folderoptionslink" type="link" title="moreactions" class="listbutton groupactions" onclick="UI.show_popup('folderoptions', undefined, {above: 1});return false" innerClass="inner" content="&#9881;" />
+        <roundcube:if condition="env:files_quota" />
+            <roundcube:object name="filequotadisplay" id="quotadisplay" class="countdisplay" display="text" />
+        <roundcube:endif />
     </div>
 </div>
 
