@@ -83,7 +83,7 @@ window.rcmail && rcmail.addEventListener('init', function() {
     }
 
     // "one file only" commands
-    rcmail.env.file_commands = ['files-get', 'files-edit'];
+    rcmail.env.file_commands = ['files-get'];
     // "one or more file" commands
     rcmail.env.file_commands_all = ['files-delete', 'files-move', 'files-copy'];
 
@@ -664,14 +664,6 @@ rcube_webmail.prototype.files_open = function()
 
   if (files.length == 1)
     file_api.file_open(files[0], rcmail.env.viewer);
-};
-
-rcube_webmail.prototype.files_edit = function()
-{
-  var files = this.env.file ? [this.env.file] : kolab_files_selected();
-
-  if (files.length == 1)
-    file_api.file_edit_start(files[0]);
 };
 
 rcube_webmail.prototype.files_set_quota = function(p)
