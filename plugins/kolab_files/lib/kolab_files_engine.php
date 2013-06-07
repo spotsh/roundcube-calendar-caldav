@@ -100,6 +100,7 @@ class kolab_files_engine
             $this->rc->output->add_handlers(array(
                 'folder-create-form' => array($this, 'folder_create_form'),
                 'file-search-form'   => array($this, 'file_search_form'),
+                'file-edit-form'     => array($this, 'file_edit_form'),
                 'filelist'           => array($this, 'file_list'),
                 'filequotadisplay'   => array($this, 'quota_display'),
             ));
@@ -163,6 +164,35 @@ class kolab_files_engine
 
         $this->plugin->add_label('foldercreating', 'create', 'foldercreate', 'cancel');
         $this->rc->output->add_gui_object('folder-create-form', $attrib['id']);
+
+        return $out;
+    }
+
+    /**
+     * Template object for file_edit form
+     */
+    public function file_edit_form($attrib)
+    {
+        $attrib['name'] = 'file-edit-form';
+        if (empty($attrib['id'])) {
+            $attrib['id'] = 'file-edit-form';
+        }
+
+        $input_name    = new html_inputfield(array('id' => 'file-name', 'name' => 'name', 'size' => 30));
+        $table         = new html_table(array('cols' => 2, 'class' => 'propform'));
+
+        $table->add('title', html::label('file-name', Q($this->plugin->gettext('filename'))));
+        $table->add(null, $input_name->show());
+
+        $out = $table->show();
+
+        // add form tag around text field
+        if (empty($attrib['form'])) {
+            $out = $this->rc->output->form_tag($attrib, $out);
+        }
+
+        $this->plugin->add_label('save', 'cancel', 'fileupdating', 'fileedit');
+        $this->rc->output->add_gui_object('file-edit-form', $attrib['id']);
 
         return $out;
     }

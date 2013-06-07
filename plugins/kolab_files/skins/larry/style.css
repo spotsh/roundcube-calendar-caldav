@@ -168,6 +168,7 @@
 
 #filelist tr td.options {
   width: 26px;
+  cursor: pointer;
 }
 
 #filelist thead tr td.filename,
@@ -214,6 +215,13 @@
   padding: 0 3px;
 }
 
+#filelist tbody tr td.options:hover span {
+  width: 26px;
+  height: 18px;
+  background: url(../../../../skins/larry/images/buttons.png) -5px -418px no-repeat;
+  display: block;
+}
+
 #filelist td.filename {
   padding: 0 4px;
 }
@@ -249,6 +257,7 @@
 
 #files-dialog,
 #files-compose-dialog,
+#files-file-edit-dialog,
 #files-folder-create-dialog {
   display: none;
 }

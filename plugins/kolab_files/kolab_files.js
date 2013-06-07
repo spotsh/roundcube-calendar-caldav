@@ -83,7 +83,7 @@ window.rcmail && rcmail.addEventListener('init', function() {
     }
 
     // "one file only" commands
-    rcmail.env.file_commands = ['files-get'];
+    rcmail.env.file_commands = ['files-get', 'files-edit'];
     // "one or more file" commands
     rcmail.env.file_commands_all = ['files-delete', 'files-move', 'files-copy'];
 
@@ -176,18 +176,14 @@ function kolab_directory_selector_dialog(id)
   };
 
   // show dialog window
-  dialog.dialog({
-    modal: true,
-    resizable: !bw.ie6,
-    closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
+  kolab_dialog_show(dialog, {
     title: rcmail.gettext('kolab_files.' + (id ? 'saveto' : 'saveall')),
-//    close: function() { rcmail.dialog_close(); },
     buttons: buttons,
     minWidth: 250,
     minHeight: 300,
     height: 350,
     width: 300
-    }).show();
+  });
 
   if (!rcmail.env.folders_loaded) {
     file_api.folder_list();
@@ -229,18 +225,14 @@ function kolab_files_selector_dialog()
   };
 
   // show dialog window
-  dialog.dialog({
-    modal: true,
-    resizable: !bw.ie6,
-    closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
+  kolab_dialog_show(dialog, {
     title: rcmail.gettext('kolab_files.selectfiles'),
-//    close: function() { rcmail.dialog_close(); },
     buttons: buttons,
     minWidth: 500,
     minHeight: 300,
     width: 700,
     height: 500
-    }).show();
+  });
 
   if (!rcmail.env.files_loaded) {
     file_api.folder_list();
@@ -289,18 +281,14 @@ function kolab_files_folder_create_dialog()
   };
 
   // show dialog window
-  dialog.dialog({
-    modal: true,
-    resizable: !bw.ie6,
-    closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
+  kolab_dialog_show(dialog, {
     title: rcmail.gettext('kolab_files.foldercreate'),
-//    close: function() { rcmail.dialog_close(); },
     buttons: buttons,
     minWidth: 400,
     minHeight: 300,
     width: 500,
     height: 400
-    }).show();
+  });
 
   // build parent selector
   select.append($('<option>').val('').text('---'));
@@ -315,6 +303,52 @@ function kolab_files_folder_create_dialog()
     if (i == file_api.env.folder)
       option.attr('selected', true);
   });
+};
+
+// file edition dialog
+function kolab_files_file_edit_dialog(file)
+{
+  var dialog = $('#files-file-edit-dialog'),
+    buttons = {}, name = file_api.file_name(file)
+    input = $('input[name="name"]', dialog).val(name);
+
+  buttons[rcmail.gettext('kolab_files.save')] = function () {
+    var folder = file_api.file_path(file), name = input.val();
+
+    if (!name)
+      return;
+
+    name = folder + file_api.env.directory_separator + name;
+
+    // @TODO: now we only update filename
+    if (name != file)
+      file_api.file_rename(file, name);
+    dialog.dialog('destroy').hide();
+  };
+  buttons[rcmail.gettext('kolab_files.cancel')] = function () {
+    dialog.dialog('destroy').hide();
+  };
+
+  // show dialog window
+  kolab_dialog_show(dialog, {
+    title: rcmail.gettext('kolab_files.fileedit'),
+    buttons: buttons
+  });
+};
+
+function kolab_dialog_show(dialog, params)
+{
+  params = $.extend({
+    modal: true,
+    resizable: !bw.ie6,
+    closeOnEscape: (!bw.ie6 && !bw.ie7),  // disabled for performance reasons
+    minWidth: 400,
+    minHeight: 300,
+    width: 500,
+    height: 400
+  }, params || {});
+
+  dialog.dialog(params).show();
 };
 
 // smart upload button
@@ -632,6 +666,14 @@ rcube_webmail.prototype.files_open = function()
     file_api.file_open(files[0], rcmail.env.viewer);
 };
 
+rcube_webmail.prototype.files_edit = function()
+{
+  var files = this.env.file ? [this.env.file] : kolab_files_selected();
+
+  if (files.length == 1)
+    file_api.file_edit_start(files[0]);
+};
+
 rcube_webmail.prototype.files_set_quota = function(p)
 {
   if (p.total) {
@@ -653,6 +695,8 @@ rcube_webmail.prototype.files_set_quota = function(p)
 
 function kolab_files_ui()
 {
+  this.requests = {};
+
 /*
   // Called on "session expired" session
   this.logout = function(response) {};
@@ -795,8 +839,6 @@ function kolab_files_ui()
     rcmail.enable_command('files-folder-delete', 'files-upload', false);
     this.env.folder = null;
     this.env.collection = null;
-
-    this.quota();
   };
 
   // folder create request
@@ -864,6 +906,13 @@ function kolab_files_ui()
     if (!params)
       params = {};
 
+    // reset all pending list requests
+    for (i in this.requests) {
+      this.requests[i].abort();
+      rcmail.hide_message(i);
+      delete this.requests[i];
+    }
+
     if (params.all_folders) {
       params.collection = null;
       params.folder = null;
@@ -891,20 +940,23 @@ function kolab_files_ui()
 
     // empty the list
     this.env.file_list = [];
-    rcmail.file_list.clear();
+    rcmail.file_list.clear(true);
 
     // request
     if (params.collection || params.all_folders)
       this.file_list_loop(params);
     else if (this.env.folder) {
-      this.req = this.set_busy(true, 'loading');
-      this.request('file_list', params, 'file_list_response');
+      params.req_id = this.set_busy(true, 'loading');
+      this.requests[params.req_id] = this.request('file_list', params, 'file_list_response');
     }
   };
 
   // file list response handler
   this.file_list_response = function(response)
   {
+    if (response.req_id)
+      rcmail.hide_message(response.req_id);
+
     if (!this.response(response))
       return;
 
@@ -945,9 +997,9 @@ function kolab_files_ui()
     this.env.folders_loop_lock = false;
 
     for (i=0; i<folders.length && i<limit; i++) {
-      this.req = this.set_busy(true, 'loading');
+      params.req_id = this.set_busy(true, 'loading');
       params.folder = folders.shift();
-      this.request('file_list', params, 'file_list_loop_response');
+      this.requests[params.req_id] = this.request('file_list', params, 'file_list_loop_response');
     }
   };
 
@@ -959,10 +1011,13 @@ function kolab_files_ui()
       limit = Math.max(this.env.search_threads || 1, 1),
       valid = this.response(response);
 
+    if (response.req_id)
+      rcmail.hide_message(response.req_id);
+
     for (i=0; i<folders.length && i<limit; i++) {
-      this.req = this.set_busy(true, 'loading');
+      params.req_id = this.set_busy(true, 'loading');
       params.folder = folders.shift();
-      this.request('file_list', params, 'file_list_loop_response');
+      this.requests[params.req_id] = this.request('file_list', params, 'file_list_loop_response');
     }
 
     if (!valid)
@@ -1060,7 +1115,7 @@ function kolab_files_ui()
       else if (c == 'size')
         col = '<td class="size">' + this.file_size(data.size) + '</td>';
       else if (c == 'options')
-        col = '<td class="options"></td>'; // @TODO
+        col = '<td class="options"><span></span></td>';
       else
         col = '<td class="' + c + '"></td>';
 
@@ -1070,6 +1125,10 @@ function kolab_files_ui()
     row = $('<tr>')
       .html(row)
       .attr({id: 'rcmrow' + index, 'data-file': file, 'data-type': data.type});
+
+    $('td.options > span', row).click(function(e) {
+      kolab_files_file_edit_dialog(file);
+    });
 
     // collection (or search) lists files from all folders
     // display file name with full path as title
@@ -1259,15 +1318,12 @@ function kolab_files_ui()
       };
 
     // open jquery UI dialog
-    dialog.dialog({
-      modal: true,
-      resizable: !bw.ie6,
-      closeOnEscape: (!bw.ie6 && !bw.ie7),  // disable for performance reasons
+    kolab_dialog_show(dialog.html(text), {
       close: skip_func,
       buttons: buttons,
       minWidth: 400,
       width: 400
-    }).html(text).show();
+    });
   };
 
   // file move (with overwrite) response handler
@@ -1284,6 +1340,23 @@ function kolab_files_ui()
       if (move)
         this.file_list();
     }
+  };
+
+  // file(s) rename request
+  this.file_rename = function(oldfile, newfile)
+  {
+    this.req = this.set_busy(true, 'kolab_files.fileupdating');
+    this.request('file_move', {file: oldfile, 'new': newfile}, 'file_rename_response');
+  };
+
+  // file(s) move response handler
+  this.file_rename_response = function(response)
+  {
+    if (!this.response(response))
+      return;
+
+    // @TODO: we could update metadata instead
+    this.file_list();
   };
 
   // file upload request

@@ -26,7 +26,9 @@ $labels['get'] = 'Download';
 $labels['getfile'] = 'Download file';
 $labels['view'] = 'View';
 $labels['viewfile'] = 'View file';
+$labels['rename'] = 'Rename file';
 $labels['deletefile'] = 'Delete selected file(s)';
+$labels['fileedit'] = 'File properties';
 
 $labels['collection_audio'] = 'Audio';
 $labels['collection_video'] = 'Video';
@@ -43,6 +45,7 @@ $labels['foldercreatenotice'] = 'Folder created successfully.';
 $labels['saveallnotice'] = 'Successfully saved $n file(s).';
 $labels['saveallerror'] = 'Saving $n file(s) failed.';
 $labels['attacherror'] = 'Failed to attach file(s) from the cloud';
+$labels['fileupdating'] = 'Updating file...';
 $labels['filemoving'] = 'Moving file(s)...';
 $labels['filecopying'] = 'Copying file(s)...';
 $labels['filedeleting'] = 'Deleting file(s)...';
