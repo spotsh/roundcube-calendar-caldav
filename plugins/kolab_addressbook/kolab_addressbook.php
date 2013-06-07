@@ -495,9 +495,13 @@ class kolab_addressbook extends rcube_plugin
         $folder = trim(get_input_value('_source', RCUBE_INPUT_GPC, true, 'UTF7-IMAP'));
 
         if (kolab_storage::folder_delete($folder)) {
+            $storage = $this->rc->get_storage();
+            $delimiter = $storage->get_hierarchy_delimiter();
+
             $this->rc->output->show_message('kolab_addressbook.bookdeleted', 'confirmation');
             $this->rc->output->set_env('pagecount', 0);
             $this->rc->output->command('set_rowcount', rcmail_get_rowcount_text(new rcube_result_set()));
+            $this->rc->output->command('set_env', 'delimiter', $delimiter);
             $this->rc->output->command('list_contacts_clear');
             $this->rc->output->command('book_delete_done', kolab_storage::folder_id($folder));
         }

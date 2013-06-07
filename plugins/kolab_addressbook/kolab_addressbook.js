@@ -89,7 +89,7 @@ rcube_webmail.prototype.book_delete_done = function(id, recur)
     var n, groups = this.env.contactgroups,
         sources = this.env.address_sources,
         olddata = sources[id];
-
+alert(id);
     this.treelist.remove(id);
 
     for (n in groups)
@@ -104,8 +104,11 @@ rcube_webmail.prototype.book_delete_done = function(id, recur)
     if (recur)
         return;
 
+    this.enable_command('group-create', 'book-edit', 'book-delete', false);
+
     // remove subfolders
     olddata.realname += this.env.delimiter;
+alert(olddata.realname)
     for (n in sources)
         if (sources[n].realname && sources[n].realname.indexOf(olddata.realname) == 0)
             this.book_delete_done(n, true);
