@@ -89,7 +89,7 @@ rcube_webmail.prototype.book_delete_done = function(id, recur)
     var n, groups = this.env.contactgroups,
         sources = this.env.address_sources,
         olddata = sources[id];
-alert(id);
+
     this.treelist.remove(id);
 
     for (n in groups)
@@ -108,7 +108,6 @@ alert(id);
 
     // remove subfolders
     olddata.realname += this.env.delimiter;
-alert(olddata.realname)
     for (n in sources)
         if (sources[n].realname && sources[n].realname.indexOf(olddata.realname) == 0)
             this.book_delete_done(n, true);
