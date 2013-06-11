@@ -176,7 +176,7 @@ class calendar extends rcube_plugin
   {
     if (is_object($this->driver))
       return;
-    
+
     $driver_name = $this->rc->config->get('calendar_driver', 'database');
     $driver_class = $driver_name . '_driver';
 
@@ -308,10 +308,19 @@ class calendar extends rcube_plugin
    */
   function preferences_list($p)
   {
-    if ($p['section'] == 'calendar') {
-      $this->load_driver();
+    if ($p['section'] != 'calendar') {
+      return $p;
+    }
 
-      $p['blocks']['view']['name'] = $this->gettext('mainoptions');
+    $no_override = array_flip((array)$this->rc->config->get('dont_override'));
+
+    $p['blocks']['view']['name'] = $this->gettext('mainoptions');
+
+    if (!isset($no_override['calendar_default_view'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
 
       $field_id = 'rcmfd_default_view';
       $select = new html_select(array('name' => '_default_view', 'id' => $field_id));
@@ -323,6 +332,13 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('default_view'))),
         'content' => $select->show($this->rc->config->get('calendar_default_view', $this->defaults['calendar_default_view'])),
       );
+    }
+
+    if (!isset($no_override['calendar_timeslots'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
 
       $field_id = 'rcmfd_timeslot';
       $choices = array('1', '2', '3', '4', '6');
@@ -332,7 +348,14 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('timeslots'))),
         'content' => $select->show($this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots'])),
       );
-      
+    }
+
+    if (!isset($no_override['calendar_first_day'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
+
       $field_id = 'rcmfd_firstday';
       $select = new html_select(array('name' => '_first_day', 'id' => $field_id));
       $select->add(rcube_label('sunday'), '0');
@@ -346,7 +369,14 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('first_day'))),
         'content' => $select->show(strval($this->rc->config->get('calendar_first_day', $this->defaults['calendar_first_day']))),
       );
-      
+    }
+
+    if (!isset($no_override['calendar_first_hour'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
+
       $time_format = $this->rc->config->get('time_format', libcalendaring::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format'])));
       $select_hours = new html_select();
       for ($h = 0; $h < 24; $h++)
@@ -357,13 +387,27 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id, Q($this->gettext('first_hour'))),
         'content' => $select_hours->show($this->rc->config->get('calendar_first_hour', $this->defaults['calendar_first_hour']), array('name' => '_first_hour', 'id' => $field_id)),
       );
-      
+    }
+
+    if (!isset($no_override['calendar_work_start'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
+
       $field_id = 'rcmfd_workstart';
       $p['blocks']['view']['options']['workinghours'] = array(
         'title' => html::label($field_id, Q($this->gettext('workinghours'))),
         'content' => $select_hours->show($this->rc->config->get('calendar_work_start', $this->defaults['calendar_work_start']), array('name' => '_work_start', 'id' => $field_id)) .
         ' &mdash; ' . $select_hours->show($this->rc->config->get('calendar_work_end', $this->defaults['calendar_work_end']), array('name' => '_work_end', 'id' => $field_id)),
       );
+    }
+
+    if (!isset($no_override['calendar_event_coloring'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
 
       $field_id = 'rcmfd_coloring';
       $select_colors = new html_select(array('name' => '_event_coloring', 'id' => $field_id));
@@ -376,28 +420,53 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id . 'value', Q($this->gettext('eventcoloring'))),
         'content' => $select_colors->show($this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring'])),
       );
+    }
+
+    // loading driver is expensive, don't do it if not needed
+    $this->load_driver();
+
+    if (!isset($no_override['calendar_default_alarm_type'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
 
       $field_id = 'rcmfd_alarm';
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
       foreach ($this->driver->alarm_types as $type)
         $select_type->add(rcube_label(strtolower("alarm{$type}option"), 'libcalendaring'), $type);
-      
-      $input_value = new html_inputfield(array('name' => '_alarm_value', 'id' => $field_id . 'value', 'size' => 3));
-      $select_offset = new html_select(array('name' => '_alarm_offset', 'id' => $field_id . 'offset'));
-      foreach (array('-M','-H','-D','+M','+H','+D') as $trigger)
-        $select_offset->add(rcube_label('trigger' . $trigger, 'libcalendaring'), $trigger);
-      
+
       $p['blocks']['view']['options']['alarmtype'] = array(
         'title' => html::label($field_id, Q($this->gettext('defaultalarmtype'))),
         'content' => $select_type->show($this->rc->config->get('calendar_default_alarm_type', '')),
       );
+    }
+
+    if (!isset($no_override['calendar_default_alarm_offset'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
+
+      $field_id = 'rcmfd_alarm';
+      $input_value = new html_inputfield(array('name' => '_alarm_value', 'id' => $field_id . 'value', 'size' => 3));
+      $select_offset = new html_select(array('name' => '_alarm_offset', 'id' => $field_id . 'offset'));
+      foreach (array('-M','-H','-D','+M','+H','+D') as $trigger)
+        $select_offset->add(rcube_label('trigger' . $trigger, 'libcalendaring'), $trigger);
+
       $preset = libcalendaring::parse_alaram_value($this->rc->config->get('calendar_default_alarm_offset', '-15M'));
       $p['blocks']['view']['options']['alarmoffset'] = array(
         'title' => html::label($field_id . 'value', Q($this->gettext('defaultalarmoffset'))),
         'content' => $input_value->show($preset[0]) . ' ' . $select_offset->show($preset[1]),
       );
-      
+    }
+
+    if (!isset($no_override['calendar_default_calendar'])) {
+      if (!$p['current']) {
+        $p['blocks']['view']['content'] = true;
+        return $p;
+      }
       // default calendar selection
       $field_id = 'rcmfd_default_calendar';
       $select_cal = new html_select(array('name' => '_default_calendar', 'id' => $field_id, 'is_escaped' => true));
@@ -410,11 +479,16 @@ class calendar extends rcube_plugin
         'title' => html::label($field_id . 'value', Q($this->gettext('defaultcalendar'))),
         'content' => $select_cal->show($this->rc->config->get('calendar_default_calendar', $default_calendar)),
       );
-      
-      
-      // category definitions
-      if (!$this->driver->nocategories) {
+    }
+
+    // category definitions
+    if (!$this->driver->nocategories && !isset($no_override['calendar_categories'])) {
         $p['blocks']['categories']['name'] = $this->gettext('categories');
+
+        if (!$p['current']) {
+          $p['blocks']['categories']['content'] = true;
+          return $p;
+        }
 
         $categories = (array) $this->driver->list_categories();
         $categories_list = '';
@@ -438,7 +512,7 @@ class calendar extends rcube_plugin
         $p['blocks']['categories']['options']['categories'] = array(
           'content' => $new_category->show('') . '&nbsp;' . $add_category->show(),
         );
-        
+
         $this->rc->output->add_script('function rcube_calendar_add_category(){
           var name = $("#rcmfd_new_category").val();
           if (name.length) {
@@ -464,7 +538,6 @@ class calendar extends rcube_plugin
         $this->include_stylesheet($this->local_skin_path() . '/jquery.miniColors.css');
         $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
         $this->rc->output->add_script('$("input.colors").miniColors({ colorValues:rcmail.env.mscolors })', 'docready');
-      }
     }
 
     return $p;
