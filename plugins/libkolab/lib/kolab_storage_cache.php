@@ -35,7 +35,7 @@ class kolab_storage_cache
     private $synched = false;
     private $synclock = false;
     private $ready = false;
-    private $max_sql_packet = 1046576;  // 1 MB - 2000 bytes
+    private $max_sql_packet;
     private $max_sync_lock_time = 600;
     private $binary_cols = array('photo','pgppublickey','pkcs7publickey');
 
@@ -53,9 +53,6 @@ class kolab_storage_cache
         if ($this->enabled) {
             // remove sync-lock on script termination
             $rcmail->add_shutdown_function(array($this, '_sync_unlock'));
-
-            // read max_allowed_packet from mysql config
-            $this->max_sql_packet = min($this->db->get_variable('max_allowed_packet', 1048500), 4*1024*1024) - 2000;  // mysql limit or max 4 MB
         }
 
         if ($storage_folder)
@@ -648,7 +645,7 @@ class kolab_storage_cache
             $line = '(' . join(',', $values) . ')';
         }
 
-        if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet))) {
+        if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet()))) {
             $result = $this->db->query(
                 "INSERT INTO kolab_cache ".
                 " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words, filename)".
@@ -665,6 +662,20 @@ class kolab_storage_cache
         }
 
         $buffer .= ($buffer ? ',' : '') . $line;
+    }
+
+    /**
+     * Returns max_allowed_packet from mysql config
+     */
+    private function max_sql_packet()
+    {
+        if (!$this->max_sql_packet) {
+            // mysql limit or max 4 MB
+            $value = $this->db->get_variable('max_allowed_packet', 1048500);
+            $this->max_sql_packet = min($value, 4*1024*1024) - 2000;
+        }
+
+        return $this->max_sql_packet;
     }
 
     /**
