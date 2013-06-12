@@ -27,7 +27,11 @@ $labels['getfile'] = 'Download file';
 $labels['view'] = 'View';
 $labels['viewfile'] = 'View file';
 $labels['rename'] = 'Rename file';
-$labels['deletefile'] = 'Delete selected file(s)';
+$labels['deletefile'] = 'Delete file(s)';
+$labels['edit'] = 'Edit';
+$labels['editfile'] = 'Edit file';
+$labels['save'] = 'Save';
+$labels['savefile'] = 'Save file';
 $labels['fileedit'] = 'File properties';
 
 $labels['collection_audio'] = 'Audio';

@@ -559,6 +559,16 @@ kolab_files_selected = function()
   return files;
 };
 
+kolab_files_frame_load = function(frame)
+{
+  var win = frame.contentWindow;
+
+  rcmail.file_editor = win.file_editor && win.file_editor.editable ? win.file_editor : null;
+
+  if (rcmail.file_editor)
+    rcmail.enable_command('files-edit', true);
+};
+
 
 /***********************************************************/
 /**********              Commands                 **********/
@@ -666,6 +676,25 @@ rcube_webmail.prototype.files_open = function()
     file_api.file_open(files[0], rcmail.env.viewer);
 };
 
+// enable file editor
+rcube_webmail.prototype.files_edit = function()
+{
+  if (this.file_editor) {
+    this.file_editor.enable();
+    this.enable_command('files-save', true);
+  }
+};
+
+rcube_webmail.prototype.files_save = function()
+{
+  if (!this.file_editor)
+    return;
+
+  var content = this.file_editor.getContent();
+
+  file_api.file_save(this.env.file, content);
+};
+
 rcube_webmail.prototype.files_set_quota = function(p)
 {
   if (p.total) {
@@ -747,7 +776,7 @@ function kolab_files_ui()
       var row = $('<li class="mailbox"><span class="branch"></span></li>');
 
       row.attr('id', f.id).data('folder', i)
-        .append($('<span class="name">').text(f.name))
+        .append($('<span class="name"></span>').text(f.name))
         .click(function() { file_api.folder_select(i); });
 
       if (f.depth)
@@ -776,7 +805,7 @@ function kolab_files_ui()
       var row = $('<li class="mailbox collection ' + n + '"></li>');
 
       row.attr('id', 'folder-collection-' + n)
-        .append($('<span class="name">').text(rcmail.gettext('kolab_files.collection_' + n)))
+        .append($('<span class="name"></span>').text(rcmail.gettext('kolab_files.collection_' + n)))
         .click(function() { file_api.folder_select(n, true); });
 
       list.append(row);
@@ -1433,4 +1462,34 @@ function kolab_files_ui()
     var href = '?' + $.param({_task: 'files', _action: 'open', file: file, viewer: viewer == 2 ? 1 : 0});
     rcmail.open_window(href, false, true);
   };
+
+  // save file
+  this.file_save = function(file, content)
+  {
+    rcmail.enable_command('files-save', false);
+    // because we currently can edit only text files
+    // and we do not expect them to be very big, we save
+    // file in a very simple way, no upload progress, etc.
+    this.req = this.set_busy(true, 'saving');
+    this.request('file_update', {file: file, content: content, info: 1}, 'file_save_response');
+  };
+
+  // file save response handler
+  this.file_save_response = function(response)
+  {
+    rcmail.enable_command('files-save', true);
+
+    if (!this.response(response))
+      return;
+
+    // update file properties table
+    var table = $('#fileinfobox table'), file = response.result;
+
+    if (file) {
+      $('td.filetype', table).text(file.type);
+      $('td.filesize', table).text(this.file_size(file.size));
+      $('td.filemtime', table).text(file.mtime);
+    }
+  };
+
 };

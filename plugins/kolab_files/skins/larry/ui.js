@@ -1,8 +1,11 @@
 function kolab_files_ui_init()
 {
-  if (rcmail.env.action == 'open')
+  if (rcmail.env.action == 'open') {
     var filesviewsplit = new rcube_splitter({ id:'filesopensplitter', p1:'#fileinfobox', p2:'#filecontent',
       orientation:'v', relative:true, start:226, min:150, size:12 }).init();
+
+    rcmail.addEventListener('enable-command', kolab_files_enable_command);
+  }
   else
     var filesviewsplit = new rcube_splitter({ id:'filesviewsplitter', p1:'#folderlistbox', p2:'#filelistcontainer',
       orientation:'v', relative:true, start:226, min:150, size:12 }).init();
@@ -28,10 +31,19 @@ function kolab_files_ui_init()
   kolab_files_upload_input('#filestoolbar a.upload');
 };
 
+function kolab_files_enable_command(p)
+{
+  if (p.command == 'files-save') {
+    var toolbar = $('#filestoolbar');
+    $('a.button.edit', toolbar).hide();
+    $('a.button.save', toolbar).show();
+  }
+};
+
 function kolab_files_update_quota(p)
 {
     return UI.update_quota(p);
-}
+};
 
 function kolab_files_show_listoptions()
 {
@@ -61,7 +73,8 @@ function kolab_files_show_listoptions()
     close: function() {
       $dialog.dialog('destroy').hide();
     },
-    width: 650
+    minWidth: 400,
+    width: $dialog.width()+20
   }).show();
 };
 

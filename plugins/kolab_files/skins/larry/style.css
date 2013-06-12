@@ -31,7 +31,7 @@
 }
 
 #filestoolbar a.button.get {
-  background-position: center -94px;
+  background-position: center -93px;
 }
 
 #filestoolbar a.button.open {
@@ -40,6 +40,14 @@
 
 #filestoolbar a.button.delete {
   background-image: url(../../../../skins/larry/images/buttons.png);
+}
+
+#filestoolbar a.button.edit {
+  background-position: center -173px;
+}
+
+#filestoolbar a.button.save {
+  background-position: center -213px;
 }
 
 #filestoolbar form {
@@ -325,5 +333,5 @@ a.filesaveall {
 }
 
 ul.toolbarmenu li span.saveas {
-  background: url(images/buttons.png) -5px -180px no-repeat;
+  background: url(images/buttons.png) -5px -253px no-repeat;
 }

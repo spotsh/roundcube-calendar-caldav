@@ -444,7 +444,10 @@ class kolab_files_engine
 
         $this->rc->output->add_gui_object('preview_frame', $attrib['id']);
 
-        return html::iframe(array('id' => 'file-content', 'src' => $href));
+        $attrib['src']    = $href;
+        $attrib['onload'] = 'kolab_files_frame_load(this)';
+
+        return html::iframe($attrib);
     }
 
     /**
