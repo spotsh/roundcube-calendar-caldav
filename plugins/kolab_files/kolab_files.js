@@ -567,6 +567,9 @@ kolab_files_frame_load = function(frame)
 
   if (rcmail.file_editor)
     rcmail.enable_command('files-edit', true);
+
+  rcmail.enable_command('files-print', (rcmail.file_editor && rcmail.file_editor.printable) ||
+    (rcmail.env.file_data && /^image\//i.test(rcmail.env.file_data.type)));
 };
 
 
@@ -693,6 +696,21 @@ rcube_webmail.prototype.files_save = function()
   var content = this.file_editor.getContent();
 
   file_api.file_save(this.env.file, content);
+};
+
+rcube_webmail.prototype.files_print = function()
+{
+  if (this.file_editor && this.file_editor.printable)
+    this.file_editor.print();
+  else if (/^image\//i.test(this.env.file_data.type)) {
+    var frame = $('#fileframe').get(0),
+      win = frame ? frame.contentWindow : null;
+
+    if (win) {
+      win.focus();
+      win.print();
+    }
+  }
 };
 
 rcube_webmail.prototype.files_set_quota = function(p)

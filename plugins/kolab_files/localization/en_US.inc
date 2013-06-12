@@ -32,6 +32,7 @@ $labels['edit'] = 'Edit';
 $labels['editfile'] = 'Edit file';
 $labels['save'] = 'Save';
 $labels['savefile'] = 'Save file';
+$labels['printfile'] = 'Print file';
 $labels['fileedit'] = 'File properties';
 
 $labels['collection_audio'] = 'Audio';

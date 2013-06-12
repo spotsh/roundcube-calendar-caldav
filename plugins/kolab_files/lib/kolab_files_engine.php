@@ -700,15 +700,14 @@ class kolab_files_engine
 
         $this->plugin->add_label('filedeleteconfirm', 'filedeleting', 'filedeletenotice');
 
-        // this one is for styling purpose
-        $this->rc->output->set_env('extwin', true);
-
         // register template objects for dialogs (and main interface)
         $this->rc->output->add_handlers(array(
             'fileinfobox'      => array($this, 'file_info_box'),
             'filepreviewframe' => array($this, 'file_preview_frame'),
         ));
 
+        // this one is for styling purpose
+        $this->rc->output->set_env('extwin', true);
         $this->rc->output->set_env('file', $file);
         $this->rc->output->set_env('file_data', $this->file_data);
         $this->rc->output->set_pagetitle(rcube::Q($file));

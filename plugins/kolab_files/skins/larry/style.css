@@ -50,6 +50,10 @@
   background-position: center -213px;
 }
 
+#filestoolbar a.button.print {
+  background:  url(../../../../skins/larry/images/buttons.png) center -810px no-repeat;
+}
+
 #filestoolbar form {
   display: inline;
 }
