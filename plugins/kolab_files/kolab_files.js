@@ -794,8 +794,7 @@ function kolab_files_ui()
       var row = $('<li class="mailbox"><span class="branch"></span></li>');
 
       row.attr('id', f.id).data('folder', i)
-        .append($('<span class="name"></span>').text(f.name))
-        .click(function() { file_api.folder_select(i); });
+        .append($('<span class="name"></span>').text(f.name));
 
       if (f.depth)
         $('span.branch', row).width(15 * f.depth);
@@ -803,7 +802,8 @@ function kolab_files_ui()
       if (f.virtual)
         row.addClass('virtual');
       else
-        row.mouseenter(function() {
+        row.click(function() { file_api.folder_select(i); })
+          .mouseenter(function() {
             if (rcmail.file_list && rcmail.file_list.drag_active && !$(this).hasClass('selected'))
               $(this).addClass('droptarget');
           })

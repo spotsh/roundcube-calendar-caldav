@@ -151,9 +151,8 @@
   border-top: 0;
 }
 
-#files-folder-list ul li.virtual {
+#files-folder-list ul li.virtual span {
   color: #aaa;
-  cursor: default;
 }
 
 #filelist thead tr td {
