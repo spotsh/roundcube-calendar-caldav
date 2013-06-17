@@ -37,7 +37,11 @@ class kolab_storage_cache
     private $ready = false;
     private $max_sql_packet;
     private $max_sync_lock_time = 600;
-    private $binary_cols = array('photo','pgppublickey','pkcs7publickey');
+    private $binary_items = array(
+        'photo'          => '|<photo><uri>[^;]+;base64,([^<]+)</uri></photo>|i',
+        'pgppublickey'   => '|<key><uri>date:application/pgp-keys;base64,([^<]+)</uri></photo>|i',
+        'pkcs7publickey' => '|<key><uri>date:application/pkcs7-mime;base64,([^<]+)</uri></photo>|i',
+    );
 
 
     /**
@@ -524,7 +528,6 @@ class kolab_storage_cache
      */
     private function _serialize($object)
     {
-        $bincols  = array_flip($this->binary_cols);
         $sql_data = array('changed' => null, 'dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
         $objtype  = $object['_type'] ? $object['_type'] : $this->folder->type;
 
@@ -566,12 +569,13 @@ class kolab_storage_cache
         // extract object data
         $data = array();
         foreach ($object as $key => $val) {
+            // skip empty properties
             if ($val === "" || $val === null) {
-                // skip empty properties
                 continue;
             }
-            if (isset($bincols[$key])) {
-                $data[$key] = base64_encode($val);
+            // mark binary data to be extracted from xml on unserialize()
+            if (isset($this->binary_items[$key])) {
+                $data[$key] = true;
             }
             else if ($key[0] != '_') {
                 $data[$key] = $val;
@@ -597,9 +601,10 @@ class kolab_storage_cache
         $object = unserialize($sql_arr['data']);
 
         // decode binary properties
-        foreach ($this->binary_cols as $key) {
-            if (!empty($object[$key]))
-                $object[$key] = base64_decode($object[$key]);
+        foreach ($this->binary_items as $key => $regexp) {
+            if (!empty($object[$key]) && preg_match($regexp, $sql_arr['xml'], $m)) {
+                $object[$key] = base64_decode($m[1]);
+            }
         }
 
         // add meta data
@@ -708,17 +713,15 @@ class kolab_storage_cache
         if (!$sql_arr) {
             $this->db->query(
                 "INSERT INTO kolab_cache (resource, type, msguid, created, uid, data, xml)".
-                " VALUES (?, ?, 1, ?, '', '', '')",
+                " VALUES (?, ?, 1, " . $this->db->now() . ", '', '', '')",
                 $this->resource_uri,
-                'lock',
-                date('Y-m-d H:i:s')
+                'lock'
             );
         }
         else {
             $this->db->query(
-                "UPDATE kolab_cache SET msguid=1, created=? ".
-                "WHERE resource=? AND type=?",
-                date('Y-m-d H:i:s'),
+                "UPDATE kolab_cache SET msguid = 1, created = " . $this->db->now() .
+                " WHERE resource = ? AND type = ?",
                 $this->resource_uri,
                 'lock'
             );
@@ -734,8 +737,7 @@ class kolab_storage_cache
             return;
 
         $this->db->query(
-            "UPDATE kolab_cache SET msguid=0 ".
-            "WHERE resource=? AND type=?",
+            "UPDATE kolab_cache SET msguid = 0 WHERE resource = ? AND type = ?",
             $this->resource_uri,
             'lock'
         );
