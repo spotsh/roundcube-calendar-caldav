@@ -29,8 +29,8 @@ class kolab_storage
     const CTYPE_KEY_PRIVATE = '/private/vendor/kolab/folder-type';
     const COLOR_KEY_SHARED  = '/shared/vendor/kolab/color';
     const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
-    const NAME_KEY_SHARED   = '/shared/vendor/kolab/name';
-    const NAME_KEY_PRIVATE  = '/private/vendor/kolab/name';
+    const NAME_KEY_SHARED   = '/shared/vendor/kolab/displayname';
+    const NAME_KEY_PRIVATE  = '/private/vendor/kolab/displayname';
 
     public static $version = '3.0';
     public static $last_error;
@@ -100,6 +100,23 @@ class kolab_storage
         }
 
         return $folders;
+    }
+
+    /**
+     * Getter for the storage folder for the given type
+     *
+     * @param string Data type to list folders for (contact,distribution-list,event,task,note)
+     * @return object kolab_storage_folder  The folder object
+     */
+    public static function get_default_folder($type)
+    {
+        if (self::setup()) {
+            foreach ((array)self::list_folders('', '*', $type . '.default', false, $folderdata) as $foldername) {
+                return new kolab_storage_folder($foldername, $folderdata[$foldername]);
+            }
+        }
+
+        return null;
     }
 
 
