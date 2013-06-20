@@ -681,7 +681,7 @@ class kolab_storage_folder
         $binary = $type == 'file' && !$rcmail->config->get('kolab_binary_disable') && $this->imap->get_capability('BINARY');
 
         // generate and save object message
-        if ($raw_msg = $this->build_message($object, $type, $binary)) {
+        if ($raw_msg = $this->build_message($object, $type, $binary, $body_file)) {
             // resolve old msguid before saving
             if ($uid && empty($object['_msguid']) && ($msguid = $this->cache->uid2msguid($uid))) {
                 $object['_msguid'] = $msguid;
@@ -700,6 +700,11 @@ class kolab_storage_folder
             if ($result) {
                 $object['_msguid'] = $result;
                 $this->cache->insert($result, $object);
+
+                // remove temp file
+                if ($body_file) {
+                    @unlink($body_file);
+                }
             }
         }
 
@@ -855,14 +860,15 @@ class kolab_storage_folder
     /**
      * Creates source of the configuration object message
      *
-     * @param array  $object The array that holds the data of the object.
-     * @param string $type   The type of the kolab object.
-     * @param bool   $binary Enables use of binary encoding of attachment(s)
+     * @param array  $object    The array that holds the data of the object.
+     * @param string $type      The type of the kolab object.
+     * @param bool   $binary    Enables use of binary encoding of attachment(s)
+     * @param string $body_file Reference to filename of message body
      *
      * @return mixed Message as string or array with two elements
      *               (one for message file path, second for message headers)
      */
-    private function build_message(&$object, $type, $binary)
+    private function build_message(&$object, $type, $binary, &$body_file)
     {
         // load old object to preserve data we don't understand/process
         if (is_object($object['_formatobj']))
