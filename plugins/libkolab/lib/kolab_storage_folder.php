@@ -688,13 +688,7 @@ class kolab_storage_folder
                 $object['_mailbox'] = $this->name;
             }
 
-            if (is_array($raw_msg)) {
-                $result = $this->imap->save_message($this->name, $raw_msg[0], $raw_msg[1], true, null, null, $binary);
-                @unlink($raw_msg[0]);
-            }
-            else {
-                $result = $this->imap->save_message($this->name, $raw_msg, null, false, null, null, $binary);
-            }
+            $result = $this->imap->save_message($this->name, $raw_msg, null, false, null, null, $binary);
 
             // delete old message
             if ($result && !empty($object['_msguid']) && !empty($object['_mailbox'])) {
@@ -861,6 +855,10 @@ class kolab_storage_folder
     /**
      * Creates source of the configuration object message
      *
+     * @param array  $object The array that holds the data of the object.
+     * @param string $type   The type of the kolab object.
+     * @param bool   $binary Enables use of binary encoding of attachment(s)
+     *
      * @return mixed Message as string or array with two elements
      *               (one for message file path, second for message headers)
      */
@@ -891,6 +889,7 @@ class kolab_storage_folder
         $mime     = new Mail_mime("\r\n");
         $rcmail   = rcube::get_instance();
         $headers  = array();
+        $files    = array();
         $part_id  = 1;
         $encoding = $binary ? 'binary' : 'base64';
 
@@ -914,8 +913,9 @@ class kolab_storage_folder
                 $memory += $attachment['size'];
             }
 
-            // 1.33 is for base64, we need at least 2x more memory than the message size
-            if ($memory * ($binary ? 1 : 1.33) * 2 > $mem_limit) {
+            // 1.33 is for base64, we need at least 4x more memory than the message size
+            if ($memory * ($binary ? 1 : 1.33) * 4 > $mem_limit) {
+                $marker   = '%%%~~~' . md5(microtime(true) . $memory) . '~~~%%%';
                 $is_file  = true;
                 $temp_dir = unslashify($rcmail->config->get('temp_dir'));
                 $mime->setParam('delay_file_io', true);
@@ -969,14 +969,42 @@ class kolab_storage_folder
                 $part_id++;
             }
             else if (!empty($att['path'])) {
-                $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                // To store binary files we can use faster method
+                // without writting full message content to a temporary file but
+                // directly to IMAP, see rcube_imap_generic::append().
+                if ($is_file && $binary) {
+                    $files[] = fopen($att['path'], 'r');
+                    $mime->addAttachment($marker, $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                }
+                else {
+                    $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                }
                 $part_id++;
             }
 
             $object['_attachments'][$key]['id'] = $part_id;
         }
 
-        if ($is_file) {
+        if (!$is_file || !empty($files)) {
+            $message = $mime->getMessage();
+        }
+
+        // parse message and build message array with
+        // attachment file pointers in place of file markers
+        if (!empty($files)) {
+            $message = explode($marker, $message);
+            $tmp     = array();
+
+            foreach ($message as $msg_part) {
+                $tmp[] = $msg_part;
+                if ($file = array_shift($files)) {
+                    $tmp[] = $file;
+                }
+            }
+            $message = $tmp;
+        }
+        // write complete message body into temp file
+        else if ($is_file) {
             // use common temp dir
             $body_file = tempnam($temp_dir, 'rcmMsg');
 
@@ -988,11 +1016,10 @@ class kolab_storage_folder
                 return false;
             }
 
-            return array($body_file, $mime->txtHeaders());
+            $message = array(trim($mime->txtHeaders()) . "\r\n\r\n", fopen($body_file, 'r'));
         }
-        else {
-            return $mime->getMessage();
-        }
+
+        return $message;
     }
 
 
