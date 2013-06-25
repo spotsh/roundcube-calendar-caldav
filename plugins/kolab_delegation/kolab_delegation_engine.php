@@ -61,13 +61,13 @@ class kolab_delegation_engine
             $delegate = $this->delegate_get($delegate);
         }
 
-        $dn   = $delegate['ID'];
-        $list = $this->list_delegates();
-        $user = $this->user();
-
+        $dn = $delegate['ID'];
         if (empty($delegate) || empty($dn)) {
             return false;
         }
+
+        $list = $this->list_delegates();
+        $user = $this->user();
 
         // add delegate to the list
         $list = array_keys((array)$list);
@@ -75,11 +75,10 @@ class kolab_delegation_engine
         if (!in_array($dn, $list)) {
             $list[] = $dn;
         }
-        $list = array_map(array('rcube_ldap', 'dn_decode'), $list);
-        $user[$this->ldap_delegate_field] = $list;
+        $list = array_map(array('kolab_auth_ldap', 'dn_decode'), $list);
 
         // update user record
-        $result = $this->user_update($user);
+        $result = $this->user_update_delegates($list);
 
         // Set ACL on folders
         if ($result && !empty($acl)) {
@@ -141,11 +140,11 @@ class kolab_delegation_engine
         // remove delegate from the list
         unset($list[$dn]);
         $list = array_keys($list);
-        $list = array_map(array('rcube_ldap', 'dn_decode'), $list);
+        $list = array_map(array('kolab_auth_ldap', 'dn_decode'), $list);
         $user[$this->ldap_delegate_field] = $list;
 
         // update user record
-        $result = $this->user_update($user);
+        $result = $this->user_update_delegates($list);
 
         // remove ACL
         if ($result && $acl_del) {
@@ -164,25 +163,28 @@ class kolab_delegation_engine
      */
     public function delegate_get($dn)
     {
-        $ldap = $this->ldap();
+        // use internal cache so we not query LDAP more than once per request
+        if (!isset($this->cache[$dn])) {
+            $ldap = $this->ldap();
 
-        if (!$ldap) {
-            return array();
+            if (!$ldap || empty($dn)) {
+                return array();
+            }
+
+            // Get delegate
+            $user = $ldap->get_record(kolab_auth_ldap::dn_decode($dn));
+
+            if (empty($user)) {
+                return array();
+            }
+
+            $delegate = $this->parse_ldap_record($user);
+            $delegate['ID'] = $dn;
+
+            $this->cache[$dn] = $delegate;
         }
 
-        $ldap->reset();
-
-        // Get delegate
-        $user = $ldap->get_record($dn, true);
-
-        if (empty($user)) {
-            return array();
-        }
-
-        $delegate = $this->parse_ldap_record($user);
-        $delegate['ID'] = $dn;
-
-        return $delegate;
+        return $this->cache[$dn];
     }
 
     /**
@@ -200,13 +202,13 @@ class kolab_delegation_engine
             return array();
         }
 
-        $ldap->reset();
-
         $list = $ldap->search($this->ldap_login_field, $login, 1);
 
-        if ($list->count == 1) {
-            $user = $list->next();
-            return $this->parse_ldap_record($user);
+        if (count($list) == 1) {
+            $dn   = key($list);
+            $user = $list[$dn];
+
+            return $this->parse_ldap_record($user, $dn);
         }
     }
 
@@ -248,9 +250,8 @@ class kolab_delegation_engine
     public function list_delegates()
     {
         $result = array();
-
-        $ldap = $this->ldap();
-        $user = $this->user();
+        $ldap   = $this->ldap();
+        $user   = $this->user();
 
         if (empty($ldap) || empty($user)) {
             return array();
@@ -261,12 +262,11 @@ class kolab_delegation_engine
 
         if (!empty($delegates)) {
             foreach ((array)$delegates as $dn) {
-                $ldap->reset();
-                $delegate = $ldap->get_record(rcube_ldap::dn_encode($dn), true);
-                $data     = $this->parse_ldap_record($delegate);
+                $delegate = $ldap->get_record($dn);
+                $data     = $this->parse_ldap_record($delegate, $dn);
 
                 if (!empty($data) && !empty($data['name'])) {
-                    $result[$delegate['ID']] = $data['name'];
+                    $result[$data['ID']] = $data['name'];
                 }
             }
         }
@@ -282,18 +282,17 @@ class kolab_delegation_engine
     public function list_delegators()
     {
         $result = array();
-
-        $ldap = $this->ldap();
+        $ldap   = $this->ldap();
 
         if (empty($ldap) || empty($this->ldap_dn)) {
             return array();
         }
 
-        $ldap->reset();
-        $list = $ldap->search($this->ldap_delegate_field, rcube_ldap::dn_decode($this->ldap_dn), 1);
+        $list = $ldap->search($this->ldap_delegate_field, $this->ldap_dn, 1);
 
-        while ($delegator = $list->iterate()) {
-            $result[$delegator['ID']] = $this->parse_ldap_record($delegator);
+        foreach ($list as $dn => $delegator) {
+            $delegator = $this->parse_ldap_record($delegator, $dn);
+            $result[$delegator['ID']] = $delegator;
         }
 
         return $result;
@@ -427,11 +426,9 @@ class kolab_delegation_engine
         $fields = array_unique(array_filter(array_merge((array)$this->ldap_name_field, (array)$this->ldap_login_field)));
         $users  = array();
 
-        $ldap->reset();
-        $ldap->set_pagesize($max);
-        $result = $ldap->search($fields, $search, $mode, true, false, (array)$this->ldap_login_field);
+        $result = $ldap->search($fields, $search, $mode, (array)$this->ldap_login_field, $max);
 
-        foreach ($result->records as $record) {
+        foreach ($result as $record) {
             $user = $this->parse_ldap_record($record);
 
             if ($user['name']) {
@@ -447,7 +444,7 @@ class kolab_delegation_engine
     /**
      * Extract delegate identifiers and pretty name from LDAP record
      */
-    private function parse_ldap_record($data)
+    private function parse_ldap_record($data, $dn = null)
     {
         $email = array();
         $uid   = $data[$this->ldap_login_field];
@@ -496,12 +493,12 @@ class kolab_delegation_engine
         }
 
         return array(
+            'ID'       => kolab_auth_ldap::dn_encode($dn),
             'uid'      => $uid,
             'name'     => $name,
             'realname' => $realname,
             'imap_uid' => $imap_uid,
             'email'    => $email,
-            'ID'       => $data['ID'],
             'organization' => $organization,
         );
     }
@@ -519,8 +516,6 @@ class kolab_delegation_engine
             if (!$ldap) {
                 return array();
             }
-
-            $ldap->reset();
 
             // Get current user record
             $this->cache['user'] = $ldap->get_record($this->ldap_dn, true);
@@ -547,27 +542,28 @@ class kolab_delegation_engine
     /**
      * Update LDAP record of current user
      *
-     * @param array User data
+     * @param array List of delegates
      */
-    public function user_update($user)
+    public function user_update_delegates($list)
     {
         $ldap = $this->ldap();
+        $pass = $this->rc->decrypt($_SESSION['password']);
 
         if (!$ldap) {
             return false;
         }
 
-        $dn   = rcube_ldap::dn_decode($this->ldap_dn);
-        $pass = $this->rc->decrypt($_SESSION['password']);
-
         // need to bind as self for sufficient privilages
-        if (!$ldap->bind($dn, $pass)) {
+        if (!$ldap->bind($this->ldap_dn, $pass)) {
             return false;
         }
 
+        $user[$this->ldap_delegate_field] = $list;
+
         unset($this->cache['user']);
-        // update user record
-        return $ldap->update($this->ldap_dn, $user);
+
+        // replace delegators list in user record
+        return $ldap->replace($this->ldap_dn, $user);
     }
 
     /**

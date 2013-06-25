@@ -18,10 +18,10 @@
 		<email>machniak@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2012-12-19</date>
+	<date>2013-06-25</date>
 	<version>
-		<release>0.6</release>
-		<api>0.1</api>
+		<release>0.7</release>
+		<api>0.2</api>
 	</version>
 	<stability>
 		<release>stable</release>
@@ -32,6 +32,10 @@
 	<contents>
 		<dir baseinstalldir="/" name="/">
 			<file name="kolab_auth.php" role="php">
+				<tasks:replace from="@name@" to="name" type="package-info"/>
+				<tasks:replace from="@package_version@" to="version" type="package-info"/>
+			</file>
+			<file name="kolab_auth_ldap.php" role="php">
 				<tasks:replace from="@name@" to="name" type="package-info"/>
 				<tasks:replace from="@package_version@" to="version" type="package-info"/>
 			</file>

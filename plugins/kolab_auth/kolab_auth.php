@@ -61,12 +61,12 @@ class kolab_auth extends rcube_plugin
             $rcmail->config->set('imap_debug', true);
             $rcmail->config->set('ldap_debug', true);
             $rcmail->config->set('smtp_debug', true);
-
         }
 
     }
 
-    public function startup($args) {
+    public function startup($args)
+    {
         // Arguments are task / action, not interested
         if (!empty($_SESSION['user_roledns'])) {
             $this->load_user_role_plugins_and_settings($_SESSION['user_roledns']);
@@ -75,7 +75,8 @@ class kolab_auth extends rcube_plugin
         return $args;
     }
 
-    public function load_user_role_plugins_and_settings($role_dns) {
+    public function load_user_role_plugins_and_settings($role_dns)
+    {
         $rcmail = rcube::get_instance();
         $this->load_config();
 
@@ -151,7 +152,8 @@ class kolab_auth extends rcube_plugin
         }
     }
 
-    public function write_log($args) {
+    public function write_log($args)
+    {
         $rcmail = rcube::get_instance();
 
         if (!$rcmail->config->get('kolab_auth_auditlog', false)) {
@@ -286,7 +288,7 @@ class kolab_auth extends rcube_plugin
         }
 
         // Find user record in LDAP
-        $record = $this->get_user_record($user, $host);
+        $record = $ldap->get_user_record($user, $host);
 
         if (empty($record)) {
             $args['abort'] = true;
@@ -309,8 +311,7 @@ class kolab_auth extends rcube_plugin
         // Login As...
         if (!empty($loginas) && $admin_login) {
             // Authenticate to LDAP
-            $dn     = rcube_ldap::dn_decode($record['ID']);
-            $result = $ldap->bind($dn, $pass);
+            $result = $ldap->bind($record['dn'], $pass);
 
             if (!$result) {
                 $args['abort'] = true;
@@ -318,32 +319,24 @@ class kolab_auth extends rcube_plugin
             }
 
             // check if the original user has/belongs to administrative role/group
-            $isadmin   = false;
-            $group     = $rcmail->config->get('kolab_auth_group');
-            $role_attr = $rcmail->config->get('kolab_auth_role');
-            $role_dn   = $rcmail->config->get('kolab_auth_role_value');
+            $isadmin = false;
+            $group   = $rcmail->config->get('kolab_auth_group');
+            $role_dn = $rcmail->config->get('kolab_auth_role_value');
 
             // check role attribute
             if (!empty($role_attr) && !empty($role_dn) && !empty($record[$role_attr])) {
-                $role_dn = $this->parse_vars($role_dn, $user, $host);
-                foreach ((array)$record[$role_attr] as $role) {
-                    if ($role == $role_dn) {
-                        $isadmin = true;
-                        break;
-                    }
+                $role_dn = $ldap->parse_vars($role_dn, $user, $host);
+                if (in_array($role_dn, (array)$record[$role_attr])) {
+                    $isadmin = true;
                 }
             }
 
             // check group
             if (!$isadmin && !empty($group)) {
-                $groups = $ldap->get_record_groups($record['ID']);
-                foreach (array_keys($groups) as $g) {
-                    if ($group == rcube_ldap::dn_decode($g)) {
-                        $isadmin = true;
-                        break;
-                    }
+                $groups = $ldap->get_user_groups($record['dn'], $user, $host);
+                if (in_array($group, $groups)) {
+                    $isadmin = true;
                 }
-
             }
 
             // Save original user login for log (see below)
@@ -358,7 +351,7 @@ class kolab_auth extends rcube_plugin
 
             // user has the privilage, get "login as" user credentials
             if ($isadmin) {
-                $record = $this->get_user_record($loginas, $host);
+                $record = $ldap->get_user_record($loginas, $host);
             }
 
             if (empty($record)) {
@@ -376,7 +369,7 @@ class kolab_auth extends rcube_plugin
 
         // Store UID and DN of logged user in session for use by other plugins
         $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
-        $_SESSION['kolab_dn']  = $record['ID']; // encoded
+        $_SESSION['kolab_dn']  = $record['dn'];
 
         // Set user login
         if ($login_attr) {
@@ -485,80 +478,10 @@ class kolab_auth extends rcube_plugin
             return null;
         }
 
-        self::$ldap = new kolab_auth_ldap_backend(
-            $addressbook,
-            $rcmail->config->get('ldap_debug'),
-            $rcmail->config->mail_domain($_SESSION['imap_host'])
-        );
+        require_once __DIR__ . '/kolab_auth_ldap.php';
 
-        $rcmail->add_shutdown_function(array(self::$ldap, 'close'));
+        self::$ldap = new kolab_auth_ldap($addressbook);
 
         return self::$ldap;
-    }
-
-    /**
-     * Fetches user data from LDAP addressbook
-     */
-    private function get_user_record($user, $host)
-    {
-        $rcmail = rcube::get_instance();
-        $filter = $rcmail->config->get('kolab_auth_filter');
-        $filter = $this->parse_vars($filter, $user, $host);
-        $ldap   = self::ldap();
-
-        // reset old result
-        $ldap->reset();
-
-        // get record
-        $ldap->set_filter($filter);
-        $results = $ldap->list_records();
-
-        if (count($results->records) == 1) {
-            return $results->records[0];
-        }
-    }
-
-    /**
-     * Prepares filter query for LDAP search
-     */
-    private function parse_vars($str, $user, $host)
-    {
-        $rcmail = rcube::get_instance();
-        $domain = $rcmail->config->get('username_domain');
-
-        if (!empty($domain) && strpos($user, '@') === false) {
-            if (is_array($domain) && isset($domain[$host])) {
-                $user .= '@'.rcube_utils::parse_host($domain[$host], $host);
-            }
-            else if (is_string($domain)) {
-                $user .= '@'.rcube_utils::parse_host($domain, $host);
-            }
-        }
-
-        // replace variables in filter
-        list($u, $d) = explode('@', $user);
-        $dc = 'dc='.strtr($d, array('.' => ',dc=')); // hierarchal domain string
-        $replaces = array('%dc' => $dc, '%d' => $d, '%fu' => $user, '%u' => $u);
-
-        return strtr($str, $replaces);
-    }
-}
-
-/**
- * Wrapper class for rcube_ldap addressbook
- */
-class kolab_auth_ldap_backend extends rcube_ldap
-{
-    function __construct($p, $debug=false, $mail_domain=null)
-    {
-        parent::__construct($p, $debug, $mail_domain);
-        $this->fieldmap['uid'] = 'uid';
-    }
-
-    function set_filter($filter)
-    {
-        if ($filter) {
-            $this->prop['filter'] = $filter;
-        }
     }
 }
