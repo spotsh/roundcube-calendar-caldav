@@ -2,6 +2,17 @@
 
 // The id of the LDAP address book (which refers to the $rcmail_config['ldap_public'])
 // or complete addressbook definition array.
+// --------------------------------------------------------------------
+// Note: Multi-domain (hosted) installations can resolve domain aliases
+//   by adding following settings in kolab_auth_addressbook spec.:
+//
+//   'domain_base_dn'   => 'cn=kolab,cn=config',
+//   'domain_filter'    => '(&(objectclass=domainrelatedobject)(associateddomain=%s))',
+//   'domain_name_attr' => 'associateddomain',
+//
+//   With this %dc variable in base_dn and groups/base_dn will be
+//   replaced with DN string of resolved domain
+//---------------------------------------------------------------------
 $rcmail_config['kolab_auth_addressbook'] = '';
 
 // This will overwrite defined filter

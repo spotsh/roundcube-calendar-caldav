@@ -27,13 +27,14 @@
  */
 class kolab_auth_ldap extends rcube_ldap_generic
 {
+    private $icache = array();
+
 
     function __construct($p)
     {
         $rcmail = rcube::get_instance();
 
         $this->debug    = (bool) $rcmail->config->get('ldap_debug');
-        $this->domain   = $rcmail->config->get('username_domain');
         $this->fieldmap = $p['fieldmap'];
         $this->fieldmap['uid'] = 'uid';
 
@@ -109,6 +110,8 @@ class kolab_auth_ldap extends rcube_ldap_generic
         $filter  = $this->parse_vars($filter, $user, $host);
         $base_dn = $this->parse_vars($this->config['base_dn'], $user, $host);
         $scope   = $this->config['scope'];
+
+        // @TODO: print error if filter is empty
 
         // get record
         if ($result = parent::search($base_dn, $filter, $scope, $this->attributes)) {
@@ -273,7 +276,7 @@ class kolab_auth_ldap extends rcube_ldap_generic
             $filter = '(&(' . preg_replace('/^\(|\)$/', '', $this->config['filter']) . ')' . $filter . ')';
         }
 
-        $base_dn = $this->parse_vars($this->config['base_dn'], $_SESSION['username']);
+        $base_dn = $this->parse_vars($this->config['base_dn']);
         $scope   = $this->config['scope'];
         $attrs   = array_values($this->fieldmap);
         $list    = array();
@@ -357,23 +360,106 @@ class kolab_auth_ldap extends rcube_ldap_generic
     /**
      * Prepares filter query for LDAP search
      */
-    function parse_vars($str, $user, $host = null)
+    function parse_vars($str, $user = null, $host = null)
     {
-        if (!empty($this->domain) && strpos($user, '@') === false) {
-            if ($host && is_array($this->domain) && isset($this->domain[$host])) {
-                $user .= '@'.rcube_utils::parse_host($this->domain[$host], $host);
+        // When authenticating user $user is always set
+        // if not set it means we use this LDAP object for other
+        // purposes, e.g. kolab_delegation, then username with
+        // correct domain is in a session
+        if (!$user) {
+            $user = $_SESSION['username'];
+        }
+        else if (isset($this->icache[$user])) {
+            list($user, $dc) = $this->icache[$user];
+        }
+        else {
+            $orig_user = $user;
+            $rcmail = rcube::get_instance();
+
+            // get default domain
+            if ($username_domain = $rcmail->config->get('username_domain')) {
+                if ($host && is_array($username_domain) && isset($username_domain[$host])) {
+                    $domain = rcube_utils::parse_host($username_domain[$host], $host);
+                }
+                else if (is_string($username_domain)) {
+                    $domain = rcube_utils::parse_host($username_domain, $host);
+                }
             }
-            else if (is_string($this->domain)) {
-                $user .= '@'.rcube_utils::parse_host($this->domain, $host);
+
+            // realmed username (with domain)
+            if (strpos($user, '@')) {
+                list($usr, $dom) = explode('@', $user);
+
+                // unrealm domain, user login can contain a domain alias
+                if ($dom != $domain && ($r_domain = $this->find_domain($dom))) {
+                    // $dom is a domain DN string?
+                    if (strpos($r_domain, '=')) {
+                        $dc = $r_domain;
+                    }
+                    else {
+                        $user = $usr . '@' . $r_domain;
+                    }
+                }
             }
+            else if ($domain && !strpos($user, '@')) {
+                $user .= '@' . $domain;
+            }
+
+            $this->icache[$orig_user] = array($user, $dc);
         }
 
         // replace variables in filter
         list($u, $d) = explode('@', $user);
-        $dc = 'dc='.strtr($d, array('.' => ',dc=')); // hierarchal domain string
+
+        // hierarchal domain string
+        if (empty($dc)) {
+            $dc = 'dc=' . strtr($d, array('.' => ',dc='));
+        }
+
         $replaces = array('%dc' => $dc, '%d' => $d, '%fu' => $user, '%u' => $u);
 
         return strtr($str, $replaces);
+    }
+
+    /**
+     * Find root domain for specified domain
+     *
+     * @param string $domain Domain name
+     *
+     * @return string Domain name or domain DN string
+     */
+    function find_domain($domain)
+    {
+        if (empty($domain) || empty($this->config['domain_base_dn']) || empty($this->config['domain_filter'])) {
+            return null;
+        }
+
+        $base_dn   = $this->config['domain_base_dn'];
+        $filter    = $this->config['domain_filter'];
+        $name_attr = $this->config['domain_name_attribute'];
+
+        if (empty($name_attr)) {
+            $name_attr = 'associateddomain';
+        }
+
+        $filter = str_replace('%s', rcube_ldap_generic::quote_string($domain), $filter);
+        $result = parent::search($base_dn, $filter, 'sub', array($name_attr, 'inetdomainbasedn'));
+
+        if (!$result) {
+            return null;
+        }
+
+        $entries  = $result->entries(true);
+        $entry_dn = key($entries);
+        $entry    = $entries[$entry_dn];
+
+        if (is_array($entry)) {
+            if (!empty($entry['inetdomainbasedn'])) {
+                return $entry['inetdomainbasedn'];
+            }
+
+            return is_array($entry[$name_attr]) ? $entry[$name_attr][0] : $entry[$name_attr];
+        }
     }
 
     /**
