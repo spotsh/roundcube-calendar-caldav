@@ -27,7 +27,7 @@
 	<stability>
 		<release>stable</release>
 	</stability>
-	<license uri="http://www.gnu.org/licenses/agpl.html">GNU AGPL</license>
+	<license uri="http://www.gnu.org/licenses/agpl.html">GNU AGPLv3</license>
 	<notes>-</notes>
 	<contents>
 		<dir baseinstalldir="/" name="/">
