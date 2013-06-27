@@ -421,7 +421,7 @@ class kolab_storage_folder
         $this->cache->synchronize();
 
         $msguid = $this->cache->uid2msguid($uid);
-        if ($msguid && ($object = $this->cache->get($msguid)))
+        if ($msguid && ($object = $this->cache->get($msguid, '*')))
             return $object;
 
         return false;
