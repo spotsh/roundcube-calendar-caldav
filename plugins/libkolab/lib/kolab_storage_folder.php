@@ -648,7 +648,16 @@ class kolab_storage_folder
                 // make sure size is set, so object saved in cache contains this info
                 if (!isset($attachment['size'])) {
                     if (!empty($attachment['content'])) {
-                        $attachment['size'] = strlen($attachment['content']);
+                        if (is_resource($attachment['content'])) {
+                            // this need to be a seekable resource, otherwise
+                            // fstat() failes and we're unable to determine size
+                            // here nor in rcube_imap_generic before IMAP APPEND
+                            $stat = fstat($attachment['content']);
+                            $attachment['size'] = $stat ? $stat['size'] : 0;
+                        }
+                        else {
+                            $attachment['size'] = strlen($attachment['content']);
+                        }
                     }
                     else if (!empty($attachment['path'])) {
                         $attachment['size'] = filesize($attachment['path']);
@@ -970,14 +979,25 @@ class kolab_storage_folder
             $headers = array('Content-ID' => Mail_mimePart::encodeHeader('Content-ID', '<' . $key . '>', RCUBE_CHARSET, 'quoted-printable'));
             $name = !empty($att['name']) ? $att['name'] : $key;
 
+            // To store binary files we can use faster method
+            // without writting full message content to a temporary file but
+            // directly to IMAP, see rcube_imap_generic::append().
+            // I.e. use file handles where possible
             if (!empty($att['content'])) {
-                $mime->addAttachment($att['content'], $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                if (is_resource($att['content']) && $is_file && $binary) {
+                    $files[] = $att['content'];
+                    $mime->addAttachment($marker, $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                }
+                else {
+                    if (is_resource($att['content'])) {
+                        @rewind($att['content']);
+                        $att['content'] = stream_get_contents($att['content']);
+                    }
+                    $mime->addAttachment($att['content'], $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                }
                 $part_id++;
             }
             else if (!empty($att['path'])) {
-                // To store binary files we can use faster method
-                // without writting full message content to a temporary file but
-                // directly to IMAP, see rcube_imap_generic::append().
                 if ($is_file && $binary) {
                     $files[] = fopen($att['path'], 'r');
                     $mime->addAttachment($marker, $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
