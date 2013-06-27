@@ -246,7 +246,7 @@ class kolab_storage_folder
         if (is_array($nsdata[0]) && strlen($nsdata[0][0]) && strpos($this->name, $nsdata[0][0]) === 0) {
             $subpath = substr($this->name, strlen($nsdata[0][0]));
             if ($ns == 'other') {
-                list($user, $suffix) = explode($nsdata[0][1], $subpath);
+                list($user, $suffix) = explode($nsdata[0][1], $subpath, 2);
                 $subpath = $suffix;
             }
         }
