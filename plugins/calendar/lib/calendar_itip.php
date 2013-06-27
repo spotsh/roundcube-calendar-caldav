@@ -143,6 +143,7 @@ class calendar_itip
     $message->setParam('head_encoding', 'quoted-printable');
     $message->setParam('head_charset', RCMAIL_CHARSET);
     $message->setParam('text_charset', RCMAIL_CHARSET . ";\r\n format=flowed");
+    $message->setContentType('multipart/alternative');
     
     // compose common headers array
     $headers = array(
