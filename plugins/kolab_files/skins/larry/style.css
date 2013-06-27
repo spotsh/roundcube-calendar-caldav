@@ -1,17 +1,19 @@
 /* Taskbar button */
-#taskbar a.button-files span.button-inner
-{
+#taskbar a.button-files span.button-inner {
   background: url(images/buttons.png) 0 0 no-repeat;
   height: 22px;
 }
 
 #taskbar a.button-files:hover span.button-inner,
-#taskbar a.button-files.button-selected span.button-inner
-{
+#taskbar a.button-files.button-selected span.button-inner {
   background: url(images/buttons.png) 0 -26px no-repeat;
   height: 22px;
 }
 
+/* Attachment toolbar button */
+.toolbar a.button.saveas {
+  background: url(images/buttons.png) center -277px no-repeat;
+}
 
 /* Files main interface */
 #filestoolbar {

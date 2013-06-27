@@ -51,24 +51,38 @@ class kolab_files_engine
             if ($this->rc->action == 'compose') {
                 $template = 'compose_plugin';
             }
-            else if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
+            else if (in_array($this->rc->action, array('show', 'preview', 'get'))) {
                 $template = 'message_plugin';
 
-                // add "Save as" button into attachment menu
-                $this->plugin->add_button(array(
-                    'id'         => 'attachmenusaveas',
-                    'name'       => 'attachmenusaveas',
-                    'type'       => 'link',
-                    'wrapper'    => 'li',
-                    'onclick'    => 'return false',
-                    'class'      => 'icon active saveas',
-                    'classact'   => 'icon active saveas',
-                    'innerclass' => 'icon active saveas',
-                    'label'      => 'kolab_files.saveto',
-                    ), 'attachmentmenu');
+                if ($this->rc->action == 'get') {
+                    // add "Save as" button into attachment toolbar
+                    $this->plugin->add_button(array(
+                        'id'         => 'saveas',
+                        'name'       => 'saveas',
+                        'type'       => 'link',
+                        'onclick'    => 'kolab_directory_selector_dialog()',
+                        'class'      => 'button buttonPas saveas',
+                        'classact'   => 'button saveas',
+                        'label'      => 'kolab_files.save',
+                        ), 'toolbar');
+                }
+                else {
+                    // add "Save as" button into attachment menu
+                    $this->plugin->add_button(array(
+                        'id'         => 'attachmenusaveas',
+                        'name'       => 'attachmenusaveas',
+                        'type'       => 'link',
+                        'wrapper'    => 'li',
+                        'onclick'    => 'return false',
+                        'class'      => 'icon active saveas',
+                        'classact'   => 'icon active saveas',
+                        'innerclass' => 'icon active saveas',
+                        'label'      => 'kolab_files.saveto',
+                        ), 'attachmentmenu');
+                }
             }
 
-            $this->plugin->add_label('save', 'cancel',
+            $this->plugin->add_label('save', 'cancel', 'saveto',
                 'saveall', 'fromcloud', 'attachsel', 'selectfiles', 'attaching',
                 'collection_audio', 'collection_video', 'collection_image', 'collection_document'
             );

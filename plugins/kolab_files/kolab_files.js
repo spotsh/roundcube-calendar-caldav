@@ -137,10 +137,11 @@ function kolab_files_token()
 // folder selection dialog
 function kolab_directory_selector_dialog(id)
 {
-  var dialog = $('#files-dialog'), buttons = {},
+  var dialog = $('#files-dialog'),
     input = $('#file-save-as-input'),
     form = $('#file-save-as'),
-    list = $('#folderlistbox');
+    list = $('#folderlistbox'),
+    buttons = {}, label = 'saveto';
 
   // attachment is specified
   if (id) {
@@ -149,9 +150,17 @@ function kolab_directory_selector_dialog(id)
     dialog.addClass('saveas');
     input.val(filename);
   }
+  // attachment preview page
+  else if (rcmail.env.action == 'get') {
+    id = rcmail.env.part;
+    form.show();
+    dialog.addClass('saveas');
+    input.val(rcmail.env.filename);
+  }
   else {
     form.hide();
     dialog.removeClass('saveas');
+    label = 'saveall';
   }
 
   buttons[rcmail.gettext('kolab_files.save')] = function () {
@@ -177,7 +186,7 @@ function kolab_directory_selector_dialog(id)
 
   // show dialog window
   kolab_dialog_show(dialog, {
-    title: rcmail.gettext('kolab_files.' + (id ? 'saveto' : 'saveall')),
+    title: rcmail.gettext('kolab_files.' + label),
     buttons: buttons,
     minWidth: 250,
     minHeight: 300,
