@@ -255,6 +255,8 @@ class kolab_format_contact extends kolab_format
 
         // TODO: handle language, gpslocation, etc.
 
+        // set type property for proper caching
+        $object['_type'] = 'contact';
 
         // cache this data
         $this->data = $object;
