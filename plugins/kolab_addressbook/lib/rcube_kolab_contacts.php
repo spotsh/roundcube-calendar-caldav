@@ -252,7 +252,7 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     public function list_records($cols = null, $subset = 0)
     {
-        $this->result = new rcube_result_set(0, ($this->list_page-1) * $this->page_size);;
+        $this->result = new rcube_result_set(0, ($this->list_page-1) * $this->page_size);
 
         // list member of the selected group
         if ($this->gid) {
@@ -276,8 +276,10 @@ class rcube_kolab_contacts extends rcube_addressbook
         }
         else if (is_array($this->filter['ids'])) {
             $ids = $this->filter['ids'];
-            if ($this->result->count = count($ids))
-                $this->_fetch_contacts(array(array('uid', '=', $ids)));
+            if ($this->result->count = count($ids)) {
+                $uids = array_map(array($this, 'id2uid'), $this->filter['ids']);
+                $this->_fetch_contacts(array(array('uid', '=', $uids)));
+            }
         }
         else {
             $this->_fetch_contacts();
@@ -473,7 +475,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     public function get_record($id, $assoc=false)
     {
         $rec = null;
-        $uid = $this->_id2uid($id);
+        $uid = $this->id2uid($id);
         if (strpos($uid, 'mailto:') === 0) {
             $this->_fetch_groups(true);
             $rec = $this->contacts[$id];
@@ -578,7 +580,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     public function update($id, $save_data)
     {
         $updated = false;
-        if ($old = $this->storagefolder->get_object($this->_id2uid($id))) {
+        if ($old = $this->storagefolder->get_object($this->id2uid($id))) {
             $object = $this->_from_rcube_contact($save_data, $old);
 
             if (!$this->storagefolder->save($object, 'contact', $old['uid'])) {
@@ -617,7 +619,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         $count = 0;
         foreach ($ids as $id) {
-            if ($uid = $this->_id2uid($id)) {
+            if ($uid = $this->id2uid($id)) {
                 $is_mailto = strpos($uid, 'mailto:') === 0;
                 $deleted = $is_mailto || $this->storagefolder->delete($uid, $force);
 
@@ -661,7 +663,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         $count = 0;
         foreach ($ids as $id) {
-            $uid = $this->_id2uid($id);
+            $uid = $this->id2uid($id);
             if ($this->storagefolder->undelete($uid)) {
                 $count++;
             }
@@ -725,7 +727,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             return false;
         }
         else {
-            $id = $this->_uid2id($list['uid']);
+            $id = $this->uid2id($list['uid']);
             $this->distlists[$id] = $list;
             $result = array('id' => $id, 'name' => $name);
         }
@@ -817,7 +819,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         $ids = array_diff($ids, $exists);
 
         foreach ($ids as $contact_id) {
-            $uid = $this->_id2uid($contact_id);
+            $uid = $this->id2uid($contact_id);
             if ($contact = $this->storagefolder->get_object($uid)) {
                 foreach ($this->get_col_values('email', $contact, true) as $email)
                     break;
@@ -999,9 +1001,9 @@ class rcube_kolab_contacts extends rcube_addressbook
         if (!isset($this->distlists)) {
             $this->distlists = $this->groupmembers = array();
             foreach ((array)$this->storagefolder->get_objects('distribution-list') as $record) {
-                $record['ID'] = $this->_uid2id($record['uid']);
+                $record['ID'] = $this->uid2id($record['uid']);
                 foreach ((array)$record['member'] as $i => $member) {
-                    $mid = $this->_uid2id($member['uid'] ? $member['uid'] : 'mailto:' . $member['email']);
+                    $mid = $this->uid2id($member['uid'] ? $member['uid'] : 'mailto:' . $member['email']);
                     $record['member'][$i]['ID'] = $mid;
                     $record['member'][$i]['readonly'] = empty($member['uid']);
                     $this->groupmembers[$mid][] = $record['ID'];
@@ -1017,7 +1019,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * Encode object UID into a safe identifier
      */
-    private function _uid2id($uid)
+    public function uid2id($uid)
     {
         return rtrim(strtr(base64_encode($uid), '+/', '-_'), '=');
     }
@@ -1025,7 +1027,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * Convert Roundcube object identifier back into the original UID
      */
-    private function _id2uid($id)
+    public function id2uid($id)
     {
         return base64_decode(str_pad(strtr($id, '-_', '+/'), strlen($id) % 4, '=', STR_PAD_RIGHT));
     }
@@ -1035,7 +1037,7 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     private function _to_rcube_contact($record)
     {
-        $record['ID'] = $this->_uid2id($record['uid']);
+        $record['ID'] = $this->uid2id($record['uid']);
 
         // convert email, website, phone values
         foreach (array('email'=>'address', 'website'=>'url', 'phone'=>'number') as $col => $propname) {
@@ -1090,7 +1092,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     private function _from_rcube_contact($contact, $old = array())
     {
         if (!$contact['uid'] && $contact['ID'])
-            $contact['uid'] = $this->_id2uid($contact['ID']);
+            $contact['uid'] = $this->id2uid($contact['ID']);
         else if (!$contact['uid'] && $old['uid'])
             $contact['uid'] = $old['uid'];
 
