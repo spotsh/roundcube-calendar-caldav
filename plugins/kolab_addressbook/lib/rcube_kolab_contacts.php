@@ -821,13 +821,20 @@ class rcube_kolab_contacts extends rcube_addressbook
         foreach ($ids as $contact_id) {
             $uid = $this->id2uid($contact_id);
             if ($contact = $this->storagefolder->get_object($uid)) {
-                foreach ($this->get_col_values('email', $contact, true) as $email)
-                    break;
+                $email = '';
+                if (empty($uid)) {
+                    foreach ($contact['email'] as $email) {
+                        if (is_array($email)) {
+                            $email = $email['address'];
+                        }
+                        break;
+                    }
+                }
 
                 $list['member'][] = array(
-                    'uid' => $uid,
+                    'uid'   => $uid,
                     'email' => $email,
-                    'name' => self::compose_display_name($contact),
+                    'name'   => self::compose_display_name($contact),
                 );
                 $this->groupmembers[$contact_id][] = $gid;
                 $added++;
@@ -835,7 +842,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             else if (strpos($uid, 'mailto:') === 0 && ($contact = $this->contacts[$contact_id])) {
                 $list['member'][] = array(
                     'email' => $contact['email'],
-                    'name' => $contact['name'],
+                    'name'  => $contact['name'],
                 );
                 $this->groupmembers[$contact_id][] = $gid;
                 $added++;
@@ -1096,7 +1103,7 @@ class rcube_kolab_contacts extends rcube_addressbook
         else if (!$contact['uid'] && $old['uid'])
             $contact['uid'] = $old['uid'];
 
-        $contact['im']    = array_filter($this->get_col_values('im', $contact, true));
+        $contact['im'] = array_filter($this->get_col_values('im', $contact, true));
 
         // convert email, website, phone values
         foreach (array('email'=>'address', 'website'=>'url', 'phone'=>'number') as $col => $propname) {

@@ -44,7 +44,6 @@ class kolab_format_distributionlist extends kolab_format
 
         $this->obj->setName($object['name']);
 
-        $seen = array();
         $members = new vectorcontactref;
         foreach ((array)$object['member'] as $member) {
             if ($member['uid'])
@@ -56,7 +55,6 @@ class kolab_format_distributionlist extends kolab_format
 
             $m->setName($member['name']);
             $members->push($m);
-            $seen[$member['email']]++;
         }
 
         $this->obj->setMembers($members);
@@ -100,11 +98,11 @@ class kolab_format_distributionlist extends kolab_format
         $members = $this->obj->members();
         for ($i=0; $i < $members->size(); $i++) {
             $member = $members->get($i);
-#            if ($member->type() == ContactReference::UidReference && ($uid = $member->uid()))
+//            if ($member->type() == ContactReference::UidReference && ($uid = $member->uid()))
                 $object['member'][] = array(
-                    'uid' => $member->uid(),
+                    'uid'   => $member->uid(),
                     'email' => $member->email(),
-                    'name' => $member->name(),
+                    'name'  => $member->name(),
                 );
         }
 
