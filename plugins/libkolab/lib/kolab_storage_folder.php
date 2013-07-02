@@ -636,7 +636,7 @@ class kolab_storage_folder
         if (kolab_storage::$version == '2.0' && $object['photo']) {
             $attkey = 'kolab-picture.png';  // this file name is hard-coded in libkolab/kolabformatV2/contact.cpp
             $object['_attachments'][$attkey] = array(
-                'mimetype'=> rc_image_content_type($object['photo']),
+                'mimetype'=> rcube_mime::image_content_type($object['photo']),
                 'content' => preg_match('![^a-z0-9/=+-]!i', $object['photo']) ? $object['photo'] : base64_decode($object['photo']),
             );
         }
