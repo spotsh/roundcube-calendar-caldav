@@ -983,7 +983,16 @@ class kolab_storage_folder
             // without writting full message content to a temporary file but
             // directly to IMAP, see rcube_imap_generic::append().
             // I.e. use file handles where possible
-            if (!empty($att['content'])) {
+            if (!empty($att['path'])) {
+                if ($is_file && $binary) {
+                    $files[] = fopen($att['path'], 'r');
+                    $mime->addAttachment($marker, $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                }
+                else {
+                    $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
+                }
+            }
+            else {
                 if (is_resource($att['content']) && $is_file && $binary) {
                     $files[] = $att['content'];
                     $mime->addAttachment($marker, $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
@@ -995,20 +1004,9 @@ class kolab_storage_folder
                     }
                     $mime->addAttachment($att['content'], $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
                 }
-                $part_id++;
-            }
-            else if (!empty($att['path'])) {
-                if ($is_file && $binary) {
-                    $files[] = fopen($att['path'], 'r');
-                    $mime->addAttachment($marker, $att['mimetype'], $name, false, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
-                }
-                else {
-                    $mime->addAttachment($att['path'], $att['mimetype'], $name, true, $encoding, 'attachment', '', '', '', null, null, '', RCUBE_CHARSET, $headers);
-                }
-                $part_id++;
             }
 
-            $object['_attachments'][$key]['id'] = $part_id;
+            $object['_attachments'][$key]['id'] = ++$part_id;
         }
 
         if (!$is_file || !empty($files)) {
