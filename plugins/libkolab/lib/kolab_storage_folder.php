@@ -412,17 +412,22 @@ class kolab_storage_folder
     /**
      * Getter for a single Kolab object, identified by its UID
      *
-     * @param string Object UID
+     * @param string $uid  Object UID
+     * @param string $type Object type (e.g. contact, event, todo, journal, note, configuration)
+     *                     Defaults to folder type
+     *
      * @return array The Kolab object represented as hash array
      */
-    public function get_object($uid)
+    public function get_object($uid, $type = null)
     {
         // synchronize caches
         $this->cache->synchronize();
 
         $msguid = $this->cache->uid2msguid($uid);
-        if ($msguid && ($object = $this->cache->get($msguid, '*')))
+
+        if ($msguid && ($object = $this->cache->get($msguid, $type))) {
             return $object;
+        }
 
         return false;
     }
