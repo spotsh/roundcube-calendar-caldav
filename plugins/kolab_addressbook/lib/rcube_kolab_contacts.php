@@ -230,6 +230,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         $this->_fetch_groups();
         $groups = array();
+
         foreach ((array)$this->distlists as $group) {
             if (!$search || strstr(strtolower($group['name']), strtolower($search)))
                 $groups[$group['name']] = array('ID' => $group['ID'], 'name' => $group['name']);
@@ -257,22 +258,35 @@ class rcube_kolab_contacts extends rcube_addressbook
         // list member of the selected group
         if ($this->gid) {
             $this->_fetch_groups();
-            $seen = array();
+
+            $this->contacts = array();
+            $uids           = array();
+
+            // get members with email specified
             foreach ((array)$this->distlists[$this->gid]['member'] as $member) {
                 // skip member that don't match the search filter
-                if (is_array($this->filter['ids']) && array_search($member['ID'], $this->filter['ids']) === false)
+                if (!empty($this->filter['ids']) && array_search($member['ID'], $this->filter['ids']) === false) {
                     continue;
-
-                if ($member['uid'] && ($contact = $this->storagefolder->get_object($member['uid'])) && !$seen[$member['ID']]++) {
-                    $this->contacts[$member['ID']] = $this->_to_rcube_contact($contact);
-                    $this->result->count++;
                 }
-                else if ($member['email'] && !$seen[$member['ID']]++) {
+
+                if (!empty($member['email'])) {
                     $this->contacts[$member['ID']] = $member;
-                    $this->result->count++;
+                }
+                if (!empty($member['uid'])) {
+                    $uids[] = $member['uid'];
                 }
             }
-            $ids = array_keys($seen);
+
+            // get members by UID
+            if (!empty($uids)) {
+                foreach ((array)$this->storagefolder->select(array(array('uid', '=', $uids))) as $record) {
+                    $member = $this->_to_rcube_contact($record);
+                    $this->contacts[$member['ID']] = $member;
+                }
+            }
+
+            $ids = array_keys($this->contacts);
+            $this->result->count = count($this->contacts);
         }
         else if (is_array($this->filter['ids'])) {
             $ids = $this->filter['ids'];
@@ -802,48 +816,44 @@ class rcube_kolab_contacts extends rcube_addressbook
      */
     function add_to_group($gid, $ids)
     {
-        if (!is_array($ids))
+        if (!is_array($ids)) {
             $ids = explode(',', $ids);
-
-        $added = 0;
-        $exists = array();
+        }
 
         $this->_fetch_groups(true);
-        $list = $this->distlists[$gid];
+
+        $list   = $this->distlists[$gid];
+        $added  = 0;
+        $uids   = array();
+        $exists = array();
 
         foreach ((array)$list['member'] as $member) {
             $exists[] = $member['ID'];
         }
 
         // substract existing assignments from list
-        $ids = array_diff($ids, $exists);
+        $ids = array_unique(array_diff($ids, $exists));
 
+        // add mailto: members
         foreach ($ids as $contact_id) {
             $uid = $this->id2uid($contact_id);
-            if ($contact = $this->storagefolder->get_object($uid)) {
-                $email = '';
-                if (empty($uid)) {
-                    foreach ($contact['email'] as $email) {
-                        if (is_array($email)) {
-                            $email = $email['address'];
-                        }
-                        break;
-                    }
-                }
-
-                $list['member'][] = array(
-                    'uid'   => $uid,
-                    'email' => $email,
-                    'name'   => self::compose_display_name($contact),
-                );
-                $this->groupmembers[$contact_id][] = $gid;
-                $added++;
-            }
-            else if (strpos($uid, 'mailto:') === 0 && ($contact = $this->contacts[$contact_id])) {
+            if (strpos($uid, 'mailto:') === 0 && ($contact = $this->contacts[$contact_id])) {
                 $list['member'][] = array(
                     'email' => $contact['email'],
                     'name'  => $contact['name'],
                 );
+                $this->groupmembers[$contact_id][] = $gid;
+                $added++;
+            }
+            else {
+                $uids[$uid] = $contact_id;
+            }
+        }
+
+        // add members with UID
+        if (!empty($uids)) {
+            foreach ($uids as $uid => $contact_id) {
+                $list['member'][] = array('uid' => $uid);
                 $this->groupmembers[$contact_id][] = $gid;
                 $added++;
             }
