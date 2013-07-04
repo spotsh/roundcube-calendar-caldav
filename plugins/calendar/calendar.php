@@ -1035,7 +1035,7 @@ class calendar extends rcube_plugin
     header("Content-Type: text/calendar");
     header("Content-Disposition: inline; filename=".$calname.'.ics');
 
-    $this->get_ical()->export($events, '', true);
+    $this->get_ical()->export($events, '', true, array($this->driver, 'get_attachment_body'));
 
     if ($terminate)
       exit;

@@ -99,6 +99,8 @@ class calendar_ical
     while (($line = fgets($fp, 2048)) !== false) {
       $buffer .= $line;
       if (preg_match('/END:VEVENT/i', $line)) {
+        if (preg_match('/BEGIN:VCALENDAR/i', $buffer))
+          $buffer .= self::EOL ."END:VCALENDAR";
         $parser->parsevCalendar($buffer, 'VCALENDAR', RCMAIL_CHARSET, false);
         $buffer = '';
       }
@@ -260,6 +262,26 @@ class calendar_ical
             $event['free_busy'] = strtolower($attr['value']);
           break;
 
+        case 'ATTACH':
+          // decode inline attachment
+          if (strtoupper($attr['params']['VALUE']) == 'BINARY' && !empty($attr['value'])) {
+            $data = !strcasecmp($attr['params']['ENCODING'], 'BASE64') ? base64_decode($attr['value']) : $attr['value'];
+            $mimetype = $attr['params']['FMTTYPE'] ? $attr['params']['FMTTYPE'] : rcube_mime::file_content_type($data, $attr['params']['X-LABEL'], 'application/octet-stream', true);
+            $extensions = rcube_mime::get_mime_extensions($mimetype);
+            $filename = $attr['params']['X-LABEL'] ? $attr['params']['X-LABEL'] : 'attachment' . count($event['attachments']) . '.' . $extensions[0];
+            $event['attachments'][] = array(
+              'mimetype' => $mimetype,
+              'name' => $filename,
+              'data' => $data,
+              'size' => strlen($data),
+            );
+          }
+          else if (!empty($attr['value']) && preg_match('!^[hftps]+://!', $attr['value'])) {
+            // TODO: add support for displaying/managing link attachments in UI
+            $event['links'][] = $attr['value'];
+          }
+          break;
+
         default:
           if (substr($attr['name'], 0, 2) == 'X-')
             $event['x-custom'][] = array($attr['name'], $attr['value']);
@@ -346,10 +368,13 @@ class calendar_ical
    * @param  array   Events as array
    * @param  string  VCalendar method to advertise
    * @param  boolean Directly send data to stdout instead of returning
+   * @param  callable Callback function to fetch attachment contents, false if no attachment export
    * @return string  Events in iCalendar format (http://tools.ietf.org/html/rfc5545)
    */
-  public function export($events, $method = null, $write = false, $recurrence_id = null)
+  public function export($events, $method = null, $write = false, $get_attachment = false, $recurrence_id = null)
   {
+      $memory_limit = parse_bytes(ini_get('memory_limit'));
+
       if (!$recurrence_id) {
         $ical = "BEGIN:VCALENDAR" . self::EOL;
         $ical .= "VERSION:2.0" . self::EOL;
@@ -432,7 +457,23 @@ class calendar_ical
         foreach ((array)$event['x-custom'] as $prop)
           $vevent .= $prop[0] . ':' . self::escape($prop[1]) . self::EOL;
         
-        // TODO: export attachments
+        // export attachments using the given callback function
+        if (is_callable($get_attachment) && !empty($event['attachments'])) {
+          foreach ((array)$event['attachments'] as $attach) {
+            // check available memory and skip attachment export if we can't buffer it
+            if ($memory_limit > 0 && ($memory_used = function_exists('memory_get_usage') ? memory_get_usage() : 16*1024*1024)
+                  && $attach['size'] && $memory_used + $attach['size'] * 3 > $memory_limit) {
+                continue;
+            }
+            // TODO: let the callback print the data directly to stdout (with b64 encoding)
+            if ($data = call_user_func($get_attachment, $attach['id'], $event)) {
+              $vevent .= sprintf('ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE=%s;X-LABEL=%s:',
+                self::escape($attach['mimetype']), self::escape($attach['name']));
+              $vevent .= base64_encode($data) . self::EOL;
+            }
+            unset($data);  // attempt to free memory
+          }
+        }
         
         $vevent .= "END:VEVENT" . self::EOL;
 
@@ -441,7 +482,7 @@ class calendar_ical
           foreach ($event['recurrence']['EXCEPTIONS'] as $ex) {
             $exdate = clone $event['start'];
             $exdate->setDate($ex['start']->format('Y'), $ex['start']->format('n'), $ex['start']->format('j'));
-            $vevent .= $this->export(array($ex), null, false,
+            $vevent .= $this->export(array($ex), null, false, $get_attachment,
               $this->format_datetime('RECURRENCE-ID', $exdate, $event['allday']));
           }
         }
