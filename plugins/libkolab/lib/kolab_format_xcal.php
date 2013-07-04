@@ -286,8 +286,10 @@ abstract class kolab_format_xcal extends kolab_format
         }
 
         // save recurrence rule
+        $rr = new RecurrenceRule;
+        $rr->setFrequency(RecurrenceRule::FreqNone);
+
         if ($object['recurrence']) {
-            $rr = new RecurrenceRule;
             $rr->setFrequency($this->rrule_type_map[$object['recurrence']['FREQ']]);
 
             if ($object['recurrence']['INTERVAL'])
@@ -327,8 +329,6 @@ abstract class kolab_format_xcal extends kolab_format
                 $rr->setEnd(self::get_datetime($object['recurrence']['UNTIL'], null, true));
 
             if ($rr->isValid()) {
-                $this->obj->setRecurrenceRule($rr);
-
                 // add exception dates (only if recurrence rule is valid)
                 $exdates = new vectordatetime;
                 foreach ((array)$object['recurrence']['EXDATE'] as $exdate)
@@ -343,6 +343,8 @@ abstract class kolab_format_xcal extends kolab_format
                 ), true);
             }
         }
+
+        $this->obj->setRecurrenceRule($rr);
 
         // save alarm
         $valarms = new vectoralarm;
