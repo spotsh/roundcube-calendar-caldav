@@ -44,7 +44,8 @@ class kolab_format_configuration extends kolab_format
      */
     public function set(&$object)
     {
-        $this->init();
+        // set common object properties
+        parent::set($object);
 
         // read type-specific properties
         switch ($object['type']) {
@@ -62,12 +63,6 @@ class kolab_format_configuration extends kolab_format
         default:
             return false;
         }
-
-        // set some automatic values if missing
-        if (!empty($object['uid']))
-            $this->obj->setUid($object['uid']);
-        if (!empty($object['created']))
-            $this->obj->setCreated(self::get_datetime($object['created']));
 
         // adjust content-type string
         $this->CTYPE = $this->CTYPEv2 = 'application/x-vnd.kolab.configuration.' . $object['type'];
