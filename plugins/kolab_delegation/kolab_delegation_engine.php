@@ -354,14 +354,12 @@ class kolab_delegation_engine
     {
         $storage  = $this->rc->get_storage();
         $folders  = $storage->list_folders();
-        $metadata = $storage->get_metadata('*', array(kolab_storage::CTYPE_KEY, kolab_storage::CTYPE_KEY_PRIVATE));
+        $metadata = kolab_storage::folders_typedata();
         $result   = array();
 
         if (!is_array($metadata)) {
             return $result;
         }
-
-        $metadata = array_map(array('kolab_storage', 'folder_select_metadata'), $metadata);
 
         // Definition of read and write ACL
         $right_types = $this->right_types();
