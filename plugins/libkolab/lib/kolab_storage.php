@@ -599,7 +599,7 @@ class kolab_storage
         $regexp = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // get folders types
-        $folderdata = self::folders_metadata($prefix);
+        $folderdata = self::folders_typedata($prefix);
 
         if (!is_array($folderdata)) {
             return array();
@@ -651,7 +651,7 @@ class kolab_storage
      *
      * @return array|bool List of folders, False on failure
      */
-    static function folders_metadata($prefix = '*')
+    static function folders_typedata($prefix = '*')
     {
         if (!self::setup()) {
             return false;

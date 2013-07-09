@@ -104,7 +104,7 @@ class kolab_folders extends rcube_plugin
         }
 
         // get folders types
-        $folderdata = kolab_storage::folders_metadata();
+        $folderdata = kolab_storage::folders_typedata();
 
         if (!is_array($folderdata)) {
             return $args;
@@ -362,7 +362,7 @@ class kolab_folders extends rcube_plugin
             return $args;
         }
 
-        $folderdata = kolab_storage::folders_metadata();
+        $folderdata = kolab_storage::folders_typedata();
 
         if (!is_array($folderdata)) {
              return $args;
@@ -442,7 +442,7 @@ class kolab_folders extends rcube_plugin
      */
     function get_default_folder($type)
     {
-        $folderdata = kolab_storage::folders_metadata();
+        $folderdata = kolab_storage::folders_typedata();
 
         if (!is_array($folderdata)) {
             return null;
@@ -512,7 +512,7 @@ class kolab_folders extends rcube_plugin
         }
 
         if ($folderdata === null) {
-            $folderdata = kolab_storage::folders_metadata();
+            $folderdata = kolab_storage::folders_typedata();
         }
 
         if (!is_array($folderdata)) {
