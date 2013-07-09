@@ -36,7 +36,6 @@ class kolab_activesync extends rcube_plugin
 
     const ROOT_MAILBOX = 'INBOX';
     const ASYNC_KEY    = '/private/vendor/kolab/activesync';
-    const CTYPE_KEY    = '/shared/vendor/kolab/folder-type';
 
 
     /**
@@ -189,29 +188,6 @@ class kolab_activesync extends rcube_plugin
         $storage = $this->rc->get_storage();
 
         return $storage->list_folders();
-    }
-
-    /**
-     * Returns list of folders with assigned type
-     *
-     * @return array List of folder types indexed by folder name
-     */
-    public function list_types()
-    {
-        if ($this->folder_types === null) {
-            $storage    = $this->rc->get_storage();
-            $folderdata = $storage->get_metadata('*', self::CTYPE_KEY);
-
-            $this->folder_types = array();
-
-            foreach ($folderdata as $folder => $data) {
-                if ($data[self::CTYPE_KEY]) {
-                    $this->folder_types[$folder] = $data[self::CTYPE_KEY];
-                }
-            }
-        }
-
-        return $this->folder_types;
     }
 
     /**

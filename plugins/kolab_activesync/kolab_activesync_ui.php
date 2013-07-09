@@ -107,7 +107,7 @@ class kolab_activesync_ui
 
         // group folders by type (show only known types)
         $folder_groups = array('mail' => array(), 'contact' => array(), 'event' => array(), 'task' => array());
-        $folder_types  = $this->plugin->list_types();
+        $folder_types  = kolab_storage::folders_typedata();
         $imei          = $this->device['_id'];
         $subscribed    = array();
 
