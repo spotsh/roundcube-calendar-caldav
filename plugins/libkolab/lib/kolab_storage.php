@@ -596,16 +596,14 @@ class kolab_storage
         }
 
         $prefix = $root . $mbox;
+        $regexp = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // get folders types
-        $folderdata = self::$imap->get_metadata($prefix, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
+        $folderdata = self::folders_metadata($prefix);
 
         if (!is_array($folderdata)) {
             return array();
         }
-
-        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
-        $regexp     = '/^' . preg_quote($filter, '/') . '(\..+)?$/';
 
         // In some conditions we can skip LIST command (?)
         if (!$subscribed && $filter != 'mail' && $prefix == '*') {
@@ -643,6 +641,29 @@ class kolab_storage
         }
 
         return $folders;
+    }
+
+
+    /**
+     * Returns folder types indexed by folder name
+     *
+     * @param string $prefix Folder prefix (Default '*' for all folders)
+     *
+     * @return array|bool List of folders, False on failure
+     */
+    static function folders_metadata($prefix = '*')
+    {
+        if (!self::setup()) {
+            return false;
+        }
+
+        $folderdata = self::$imap->get_metadata($prefix, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
+
+        if (!is_array($folderdata)) {
+            return false;
+        }
+
+        return array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
     }
 
 

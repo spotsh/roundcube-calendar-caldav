@@ -103,25 +103,25 @@ class kolab_folders extends rcube_plugin
             return $args;
         }
 
-        $table   = $args['table'];
-        $storage = $this->rc->get_storage();
-
         // get folders types
-        $folderdata = $storage->get_metadata('*', kolab_storage::CTYPE_KEY);
+        $folderdata = kolab_storage::folders_metadata();
 
         if (!is_array($folderdata)) {
             return $args;
         }
+
+        $table = $args['table'];
 
         // Add type-based style for table rows
         // See kolab_folders::folder_class_name()
         for ($i=1, $cnt=$table->size(); $i<=$cnt; $i++) {
             $attrib = $table->get_row_attribs($i);
             $folder = $attrib['foldername']; // UTF7-IMAP
-            $type   = !empty($folderdata[$folder]) ? $folderdata[$folder][kolab_storage::CTYPE_KEY] : null;
+            $type   = $folderdata[$folder];
 
-            if (!$type)
+            if (!$type) {
                 $type = 'mail';
+            }
 
             $class_name = self::folder_class_name($type);
 
@@ -362,14 +362,11 @@ class kolab_folders extends rcube_plugin
             return $args;
         }
 
-        $storage    = $this->rc->get_storage();
-        $folderdata = $storage->get_metadata('*', array(kolab_storage::CTYPE_KEY_PRIVATE, kolab_storage::CTYPE_KEY));
+        $folderdata = kolab_storage::folders_metadata();
 
         if (!is_array($folderdata)) {
              return $args;
         }
-
-        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
 
         foreach ($opts as $opt_name => $type) {
             $foldername = $args['prefs'][$opt_name];
@@ -445,15 +442,13 @@ class kolab_folders extends rcube_plugin
      */
     function get_default_folder($type)
     {
-        $storage    = $this->rc->get_storage();
-        $folderdata = $storage->get_metadata('*', array(kolab_storage::CTYPE_KEY_PRIVATE, kolab_storage::CTYPE_KEY));
+        $folderdata = kolab_storage::folders_metadata();
 
         if (!is_array($folderdata)) {
             return null;
         }
 
         // get all folders of specified type
-        $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
         $folderdata = array_intersect($folderdata, array($type.'.default'));
 
         return key($folderdata);
@@ -516,14 +511,12 @@ class kolab_folders extends rcube_plugin
             return;
         }
 
+        if ($folderdata === null) {
+            $folderdata = kolab_storage::folders_metadata();
+        }
+
         if (!is_array($folderdata)) {
-            $folderdata = $storage->get_metadata('*', array(kolab_storage::CTYPE_KEY_PRIVATE, kolab_storage::CTYPE_KEY));
-
-            if (!is_array($folderdata)) {
-                return;
-            }
-
-            $folderdata = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
+            return;
         }
 
         // find default folders
