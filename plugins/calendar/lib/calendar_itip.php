@@ -40,6 +40,12 @@ class calendar_itip
     $this->cal->add_hook('smtp_connect', array($this, 'smtp_connect_hook'));
   }
 
+  function set_sender_email($email)
+  {
+    if (!empty($email))
+      $this->sender['email'] = $email;
+  }
+
   /**
    * Send an iTip mail message
    *
@@ -135,7 +141,26 @@ class calendar_itip
   public function compose_itip_message($event, $method)
   {
     $from = rcube_idn_to_ascii($this->sender['email']);
+    $from_utf = rcube_idn_to_utf8($from);
     $sender = format_email_recipient($from, $this->sender['name']);
+    
+    // truncate list attendees down to the recipient of the iTip Reply.
+    // constraints for a METHOD:REPLY according to RFC 5546
+    if ($method == 'REPLY') {
+      $replying_attendee = null; $reply_attendees = array();
+      foreach ($event['attendees'] as $attendee) {
+        if ($attendee['role'] == 'ORGANIZER') {
+          $reply_attendees[] = $attendee;
+        }
+        else if (strcasecmp($attedee['email'], $from) == 0 || strcasecmp($attendee['email'], $from_utf) == 0) {
+          $replying_attendee = $attendee;
+        }
+      }
+      if ($replying_attendee) {
+        $reply_attendees[] = $replying_attendee;
+        $event['attendees'] = $reply_attendees;
+      }
+    }
     
     // compose multipart message using PEAR:Mail_Mime
     $message = new Mail_mime("\r\n");

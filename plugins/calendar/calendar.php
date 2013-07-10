@@ -747,10 +747,12 @@ class calendar extends rcube_plugin
               $organizer = $attendee;
             else if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
               $old['attendees'][$i]['status'] = 'DECLINED';
+              $reply_sender = $attendee['email'];
             }
           }
           
           $itip = $this->load_itip();
+          $itip->set_sender_email($reply_sender);
           if ($organizer && $itip->send_itip_message($old, 'REPLY', $organizer, 'itipsubjectdeclined', 'itipmailbodydeclined'))
             $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name'] ? $organizer['name'] : $organizer['email']))), 'confirmation');
           else
@@ -1953,6 +1955,7 @@ class calendar extends rcube_plugin
           }
           else if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
             $event['attendees'][$i]['status'] = strtoupper($status);
+            $reply_sender = $attendee['email'];
           }
         }
       }
@@ -2037,6 +2040,7 @@ class calendar extends rcube_plugin
     // send iTip reply
     if ($this->ical->method == 'REQUEST' && $organizer && !in_array(strtolower($organizer['email']), $emails) && !$error_msg) {
       $itip = $this->load_itip();
+      $itip->set_sender_email($reply_sender);
       if ($itip->send_itip_message($event, 'REPLY', $organizer, 'itipsubject' . $status, 'itipmailbody' . $status))
         $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $organizer['name'] ? $organizer['name'] : $organizer['email']))), 'confirmation');
       else
