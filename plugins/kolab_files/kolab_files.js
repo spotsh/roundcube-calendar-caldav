@@ -667,7 +667,7 @@ rcube_webmail.prototype.files_list_update = function(head)
   var list = this.file_list;
 
   list.clear();
-  $('thead', list.list).html(head);
+  $('thead', list.fixed_header ? list.fixed_header : list.list).html(head);
   kolab_files_list_coltypes();
   file_api.file_list();
 };
@@ -1019,6 +1019,7 @@ function kolab_files_ui()
     });
 
     this.env.file_list = list;
+    rcmail.file_list.resize();
   };
 
   // call file_list request for every folder (used for search and virt. collections)
@@ -1067,6 +1068,8 @@ function kolab_files_ui()
       params.folder = folders.shift();
       this.requests[params.req_id] = this.request('file_list', params, 'file_list_loop_response');
     }
+
+    rcmail.file_list.resize();
 
     if (!valid)
       return;
