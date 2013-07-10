@@ -546,17 +546,18 @@ function rcube_calendar_ui(settings)
         $('#edit-recurring-warning').hide();
 
       // init attendees tab
-      var organizer = !event.attendees || is_organizer(event);
+      var organizer = !event.attendees || is_organizer(event),
+        allow_invitations = organizer || (calendar.owner && calendar.owner == 'anonymous') || settings.invite_shared;
       event_attendees = [];
       attendees_list = $('#edit-attendees-table > tbody').html('');
-      $('#edit-attendees-notify')[(notify.checked && organizer ? 'show' : 'hide')]();
-      $('#edit-localchanges-warning')[(has_attendees(event) && !(organizer || (calendar.owner && is_organizer(event, calendar.owner))) ? 'show' : 'hide')]();
+      $('#edit-attendees-notify')[(notify.checked && allow_invitations ? 'show' : 'hide')]();
+      $('#edit-localchanges-warning')[(has_attendees(event) && !(allow_invitations || (calendar.owner && is_organizer(event, calendar.owner))) ? 'show' : 'hide')]();
 
       var load_attendees_tab = function()
       {
         if (event.attendees) {
           for (var j=0; j < event.attendees.length; j++)
-            add_attendee(event.attendees[j], !organizer);
+            add_attendee(event.attendees[j], !allow_invitations);
         }
 
         // select the correct organizer identity
@@ -568,7 +569,7 @@ function rcube_calendar_ui(settings)
           }
         });
         $('#edit-identities-list').val(identity_id);
-        $('#edit-attendees-form')[(organizer?'show':'hide')]();
+        $('#edit-attendees-form')[(allow_invitations?'show':'hide')]();
         $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
       };
 
@@ -655,7 +656,7 @@ function rcube_calendar_ui(settings)
           data.attendees = [];
         
         // tell server to send notifications
-        if ((data.attendees.length || (event.id && event.attendees.length)) && organizer && (notify.checked || invite.checked)) {
+        if ((data.attendees.length || (event.id && event.attendees.length)) && allow_invitations && (notify.checked || invite.checked)) {
           data._notify = 1;
         }
 

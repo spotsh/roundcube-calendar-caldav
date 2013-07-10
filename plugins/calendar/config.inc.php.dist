@@ -104,6 +104,9 @@ $rcmail_config['calendar_categories'] = array(
    'Holiday' => 'ff6600',
 );
 
+// enable users to invite/edit attendees for shared events organized by others
+$rcmail_config['calendar_allow_invite_shared'] = false;
+
 // enable asynchronous free-busy triggering after data changed
 $rcmail_config['calendar_freebusy_trigger'] = false;
 

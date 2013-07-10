@@ -56,6 +56,7 @@ class calendar extends rcube_plugin
     'calendar_agenda_sections' => 'smart',
     'calendar_event_coloring'  => 0,
     'calendar_time_indicator'  => true,
+    'calendar_allow_invite_shared' => false,
   );
 
   private $ics_parts = array();
@@ -1120,6 +1121,7 @@ class calendar extends rcube_plugin
     $settings['agenda_sections'] = $this->rc->config->get('calendar_agenda_sections', $this->defaults['calendar_agenda_sections']);
     $settings['event_coloring'] = (int)$this->rc->config->get('calendar_event_coloring', $this->defaults['calendar_event_coloring']);
     $settings['time_indicator'] = (int)$this->rc->config->get('calendar_time_indicator', $this->defaults['calendar_time_indicator']);
+    $settings['invite_shared'] = (int)$this->rc->config->get('calendar_allow_invite_shared', $this->defaults['calendar_allow_invite_shared']);
 
     // get user identity to create default attendee
     if ($this->ui->screen == 'calendar') {
