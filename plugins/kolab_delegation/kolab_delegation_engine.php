@@ -577,14 +577,17 @@ class kolab_delegation_engine
         //  c) remove all other identities which do not match the user's primary
         //       or alias email if 'kolab_delegation_purge_identities' is set.
 
-        $storage    = $this->rc->get_storage();
         $delegators = $this->list_delegators();
-        $other_ns   = $storage->get_namespace('other');
-        $folders    = $storage->list_folders();
         $use_subs   = $this->rc->config->get('kolab_use_subscriptions');
         $identities = $this->user_identities();
         $emails     = array();
         $uids       = array();
+
+        if (!empty($delegators)) {
+            $storage  = $this->rc->get_storage();
+            $other_ns = $storage->get_namespace('other');
+            $folders  = $storage->list_folders();
+        }
 
         // convert identities to simpler format for faster access
         foreach ($identities as $idx => $ident) {
