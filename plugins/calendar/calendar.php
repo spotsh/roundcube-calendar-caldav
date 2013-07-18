@@ -219,8 +219,7 @@ class calendar extends rcube_plugin
   public function get_ical()
   {
     if (!$this->ical) {
-      require_once($this->home . '/lib/calendar_ical.php');
-      $this->ical = new calendar_ical($this);
+      $this->ical = libcalendaring::get_ical();
     }
     
     return $this->ical;

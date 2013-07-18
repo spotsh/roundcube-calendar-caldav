@@ -34,20 +34,18 @@
  * > pear install horde/Horde_Icalendar
  *
  */
-class calendar_ical
+class libvcalendar
 {
   const EOL = "\r\n";
   
-  private $rc;
-  private $cal;
+  private $timezone;
 
   public $method;
   public $events = array();
 
-  function __construct($cal)
+  function __construct($timezone = null)
   {
-    $this->cal = $cal;
-    $this->rc = $cal->rc;
+    $this->timezone = $timezone ? $timezone : new DateTimezone('UTC');
   }
 
   /**
@@ -117,6 +115,8 @@ class calendar_ical
       }
     }
 
+    $this->method = $parser->getAttributeDefault('METHOD', '');
+
     return $this->events;
   }
 
@@ -126,7 +126,7 @@ class calendar_ical
   public function get_parser()
   {
     if (!class_exists('Horde_iCalendar'))
-      require_once($this->cal->home . '/lib/Horde_iCalendar.php');
+      require_once(__DIR__ . '/lib/Horde_iCalendar.php');
 
     // set target charset for parsed events
     $GLOBALS['_HORDE_STRING_CHARSET'] = RCMAIL_CHARSET;
@@ -160,12 +160,12 @@ class calendar_ical
 
     // assign current timezone to event start/end
     if (is_a($event['start'], 'DateTime'))
-        $event['start']->setTimezone($this->cal->timezone);
+        $event['start']->setTimezone($this->timezone);
     else
         unset($event['start']);
 
     if (is_a($event['end'], 'DateTime'))
-        $event['end']->setTimezone($this->cal->timezone);
+        $event['end']->setTimezone($this->timezone);
     else
         unset($event['end']);
 
@@ -233,8 +233,9 @@ class calendar_ical
           break;
         
         case 'EXDATE':
+          $event['recurrence']['EXDATE'][] = $this->_date2time($attr['value']);
           break;
-          
+        
         case 'RECURRENCE-ID':
           $event['recurrence_id'] = $this->_date2time($attr['value']);
           break;
@@ -243,6 +244,7 @@ class calendar_ical
           $event['sequence'] = intval($attr['value']);
           break;
         
+        case 'CATEGORIES':
         case 'DESCRIPTION':
         case 'LOCATION':
         case 'URL':
@@ -332,8 +334,8 @@ class calendar_ical
       array_unshift($event['attendees'], $organizer);
 
     // make sure the event has an UID
-    if (!$event['uid'])
-      $event['uid'] = $this->cal->generate_uid();
+#    if (!$event['uid'])
+#      $event['uid'] = $this->cal->generate_uid();
     
     return $event;
   }
@@ -345,7 +347,7 @@ class calendar_ical
   {
     // create timestamp at 12:00 in user's timezone
     if (is_array($prop))
-      return date_create(sprintf('%04d%02d%02dT120000', $prop['year'], $prop['month'], $prop['mday']), $this->cal->timezone);
+      return date_create(sprintf('%04d%02d%02dT120000', $prop['year'], $prop['month'], $prop['mday']), $this->timezone);
     else if (is_numeric($prop))
       return date_create('@'.$prop);
     
@@ -425,8 +427,12 @@ class calendar_ical
         }
         if ($event['recurrence'] && !$recurrence_id) {
           $vevent .= "RRULE:" . libcalendaring::to_rrule($event['recurrence'], self::EOL) . self::EOL;
+          
+          foreach ((array)$event['recurrence']['EXDATE'] as $ex) {
+             $vevent .= $this->format_datetime("EXDATE", $ex, false, true) . self::EOL;
+          }
         }
-        if(!empty($event['categories'])) {
+        if (!empty($event['categories'])) {
           $vevent .= "CATEGORIES:" . self::escape(strtoupper($event['categories'])) . self::EOL;
         }
         if ($event['sensitivity'] > 0) {

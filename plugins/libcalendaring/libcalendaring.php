@@ -7,7 +7,7 @@
  * - alarms display and dismissal
  * - attachment handling
  * - recurrence computation and UI elements (TODO)
- * - ical parsing and exporting (TODO)
+ * - ical parsing and exporting
  *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
@@ -97,7 +97,16 @@ class libcalendaring extends rcube_plugin
         }
     }
 
-
+    /**
+     * Load iCalendar functions
+     */
+    public static function get_ical()
+    {
+        $self = self::get_instance();
+        require_once($self->home . '/libvcalendar.php');
+        return new libvcalendar($self->timezone);
+    }
+    
     /**
      * Shift dates into user's current timezone
      *
