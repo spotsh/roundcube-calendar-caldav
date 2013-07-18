@@ -233,7 +233,7 @@ class kolab_addressbook extends rcube_plugin
         }
 
         // get all folders that have "contact" type
-        $this->folders = kolab_storage::get_folders('contact');
+        $this->folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
 
         if (PEAR::isError($this->folders)) {
             rcube::raise_error(array(
@@ -245,15 +245,10 @@ class kolab_addressbook extends rcube_plugin
         else {
             // convert to UTF8 and sort
             $names = array();
-            foreach ($this->folders as $c_folder)
-                $names[$c_folder->name] = rcube_charset::convert($c_folder->name, 'UTF7-IMAP');
-
-            asort($names, SORT_LOCALE_STRING);
-
-            foreach (array_keys($names) as $utf7name) {
+            foreach ($this->folders as $folder) {
                 // create instance of rcube_contacts
-                $abook_id = kolab_storage::folder_id($utf7name);
-                $abook = new rcube_kolab_contacts($utf7name);
+                $abook_id = kolab_storage::folder_id($folder->name);
+                $abook = new rcube_kolab_contacts($folder->name);
                 $this->sources[$abook_id] = $abook;
             }
         }

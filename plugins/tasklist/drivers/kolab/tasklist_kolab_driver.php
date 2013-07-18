@@ -62,26 +62,21 @@ class tasklist_kolab_driver extends tasklist_driver
             return $this->lists;
 
         // get all folders that have type "task"
-        $this->folders = kolab_storage::get_folders('task');
-        $this->lists = array();
+        $folders = kolab_storage::sort_folders(kolab_storage::get_folders('task'));
+        $this->lists = $this->folders = array();
 
-        // convert to UTF8 and sort
-        $names = array();
-        $default_folder = null;
-        foreach ($this->folders as $folder) {
-            $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
-            $this->folders[$folder->name] = $folder;
+        // find default folder
+        $default_index = 0;
+        foreach ($folders as $i => $folder) {
             if ($folder->default)
-                $default_folder = $folder->name;
+                $default_index = $i;
         }
 
-        asort($names, SORT_LOCALE_STRING);
-
         // put default folder (aka INBOX) on top of the list
-        if ($default_folder) {
-            $default_name = $names[$default_folder];
-            unset($names[$default_folder]);
-            $names = array_merge(array($default_folder => $default_name), $names);
+        if ($default_index > 0) {
+            $default_folder = $folders[$default_index];
+            unset($folders[$default_index]);
+            array_unshift($folders, $default_folder);
         }
 
         $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
@@ -89,11 +84,12 @@ class tasklist_kolab_driver extends tasklist_driver
 
         $prefs = $this->rc->config->get('kolab_tasklists', array());
 
-        foreach ($names as $utf7name => $name) {
-            $folder = $this->folders[$utf7name];
+        foreach ($folders as $folder) {
+            $utf7name = $folder->name;
+            $this->folders[$folder->name] = $folder;
 
-            $path_imap = explode($delim, $name);
-            $editname = array_pop($path_imap);  // pop off raw name part
+            $path_imap = explode($delim, $utf7name);
+            $editname = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');  // pop off raw name part
             $path_imap = join($delim, $path_imap);
 
             $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);

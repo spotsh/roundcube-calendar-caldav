@@ -388,9 +388,11 @@ class kolab_storage
         self::setup();
 
         // find custom display name in folder METADATA
-        $metadata = self::$imap->get_metadata($folder, array(self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED));
-        if (($name = $metadata[$folder][self::NAME_KEY_PRIVATE]) || ($name = $metadata[$folder][self::NAME_KEY_SHARED])) {
-            return $name;
+        if (self::$config->get('kolab_custom_display_names', true)) {
+            $metadata = self::$imap->get_metadata($folder, array(self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED));
+            if (($name = $metadata[$folder][self::NAME_KEY_PRIVATE]) || ($name = $metadata[$folder][self::NAME_KEY_SHARED])) {
+                return $name;
+            }
         }
 
         $found     = false;
@@ -645,13 +647,43 @@ class kolab_storage
 
 
     /**
+     * Sort the given list of kolab folders by namespace/name
+     *
+     * @param array List of kolab_storage_folder objects
+     * @return array Sorted list of folders
+     */
+    public static function sort_folders($folders)
+    {
+        $nsnames = array('personal' => array(), 'shared' => array(), 'other' => array());
+        foreach ($folders as $folder) {
+            $folders[$folder->name] = $folder;
+            $ns = $folder->get_namespace();
+            $nsnames[$ns][$folder->name] = strtolower(html_entity_decode(self::object_name($folder->name, $ns), ENT_COMPAT, RCUBE_CHARSET));  // decode &raquo;
+        }
+
+        $names = array();
+        foreach ($nsnames as $ns => $dummy) {
+            asort($nsnames[$ns], SORT_LOCALE_STRING);
+            $names += $nsnames[$ns];
+        }
+
+        $out = array();
+        foreach ($names as $utf7name => $name) {
+            $out[] = $folders[$utf7name];
+        }
+
+        return $out;
+    }
+
+
+    /**
      * Returns folder types indexed by folder name
      *
      * @param string $prefix Folder prefix (Default '*' for all folders)
      *
      * @return array|bool List of folders, False on failure
      */
-    static function folders_typedata($prefix = '*')
+    public static function folders_typedata($prefix = '*')
     {
         if (!self::setup()) {
             return false;
@@ -670,7 +702,7 @@ class kolab_storage
     /**
      * Callback for array_map to select the correct annotation value
      */
-    static function folder_select_metadata($types)
+    public static function folder_select_metadata($types)
     {
         if (!empty($types[self::CTYPE_KEY_PRIVATE])) {
             return $types[self::CTYPE_KEY_PRIVATE];
@@ -690,7 +722,7 @@ class kolab_storage
      *
      * @return string Folder type
      */
-    static function folder_type($folder)
+    public static function folder_type($folder)
     {
         self::setup();
 
@@ -716,7 +748,7 @@ class kolab_storage
      *
      * @return boolean True on success
      */
-    static function set_folder_type($folder, $type='mail')
+    public static function set_folder_type($folder, $type='mail')
     {
         self::setup();
 

@@ -19,4 +19,8 @@ $rcmail_config['kolab_ssl_verify_peer'] = false;
 // folders in calendar view or available addressbooks
 $rcmail_config['kolab_use_subscriptions'] = false;
 
+// Enables the use of displayname folder annotations as introduced in KEP:?
+// for displaying resource folder names (experimental!)
+$rcmail_config['kolab_custom_display_names'] = false;
+
 ?>

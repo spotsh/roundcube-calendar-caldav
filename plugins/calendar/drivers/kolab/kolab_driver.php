@@ -72,19 +72,12 @@ class kolab_driver extends calendar_driver
     if (isset($this->calendars))
       return $this->calendars;
 
-    // get all folders that have "event" type
-    $folders = kolab_storage::get_folders('event');
+    // get all folders that have "event" type, sorted by namespace/name
+    $folders = kolab_storage::sort_folders(kolab_storage::get_folders('event'));
     $this->calendars = array();
 
-    // convert to UTF8 and sort
-    $names = array();
-    foreach ($folders as $folder)
-      $names[$folder->name] = rcube_charset::convert($folder->name, 'UTF7-IMAP');
-
-    asort($names, SORT_LOCALE_STRING);
-
-    foreach (array_keys($names) as $utf7name) {
-      $calendar = new kolab_calendar($utf7name, $this->cal);
+    foreach ($folders as $folder) {
+      $calendar = new kolab_calendar($folder->name, $this->cal);
       $this->calendars[$calendar->id] = $calendar;
       if (!$calendar->readonly)
         $this->has_writeable = true;
