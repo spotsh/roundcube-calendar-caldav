@@ -809,6 +809,8 @@ class calendar extends rcube_plugin
           $action = 'import';
         }
         else if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
+          if (is_numeric($event['changed']))
+            $event['changed'] = new DateTime('@'.$event['changed']);
           $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
           if ($existing['sequence'] >= $event['sequence'] || (!$event['sequence'] && $existing['changed'] && $existing['changed'] >= $event['changed'])) {
             $action = '';  // nothing to do here
@@ -1199,6 +1201,7 @@ class calendar extends rcube_plugin
       '_id'   => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
       'start' => $this->lib->adjust_timezone($event['start'])->format('c'),
       'end'   => $this->lib->adjust_timezone($event['end'])->format('c'),
+      'changed' => $this->lib->adjust_timezone($event['changed'])->format('c'),
       'title'       => strval($event['title']),
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
@@ -1854,7 +1857,7 @@ class calendar extends rcube_plugin
           $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $import_button);
           $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
           
-          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed'], 'sequence' => intval($event['sequence']), 'fallback' => $status)) . ')', 'docready');
+          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed']->format('U'), 'sequence' => intval($event['sequence']), 'fallback' => $status)) . ')', 'docready');
         }
         else if ($this->ical->method == 'CANCEL') {
           $title = $this->gettext('itipcancellation');
@@ -1878,7 +1881,7 @@ class calendar extends rcube_plugin
           $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $button_import);
           $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
           
-          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed'], 'sequence' => intval($event['sequence']), 'fallback' => 'CANCELLED')) . ')', 'docready');
+          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed']->format('U'), 'sequence' => intval($event['sequence']), 'fallback' => 'CANCELLED')) . ')', 'docready');
         }
         else {
           $buttons = html::tag('input', array(

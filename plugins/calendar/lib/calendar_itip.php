@@ -238,7 +238,7 @@ class calendar_itip
           $this->sender = $attendee;
         }
       }
-      $invitation['event']['changed'] = time();
+      $invitation['event']['changed'] = new DateTime();
       
       // send iTIP REPLY message to organizer
       if ($organizer) {

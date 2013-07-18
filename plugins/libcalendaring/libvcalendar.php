@@ -141,7 +141,7 @@ class libvcalendar
   {
     $event = array(
       'uid' => $ve->getAttributeDefault('UID'),
-      'changed' => $ve->getAttributeDefault('DTSTAMP', 0),
+      'changed' => $this->_date2time($ve->getAttributeDefault('DTSTAMP', 0)),
       'title' => $ve->getAttributeDefault('SUMMARY'),
       'start' => $this->_date2time($ve->getAttribute('DTSTART')),
       'end' => $this->_date2time($ve->getAttribute('DTEND')),
