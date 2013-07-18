@@ -253,8 +253,7 @@ class libvcalendar
         
         case 'CLASS':
         case 'X-CALENDARSERVER-ACCESS':
-          $sensitivity_map = array('PUBLIC' => 0, 'PRIVATE' => 1, 'CONFIDENTIAL' => 2);
-          $event['sensitivity'] = $sensitivity_map[$attr['value']];
+          $event['sensitivity'] = strtolower($attr['value']);
           break;
 
         case 'X-MICROSOFT-CDO-BUSYSTATUS':
@@ -433,10 +432,10 @@ class libvcalendar
           }
         }
         if (!empty($event['categories'])) {
-          $vevent .= "CATEGORIES:" . self::escape(strtoupper($event['categories'])) . self::EOL;
+          $vevent .= "CATEGORIES:" . self::escape($event['categories']) . self::EOL;
         }
-        if ($event['sensitivity'] > 0) {
-          $vevent .= "CLASS:" . ($event['sensitivity'] == 2 ? 'CONFIDENTIAL' : 'PRIVATE') . self::EOL;
+        if (!empty($event['sensitivity']) && $event['sensitivity'] != 'public') {
+          $vevent .= "CLASS:" . strtoupper($event['sensitivity']) . self::EOL;
         }
         if ($event['alarms']) {
           list($trigger, $action) = explode(':', $event['alarms']);

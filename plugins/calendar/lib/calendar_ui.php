@@ -333,9 +333,9 @@ class calendar_ui
   {
     $attrib['name'] = 'sensitivity';
     $select = new html_select($attrib);
-    $select->add($this->cal->gettext('public'), '0');
-    $select->add($this->cal->gettext('private'), '1');
-    $select->add($this->cal->gettext('confidential'), '2');
+    $select->add($this->cal->gettext('public'), 'public');
+    $select->add($this->cal->gettext('private'), 'private');
+    $select->add($this->cal->gettext('confidential'), 'confidential');
     return $select->show(null);
   }
   

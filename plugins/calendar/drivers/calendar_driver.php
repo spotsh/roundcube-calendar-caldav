@@ -53,7 +53,7 @@
  *    'categories' => 'Event category',
  *     'free_busy' => 'free|busy|outofoffice|tentative',  // Show time as
  *      'priority' => 0-9,     // Event priority (0=undefined, 1=highest, 9=lowest)
- *   'sensitivity' => 0|1|2,   // Event sensitivity (0=public, 1=private, 2=confidential)
+ *   'sensitivity' => 'public|private|confidential',   // Event sensitivity
  *        'alarms' => '-15M:DISPLAY',  // Reminder settings inspired by valarm definition (e.g. display alert 15 minutes before event)
  *   'attachments' => array(   // List of attachments
  *            'name' => 'File name',

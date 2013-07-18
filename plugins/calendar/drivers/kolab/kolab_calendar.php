@@ -38,7 +38,6 @@ class kolab_calendar
   private $events = array();
   private $imap_folder = 'INBOX/Calendar';
   private $search_fields = array('title', 'description', 'location', 'attendees');
-  private $sensitivity_map = array('public', 'private', 'confidential');
 
 
   /**
@@ -557,9 +556,6 @@ class kolab_calendar
       $record['attachments'] = $attachments;
     }
 
-    $sensitivity_map = array_flip($this->sensitivity_map);
-    $record['sensitivity'] = intval($sensitivity_map[$record['sensitivity']]);
-
     // Roundcube only supports one category assignment
     if (is_array($record['categories']))
       $record['categories'] = $record['categories'][0];
@@ -612,9 +608,6 @@ class kolab_calendar
 
       unset($event['attachments']);
     }
-
-    // translate sensitivity property
-    $event['sensitivity'] = $this->sensitivity_map[$event['sensitivity']];
 
     // set current user as ORGANIZER
     $identity = $this->cal->rc->user->get_identity();

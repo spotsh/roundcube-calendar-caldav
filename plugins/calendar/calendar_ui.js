@@ -51,7 +51,7 @@ function rcube_calendar_ui(settings)
     var freebusy_data = {};
     var current_view = null;
     var exec_deferred = bw.ie6 ? 5 : 1;
-    var sensitivitylabels = { 0:rcmail.gettext('public','calendar'), 1:rcmail.gettext('private','calendar'), 2:rcmail.gettext('confidential','calendar') };
+    var sensitivitylabels = { 'public':rcmail.gettext('public','calendar'), 'private':rcmail.gettext('private','calendar'), 'confidential':rcmail.gettext('confidential','calendar') };
     var ui_loading = rcmail.set_busy(true, 'loading');
 
     // general datepicker settings
@@ -314,10 +314,9 @@ function rcube_calendar_ui(settings)
         $('#event-priority').show().children('.event-text').html(Q(event.priority+' '+priolabels[event.priority]));
       }
 
-      if (event.sensitivity != 0) {
-        var sensitivityclasses = { 0:'public', 1:'private', 2:'confidential' };
+      if (event.sensitivity && event.sensitivity != 'public') {
         $('#event-sensitivity').show().children('.event-text').html(Q(sensitivitylabels[event.sensitivity]));
-        $dialog.addClass('sensitivity-'+sensitivityclasses[event.sensitivity]);
+        $dialog.addClass('sensitivity-'+event.sensitivity);
       }
 
       // create attachments list
@@ -1699,14 +1698,14 @@ function rcube_calendar_ui(settings)
 
     var fc_event_render = function(event, element, view) {
       if (view.name != 'list' && view.name != 'table') {
-        var prefix = event.sensitivity != 0 ? String(sensitivitylabels[event.sensitivity]).toUpperCase()+': ' : '';
+        var prefix = event.sensitivity && event.sensitivity != 'public' ? String(sensitivitylabels[event.sensitivity]).toUpperCase()+': ' : '';
         element.attr('title', prefix + event.title);
       }
       if (view.name != 'month') {
         if (event.location) {
           element.find('div.fc-event-title').after('<div class="fc-event-location">@&nbsp;' + Q(event.location) + '</div>');
         }
-        if (event.sensitivity != 0)
+        if (event.sensitivity && event.sensitivity != 'public')
           element.find('div.fc-event-time').append('<i class="fc-icon-sensitive"></i>');
         if (event.recurrence)
           element.find('div.fc-event-time').append('<i class="fc-icon-recurring"></i>');

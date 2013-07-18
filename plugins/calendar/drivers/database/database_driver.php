@@ -42,6 +42,7 @@ class database_driver extends calendar_driver
   private $calendars = array();
   private $calendar_ids = '';
   private $free_busy_map = array('free' => 0, 'busy' => 1, 'out-of-office' => 2, 'outofoffice' => 2, 'tentative' => 3);
+  private $sensitivity_map = array('public' => 0, 'private' => 1, 'confidential' => 2);
   private $server_timezone;
   
   private $db_events = 'events';
@@ -407,6 +408,7 @@ class database_driver extends calendar_driver
     $rrule = $event['recurrence'] ? libcalendaring::to_rrule($event['recurrence']) : '';
     $event['_recurrence'] = rtrim($rrule, ';');
     $event['free_busy'] = intval($this->free_busy_map[strtolower($event['free_busy'])]);
+    $event['sensitivity'] = intval($this->sensitivity_map[strtolower($event['sensitivity'])]);
     
     if (isset($event['allday'])) {
       $event['all_day'] = $event['allday'] ? 1 : 0;
@@ -769,6 +771,7 @@ class database_driver extends calendar_driver
   private function _read_postprocess($event)
   {
     $free_busy_map = array_flip($this->free_busy_map);
+    $sensitivity_map = array_flip($this->sensitivity_map);
     
     $event['id'] = $event['event_id'];
     $event['start'] = new DateTime($event['start']);
@@ -776,6 +779,7 @@ class database_driver extends calendar_driver
     $event['allday'] = intval($event['all_day']);
     $event['changed'] = new DateTime($event['changed']);
     $event['free_busy'] = $free_busy_map[$event['free_busy']];
+    $event['sensitivity'] = $sensitivity_map[$event['sensitivity']];
     $event['calendar'] = $event['calendar_id'];
     $event['recurrence_id'] = intval($event['recurrence_id']);
     
