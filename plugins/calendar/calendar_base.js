@@ -81,14 +81,22 @@ function rcube_calendar(settings)
 // static methods
 rcube_calendar.add_event_from_mail = function(mime_id, status)
 {
+  // ask user to delete the declined event from the local calendar (#1670)
+  var del = false;
+  if (rcmail.env.rsvp_saved && status == 'declined') {
+    del = confirm(rcmail.gettext('calendar.declinedeleteconfirm'));
+  }
+
   var lock = rcmail.set_busy(true, 'calendar.savingdata');
   rcmail.http_post('calendar/mailimportevent', {
       '_uid': rcmail.env.uid,
       '_mbox': rcmail.env.mailbox,
       '_part': mime_id,
       '_calendar': $('#calendar-saveto').val(),
-      '_status': status
+      '_status': status,
+      '_del': del?1:0
     }, lock);
+
   return false;
 };
 
@@ -123,13 +131,28 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
     var cal = new rcube_calendar($.extend(rcmail.env.calendar_settings, rcmail.env.libcal_settings));
 
     rcmail.addEventListener('plugin.update_event_rsvp_status', function(p){
-      if (p.html)
+      rcmail.env.rsvp_saved = p.saved;
+
+      if (p.html) {
+        // append/replace rsvp status display
+        $('#loading-'+p.id).next('.rsvp-status').remove();
         $('#loading-'+p.id).hide().after(p.html);
-      else
+      }
+      else {
         $('#loading-'+p.id).hide();
-      
+      }
+
+      // enable/disable rsvp buttons
+      $('.rsvp-buttons input.button').prop('disabled', false)
+        .filter('.'+String(p.status).toLowerCase()).prop('disabled', true);
+
+      // show rsvp/import buttons with or without calendar selector
+      if (!p.select)
+        $('#rsvp-'+p.id+' .calendar-select').remove();
       $('#'+p.action+'-'+p.id).show().append(p.select);
     });
+
+    rcmail.addEventListener('plugin.fetch_event_rsvp_status', rcube_calendar.fetch_event_rsvp_status);
     
     // register create-from-mail command to message_commands array
     if (rcmail.env.task == 'mail') {
