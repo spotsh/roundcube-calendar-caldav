@@ -62,9 +62,10 @@ class database_driver extends calendar_driver
     require_once($this->cal->home . '/lib/Horde_Date_Recurrence.php');
     
     // read database config
-    $this->db_events = $this->rc->config->get('db_table_events', $this->db_events);
-    $this->db_calendars = $this->rc->config->get('db_table_calendars', $this->db_calendars);
-    $this->db_attachments = $this->rc->config->get('db_table_attachments', $this->db_attachments);
+    $db = $this->rc->get_dbh();
+    $this->db_events = $this->rc->config->get('db_table_events', $db->table_name($this->db_events));
+    $this->db_calendars = $this->rc->config->get('db_table_calendars', $db->table_name($this->db_calendars));
+    $this->db_attachments = $this->rc->config->get('db_table_attachments', $db->table_name($this->db_attachments));
     
     $this->_read_calendars();
   }

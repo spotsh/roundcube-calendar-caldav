@@ -46,8 +46,9 @@ class tasklist_database_driver extends tasklist_driver
         $this->plugin = $plugin;
 
         // read database config
-        $this->db_lists = $this->rc->config->get('db_table_lists', $this->db_lists);
-        $this->db_tasks = $this->rc->config->get('db_table_tasks', $this->db_tasks);
+        $db = $this->rc->get_dbh();
+        $this->db_lists = $this->rc->config->get('db_table_lists', $db->table_name($this->db_lists));
+        $this->db_tasks = $this->rc->config->get('db_table_tasks', $db->table_name($this->db_tasks));
 
         $this->_read_lists();
     }
