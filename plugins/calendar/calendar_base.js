@@ -144,7 +144,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
       // enable/disable rsvp buttons
       $('.rsvp-buttons input.button').prop('disabled', false)
-        .filter('.'+String(p.status).toLowerCase()).prop('disabled', true);
+        .filter('.'+String(p.status).toLowerCase()).prop('disabled', p.latest);
 
       // show rsvp/import buttons with or without calendar selector
       if (!p.select)

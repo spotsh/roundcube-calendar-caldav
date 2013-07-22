@@ -778,9 +778,13 @@ class calendar extends rcube_plugin
       case "rsvp-status":
         $action = 'rsvp';
         $status = $event['fallback'];
+        $latest = false;
         $html = html::div('rsvp-status', $status != 'CANCELLED' ? $this->gettext('acceptinvitation') : '');
+        if (is_numeric($event['changed']))
+          $event['changed'] = new DateTime('@'.$event['changed']);
         $this->load_driver();
         if ($existing = $this->driver->get_event($event, true, false, true)) {
+          $latest = ($event['sequence'] && $existing['sequence'] == $event['sequence']) || (!$event['sequence'] && $existing['changed'] && $existing['changed'] >= $event['changed']);
           $emails = $this->get_user_emails();
           foreach ($existing['attendees'] as $i => $attendee) {
             if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
@@ -809,11 +813,9 @@ class calendar extends rcube_plugin
           $action = 'import';
         }
         else if (in_array($status, array('ACCEPTED','TENTATIVE','DECLINED'))) {
-          if (is_numeric($event['changed']))
-            $event['changed'] = new DateTime('@'.$event['changed']);
           $html = html::div('rsvp-status ' . strtolower($status), $this->gettext('youhave'.strtolower($status)));
-          if ($existing['sequence'] >= $event['sequence'] || (!$event['sequence'] && $existing['changed'] && $existing['changed'] >= $event['changed'])) {
-            $action = '';  // nothing to do here
+          if ($existing['sequence'] > $event['sequence'] || (!$event['sequence'] && $existing['changed'] && $existing['changed'] > $event['changed'])) {
+            $action = '';  // nothing to do here, outdated invitation
          }
         }
 
@@ -822,6 +824,7 @@ class calendar extends rcube_plugin
           'uid' => $event['uid'],
           'id' => asciiwords($event['uid'], true),
           'saved' => $existing ? true : false,
+          'latest' => $latest,
           'status' => $status,
           'action' => $action,
           'html' => $html,
