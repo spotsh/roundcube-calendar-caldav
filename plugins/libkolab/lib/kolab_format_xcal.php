@@ -237,7 +237,8 @@ abstract class kolab_format_xcal extends kolab_format
         parent::set($object);
 
         // increment sequence on updates
-        $object['sequence'] = !$is_new ? $this->obj->sequence()+1 : 0;
+        if (empty($object['sequence']))
+            $object['sequence'] = !$is_new ? $this->obj->sequence()+1 : 0;
         $this->obj->setSequence($object['sequence']);
 
         $this->obj->setSummary($object['title']);

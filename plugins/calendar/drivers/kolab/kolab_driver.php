@@ -370,8 +370,10 @@ class kolab_driver extends calendar_driver
    */
   public function move_event($event)
   {
-    if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
+    if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id']))) {
+      unset($ev['sequence']);
       return $this->update_event($event + $ev);
+    }
 
     return false;
   }
@@ -384,8 +386,10 @@ class kolab_driver extends calendar_driver
    */
   public function resize_event($event)
   {
-    if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id'])))
+    if (($storage = $this->calendars[$event['calendar']]) && ($ev = $storage->get_event($event['id']))) {
+      unset($ev['sequence']);
       return $this->update_event($event + $ev);
+    }
 
     return false;
   }

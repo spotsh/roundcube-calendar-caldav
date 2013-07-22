@@ -299,7 +299,7 @@ class database_driver extends calendar_driver
       $old = $this->get_event($event);
       
       // increment sequence number
-      if ($old['sequence'])
+      if ($old['sequence'] && empty($event['sequence']))
         $event['sequence'] = max($event['sequence'], $old['sequence']+1);
       
       // modify a recurring event, check submitted savemode to do the right things
