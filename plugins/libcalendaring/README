@@ -7,9 +7,9 @@ Provides utility functions for calendar-related modules such as
 * attachment handling
 * iCal parsing and exporting
 
-iCal parsing is done with the help of the Horde_iCalendar class. A copy
-of that class with all its dependencies is part of this package. In order
-to update it, execute lib/get_horde_icalendar.sh > lib/Horde_iCalendar.php
-Finally apply the patch lib/Horde_iCalendar_timezone.diff to fix timezone
-handling when parsing iCal files.
+iCal parsing and exporting is done with the help of the Sabretooth VObject
+library [1]. A copy of that library with all its dependencies is part of this
+package. In order to update it, execute ./get_sabre_vobject.sh within the
+lib/ directory.
 
+[1]: https://github.com/fruux/sabre-vobject

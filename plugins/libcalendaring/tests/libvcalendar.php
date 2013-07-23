@@ -123,14 +123,14 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEquals('-H', $alarm[1], "Alarm unit");
 
         // categories, class
-        $this->assertEquals('libcalendaring tests', $event['categories'], "Event categories");
-        $this->assertEquals(2, $event['sensitivity'], "Class/sensitivity = confidential");
+        $this->assertEquals('libcalendaring tests', join(',', (array)$event['categories']), "Event categories");
+        $this->assertEquals('confidential', $event['sensitivity'], "Class/sensitivity = confidential");
     }
 
     /**
      * Test for iCal export from internal hash array representation
      *
-     * @depend test_extended
+     * @depends test_extended
      */
     function test_export()
     {
@@ -156,7 +156,7 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertContains('SEQUENCE:' . $event['sequence'],           $ics, "Export Sequence number");
         $this->assertContains('CLASS:CONFIDENTIAL',                       $ics, "Sensitivity => Class");
         $this->assertContains('DESCRIPTION:*Exported by',                 $ics, "Export Description");
-        $this->assertContains('ORGANIZER;CN="Rolf Test":mailto:rolf@',    $ics, "Export organizer");
+        $this->assertContains('ORGANIZER;CN=Rolf Test:mailto:rolf@',    $ics, "Export organizer");
         $this->assertRegExp('/ATTENDEE.*;ROLE=REQ-PARTICIPANT/',          $ics, "Export Attendee ROLE");
         $this->assertRegExp('/ATTENDEE.*;PARTSTAT=NEEDS-ACTION/',         $ics, "Export Attendee Status");
         $this->assertRegExp('/ATTENDEE.*;RSVP=TRUE/',                     $ics, "Export Attendee RSVP");
@@ -182,7 +182,8 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @depend test_export
+     * @depends test_extended
+     * @depends test_export
      */
     function test_export_multiple()
     {
@@ -202,7 +203,7 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @depend test_export
+     * @depends test_export
      */
     function test_export_recurrence_exceptions()
     {
@@ -233,13 +234,13 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEquals($num, substr_count($ics, 'UID:'.$event['uid']), "Recurrence Exceptions with same UID");
         $this->assertEquals($num, substr_count($ics, 'END:VEVENT'),         "VEVENT encapsulation END");
 
-        $this->assertContains('RECURRENCE-ID:20130814', $ics, "Recurrence-ID (1) being the exception date");
-        $this->assertContains('RECURRENCE-ID:20131113', $ics, "Recurrence-ID (2) being the exception date");
+        $this->assertContains('RECURRENCE-ID;VALUE=DATE-TIME:20130814', $ics, "Recurrence-ID (1) being the exception date");
+        $this->assertContains('RECURRENCE-ID;VALUE=DATE-TIME:20131113', $ics, "Recurrence-ID (2) being the exception date");
         $this->assertContains('SUMMARY:'.$exception2['title'], $ics, "Exception title");
     }
     
     /**
-     * @depend test_export
+     * @depends test_export
      */
     function test_export_direct()
     {
