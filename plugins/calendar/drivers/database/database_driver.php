@@ -777,6 +777,7 @@ class database_driver extends calendar_driver
     $event['start'] = new DateTime($event['start']);
     $event['end'] = new DateTime($event['end']);
     $event['allday'] = intval($event['all_day']);
+    $event['created'] = new DateTime($event['created']);
     $event['changed'] = new DateTime($event['changed']);
     $event['free_busy'] = $free_busy_map[$event['free_busy']];
     $event['sensitivity'] = $sensitivity_map[$event['sensitivity']];
