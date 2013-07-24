@@ -53,7 +53,7 @@ class libvcalendar
             require_once(__DIR__ . '/lib/Sabre/VObject/includes.php');
         }
 
-        $this->timezone = $tz ? $tz : new DateTimezone('UTC');
+        $this->timezone = $tz;
         $this->prodid = '-//Roundcube//Roundcube libcalendaring ' . RCUBE_VERSION . '//Sabre//Sabre VObject ' . VObject\Version::VERSION . '//EN';
     }
 
@@ -325,7 +325,7 @@ class libvcalendar
                 else if (strlen($prop->value) && strtoupper($params['VALUE']) == 'BINARY') {
                     $attachment = self::map_keys($params, array('FMTTYPE' => 'mimetype', 'X-LABEL' => 'name'));
                     $attachment['data'] = base64_decode($prop->value);
-                    $attachment['size'] = strlen($attachment['content']);
+                    $attachment['size'] = strlen($attachment['data']);
                     $event['attachments'][] = $attachment;
                 }
                 break;
@@ -404,14 +404,16 @@ class libvcalendar
         
         // assign current timezone to event start/end
         if ($event['start'] instanceof DateTime) {
-            $event['start']->setTimezone($this->timezone);
+            if ($this->timezone)
+                $event['start']->setTimezone($this->timezone);
         }
         else {
             unset($event['start']);
         }
 
         if ($event['end'] instanceof DateTime) {
-            $event['end']->setTimezone($this->timezone);
+            if ($this->timezone)
+                $event['end']->setTimezone($this->timezone);
         }
         else {
             unset($event['end']);
@@ -643,10 +645,11 @@ class libvcalendar
             if ($attendee['role'] == 'ORGANIZER') {
                 if (empty($event['organizer']))
                     $event['organizer'] = $attendee;
-                continue;
             }
-            $attendee['rsvp'] = $attendee['rsvp'] ? 'TRUE' : null;
-            $ve->add('ATTENDEE', 'mailto:' . $attendee['email'], self::map_keys($attendee, $this->attendee_keymap));
+            else if (!empty($attendee['email'])) {
+                $attendee['rsvp'] = $attendee['rsvp'] ? 'TRUE' : null;
+                $ve->add('ATTENDEE', 'mailto:' . $attendee['email'], self::map_keys($attendee, $this->attendee_keymap));
+            }
         }
 
         if ($event['organizer']) {
@@ -654,7 +657,9 @@ class libvcalendar
         }
 
         foreach ((array)$event['url'] as $url) {
-            $ve->add('URL', $url);
+            if (!empty($url)) {
+                $ve->add('URL', $url);
+            }
         }
 
         if (!empty($event['parent_id'])) {
