@@ -104,7 +104,7 @@ class libcalendaring extends rcube_plugin
     {
         $self = self::get_instance();
         require_once($self->home . '/libvcalendar.php');
-        return new libvcalendar($self->timezone);
+        return new libvcalendar();
     }
     
     /**
