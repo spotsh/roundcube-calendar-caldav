@@ -191,7 +191,6 @@ class libvcalendar
             'changed' => null,
             '_type'   => $ve->name == 'VTODO' ? 'task' : 'event',
             // set defaults
-            'free_busy' => 'busy',
             'priority' => 0,
             'attendees' => array(),
         );
@@ -350,22 +349,25 @@ class libvcalendar
             }
         }
 
-        // check for all-day dates
-        if ($event['start']->_dateonly) {
-            $event['allday'] = true;
-        }
+        // validate event dates
+        if ($event['_type'] == 'event') {
+            // check for all-day dates
+            if ($event['start']->_dateonly) {
+                $event['allday'] = true;
+            }
 
-        // shift end-date by one day (except Thunderbird)
-        if ($event['allday'] && is_object($event['end'])) {
-            $event['end']->sub(new \DateInterval('PT23H'));
-        }
+            // shift end-date by one day (except Thunderbird)
+            if ($event['allday'] && is_object($event['end'])) {
+                $event['end']->sub(new \DateInterval('PT23H'));
+            }
 
-        // sanity-check and fix end date
-        if (empty($event['end'])) {
-            $event['end'] = clone $event['start'];
-        }
-        else if ($event['end'] < $event['start']) {
-            $event['end'] = clone $event['start'];
+            // sanity-check and fix end date
+            if (empty($event['end'])) {
+                $event['end'] = clone $event['start'];
+            }
+            else if ($event['end'] < $event['start']) {
+                $event['end'] = clone $event['start'];
+            }
         }
 
         // make organizer part of the attendees list for compatibility reasons
@@ -401,7 +403,7 @@ class libvcalendar
             if ($trigger)
                 $event['alarms'] = $trigger . ':' . $action;
         }
-        
+
         // assign current timezone to event start/end
         if ($event['start'] instanceof DateTime) {
             if ($this->timezone)
@@ -610,7 +612,8 @@ class libvcalendar
             $ve->add($cat);
         }
 
-        $ve->add('TRANSP', $event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE');
+        if (!empty($event['free_busy']))
+            $ve->add('TRANSP', $event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE');
 
         if ($event['priority'])
           $ve->add('PRIORITY', $event['priority']);
@@ -625,7 +628,7 @@ class libvcalendar
         if (!empty($event['sensitivity']))
             $ve->add('CLASS', strtoupper($event['sensitivity']));
 
-        if (isset($event['complete'])) {
+        if (!empty($event['complete'])) {
             $ve->add('PERCENT-COMPLETE', intval($event['complete']));
             // Apple iCal required the COMPLETED date to be set in order to consider a task complete
             if ($event['complete'] == 100)
