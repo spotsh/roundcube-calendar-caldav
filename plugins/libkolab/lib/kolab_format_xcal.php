@@ -218,6 +218,27 @@ abstract class kolab_format_xcal extends kolab_format
             }
         }
 
+        // handle attachments
+        $vattach = $this->obj->attachments();
+        for ($i=0; $i < $vattach->size(); $i++) {
+            $attach = $vattach->get($i);
+
+            // skip cid: attachments which are mime message parts handled by kolab_storage_folder
+            if (substr($attach->uri(), 0, 4) != 'cid:' && $attach->label()) {
+                $name    = $attach->label();
+                $content = $attach->data();
+                $object['_attachments'][$name] = array(
+                    'name'     => $name,
+                    'mimetype' => $attach->mimetype(),
+                    'size'     => strlen($content),
+                    'content'  => $content,
+                );
+            }
+            else if (substr($attach->uri(), 0, 4) == 'http') {
+                $object['links'][] = $attach->uri();
+            }
+        }
+
         return $object;
     }
 
@@ -379,6 +400,25 @@ abstract class kolab_format_xcal extends kolab_format
             $valarms->push($alarm);
         }
         $this->obj->setAlarms($valarms);
+
+        // save attachments
+        $vattach = new vectorattachment;
+        foreach ((array)$object['_attachments'] as $cid => $attr) {
+            if (empty($attr))
+                continue;
+            $attach = new Attachment;
+            $attach->setLabel((string)$attr['name']);
+            $attach->setUri('cid:' . $cid, $attr['mimetype']);
+            $vattach->push($attach);
+        }
+
+        foreach ((array)$object['links'] as $link) {
+            $attach = new Attachment;
+            $attach->setUri($link, 'unknown');
+            $vattach->push($attach);
+        }
+
+        $this->obj->setAttachments($vattach);
     }
 
     /**

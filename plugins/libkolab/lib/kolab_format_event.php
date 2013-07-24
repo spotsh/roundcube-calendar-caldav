@@ -89,25 +89,6 @@ class kolab_format_event extends kolab_format_xcal
             $status = kolabformat::StatusCancelled;
         $this->obj->setStatus($status);
 
-        // save attachments
-        $vattach = new vectorattachment;
-        foreach ((array)$object['_attachments'] as $cid => $attr) {
-            if (empty($attr))
-                continue;
-            $attach = new Attachment;
-            $attach->setLabel((string)$attr['name']);
-            $attach->setUri('cid:' . $cid, $attr['mimetype']);
-            $vattach->push($attach);
-        }
-
-        foreach ((array)$object['links'] as $link) {
-            $attach = new Attachment;
-            $attach->setUri($link, null);
-            $vattach->push($attach);
-        }
-
-        $this->obj->setAttachments($vattach);
-
         // save recurrence exceptions
         if ($object['recurrence']['EXCEPTIONS']) {
             $vexceptions = new vectorevent;
@@ -169,27 +150,6 @@ class kolab_format_event extends kolab_format_xcal
           $object['free_busy'] = 'tentative';
         else if ($status == kolabformat::StatusCancelled)
           $object['cancelled'] = true;
-
-        // handle attachments
-        $vattach = $this->obj->attachments();
-        for ($i=0; $i < $vattach->size(); $i++) {
-            $attach = $vattach->get($i);
-
-            // skip cid: attachments which are mime message parts handled by kolab_storage_folder
-            if (substr($attach->uri(), 0, 4) != 'cid:' && $attach->label()) {
-                $name    = $attach->label();
-                $content = $attach->data();
-                $object['_attachments'][$name] = array(
-                    'name'     => $name,
-                    'mimetype' => $attach->mimetype(),
-                    'size'     => strlen($content),
-                    'content'  => $content,
-                );
-            }
-            else if (substr($attach->uri(), 0, 4) == 'http') {
-                $object['links'][] = $attach->uri();
-            }
-        }
 
         // read exception event objects
         if (($exceptions = $this->obj->exceptions()) && is_object($exceptions) && $exceptions->size()) {
