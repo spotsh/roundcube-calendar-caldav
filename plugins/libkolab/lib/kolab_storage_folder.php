@@ -650,6 +650,10 @@ class kolab_storage_folder
         if (is_array($object['_attachments'])) {
             $numatt = count($object['_attachments']);
             foreach ($object['_attachments'] as $key => $attachment) {
+                // FIXME: kolab_storage and Roundcube attachment hooks use different fields!
+                if (empty($attachment['content']) && !empty($attachment['data']))
+                    $attachment['content'] = $attachment['data'];
+
                 // make sure size is set, so object saved in cache contains this info
                 if (!isset($attachment['size'])) {
                     if (!empty($attachment['content'])) {
