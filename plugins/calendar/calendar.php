@@ -346,7 +346,7 @@ class calendar extends rcube_plugin
       $select->add($choices);
       $p['blocks']['view']['options']['timeslots'] = array(
         'title' => html::label($field_id, Q($this->gettext('timeslots'))),
-        'content' => $select->show($this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots'])),
+        'content' => $select->show(strval($this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']))),
       );
     }
 
@@ -561,8 +561,8 @@ class calendar extends rcube_plugin
 
       $p['prefs'] = array(
         'calendar_default_view' => get_input_value('_default_view', RCUBE_INPUT_POST),
-        'calendar_timeslots'    => get_input_value('_timeslots', RCUBE_INPUT_POST),
-        'calendar_first_day'    => get_input_value('_first_day', RCUBE_INPUT_POST),
+        'calendar_timeslots'    => intval(get_input_value('_timeslots', RCUBE_INPUT_POST)),
+        'calendar_first_day'    => intval(get_input_value('_first_day', RCUBE_INPUT_POST)),
         'calendar_first_hour'   => intval(get_input_value('_first_hour', RCUBE_INPUT_POST)),
         'calendar_work_start'   => intval(get_input_value('_work_start', RCUBE_INPUT_POST)),
         'calendar_work_end'     => intval(get_input_value('_work_end', RCUBE_INPUT_POST)),
