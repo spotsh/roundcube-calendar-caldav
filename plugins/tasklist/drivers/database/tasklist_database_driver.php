@@ -26,7 +26,7 @@ class tasklist_database_driver extends tasklist_driver
 {
     public $undelete = true; // yes, we can
     public $sortable = false;
-    public $alarm_types = array('DISPLAY','EMAIL');
+    public $alarm_types = array('DISPLAY');
 
     private $rc;
     private $plugin;
