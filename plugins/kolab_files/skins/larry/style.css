@@ -111,6 +111,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   display: inline-block;
+  height: 17px;
   width: auto;
   overflow: hidden;
   color: #376572;
@@ -249,7 +250,7 @@
 
 .filelist tbody td.filename span {
   background: url(images/unknown.png) 0 0 no-repeat;
-  padding: 0 0 0 20px;
+  padding: 1px 0 3px 20px;
   height: 16px;
 }
 
