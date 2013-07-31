@@ -712,8 +712,8 @@ class kolab_storage_cache
         // create lock record if not exists
         if (!$sql_arr) {
             $this->db->query(
-                "INSERT INTO kolab_cache (resource, type, msguid, created, uid, data, xml)".
-                " VALUES (?, ?, 1, " . $this->db->now() . ", '', '', '')",
+                "INSERT INTO kolab_cache (resource, type, msguid, created, uid, data, xml, tags, words)".
+                " VALUES (?, ?, 1, " . $this->db->now() . ", '', '', '', '', '')",
                 $this->resource_uri,
                 'lock'
             );
