@@ -1,0 +1,107 @@
+/* Stylesheets for the Kolab Delegation configuration UI */
+
+#sectionslist {
+	width: 220px;
+}
+
+#prefs-box {
+	position: absolute;
+	top: 0;
+	left: 232px;
+	right: 0;
+	bottom: 0;
+}
+
+#delegation-frame {
+	border-radius: 3px;
+}
+
+#delegates-table {
+	width: 100%;
+	table-layout: fixed;
+}
+
+div.foldersblock {
+	float: left;
+	margin: 0 3em 2em 0;
+	padding: 0;
+}
+
+div.foldersblock h3 {
+	font-size: 14px;
+	color: #333;
+	margin: 0 0 0.6em 0;
+	padding: 2px 4px 2px 30px;
+}
+
+div.foldersblock h3.contact {
+	background-position: 4px -18px;
+}
+
+div.foldersblock h3.event {
+	background-position: 4px -38px;
+}
+
+div.foldersblock h3.task {
+	background-position: 4px -58x;
+}
+
+div.foldersblock h3.note {
+	background-position: 4px -78px;
+}
+
+#delegatefolders thead td {
+	color: #69939e;
+	font-weight: bold;
+	padding: 2px;
+    padding-top: 4px;
+	min-width: 2em;
+	background: #d6eaf3;
+	border-bottom: 2px solid #fff;
+	text-align: center;
+}
+
+#delegatefolders thead td.foldername {
+  text-align: left;
+}
+
+#delegatefolders thead td img {
+	cursor: pointer;
+}
+
+#delegatefolders tbody td {
+	background: #eee;
+	padding: 2px;
+	border-bottom: 2px solid #fff;
+}
+
+#delegatefolders td label {
+	display: block;
+}
+
+#delegatefolders td.mailbox {
+	padding-right: 3em;
+	padding-left: 2px;
+	min-width: 12em;
+}
+
+#delegatefolders td.virtual {
+	color: #999;
+}
+
+#delegatefolders {
+	overflow: auto;
+	margin-top: 0.5em;
+}
+
+#delegate-delete-dialog {
+	display: none;
+}
+
+#delegate-delete-dialog p {
+	font-weight: bold;
+}
+
+#delegate-delete-dialog input {
+	vertical-align: middle;
+}
