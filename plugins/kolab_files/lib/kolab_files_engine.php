@@ -448,6 +448,12 @@ class kolab_files_engine
         }
 
         if ($href = $this->file_data['viewer']['href']) {
+            // file href attribute must be an absolute URL (Bug #2063)
+            if (!empty($href)) {
+                if (!preg_match('|^https?://|', $href)) {
+                    $href = $this->url . '/api/' . $href;
+                }
+            }
         }
         else {
             $token = $this->get_api_token();
