@@ -583,6 +583,7 @@ class kolab_files_engine
                     'store_body'       => true,
                     'follow_redirects' => true,
                     'ssl_verify_peer'  => $this->rc->config->get('kolab_ssl_verify_peer', true),
+                    'ssl_verify_host'  => $this->rc->config->get('kolab_ssl_verify_host', true),
                 ));
 
                 $this->request = $request;
