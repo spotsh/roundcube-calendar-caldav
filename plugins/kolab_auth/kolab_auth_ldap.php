@@ -397,7 +397,7 @@ class kolab_auth_ldap extends rcube_ldap_generic
                         $dc = $r_domain;
                     }
                     else {
-                        $user = $usr . '@' . $r_domain;
+                        $dc = 'dc=' . implode(',dc=', explode('.', $r_domain));
                     }
                 }
             }
@@ -458,7 +458,7 @@ class kolab_auth_ldap extends rcube_ldap_generic
                 return $entry['inetdomainbasedn'];
             }
 
-            return is_array($entry[$name_attr]) ? $entry[$name_attr][0] : $entry[$name_attr];
+            return is_array($entry[$name_attr]) ? 'dc=' . implode(',dc=', explode('.', $entry[$name_attr][0])) : 'dc=' . implode(',dc=', explode('.', $entry[$name_attr]));
         }
     }
 
