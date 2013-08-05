@@ -87,7 +87,7 @@ class kolab_auth extends rcube_plugin
         //  Array(
         //      '<role_dn>' => Array('plugin1', 'plugin2'),
         //  );
-        // 
+        //
         // NOTE that <role_dn> may in fact be something like: 'cn=role,%dc'
 
         $role_plugins = $rcmail->config->get('kolab_auth_role_plugins');
@@ -110,14 +110,6 @@ class kolab_auth extends rcube_plugin
 
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready) {
-            $args['abort'] = true;
-            return $args;
-        }
-
-        // Find user record in LDAP
-        $record = $ldap->get_user_record($user, $host);
-
-        if (empty($record)) {
             $args['abort'] = true;
             return $args;
         }
