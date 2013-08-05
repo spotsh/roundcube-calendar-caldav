@@ -1231,15 +1231,27 @@ function kolab_files_ui()
     if (!this.response(response))
       return;
 
+    var rco, dir, self = this;
+
     this.display_message('kolab_files.filedeletenotice', 'confirmation');
+
     if (rcmail.env.file) {
-      // @TODO: reload files list in parent window
+      rco = rcmail.opener();
+      dir = this.file_path(rcmail.env.file);
+
+      // check if opener window contains files list, if not we can just close current window
+      if (rco && rco.file_list && (opener.file_api.env.folder == dir || !opener.file_api.env.folder))
+        self = opener.file_api;
+      else
+        window.close();
+    }
+
+    // @TODO: consider list modification "in-place" instead of full reload
+    self.file_list();
+    self.quota();
+
+    if (rcmail.env.file)
       window.close();
-    }
-    else {
-      this.file_list();
-      this.quota();
-    }
   };
 
   // file(s) move request
