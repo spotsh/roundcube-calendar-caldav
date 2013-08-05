@@ -805,8 +805,10 @@ function kolab_files_ui()
       row.attr('id', f.id).data('folder', i)
         .append($('<span class="name"></span>').text(f.name));
 
-      if (f.depth)
+      if (f.depth) {
         $('span.branch', row).width(15 * f.depth);
+        row.addClass('child');
+      }
 
       if (f.virtual)
         row.addClass('virtual');
