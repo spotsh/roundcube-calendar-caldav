@@ -1283,12 +1283,8 @@ div.fc-event-location {
 	padding: 4px 7px;
 }
 
-.calendarmain .fc-view-table col.fc-event-location {
-	width: 20%;
-}
-
 .calendarmain .fc-view-table tr.fc-event td.fc-event-handle {
-	padding: 5px 10px 2px 7px;
+	padding: 5px 0 2px 7px;
 	width: 12px;
 }
 
@@ -1315,6 +1311,9 @@ div.fc-event-location {
 	box-shadow: inset 0px 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
+.fc-view-table table.fc-list-smart {
+	table-layout: auto;
+}
 
 .fc-listappend {
 	text-align: center;

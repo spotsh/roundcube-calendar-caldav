@@ -1139,8 +1139,8 @@ div.fc-event-location {
 	color: #333;
 }
 
-.fc-view-table col.fc-event-location {
-	width: 20%;
+.fc-view-table table.fc-list-smart {
+	table-layout: auto;
 }
 
 .fc-listappend {
