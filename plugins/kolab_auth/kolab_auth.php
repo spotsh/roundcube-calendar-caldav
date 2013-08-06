@@ -115,11 +115,11 @@ class kolab_auth extends rcube_plugin
         }
 
         foreach ($role_plugins as $role_dn => $plugins) {
-            $role_plugins[$ldap->parse_vars($role_dn)] => $plugins;
+            $role_plugins[$ldap->parse_vars($role_dn)] = $plugins;
         }
 
         foreach ($role_settings as $role_dn => $settings) {
-            $role_settings[$ldap->parse_vars($role_dn)] => $settings;
+            $role_settings[$ldap->parse_vars($role_dn)] = $settings;
         }
 
         foreach ($role_dns as $role_dn) {
