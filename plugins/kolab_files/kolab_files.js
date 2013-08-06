@@ -33,6 +33,9 @@ window.rcmail && rcmail.addEventListener('init', function() {
         rcmail.file_list.init();
         kolab_files_list_coltypes();
       }
+
+      // register some commands to skip warning message on compose page
+      $.merge(rcmail.env.compose_commands, ['files-list', 'files-sort', 'files-search', 'files-search-reset']);
     }
     // mail preview
     else if (rcmail.env.action == 'show' || rcmail.env.action == 'preview') {
