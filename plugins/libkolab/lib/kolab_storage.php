@@ -41,6 +41,23 @@ class kolab_storage
     private static $config;
     private static $imap;
 
+    // Default folder names
+    private static $default_folders = array(
+        'event'         => 'Calendar',
+        'contact'       => 'Contacts',
+        'task'          => 'Tasks',
+        'note'          => 'Notes',
+        'file'          => 'Files',
+        'configuration' => 'Configuration',
+        'journal'       => 'Journal',
+        'mail.inbox'       => 'INBOX',
+        'mail.drafts'      => 'Drafts',
+        'mail.sentitems'   => 'Sent',
+        'mail.wastebasket' => 'Trash',
+        'mail.outbox'      => 'Outbox',
+        'mail.junkemail'   => 'Junk',
+    );
+
 
     /**
      * Setup the environment needed by the libs
@@ -349,25 +366,8 @@ class kolab_storage
             $result = self::folder_create($folder, $prop['type'], $prop['subscribed'], $prop['active']);
         }
 
-        // save displayname and color in METADATA
-        // TODO: also save 'showalarams' and other properties here
         if ($result) {
-            $ns = null;
-            foreach (array('color'       => array(self::COLOR_KEY_SHARED,self::COLOR_KEY_PRIVATE),
-                           'displayname' => array(self::NAME_KEY_SHARED,self::NAME_KEY_PRIVATE)) as $key => $metakeys) {
-                if (!empty($prop[$key])) {
-                    if (!isset($ns))
-                        $ns = self::$imap->folder_namespace($folder);
-
-                    $meta_saved = false;
-                    if ($ns == 'personal')  // save in shared namespace for personal folders
-                        $meta_saved = self::$imap->set_metadata($folder, array($metakeys[0] => $prop[$key]));
-                    if (!$meta_saved)    // try in private namespace
-                        $meta_saved = self::$imap->set_metadata($folder, array($metakeys[1] => $prop[$key]));
-                    if ($meta_saved)
-                        unset($prop[$key]);  // unsetting will prevent fallback to local user prefs
-                }
-            }
+            self::set_folder_props($folder, $prop);
         }
 
         return $result ? $folder : false;
@@ -913,4 +913,107 @@ class kolab_storage
         $rcube   = rcube::get_instance();
         return $rcube->user->save_prefs(array('kolab_active_folders' => $folders));
     }
+
+    /**
+     * Creates default folder of specified type
+     * To be run when none of subscribed folders (of specified type) is found
+     *
+     * @param string $type  Folder type
+     * @param string $props Folder properties (color, etc)
+     *
+     * @return string Folder name
+     */
+    public static function create_default_folder($type, $props = array())
+    {
+        if (!self::setup()) {
+            return;
+        }
+
+        $folders = self::$imap->get_metadata('*', array(kolab_storage::CTYPE_KEY_PRIVATE));
+
+        // from kolab_folders config
+        $folder_type  = strpos($type, '.') ? str_replace('.', '_', $type) : $type . '_default';
+        $default_name = self::$config->get('kolab_folders_' . $folder_type);
+        $folder_type  = str_replace('_', '.', $folder_type);
+
+        // check if we have any folder in personal namespace
+        // folder(s) may exist but not subscribed
+        foreach ($folders as $f => $data) {
+            if (strpos($data[self::CTYPE_KEY_PRIVATE], $type) === 0) {
+                $folder = $f;
+                break;
+            }
+        }
+
+        if (!$folder) {
+            if (!$default_name) {
+                $default_name = self::$default_folders[$type];
+            }
+
+            if (!$default_name) {
+                return;
+            }
+
+            $folder = rcube_charset::convert($default_name, RCUBE_CHARSET, 'UTF7-IMAP');
+            $prefix = self::$imap->get_namespace('prefix');
+
+            // add personal namespace prefix if needed
+            if ($prefix && strpos($folder, $prefix) !== 0 && $folder != 'INBOX') {
+                $folder = $prefix . $folder;
+            }
+
+            if (!self::$imap->folder_exists($folder)) {
+                if (!self::$imap->folder_create($folder)) {
+                    return;
+                }
+            }
+
+            self::set_folder_type($folder, $folder_type);
+        }
+
+        self::folder_subscribe($folder);
+
+        if ($props['active']) {
+            self::set_state($folder, true);
+        }
+
+        if (!empty($props)) {
+            self::set_folder_props($folder, $props);
+        }
+
+        return $folder;
+    }
+
+    /**
+     * Sets folder metadata properties
+     *
+     * @param string $folder Folder name
+     * @param array  $prop   Folder properties
+     */
+    public static function set_folder_props($folder, &$prop)
+    {
+        if (!self::setup()) {
+            return;
+        }
+
+        // TODO: also save 'showalarams' and other properties here
+        $ns        = self::$imap->folder_namespace($folder);
+        $supported = array(
+            'color'       => array(self::COLOR_KEY_SHARED, self::COLOR_KEY_PRIVATE),
+            'displayname' => array(self::NAME_KEY_SHARED, self::NAME_KEY_PRIVATE),
+        );
+
+        foreach ($supported as $key => $metakeys) {
+            if (array_key_exists($key, $prop)) {
+                $meta_saved = false;
+                if ($ns == 'personal')  // save in shared namespace for personal folders
+                    $meta_saved = self::$imap->set_metadata($folder, array($metakeys[0] => $prop[$key]));
+                if (!$meta_saved)    // try in private namespace
+                    $meta_saved = self::$imap->set_metadata($folder, array($metakeys[1] => $prop[$key]));
+                if ($meta_saved)
+                    unset($prop[$key]);  // unsetting will prevent fallback to local user prefs
+            }
+        }
+    }
+
 }

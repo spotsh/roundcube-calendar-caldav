@@ -31,7 +31,6 @@ class kolab_addressbook extends rcube_plugin
 {
     public $task = 'mail|settings|addressbook|calendar';
 
-    private $folders;
     private $sources;
     private $rc;
     private $ui;
@@ -93,11 +92,8 @@ class kolab_addressbook extends rcube_plugin
      */
     public function address_sources($p)
     {
-        // Load configuration
-        $this->load_config();
-
-        $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
-        $undelete = $this->rc->config->get('undo_timeout');
+        $abook_prio = $this->addressbook_prio();
+        $undelete   = $this->rc->config->get('undo_timeout');
 
         // Disable all global address books
         // Assumes that all non-kolab_addressbook sources are global
@@ -155,10 +151,7 @@ class kolab_addressbook extends rcube_plugin
             return $args;
         }
 
-        // Load configuration
-        $this->load_config();
-
-        $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
+        $abook_prio = $this->addressbook_prio();
         // here we cannot use rc->config->get()
         $sources    = $GLOBALS['CONFIG']['autocomplete_addressbooks'];
 
@@ -222,10 +215,7 @@ class kolab_addressbook extends rcube_plugin
 
         $this->sources = array();
 
-        // Load configuration
-        $this->load_config();
-
-        $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
+        $abook_prio = $this->addressbook_prio();
 
         // Personal address source(s) disabled?
         if ($abook_prio == self::GLOBAL_ONLY) {
@@ -233,19 +223,27 @@ class kolab_addressbook extends rcube_plugin
         }
 
         // get all folders that have "contact" type
-        $this->folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
+        $folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
 
-        if (PEAR::isError($this->folders)) {
+        if (PEAR::isError($folders)) {
             rcube::raise_error(array(
               'code' => 600, 'type' => 'php',
               'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Failed to list contact folders from Kolab server:" . $this->folders->getMessage()),
+              'message' => "Failed to list contact folders from Kolab server:" . $folders->getMessage()),
             true, false);
         }
         else {
+            // we need at least one folder to prevent from errors in Roundcube core
+            // when there's also no sql nor ldap addressbook (Bug #2086)
+            if (empty($folders)) {
+                if ($folder = kolab_storage::create_default_folder('contact')) {
+                    $folders = array(new kolab_storage_folder($folder, 'contact'));
+                }
+            }
+
             // convert to UTF8 and sort
             $names = array();
-            foreach ($this->folders as $folder) {
+            foreach ($folders as $folder) {
                 // create instance of rcube_contacts
                 $abook_id = kolab_storage::folder_id($folder->name);
                 $abook = new rcube_kolab_contacts($folder->name);
@@ -325,16 +323,22 @@ class kolab_addressbook extends rcube_plugin
             return $args;
         }
 
-        // Load configuration
-        $this->load_config();
+        $ldap_public = $this->rc->config->get('ldap_public');
+        $abook_type  = $this->rc->config->get('address_book_type');
 
-        // Load localization
-        $this->add_texts('localization');
+        // Hide option if there's no global addressbook
+        if (empty($ldap_public) || $abook_type != 'ldap') {
+            return $args;
+        }
 
         // Check that configuration is not disabled
-        $dont_override  = (array) $this->rc->config->get('dont_override', array());
+        $dont_override = (array) $this->rc->config->get('dont_override', array());
+        $prio          = $this->addressbook_prio();
 
         if (!in_array('kolab_addressbook_prio', $dont_override)) {
+            // Load localization
+            $this->add_texts('localization');
+
             $field_id = '_kolab_addressbook_prio';
             $select   = new html_select(array('name' => $field_id, 'id' => $field_id));
 
@@ -345,7 +349,7 @@ class kolab_addressbook extends rcube_plugin
 
             $args['blocks']['main']['options']['kolab_addressbook_prio'] = array(
                 'title' => html::label($field_id, Q($this->gettext('addressbookprio'))),
-                'content' => $select->show((int)$this->rc->config->get('kolab_addressbook_prio')),
+                'content' => $select->show($prio),
             );
         }
 
@@ -365,14 +369,11 @@ class kolab_addressbook extends rcube_plugin
             return $args;
         }
 
-        // Load configuration
-        $this->load_config();
-
         // Check that configuration is not disabled
-        $dont_override  = (array) $this->rc->config->get('dont_override', array());
+        $dont_override = (array) $this->rc->config->get('dont_override', array());
+        $key           = 'kolab_addressbook_prio';
 
-        if (!in_array('kolab_addressbook_prio', $dont_override)) {
-            $key = 'kolab_addressbook_prio';
+        if (!in_array('kolab_addressbook_prio', $dont_override) || !isset($_POST['_'.$key])) {
             $args['prefs'][$key] = (int) get_input_value('_'.$key, RCUBE_INPUT_POST);
         }
 
@@ -505,5 +506,31 @@ class kolab_addressbook extends rcube_plugin
         }
 
         $this->rc->output->send();
+    }
+
+    /**
+     * Returns value of kolab_addressbook_prio setting
+     */
+    private function addressbook_prio()
+    {
+        // Load configuration
+        if (!$this->config_loaded) {
+            $this->load_config();
+            $this->config_loaded = true;
+        }
+
+        $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
+
+        // Make sure any global addressbooks are defined
+        if ($abook_prio == 0 || $abook_prio == 2) {
+            $ldap_public = $this->rc->config->get('ldap_public');
+            $abook_type  = $this->rc->config->get('address_book_type');
+
+            if (empty($ldap_public) || $abook_type != 'ldap') {
+                $abook_prio = 1;
+            }
+        }
+
+        return $abook_prio;
     }
 }
