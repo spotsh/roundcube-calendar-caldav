@@ -377,19 +377,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // pass query to storage if only indexed cols are involved
         // NOTE: this is only some rough pre-filtering but probably includes false positives
-        $squery = array();
-        if (count(array_intersect(kolab_format_contact::$fulltext_cols, $fields)) == $scount) {
-            switch ($mode) {
-                case 1:  $prefix = '^'; $suffix = '$'; break;  // strict
-                case 2:  $prefix = '^'; $suffix = '';  break;  // prefix
-                default: $prefix = '';  $suffix = '';  break;  // substring
-            }
-
-            $search_string = is_array($value) ? join(' ', $value) : $value;
-            foreach (rcube_utils::normalize_string($search_string, true) as $word) {
-                $squery[] = array('words', 'LIKE', $prefix . $word . $suffix);
-            }
-        }
+        $squery = $this->_search_query($fields, $value, $mode);
 
         // get all/matching records
         $this->_fetch_contacts($squery);
@@ -401,9 +389,12 @@ class rcube_kolab_contacts extends rcube_addressbook
         foreach ($this->contacts as $id => $contact) {
             // check if current contact has required values, otherwise skip it
             if ($required) {
-                foreach ($required as $f)
-                    if (empty($contact[$f]))
+                foreach ($required as $f) {
+                    // required field might be 'email', but contact might contain 'email:home'
+                    if (!($v = rcube_addressbook::get_col_values($f, $contact, true)) || empty($v)) {
                         continue 2;
+                    }
+                }
             }
 
             $found = array();
@@ -1047,6 +1038,40 @@ class rcube_kolab_contacts extends rcube_addressbook
     public function id2uid($id)
     {
         return base64_decode(str_pad(strtr($id, '-_', '+/'), strlen($id) % 4, '=', STR_PAD_RIGHT));
+    }
+
+    /**
+     * Build SQL query for fulltext matches
+     */
+    private function _search_query($fields, $value, $mode)
+    {
+        $query = array();
+        $cols  = array();
+
+        // $fulltext_cols might contain composite field names e.g. 'email:address' while $fields not
+        foreach (kolab_format_contact::$fulltext_cols as $col) {
+            if ($pos = strpos($col, ':')) {
+                $col = substr($col, 0, $pos);
+            }
+            if (in_array($col, $fields)) {
+                $cols[] = $col;
+            }
+        }
+
+        if (count($cols) == count($fields)) {
+            switch ($mode) {
+                case 1:  $prefix = '^'; $suffix = '$'; break;  // strict
+                case 2:  $prefix = '^'; $suffix = '';  break;  // prefix
+                default: $prefix = '';  $suffix = '';  break;  // substring
+            }
+
+            $search_string = is_array($value) ? join(' ', $value) : $value;
+            foreach (rcube_utils::normalize_string($search_string, true) as $word) {
+                $query[] = array('words', 'LIKE', $prefix . $word . $suffix);
+            }
+        }
+
+        return $query;
     }
 
     /**
