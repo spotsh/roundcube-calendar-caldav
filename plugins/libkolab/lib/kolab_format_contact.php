@@ -386,7 +386,7 @@ class kolab_format_contact extends kolab_format
     public function get_words()
     {
         $data = '';
-        foreach (self::$fulltext_cols as $col) {
+        foreach (self::$fulltext_cols as $colname) {
             list($col, $field) = explode(':', $colname);
 
             if ($field) {
