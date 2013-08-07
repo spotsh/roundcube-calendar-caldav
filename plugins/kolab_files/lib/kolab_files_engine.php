@@ -176,7 +176,7 @@ class kolab_files_engine
             $out = $this->rc->output->form_tag($attrib, $out);
         }
 
-        $this->plugin->add_label('foldercreating', 'create', 'foldercreate', 'cancel');
+        $this->plugin->add_label('foldercreating', 'foldercreatenotice', 'create', 'foldercreate', 'cancel');
         $this->rc->output->add_gui_object('folder-create-form', $attrib['id']);
 
         return $out;
@@ -631,11 +631,12 @@ class kolab_files_engine
     protected function action_index()
     {
         $this->plugin->add_label(
-            'folderdeleting', 'folderdeleteconfirm', 'foldercreating', 'uploading', 'attaching',
+            'folderdeleting', 'folderdeleteconfirm', 'folderdeletenotice',
+            'uploading', 'attaching',
             'filedeleting', 'filedeletenotice', 'filedeleteconfirm',
-            'filemoving', 'filemovenotice', 'filecopying', 'filecopynotice',
+            'filemoving', 'filemovenotice', 'filemoveconfirm', 'filecopying', 'filecopynotice',
             'collection_audio', 'collection_video', 'collection_image', 'collection_document',
-            'fileskip', 'fileskipall', 'fileoverwrite', 'fileoverwriteall', 'filemoveconfirm'
+            'fileskip', 'fileskipall', 'fileoverwrite', 'fileoverwriteall'
         );
 
         $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
