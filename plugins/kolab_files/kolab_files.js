@@ -302,6 +302,9 @@ function kolab_files_folder_create_dialog()
     height: 400
   });
 
+  // Fix submitting form with Enter
+  $('form', dialog).submit(kolab_dialog_submit_handler);
+
   // build parent selector
   select.append($('<option>').val('').text('---'));
   $.each(file_api.env.folders, function(i, f) {
@@ -341,6 +344,9 @@ function kolab_files_file_edit_dialog(file)
     dialog.dialog('destroy').hide();
   };
 
+  // Fix submitting form with Enter
+  $('form', dialog).submit(kolab_dialog_submit_handler);
+
   // show dialog window
   kolab_dialog_show(dialog, {
     title: rcmail.gettext('kolab_files.fileedit'),
@@ -361,6 +367,13 @@ function kolab_dialog_show(dialog, params)
   }, params || {});
 
   dialog.dialog(params).show();
+};
+
+// Handle form submit with Enter key, click first dialog button instead
+function kolab_dialog_submit_handler()
+{
+  $(this).parents('.ui-dialog').find('.ui-button').first().click();
+  return false;
 };
 
 // smart upload button
