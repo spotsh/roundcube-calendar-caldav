@@ -81,7 +81,7 @@ case 'clear':
     if (!$db->is_connected() || $db->is_error())
         die("No DB connection\n");
 
-    $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','distribution-list','event','task','configuration');
+    $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','distribution-list','event','task','configuration','file');
     $folder_types_db = array_map(array($db, 'quote'), $folder_types);
 
     if ($opts['all']) {
@@ -106,7 +106,7 @@ case 'prewarm':
     $rcmail->plugins->load_plugin('libkolab');
 
     if (authenticate($opts)) {
-        $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','event','task','configuration');
+        $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','event','task','configuration','file');
         foreach ($folder_types as $type) {
             // sync every folder of the given type
             foreach (kolab_storage::get_folders($type) as $folder) {
