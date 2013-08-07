@@ -1142,8 +1142,9 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         // convert email, website, phone values
         foreach (array('email'=>'address', 'website'=>'url', 'phone'=>'number') as $col => $propname) {
+            $col_values = $this->get_col_values($col, $contact);
             $contact[$col] = array();
-            foreach ($this->get_col_values($col, $contact) as $type => $values) {
+            foreach ($col_values as $type => $values) {
                 foreach ((array)$values as $val) {
                     if (!empty($val)) {
                         $contact[$col][] = array($propname => $val, 'type' => $type);
