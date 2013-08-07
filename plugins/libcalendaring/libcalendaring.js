@@ -438,6 +438,8 @@ function rcube_libcalendaring(settings)
 
 /* libcalendaring plugin initialization */
 window.rcmail && rcmail.addEventListener('init', function(evt) {
+  if (rcmail.env.libcal_settings) {
     var libcal = new rcube_libcalendaring(rcmail.env.libcal_settings);
     rcmail.addEventListener('plugin.display_alarms', function(alarms){ libcal.display_alarms(alarms); });
+  }
 });
