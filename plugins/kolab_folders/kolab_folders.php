@@ -535,6 +535,7 @@ class kolab_folders extends rcube_plugin
             // create folder
             if (!$exists && !$storage->folder_exists($foldername)) {
                 $storage->create_folder($foldername, $type1 == 'mail');
+                $storage->subscribe($foldername);
             }
 
             // set type
