@@ -104,13 +104,17 @@ abstract class kolab_format
         }
         $result = new cDateTime();
 
-        // got a unix timestamp (in UTC)
-        if (is_numeric($datetime)) {
-            $datetime = new DateTime('@'.$datetime, new DateTimeZone('UTC'));
-            if ($tz) $datetime->setTimezone($tz);
+        try {
+            // got a unix timestamp (in UTC)
+            if (is_numeric($datetime)) {
+                $datetime = new DateTime('@'.$datetime, new DateTimeZone('UTC'));
+                if ($tz) $datetime->setTimezone($tz);
+            }
+            else if (is_string($datetime) && strlen($datetime)) {
+                $datetime = new DateTime($datetime, $tz ?: null);
+            }
         }
-        else if (is_string($datetime) && strlen($datetime))
-            $datetime = new DateTime($datetime, $tz ?: null);
+        catch (Exception $e) {}
 
         if ($datetime instanceof DateTime) {
             $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
