@@ -128,6 +128,34 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @depends test_import
+     */
+    function test_freebusy()
+    {
+        $ical = new libvcalendar();
+        $ical->import_from_file(__DIR__ . '/resources/freebusy.ifb', 'UTF-8');
+        $freebusy = $ical->freebusy;
+
+        $this->assertInstanceOf('DateTime', $freebusy['start'], "'start' property is DateTime object");
+        $this->assertInstanceOf('DateTime', $freebusy['end'], "'end' property is DateTime object");
+        $this->assertEquals(50, count($freebusy['periods']), "Number of freebusy periods defined");
+        $this->assertEquals(48, count($ical->get_busy_periods()), "Number of busy periods found");
+    }
+
+    /**
+     * @depends test_import
+     */
+    function test_freebusy_dummy()
+    {
+        $ical = new libvcalendar();
+        $ical->import_from_file(__DIR__ . '/resources/dummy.ifb', 'UTF-8');
+        $freebusy = $ical->freebusy;
+
+        $this->assertEquals(0, count($freebusy['periods']), "Ignore 0-length freebudy periods");
+        $this->assertContains('dummy', $freebusy['comment'], "Parse comment");
+    }
+
+    /**
      * Test for iCal export from internal hash array representation
      *
      * @depends test_extended

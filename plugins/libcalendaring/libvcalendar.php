@@ -42,6 +42,7 @@ class libvcalendar
 
     public $method;
     public $objects = array();
+    public $freebusy = array();
 
     /**
      * Default constructor
@@ -147,7 +148,7 @@ class libvcalendar
      */
     public function import_from_vobject($vobject)
     {
-        $this->objects = $seen = array();
+        $this->objects = $this->freebusy = $seen = array();
 
         if ($vobject->name == 'VCALENDAR') {
             $this->method = strval($vobject->METHOD);
@@ -170,10 +171,29 @@ class libvcalendar
                         $this->objects[] = $object;
                     }
                 }
+                else if ($ve->name == 'VFREEBUSY') {
+                    $this->_parse_freebusy($ve);
+                    break;
+                }
             }
         }
 
         return $this->objects;
+    }
+
+    /**
+     * Getter for free-busy periods
+     */
+    public function get_busy_periods()
+    {
+        $out = array();
+        foreach ((array)$this->freebusy['periods'] as $period) {
+            if ($period[2] != 'FREE') {
+                $out[] = $period;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -427,6 +447,60 @@ class libvcalendar
         }
 
         return $event;
+    }
+
+    /**
+     * Parse the given vfreebusy component into an array representation
+     */
+    private function _parse_freebusy($ve)
+    {
+        $this->freebusy = array('periods' => array());
+
+        foreach ($ve->children as $prop) {
+            if (!($prop instanceof VObject\Property))
+                continue;
+
+            switch ($prop->name) {
+            case 'DTSTART':
+            case 'DTEND':
+                $propmap = array('DTSTART' => 'start', 'DTEND' => 'end');
+                $this->freebusy[$propmap[$prop->name]] =  self::convert_datetime($prop);
+                break;
+
+            case 'ORGANIZER':
+                $this->freebusy['organizer'] = preg_replace('/^mailto:/i', '', $prop->value);
+                break;
+
+            case 'FREEBUSY':
+                // The freebusy component can hold more than 1 value, separated by commas.
+                $periods = explode(',', $prop->value);
+                $fbtype = strval($prop['FBTYPE']) ?: 'BUSY';
+
+                foreach ($periods as $period) {
+                    // Every period is formatted as [start]/[end]. The start is an
+                    // absolute UTC time, the end may be an absolute UTC time, or
+                    // duration (relative) value.
+                    list($busyStart, $busyEnd) = explode('/', $period);
+
+                    $busyStart = VObject\DateTimeParser::parse($busyStart);
+                    $busyEnd = VObject\DateTimeParser::parse($busyEnd);
+                    if ($busyEnd instanceof \DateInterval) {
+                        $tmp = clone $busyStart;
+                        $tmp->add($busyEnd);
+                        $busyEnd = $tmp;
+                    }
+
+                    if ($busyEnd && $busyEnd > $busyStart)
+                        $this->freebusy['periods'][] = array($busyStart, $busyEnd, $fbtype);
+                }
+                break;
+
+            case 'COMMENT':
+                $this->freebusy['comment'] = $prop->value;
+            }
+        }
+
+        return $this->freebusy;
     }
 
     /**
