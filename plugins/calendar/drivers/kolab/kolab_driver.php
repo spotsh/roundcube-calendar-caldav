@@ -935,28 +935,25 @@ class kolab_driver extends calendar_driver
 
     // parse free-busy information using Horde classes
     if ($fbdata) {
-      $fbcal = $this->cal->get_ical()->get_parser();
-      $fbcal->parsevCalendar($fbdata);
-      if ($fb = $fbcal->findComponent('vfreebusy')) {
+      $ical = $this->cal->get_ical();
+      $ical->import($fbdata);
+      if ($fb = $ical->freebusy) {
         $result = array();
-        $params = $fb->getExtraParams();
-        foreach ($fb->getBusyPeriods() as $from => $to) {
-          if ($to == null)  // no information, assume free
-            break;
-          $type = $params[$from]['FBTYPE'];
-          $result[] = array($from, $to, isset($fbtypemap[$type]) ? $fbtypemap[$type] : calendar::FREEBUSY_BUSY);
+        foreach ($fb['periods'] as $tuple) {
+          list($from, $to, $type) = $tuple;
+          $result[] = array($from->format('U'), $to->format('U'), isset($fbtypemap[$type]) ? $fbtypemap[$type] : calendar::FREEBUSY_BUSY);
         }
 
         // we take 'dummy' free-busy lists as "unknown"
-        if (empty($result) && ($comment = $fb->getAttribute('COMMENT')) && stripos($comment, 'dummy'))
+        if (empty($result) && !empty($fb['comment']) && stripos($fb['comment'], 'dummy'))
           return false;
 
         // set period from $start till the begin of the free-busy information as 'unknown'
-        if (($fbstart = $fb->getStart()) && $start < $fbstart) {
+        if ($fb['start'] && ($fbstart = $fb['start']->format('U')) && $start < $fbstart) {
           array_unshift($result, array($start, $fbstart, calendar::FREEBUSY_UNKNOWN));
         }
         // pad period till $end with status 'unknown'
-        if (($fbend = $fb->getEnd()) && $fbend < $end) {
+        if ($fb['end'] && ($fbend = $fb['end']->format('U')) && $fbend < $end) {
           $result[] = array($fbend, $end, calendar::FREEBUSY_UNKNOWN);
         }
 
