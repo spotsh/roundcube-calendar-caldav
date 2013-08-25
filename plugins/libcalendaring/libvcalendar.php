@@ -172,8 +172,7 @@ class libvcalendar
                     }
                 }
                 else if ($ve->name == 'VFREEBUSY') {
-                    $this->_parse_freebusy($ve);
-                    break;
+                    $this->objects[] = $this->_parse_freebusy($ve);
                 }
             }
         }
@@ -454,7 +453,8 @@ class libvcalendar
      */
     private function _parse_freebusy($ve)
     {
-        $this->freebusy = array('periods' => array());
+        $this->freebusy = array('_type' => 'freebusy', 'periods' => array());
+        $seen = array();
 
         foreach ($ve->children as $prop) {
             if (!($prop instanceof VObject\Property))
@@ -475,6 +475,10 @@ class libvcalendar
                 // The freebusy component can hold more than 1 value, separated by commas.
                 $periods = explode(',', $prop->value);
                 $fbtype = strval($prop['FBTYPE']) ?: 'BUSY';
+
+                // skip dupes
+                if ($seen[$prop->value.':'.$fbtype]++)
+                    continue;
 
                 foreach ($periods as $period) {
                     // Every period is formatted as [start]/[end]. The start is an

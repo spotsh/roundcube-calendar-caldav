@@ -138,8 +138,8 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('DateTime', $freebusy['start'], "'start' property is DateTime object");
         $this->assertInstanceOf('DateTime', $freebusy['end'], "'end' property is DateTime object");
-        $this->assertEquals(50, count($freebusy['periods']), "Number of freebusy periods defined");
-        $this->assertEquals(48, count($ical->get_busy_periods()), "Number of busy periods found");
+        $this->assertEquals(11, count($freebusy['periods']), "Number of freebusy periods defined");
+        $this->assertEquals(9, count($ical->get_busy_periods()), "Number of busy periods found");
     }
 
     /**
