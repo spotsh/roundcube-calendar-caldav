@@ -939,7 +939,7 @@ class kolab_files_engine
                 $id = $attachment['id'];
 
                 // store new attachment in session
-                unset($attachment['status'], $attachment['abort']);
+                unset($attachment['data'], $attachment['status'], $attachment['abort']);
                 $COMPOSE['attachments'][$id] = $attachment;
 
                 if (($icon = $COMPOSE['deleteicon']) && is_file($icon)) {
