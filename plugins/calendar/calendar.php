@@ -1205,7 +1205,8 @@ class calendar extends rcube_plugin
       '_id'   => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
       'start' => $this->lib->adjust_timezone($event['start'])->format('c'),
       'end'   => $this->lib->adjust_timezone($event['end'])->format('c'),
-      'changed' => $this->lib->adjust_timezone($event['changed'])->format('c'),
+      // 'changed' might be empty for event recurrences (Bug #2185)
+      'changed' => $event['changed'] ? $this->lib->adjust_timezone($event['changed'])->format('c') : null,
       'title'       => strval($event['title']),
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
