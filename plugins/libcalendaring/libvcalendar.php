@@ -108,7 +108,6 @@ class libvcalendar
                 return $this->import_from_vobject($vobject);
         }
         catch (Exception $e) {
-            throw $e;
             rcube::raise_error(array(
                 'code' => 600, 'type' => 'php',
                 'file' => __FILE__, 'line' => __LINE__,
@@ -206,19 +205,28 @@ class libvcalendar
         $event = array(
             'uid'     => strval($ve->UID),
             'title'   => strval($ve->SUMMARY),
-            'created' => $ve->CREATED ? $ve->CREATED->getDateTime() : null,
-            'changed' => null,
             '_type'   => $ve->name == 'VTODO' ? 'task' : 'event',
             // set defaults
             'priority' => 0,
             'attendees' => array(),
         );
 
-        if ($ve->{'LAST-MODIFIED'}) {
-            $event['changed'] = $ve->{'LAST-MODIFIED'}->getDateTime();
+        // Catch possible exceptions when date is invalid (Bug #2144)
+        // We can skip these fields, they aren't critical
+        if ($ve->CREATED) {
+            try {
+                $event['created'] = $ve->CREATED->getDateTime();
+            } catch (Exception $e) {};
         }
-        else if ($ve->DTSTAMP) {
-            $event['changed'] = $ve->DTSTAMP->getDateTime();
+        if ($ve->{'LAST-MODIFIED'}) {
+            try {
+                $event['changed'] = $ve->{'LAST-MODIFIED'}->getDateTime();
+            } catch (Exception $e) {};
+        }
+        if (!$event['changed'] && $ve->DTSTAMP) {
+            try {
+                $event['changed'] = $ve->DTSTAMP->getDateTime();
+            } catch (Exception $e) {};
         }
 
         // map other attributes to internal fields

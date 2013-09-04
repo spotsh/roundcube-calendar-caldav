@@ -120,7 +120,10 @@ class libcalendaring extends rcube_plugin
         else if (is_string($dt))
             $dt = new DateTime($dt);
 
-        $dt->setTimezone($this->timezone);
+        if ($dt instanceof DateTime) {
+            $dt->setTimezone($this->timezone);
+        }
+
         return $dt;
     }
 
