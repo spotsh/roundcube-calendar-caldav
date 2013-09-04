@@ -41,6 +41,10 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, count($events));
         $event = $events[0];
 
+        $this->assertInstanceOf('DateTime', $event['created'], "'created' property is DateTime object");
+        $this->assertInstanceOf('DateTime', $event['changed'], "'changed' property is DateTime object");
+        $this->assertEquals('UTC', $event['created']->getTimezone()->getName(), "'created' date is in UTC");
+
         $this->assertInstanceOf('DateTime', $event['start'], "'start' property is DateTime object");
         $this->assertInstanceOf('DateTime', $event['end'], "'end' property is DateTime object");
         $this->assertEquals('08-01', $event['start']->format('m-d'), "Start date is August 1st");
@@ -68,6 +72,17 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
 
         $events = $ical->import_from_file(__DIR__ . '/resources/invalid.txt', 'UTF-8');
         $this->assertEmpty($events);
+    }
+
+    function test_invalid_dates()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/invalid-dates.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals(1, count($events), "Import event data");
+        $this->assertFalse(array_key_exists('created', $event), "No created date field");
+        $this->assertFalse(array_key_exists('changed', $event), "No changed date field");
     }
 
     /**

@@ -213,20 +213,12 @@ class libvcalendar
 
         // Catch possible exceptions when date is invalid (Bug #2144)
         // We can skip these fields, they aren't critical
-        if ($ve->CREATED) {
+        foreach (array('CREATED' => 'created', 'LAST-MODIFIED' => 'changed', 'DTSTAMP' => 'changed') as $attr => $field) {
             try {
-                $event['created'] = $ve->CREATED->getDateTime();
-            } catch (Exception $e) {};
-        }
-        if ($ve->{'LAST-MODIFIED'}) {
-            try {
-                $event['changed'] = $ve->{'LAST-MODIFIED'}->getDateTime();
-            } catch (Exception $e) {};
-        }
-        if (!$event['changed'] && $ve->DTSTAMP) {
-            try {
-                $event['changed'] = $ve->DTSTAMP->getDateTime();
-            } catch (Exception $e) {};
+                if (!$event[$field] && $ve->{$attr}) {
+                    $event[$field] = $ve->{$attr}->getDateTime();
+                }
+            } catch (Exception $e) {}
         }
 
         // map other attributes to internal fields
