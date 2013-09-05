@@ -46,6 +46,7 @@ class kolab_auth extends rcube_plugin
         $this->add_hook('storage_connect', array($this, 'imap_connect'));
         $this->add_hook('managesieve_connect', array($this, 'imap_connect'));
         $this->add_hook('smtp_connect', array($this, 'smtp_connect'));
+        $this->add_hook('identity_form', array($this, 'identity_form'));
 
         $this->add_hook('write_log', array($this, 'write_log'));
 
@@ -463,6 +464,37 @@ class kolab_auth extends rcube_plugin
 
             $args['options']['smtp_auth_cid'] = $admin_login;
             $args['options']['smtp_auth_pw']  = $admin_pass;
+        }
+
+        return $args;
+    }
+
+    /**
+     * Hook to replace the plain text input field for email address by a drop-down list
+     * with all email addresses (including aliases) from this user's LDAP record.
+     */
+    public function identity_form($args)
+    {
+        $ldap = self::ldap();
+        if (!$ldap || !$ldap->ready || empty($_SESSION['kolab_dn'])) {
+            return $args;
+        }
+
+        $emails = array();
+        $rcmail = rcube::get_instance();
+        $user_record = $ldap->get_record($_SESSION['kolab_dn']);
+
+        foreach ((array)$rcmail->config->get('kolab_auth_email', array()) as $col) {
+            $values = rcube_addressbook::get_col_values($col, $user_record, true);
+            if (!empty($values))
+                $emails = array_merge($emails, array_filter($values));
+        }
+
+        if (!empty($emails)) {
+            $args['form']['addressing']['content']['email'] = array(
+                'type' => 'select',
+                'options' => array_combine($emails, $emails),
+            );
         }
 
         return $args;
