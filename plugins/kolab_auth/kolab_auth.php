@@ -326,9 +326,19 @@ class kolab_auth extends rcube_plugin
         $email_attr  = $rcmail->config->get('kolab_auth_email');
         $org_attr    = $rcmail->config->get('kolab_auth_organization');
         $role_attr   = $rcmail->config->get('kolab_auth_role');
+        $imap_attr   = $rcmail->config->get('kolab_auth_mailhost');
 
         if (!empty($role_attr) && !empty($record[$role_attr])) {
             $_SESSION['user_roledns'] = (array)($record[$role_attr]);
+        }
+
+        if (!empty($imap_attr) && !empty($record[$role_attr])) {
+            $default_host = $rcmail->config->get('default_host');
+            if (!empty($default_host)) {
+                rcube::write_log("errors", "Both default host and kolab_auth_mailhost set. Incompatible.");
+            } else {
+                $args['host'] = "tls://" . $record[$role_attr];
+            }
         }
 
         // Login As...
