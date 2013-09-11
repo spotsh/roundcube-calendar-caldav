@@ -485,13 +485,20 @@ class kolab_auth extends rcube_plugin
      */
     public function identity_form($args)
     {
+        $rcmail      = rcube::get_instance();
+        $ident_level = intval($rcmail->config->get('identities_level', 0));
+
+        // do nothing if email address modification is disabled
+        if ($ident_level == 1 || $ident_level == 3) {
+            return $args;
+        }
+
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready || empty($_SESSION['kolab_dn'])) {
             return $args;
         }
 
-        $emails = array();
-        $rcmail = rcube::get_instance();
+        $emails      = array();
         $user_record = $ldap->get_record($_SESSION['kolab_dn']);
 
         foreach ((array)$rcmail->config->get('kolab_auth_email', array()) as $col) {
