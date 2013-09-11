@@ -490,6 +490,10 @@ class kolab_auth extends rcube_plugin
                 $emails = array_merge($emails, array_filter($values));
         }
 
+        // kolab_delegation might want to modify this addresses list
+        $plugin = $rcmail->plugins->exec_hook('kolab_auth_emails', array('emails' => $emails));
+        $emails = $plugin['emails'];
+
         if (!empty($emails)) {
             $args['form']['addressing']['content']['email'] = array(
                 'type' => 'select',
