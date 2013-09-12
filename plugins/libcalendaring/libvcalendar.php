@@ -41,6 +41,7 @@ class libvcalendar
     private $attendee_keymap = array('name' => 'CN', 'status' => 'PARTSTAT', 'role' => 'ROLE', 'cutype' => 'CUTYPE', 'rsvp' => 'RSVP');
 
     public $method;
+    public $agent = '';
     public $objects = array();
     public $freebusy = array();
 
@@ -80,6 +81,14 @@ class libvcalendar
     public function set_prodid($prodid)
     {
         $this->prodid = $prodid;
+    }
+
+    /**
+     * Setter for a user-agent string to tweak input/output accordingly
+     */
+    public function set_agent($agent)
+    {
+        $this->agent = $agent;
     }
 
     /**
@@ -151,6 +160,7 @@ class libvcalendar
 
         if ($vobject->name == 'VCALENDAR') {
             $this->method = strval($vobject->METHOD);
+            $this->agent  = strval($vobject->PRODID);
 
             foreach ($vobject->getBaseComponents() as $ve) {
                 if ($ve->name == 'VEVENT' || $ve->name == 'VTODO') {
@@ -192,6 +202,16 @@ class libvcalendar
         }
 
         return $out;
+    }
+
+    /**
+     * Helper method to determine whether the connected client is an Apple device
+     */
+    private function is_apple()
+    {
+        return stripos($this->agent, 'Apple') !== false
+            || stripos($this->agent, 'Mac OS X') !== false
+            || stripos($this->agent, 'iOS/') !== false;
     }
 
     /**
@@ -290,8 +310,14 @@ class libvcalendar
                 $event['complete'] = intval($prop->value);
                 break;
 
-            case 'DESCRIPTION':
             case 'LOCATION':
+            case 'DESCRIPTION':
+                if ($this->is_apple()) {
+                    $event[strtolower($prop->name)] = str_replace('\,', ',', $prop->value);
+                    break;
+                }
+                // else: fall through
+
             case 'URL':
                 $event[strtolower($prop->name)] = $prop->value;
                 break;
@@ -657,7 +683,7 @@ class libvcalendar
         $ve->add('SUMMARY', $event['title']);
 
         if ($event['location'])
-            $ve->add('LOCATION', $event['location']);
+            $ve->add($this->is_apple() ? new vobject_location_property('LOCATION', $event['location']) : new VObject\Property('LOCATION', $event['location']));
         if ($event['description'])
             $ve->add('DESCRIPTION', strtr($event['description'], array("\r\n" => "\n", "\r" => "\n"))); // normalize line endings
 
@@ -807,3 +833,51 @@ class libvcalendar
     }
 
 }
+
+/**
+ * Override Sabre\VObject\Property that quotes commas in the location property
+ * because Apple clients treat that property as list.
+ */
+class vobject_location_property extends VObject\Property
+{
+    /**
+     * Turns the object back into a serialized blob.
+     *
+     * @return string
+     */
+    public function serialize()
+    {
+        $str = $this->name;
+
+        foreach ($this->parameters as $param) {
+            $str.=';' . $param->serialize();
+        }
+
+        $src = array(
+            '\\',
+            "\n",
+            ',',
+        );
+        $out = array(
+            '\\\\',
+            '\n',
+            '\,',
+        );
+        $str.=':' . str_replace($src, $out, $this->value);
+
+        $out = '';
+        while (strlen($str) > 0) {
+            if (strlen($str) > 75) {
+                $out.= mb_strcut($str, 0, 75, 'utf-8') . "\r\n";
+                $str = ' ' . mb_strcut($str, 75, strlen($str), 'utf-8');
+            } else {
+                $out.= $str . "\r\n";
+                $str = '';
+                break;
+            }
+        }
+
+        return $out;
+    }
+}
+
