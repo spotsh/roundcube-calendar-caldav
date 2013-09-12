@@ -326,9 +326,19 @@ class kolab_auth extends rcube_plugin
         $email_attr  = $rcmail->config->get('kolab_auth_email');
         $org_attr    = $rcmail->config->get('kolab_auth_organization');
         $role_attr   = $rcmail->config->get('kolab_auth_role');
+        $imap_attr   = $rcmail->config->get('kolab_auth_mailhost');
 
         if (!empty($role_attr) && !empty($record[$role_attr])) {
             $_SESSION['user_roledns'] = (array)($record[$role_attr]);
+        }
+
+        if (!empty($imap_attr) && !empty($record[$role_attr])) {
+            $default_host = $rcmail->config->get('default_host');
+            if (!empty($default_host)) {
+                rcube::write_log("errors", "Both default host and kolab_auth_mailhost set. Incompatible.");
+            } else {
+                $args['host'] = "tls://" . $record[$role_attr];
+            }
         }
 
         // Login As...
@@ -475,13 +485,20 @@ class kolab_auth extends rcube_plugin
      */
     public function identity_form($args)
     {
+        $rcmail      = rcube::get_instance();
+        $ident_level = intval($rcmail->config->get('identities_level', 0));
+
+        // do nothing if email address modification is disabled
+        if ($ident_level == 1 || $ident_level == 3) {
+            return $args;
+        }
+
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready || empty($_SESSION['kolab_dn'])) {
             return $args;
         }
 
-        $emails = array();
-        $rcmail = rcube::get_instance();
+        $emails      = array();
         $user_record = $ldap->get_record($_SESSION['kolab_dn']);
 
         foreach ((array)$rcmail->config->get('kolab_auth_email', array()) as $col) {
@@ -489,6 +506,10 @@ class kolab_auth extends rcube_plugin
             if (!empty($values))
                 $emails = array_merge($emails, array_filter($values));
         }
+
+        // kolab_delegation might want to modify this addresses list
+        $plugin = $rcmail->plugins->exec_hook('kolab_auth_emails', array('emails' => $emails));
+        $emails = $plugin['emails'];
 
         if (!empty($emails)) {
             $args['form']['addressing']['content']['email'] = array(

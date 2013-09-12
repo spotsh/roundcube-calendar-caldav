@@ -55,6 +55,9 @@ class kolab_delegation extends rcube_plugin
         $this->add_hook('calendar_list_filter', array($this, 'calendar_list_filter'));
         $this->add_hook('calendar_load_itip', array($this, 'calendar_load_itip'));
 
+        // delegation support in kolab_auth plugin
+        $this->add_hook('kolab_auth_emails', array($this, 'kolab_auth_emails'));
+
         if ($this->rc->task == 'settings') {
             // delegation management interface
             $this->register_action('plugin.delegation',              array($this, 'controller_ui'));
@@ -238,6 +241,27 @@ class kolab_delegation extends rcube_plugin
             $this->rc->output->set_env('delegators', $engine->list_delegators_js());
             $this->include_script('kolab_delegation.js');
         }
+    }
+
+    /**
+     * Delegation support in kolab_auth plugin
+     */
+    public function kolab_auth_emails($args)
+    {
+        // Add delegators addresses to address selector in user identity form
+
+        if (!empty($_SESSION['delegators'])) {
+            // @TODO: Consider not adding all delegator addresses to the list.
+            // Instead add only address of currently edited identity
+            foreach ($_SESSION['delegators'] as $emails) {
+                $args['emails'] = array_merge($args['emails'], $emails);
+            }
+
+            $args['emails'] = array_unique($args['emails']);
+            sort($args['emails']);
+        }
+
+        return $args;
     }
 
     /**

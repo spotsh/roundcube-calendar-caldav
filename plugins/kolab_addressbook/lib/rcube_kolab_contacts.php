@@ -286,19 +286,20 @@ class rcube_kolab_contacts extends rcube_addressbook
             }
 
             $ids = array_keys($this->contacts);
-            $this->result->count = count($this->contacts);
         }
         else if (is_array($this->filter['ids'])) {
             $ids = $this->filter['ids'];
-            if ($this->result->count = count($ids)) {
+            if (count($ids)) {
                 $uids = array_map(array($this, 'id2uid'), $this->filter['ids']);
                 $this->_fetch_contacts(array(array('uid', '=', $uids)));
+            }
+            else {
+                $this->contacts = array();
             }
         }
         else {
             $this->_fetch_contacts();
             $ids = array_keys($this->contacts);
-            $this->result->count = count($ids);
         }
 
         // sort data arrays according to desired list sorting
@@ -309,6 +310,8 @@ class rcube_kolab_contacts extends rcube_addressbook
                 $ids = array_values(array_intersect(array_keys($this->contacts), $ids));
             else
                 $ids = array_keys($this->contacts);
+
+            $this->result->count = count($ids);
         }
 
         // fill contact data into the current result set
@@ -418,6 +421,11 @@ class rcube_kolab_contacts extends rcube_addressbook
 
             if (count($found) >= $scount) // && $advanced
                 $this->filter['ids'][] = $id;
+        }
+
+        // dummy result with contacts count
+        if (!$select) {
+            return new rcube_result_set(count($this->filter['ids']), ($this->list_page-1) * $this->page_size);
         }
 
         // list records (now limited by $this->filter)
@@ -925,7 +933,7 @@ class rcube_kolab_contacts extends rcube_addressbook
      *
      * @return boolean True if input is valid, False if not.
      */
-    public function validate($save_data)
+    public function validate(&$save_data)
     {
         // validate e-mail addresses
         $valid = parent::validate($save_data);
