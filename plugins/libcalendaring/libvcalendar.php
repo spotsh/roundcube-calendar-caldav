@@ -543,10 +543,10 @@ class libvcalendar
      * @param string Property name
      * @param object DateTime
      */
-    public static function datetime_prop($name, $dt, $utc = false)
+    public static function datetime_prop($name, $dt, $utc = false, $dateonly = null)
     {
         $vdt = new VObject\Property\DateTime($name);
-        $vdt->setDateTime($dt, $dt->_dateonly ? VObject\Property\DateTime::DATE :
+        $vdt->setDateTime($dt, $dt->_dateonly || $dateonly ? VObject\Property\DateTime::DATE :
             ($utc ? VObject\Property\DateTime::UTC : VObject\Property\DateTime::LOCALTZ));
         return $vdt;
     }
@@ -645,9 +645,9 @@ class libvcalendar
         if (!empty($event['changed']))
             $ve->add(self::datetime_prop('DTSTAMP', $event['changed'], true));
         if (!empty($event['start']))
-            $ve->add(self::datetime_prop('DTSTART', $event['start'], false));
+            $ve->add(self::datetime_prop('DTSTART', $event['start'], false, $event['allday']));
         if (!empty($event['end']))
-            $ve->add(self::datetime_prop('DTEND',   $event['end'], false));
+            $ve->add(self::datetime_prop('DTEND',   $event['end'], false, $event['allday']));
         if (!empty($event['due']))
             $ve->add(self::datetime_prop('DUE',   $event['due'], false));
 
