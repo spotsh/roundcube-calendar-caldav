@@ -23,6 +23,11 @@
 
 use \Sabre\VObject;
 
+// load Sabre\VObject classes
+if (!class_exists('\Sabre\VObject\Reader')) {
+    require_once __DIR__ . '/lib/Sabre/VObject/includes.php';
+}
+
 /**
  * Class to parse and build vCalendar (iCalendar) files
  *
@@ -50,11 +55,6 @@ class libvcalendar
      */
     function __construct($tz = null)
     {
-        // load Sabre\VObject classes
-        if (!class_exists('\Sabre\VObject\Reader')) {
-            require_once(__DIR__ . '/lib/Sabre/VObject/includes.php');
-        }
-
         $this->timezone = $tz;
         $this->prodid = '-//Roundcube//Roundcube libcalendaring ' . RCUBE_VERSION . '//Sabre//Sabre VObject ' . VObject\Version::VERSION . '//EN';
     }
@@ -834,6 +834,7 @@ class libvcalendar
 
 }
 
+
 /**
  * Override Sabre\VObject\Property that quotes commas in the location property
  * because Apple clients treat that property as list.
@@ -880,4 +881,3 @@ class vobject_location_property extends VObject\Property
         return $out;
     }
 }
-
