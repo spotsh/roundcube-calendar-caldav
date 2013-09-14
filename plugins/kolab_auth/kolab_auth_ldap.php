@@ -371,7 +371,8 @@ class kolab_auth_ldap extends rcube_ldap_generic
         if (!$user) {
             $user = $_SESSION['username'];
         }
-        else if (isset($this->icache[$user])) {
+
+        if (isset($this->icache[$user])) {
             list($user, $dc) = $this->icache[$user];
         }
         else {
