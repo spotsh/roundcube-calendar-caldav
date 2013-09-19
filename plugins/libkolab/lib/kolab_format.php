@@ -403,13 +403,21 @@ abstract class kolab_format
         $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
 
         // Save custom properties of the given object
-        if (!empty($object['x-custom'])) {
+        if (isset($object['x-custom'])) {
             $vcustom = new vectorcs;
-            foreach ($object['x-custom'] as $cp) {
+            foreach ((array)$object['x-custom'] as $cp) {
                 if (is_array($cp))
                     $vcustom->push(new CustomProperty($cp[0], $cp[1]));
             }
             $this->obj->setCustomProperties($vcustom);
+        }
+        else {  // load custom properties from XML for caching (#2238)
+            $object['x-custom'] = array();
+            $vcustom = $this->obj->customProperties();
+            for ($i=0; $i < $vcustom->size(); $i++) {
+                $cp = $vcustom->get($i);
+                $object['x-custom'][] = array($cp->identifier, $cp->value);
+            }
         }
     }
 
