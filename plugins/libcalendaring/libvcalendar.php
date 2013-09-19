@@ -105,9 +105,10 @@ class libvcalendar
     *
     * @param  string vCalendar input
     * @param  string Input charset (from envelope)
+    * @param  boolean True if parsing exceptions should be forwarded to the caller
     * @return array List of events extracted from the input
     */
-    public function import($vcal, $charset = 'UTF-8')
+    public function import($vcal, $charset = 'UTF-8', $forward_exceptions = false)
     {
         // TODO: convert charset to UTF-8 if other
 
@@ -122,6 +123,10 @@ class libvcalendar
                 'file' => __FILE__, 'line' => __LINE__,
                 'message' => "iCal data parse error: " . $e->getMessage()),
                 true, false);
+
+            if ($forward_exceptions) {
+                throw $e;
+            }
         }
 
         return array();
@@ -130,10 +135,12 @@ class libvcalendar
     /**
     * Read iCalendar events from a file
     *
-    * @param string File path to read from
+    * @param  string File path to read from
+    * @param  string Input charset (from envelope)
+    * @param  boolean True if parsing exceptions should be forwarded to the caller
     * @return array List of events extracted from the file
     */
-    public function import_from_file($filepath)
+    public function import_from_file($filepath, $charset = 'UTF-8', $forward_exceptions = false)
     {
         $this->objects = array();
         $fp = fopen($filepath, 'r');
@@ -145,7 +152,7 @@ class libvcalendar
         }
         fclose($fp);
 
-        return $this->import(file_get_contents($filepath));
+        return $this->import(file_get_contents($filepath), $charset, $forward_exceptions);
     }
 
     /**
@@ -229,6 +236,7 @@ class libvcalendar
             // set defaults
             'priority' => 0,
             'attendees' => array(),
+            'x-custom' => array(),
         );
 
         // Catch possible exceptions when date is invalid (Bug #2144)
@@ -407,10 +415,7 @@ class libvcalendar
             }
 
             // sanity-check and fix end date
-            if (empty($event['end'])) {
-                $event['end'] = clone $event['start'];
-            }
-            else if ($event['end'] < $event['start']) {
+            if (!empty($event['end']) && $event['end'] < $event['start']) {
                 $event['end'] = clone $event['start'];
             }
         }
@@ -435,7 +440,7 @@ class libvcalendar
                         }
                     }
                     if (!$trigger) {
-                        $trigger = preg_replace('/PT/', '', $prop->value);
+                        $trigger = preg_replace('/PT?/', '', $prop->value);
                     }
                     break;
 
@@ -467,7 +472,7 @@ class libvcalendar
         }
 
         // minimal validation
-        if (empty($event['uid']) || empty($event['start']) != empty($event['end'])) {
+        if (empty($event['uid']) || ($event['_type'] == 'event' && empty($event['start']) != empty($event['end']))) {
             throw new VObject\ParseException('Object validation failed: missing mandatory object properties');
         }
 
@@ -743,7 +748,8 @@ class libvcalendar
             $va = VObject\Component::create('VALARM');
             list($trigger, $va->action) = explode(':', $event['alarms']);
             $val = libcalendaring::parse_alaram_value($trigger);
-            if ($val[1]) $va->add('TRIGGER', preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger));
+            $period = $val[1] && preg_match('/[HMS]$/', $val[1]) ? 'PT' : 'P';
+            if ($val[1]) $va->add('TRIGGER', preg_replace('/^([-+])P?T?(.+)/', "\\1$period\\2", $trigger));
             else         $va->add('TRIGGER', gmdate('Ymd\THis\Z', $val[0]), array('VALUE' => 'DATE-TIME'));
             $ve->add($va);
         }

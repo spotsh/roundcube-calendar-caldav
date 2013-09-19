@@ -85,6 +85,14 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertFalse(array_key_exists('changed', $event), "No changed date field");
     }
 
+    function test_invalid_vevent()
+    {
+        $this->setExpectedException('\Sabre\VObject\ParseException');
+
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/invalid-event.ics', 'UTF-8', true);
+    }
+
     /**
      * Test some extended ical properties such as attendees, recurrence rules, alarms and attachments
      *
@@ -168,6 +176,18 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
 
         $this->assertEquals(0, count($freebusy['periods']), "Ignore 0-length freebudy periods");
         $this->assertContains('dummy', $freebusy['comment'], "Parse comment");
+    }
+
+    function test_vtodo()
+    {
+        $ical = new libvcalendar();
+        $tasks = $ical->import_from_file(__DIR__ . '/resources/vtodo.ics', 'UTF-8', true);
+        $task = $tasks[0];
+
+        $this->assertInstanceOf('DateTime', $task['start'],   "'start' property is DateTime object");
+        $this->assertInstanceOf('DateTime', $task['due'],     "'due' property is DateTime object");
+        $this->assertEquals('-1D:DISPLAY',  $task['alarms'],  "Taks alarm value");
+        $this->assertEquals(1, count($task['x-custom']),      "Custom properties");
     }
 
     /**
