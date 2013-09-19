@@ -63,25 +63,28 @@ class kolab_auth extends rcube_plugin
             $rcmail->config->set('ldap_debug', true);
             $rcmail->config->set('smtp_debug', true);
         }
-
     }
 
     public function startup($args)
     {
-        // Arguments are task / action, not interested
-        if (!empty($_SESSION['user_roledns'])) {
-            $this->load_user_role_plugins_and_settings($_SESSION['user_roledns']);
-        }
+        $this->load_user_role_plugins_and_settings();
 
         return $args;
     }
 
-    public function load_user_role_plugins_and_settings($role_dns)
+    /**
+     * Modifies list of plugins and settings according to
+     * specified LDAP roles
+     */
+    public function load_user_role_plugins_and_settings()
     {
+        if (empty($_SESSION['user_roledns'])) {
+            return;
+        }
+
         $rcmail = rcube::get_instance();
         $this->load_config();
 
-        // Check role dependent plugins to enable and settings to modify
 
         // Example 'kolab_auth_role_plugins' =
         //
@@ -109,25 +112,19 @@ class kolab_auth extends rcube_plugin
 
         $role_settings = $rcmail->config->get('kolab_auth_role_settings');
 
-        $ldap = self::ldap();
-        if (!$ldap || !$ldap->ready) {
-            $args['abort'] = true;
-            return $args;
-        }
-
         if (!empty($role_plugins)) {
             foreach ($role_plugins as $role_dn => $plugins) {
-                $role_plugins[$ldap->parse_vars($role_dn)] = $plugins;
+                $role_plugins[self::parse_ldap_vars($role_dn)] = $plugins;
             }
         }
 
         if (!empty($role_settings)) {
             foreach ($role_settings as $role_dn => $settings) {
-                $role_settings[$ldap->parse_vars($role_dn)] = $settings;
+                $role_settings[self::parse_ldap_vars($role_dn)] = $settings;
             }
         }
 
-        foreach ($role_dns as $role_dn) {
+        foreach ($_SESSION['user_roledns'] as $role_dn) {
             if (isset($role_plugins[$role_dn]) && is_array($role_plugins[$role_dn])) {
                 foreach ($role_plugins[$role_dn] as $plugin) {
                     $this->require_plugin($plugin);
@@ -404,6 +401,12 @@ class kolab_auth extends rcube_plugin
         $_SESSION['kolab_uid'] = is_array($record['uid']) ? $record['uid'][0] : $record['uid'];
         $_SESSION['kolab_dn']  = $record['dn'];
 
+        // Store LDAP replacement variables used for current user
+        // This improves performance of load_user_role_plugins_and_settings()
+        // which is executed on every request (via startup hook) and where
+        // we don't like to use LDAP (connection + bind + search)
+        $_SESSION['kolab_auth_vars'] = $ldap->get_parse_vars();
+
         // Set user login
         if ($login_attr) {
             $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
@@ -558,5 +561,22 @@ class kolab_auth extends rcube_plugin
         self::$ldap = new kolab_auth_ldap($addressbook);
 
         return self::$ldap;
+    }
+
+    /**
+     * Parses LDAP DN string with replacing supported variables.
+     * See kolab_auth_ldap::parse_vars()
+     *
+     * @param string $str LDAP DN string
+     *
+     * @return string Parsed DN string
+     */
+    public static function parse_ldap_vars($str)
+    {
+        if (!empty($_SESSION['kolab_auth_vars'])) {
+            $str = strtr($str, $_SESSION['kolab_auth_vars']);
+        }
+
+        return $str;
     }
 }

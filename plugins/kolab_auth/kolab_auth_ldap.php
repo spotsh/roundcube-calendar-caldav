@@ -415,6 +415,8 @@ class kolab_auth_ldap extends rcube_ldap_generic
 
         $replaces = array('%dc' => $dc, '%d' => $d, '%fu' => $user, '%u' => $u);
 
+        $this->parse_replaces = $replaces;
+
         return strtr($str, $replaces);
     }
 
@@ -459,6 +461,16 @@ class kolab_auth_ldap extends rcube_ldap_generic
 
             return $domain ? 'dc=' . implode(',dc=', explode('.', $domain)) : null;
         }
+    }
+
+    /**
+     * Returns variables used for replacement in (last) parse_vars() call
+     *
+     * @return array Variable-value hash array
+     */
+    public function get_parse_vars()
+    {
+        return $this->parse_replaces;
     }
 
     /**
