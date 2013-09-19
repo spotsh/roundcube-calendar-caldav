@@ -308,7 +308,7 @@ class libcalendaring extends rcube_plugin
     {
         if ($val[0] == '@')
             return array(substr($val, 1));
-        else if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
+        else if (preg_match('/([+-])P?T?(\d+)([HMSDW])/', $val, $m))
             return array($m[2], $m[1].$m[3]);
 
         return false;

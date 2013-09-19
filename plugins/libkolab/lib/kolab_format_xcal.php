@@ -385,7 +385,7 @@ abstract class kolab_format_xcal extends kolab_format
             if (preg_match('/^@(\d+)/', $offset, $d)) {
                 $alarm->setStart(self::get_datetime($d[1], new DateTimeZone('UTC')));
             }
-            else if (preg_match('/^([-+]?)(\d+)([SMHDW])/', $offset, $d)) {
+            else if (preg_match('/^([-+]?)P?T?(\d+)([SMHDW])/', $offset, $d)) {
                 $days = $hours = $minutes = $seconds = 0;
                 switch ($d[3]) {
                     case 'W': $days  = 7*intval($d[2]); break;
