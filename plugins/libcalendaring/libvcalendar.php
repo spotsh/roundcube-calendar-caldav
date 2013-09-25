@@ -576,9 +576,10 @@ class libvcalendar
      */
     public static function datetime_prop($name, $dt, $utc = false, $dateonly = null)
     {
+        $is_utc = $utc || (($tz = $dt->getTimezone()) && in_array($tz->getName(), array('UTC','GMT','Z')));
         $vdt = new VObject\Property\DateTime($name);
         $vdt->setDateTime($dt, $dt->_dateonly || $dateonly ? VObject\Property\DateTime::DATE :
-            ($utc ? VObject\Property\DateTime::UTC : VObject\Property\DateTime::LOCALTZ));
+            ($is_utc ? VObject\Property\DateTime::UTC : VObject\Property\DateTime::LOCALTZ));
         return $vdt;
     }
 
