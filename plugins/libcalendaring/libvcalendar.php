@@ -675,7 +675,7 @@ class libvcalendar
         if (!empty($event['created']))
             $ve->add(self::datetime_prop('CREATED', $event['created'], true));
         if (!empty($event['changed']))
-            $ve->add(self::datetime_prop('DTSTAMP', $event['changed'], true));
+            $ve->add(self::datetime_prop('LAST-MODIFIED', $event['changed'], true));
         if (!empty($event['start']))
             $ve->add(self::datetime_prop('DTSTART', $event['start'], false, $event['allday']));
         if (!empty($event['end']))
