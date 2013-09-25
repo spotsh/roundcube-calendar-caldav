@@ -393,10 +393,11 @@ abstract class kolab_format
             $this->obj->setUid($object['uid']);
 
         // set some automatic values if missing
-        if (method_exists($this->obj, 'setCreated') && !$this->obj->created()) {
-            if (empty($object['created']))
-                $object['created'] = new DateTime('now', self::$timezone);
-            $this->obj->setCreated(self::get_datetime($object['created']));
+        if (empty($object['created']) && method_exists($this->obj, 'setCreated')) {
+            $cdt = $this->obj->created();
+            $object['created'] = $cdt && $cdt->isValid() ? self::php_datetime($cdt) : new DateTime('now', self::$timezone);
+            if (!$cdt || !$cdt->isValid())
+                $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
         $object['changed'] = new DateTime('now', self::$timezone);
