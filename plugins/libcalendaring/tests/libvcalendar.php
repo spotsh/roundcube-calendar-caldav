@@ -323,6 +323,19 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEquals($num, substr_count($output, 'END:VEVENT'),   "VEVENT encapsulation END");
     }
 
+    function test_datetime()
+    {
+        $localtime = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('Europe/Berlin')));
+        $localdate = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01', new DateTimeZone('Europe/Berlin')), false, true);
+        $utctime   = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('UTC')));
+        $asutctime = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('Europe/Berlin')), true);
+
+        $this->assertContains('TZID=Europe/Berlin', $localtime->serialize());
+        $this->assertContains('VALUE=DATE', $localdate->serialize());
+        $this->assertContains('20130901T120000Z', $utctime->serialize());
+        $this->assertContains('20130901T100000Z', $asutctime->serialize());
+    }
+
     function get_attachment_data($id, $event)
     {
         return $this->attachment_data;
