@@ -665,6 +665,7 @@ class libvcalendar
         $type = $event['_type'] ?: 'event';
         $ve = VObject\Component::create($this->type_component_map[$type]);
         $ve->add('UID', $event['uid']);
+        $ve->add(self::datetime_prop('DTSTAMP', new DateTime(), true));
 
         // all-day events end the next day
         if ($event['allday'] && !empty($event['end'])) {
