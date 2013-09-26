@@ -119,7 +119,6 @@ class kolab_auth_ldap extends rcube_ldap_generic
                 $entries = $result->entries(true);
                 $dn      = key($entries);
                 $entry   = array_pop($entries);
-                $entry   = rcube_ldap_generic::normalize_entry($entry);
                 $entry   = $this->field_mapping($dn, $entry);
 
                 return $entry;
