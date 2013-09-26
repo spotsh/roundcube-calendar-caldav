@@ -167,6 +167,7 @@ $labels['tabsharing'] = 'Freigabe';
 // messages
 $labels['deleteventconfirm'] = 'Möchten Sie diesen Termin wirklich löschen?';
 $labels['deletecalendarconfirm'] = 'Möchten Sie diesen Kalender mit allen Terminen wirklich löschen?';
+$labels['deletecalendarconfirmrecursive'] = 'Möchten Sie diesen Kalender mit allen Terminen und Unter-Kalendern wirklich löschen?';
 $labels['savingdata'] = 'Speichere Daten...';
 $labels['errorsaving'] = 'Fehler beim Speichern.';
 $labels['operationfailed'] = 'Die Aktion ist fehlgeschlagen.';
