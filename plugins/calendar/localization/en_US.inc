@@ -172,6 +172,7 @@ $labels['tabsharing'] = 'Sharing';
 // messages
 $labels['deleteventconfirm'] = 'Do you really want to delete this event?';
 $labels['deletecalendarconfirm'] = 'Do you really want to delete this calendar with all its events?';
+$labels['deletecalendarconfirmrecursive'] = 'Do you really want to delete this calendar with all its events and sub-calendars?';
 $labels['savingdata'] = 'Saving data...';
 $labels['errorsaving'] = 'Failed to save changes.';
 $labels['operationfailed'] = 'The requested operation failed.';

@@ -1911,7 +1911,7 @@ function rcube_calendar_ui(settings)
 
     this.calendar_remove = function(calendar)
     {
-      if (confirm(rcmail.gettext('deletecalendarconfirm', 'calendar'))) {
+      if (confirm(rcmail.gettext(calendar.children ? 'deletecalendarconfirmrecursive' : 'deletecalendarconfirm', 'calendar'))) {
         rcmail.http_post('calendar', { action:'remove', c:{ id:calendar.id } });
         return true;
       }
@@ -1920,7 +1920,24 @@ function rcube_calendar_ui(settings)
 
     this.calendar_destroy_source = function(id)
     {
+      var delete_ids = [];
+
       if (this.calendars[id]) {
+        // find sub-calendars
+        if (this.calendars[id].children) {
+          for (var child_id in this.calendars) {
+            if (String(child_id).indexOf(id) == 0)
+              delete_ids.push(child_id);
+          }
+        }
+        else {
+          delete_ids.push(id);
+        }
+      }
+
+      // delete all calendars in the list
+      for (var i=0; i < delete_ids.length; i++) {
+        id = delete_ids[i];
         fc.fullCalendar('removeEventSource', this.calendars[id]);
         $(rcmail.get_folder_li(id, 'rcmlical')).remove();
         $('#edit-calendar option[value="'+id+'"]').remove();
