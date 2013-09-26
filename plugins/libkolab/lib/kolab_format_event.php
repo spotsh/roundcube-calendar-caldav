@@ -138,6 +138,17 @@ class kolab_format_event extends kolab_format_xcal
             'attendees'   => array(),
         );
 
+        // derive event end from duration (#1916)
+        if (!$object['end'] && $object['start'] && ($duration = $this->obj->duration()) && $duration->isValid()) {
+            $interval = new DateInterval('PT0S');
+            $interval->d = $duration->weeks() * 7 + $duration->days();
+            $interval->h = $duration->hours();
+            $interval->i = $duration->minutes();
+            $interval->s = $duration->seconds();
+            $object['end'] = clone $object['start'];
+            $object['end']->add($interval);
+        }
+
         // organizer is part of the attendees list in Roundcube
         if ($object['organizer']) {
             $object['organizer']['role'] = 'ORGANIZER';
