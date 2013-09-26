@@ -43,8 +43,8 @@ class kolab_storage_folder
     public $default = false;
 
     /**
-     * Is this folder set to be default
-     * @var boolean
+     * The kolab_storage_cache instance for caching operations
+     * @var object
      */
     public $cache;
 
