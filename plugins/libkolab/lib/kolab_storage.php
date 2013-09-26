@@ -276,8 +276,15 @@ class kolab_storage
     {
         self::setup();
 
+        $active = self::folder_is_active($oldname);
         $success = self::$imap->rename_folder($oldname, $newname);
         self::$last_error = self::$imap->get_error_str();
+
+        // pass active state to new folder name
+        if ($success && $active) {
+            self::set_state($oldnam, false);
+            self::set_state($newname, true);
+        }
 
         return $success;
     }
