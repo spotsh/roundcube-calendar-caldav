@@ -276,6 +276,7 @@ class kolab_storage
     {
         self::setup();
 
+        $oldfolder = self::get_folder($oldname);
         $active = self::folder_is_active($oldname);
         $success = self::$imap->rename_folder($oldname, $newname);
         self::$last_error = self::$imap->get_error_str();
@@ -284,6 +285,11 @@ class kolab_storage
         if ($success && $active) {
             self::set_state($oldnam, false);
             self::set_state($newname, true);
+        }
+
+        // assign existing cache entries to new resource uri
+        if ($success && $oldfolder) {
+            $oldfolder->cache->rename($newname);
         }
 
         return $success;

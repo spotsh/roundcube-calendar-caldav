@@ -316,6 +316,23 @@ class kolab_storage_cache
         return $this->db->affected_rows($result);
     }
 
+    /**
+     * Update resource URI for existing cache entries
+     *
+     * @param string Target IMAP folder to move it to
+     */
+    public function rename($new_folder)
+    {
+        $target = kolab_storage::get_folder($new_folder);
+
+        // resolve new message UID in target folder
+        $this->db->query(
+            "UPDATE kolab_cache SET resource=? ".
+            "WHERE resource=?",
+            $target->get_resource_uri(),
+            $this->resource_uri
+        );
+    }
 
     /**
      * Select Kolab objects filtered by the given query
