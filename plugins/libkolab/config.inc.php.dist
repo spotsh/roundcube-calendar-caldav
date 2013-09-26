@@ -12,9 +12,6 @@ $rcmail_config['kolab_format_version']  = '3.0';
 // Defaults to https://<imap-server->/freebusy
 $rcmail_config['kolab_freebusy_server'] = 'https://<some-host>/<freebusy-path>';
 
-// Set this option to disable SSL certificate checks when triggering Free/Busy (enabled by default)
-$rcmail_config['kolab_ssl_verify_peer'] = false;
-
 // Enables listing of only subscribed folders. This e.g. will limit
 // folders in calendar view or available addressbooks
 $rcmail_config['kolab_use_subscriptions'] = false;
@@ -23,4 +20,7 @@ $rcmail_config['kolab_use_subscriptions'] = false;
 // for displaying resource folder names (experimental!)
 $rcmail_config['kolab_custom_display_names'] = false;
 
-?>
+// Configuration of HTTP requests.
+// See http://pear.php.net/manual/en/package.http.http-request2.config.php
+// for list of supported configuration options (array keys)
+$rcmail_config['kolab_http_request'] = array();
