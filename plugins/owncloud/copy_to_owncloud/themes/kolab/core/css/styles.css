@@ -1,0 +1,15 @@
+
+#content,
+#controls,
+#navigation {
+	top: 0px;
+}
+
+#navigation #settings {
+	bottom: 0px;
+}
+
+#leftcontent, .leftcontent,
+#rightcontent, .rightcontent {
+	top: 2.9em;
+}
