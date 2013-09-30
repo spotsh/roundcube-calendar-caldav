@@ -49,6 +49,9 @@ class kolab_files extends rcube_plugin
         $this->register_action('prefs', array($this, 'actions'));
         $this->register_action('open',  array($this, 'actions'));
 
+        // we use libkolab::http_request() from libkolab with its configuration
+        $this->require_plugin('libkolab');
+
         $this->ui();
     }
 
