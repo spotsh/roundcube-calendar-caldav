@@ -78,7 +78,7 @@ class libkolab extends rcube_plugin
         $http_config = (array) $rcube->config->get('kolab_http_request');
 
         // deprecated configuration options
-        if (empty($$http_config)) {
+        if (empty($http_config)) {
             foreach (array('ssl_verify_peer', 'ssl_verify_host') as $option) {
                 $value = $rcube->config->get('kolab_' . $option, true);
                 if (is_bool($value)) {
