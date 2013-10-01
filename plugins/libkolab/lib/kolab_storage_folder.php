@@ -1110,9 +1110,7 @@ class kolab_storage_folder
         require_once('HTTP/Request2.php');
 
         try {
-            $rcmail = rcube::get_instance();
-            $request = new HTTP_Request2($url);
-            $request->setConfig(array('ssl_verify_peer' => $rcmail->config->get('kolab_ssl_verify_peer', true)));
+            $request = libkolab::http_request($url);
 
             // set authentication credentials
             if ($auth_user && $auth_passwd)

@@ -875,8 +875,6 @@ class kolab_driver extends calendar_driver
    */
   public function get_freebusy_list($email, $start, $end)
   {
-    require_once('HTTP/Request2.php');
-
     if (empty($email)/* || $end < time()*/)
       return false;
 
@@ -889,14 +887,11 @@ class kolab_driver extends calendar_driver
 
     // ask kolab server first
     try {
-      $rcmail = rcube::get_instance();
-      $request = new HTTP_Request2(kolab_storage::get_freebusy_url($email));
-      $request->setConfig(array(
+      $request_config = array(
         'store_body'       => true,
         'follow_redirects' => true,
-        'ssl_verify_peer'  => $rcmail->config->get('kolab_ssl_verify_peer', true),
-      ));
-
+      );
+      $request  = libkolab::http_request(kolab_storage::get_freebusy_url($email), 'GET', $request_config);
       $response = $request->send();
 
       // authentication required

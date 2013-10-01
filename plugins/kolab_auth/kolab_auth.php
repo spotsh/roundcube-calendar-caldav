@@ -41,6 +41,9 @@ class kolab_auth extends rcube_plugin
         $this->add_hook('startup', array($this, 'startup'));
         $this->add_hook('user_create', array($this, 'user_create'));
 
+        // Hook for password change
+        $this->add_hook('password_ldap_bind', array($this, 'password_ldap_bind'));
+
         // Hooks related to "Login As" feature
         $this->add_hook('template_object_loginform', array($this, 'login_form'));
         $this->add_hook('storage_connect', array($this, 'imap_connect'));
@@ -444,6 +447,20 @@ class kolab_auth extends rcube_plugin
             rcube::write_log('userlogins', sprintf('Admin login for %s by %s from %s',
                 $args['user'], $origname, rcube_utils::remote_ip()));
         }
+
+        return $args;
+    }
+
+    /**
+     * Set user DN for password change (password plugin with ldap_simple driver)
+     */
+    public function password_ldap_bind($args)
+    {
+        $args['user_dn'] = $_SESSION['kolab_dn'];
+
+        $rcmail = rcube::get_instance();
+
+        $rcmail->config->set('password_ldap_method', 'user');
 
         return $args;
     }
