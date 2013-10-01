@@ -621,6 +621,7 @@ class libvcalendar
     public function export($objects, $method = null, $write = false, $get_attachment = false, $recurrence_id = null)
     {
         $memory_limit = parse_bytes(ini_get('memory_limit'));
+        $this->method = $method;
 
         // encapsulate in VCALENDAR container
         $vcal = VObject\Component::create('VCALENDAR');
@@ -665,7 +666,10 @@ class libvcalendar
         $type = $event['_type'] ?: 'event';
         $ve = VObject\Component::create($this->type_component_map[$type]);
         $ve->add('UID', $event['uid']);
-        $ve->add(self::datetime_prop('DTSTAMP', new DateTime(), true));
+
+        // set DTSTAMP according to RFC 5545, 3.8.7.2.
+        $dtstamp = !empty($event['changed']) && !empty($this->method) ? $event['changed'] : new DateTime();
+        $ve->add(self::datetime_prop('DTSTAMP', $dtstamp, true));
 
         // all-day events end the next day
         if ($event['allday'] && !empty($event['end'])) {
