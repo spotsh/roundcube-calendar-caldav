@@ -558,7 +558,9 @@ function rcube_tasklist_ui(settings)
 
         var id = rec.id,
             oldid = rec.tempid || id,
+            oldrec = listdata[oldid],
             oldindex = $.inArray(oldid, listindex),
+            oldparent = oldrec && (oldrec._old_parent_id || oldrec.parent_id),
             list = me.tasklists[rec.list];
 
         if (oldindex >= 0)
@@ -567,6 +569,15 @@ function rcube_tasklist_ui(settings)
             listindex.push(id);
 
         listdata[id] = rec;
+
+        // remove child-pointer from old parent
+        if (oldparent && listdata[oldparent] && oldparent != rec.parent_id) {
+            var oldchilds = listdata[oldparent].children,
+                i = $.inArray(oldid, oldchilds);
+            if (i >= 0) {
+                oldchilds = oldchilds.slice(0,i).concat(oldchilds.slice(i+1));
+            }
+        }
 
         // register a forward-pointer to child tasks
         if (rec.parent_id && listdata[rec.parent_id] && listdata[rec.parent_id].children && $.inArray(id, listdata[rec.parent_id].children) >= 0)
@@ -853,6 +864,7 @@ function rcube_tasklist_ui(settings)
 
             if (rec && parent.length) {
                 // submit changes to server
+                rec._old_parent_id = rec.parent_id;
                 rec.parent_id = drop_id || 0;
                 save_task(rec, 'edit');
 
@@ -1337,7 +1349,7 @@ function rcube_tasklist_ui(settings)
     function match_filter(rec, cache, recursive)
     {
         // return cached result
-        if (typeof cache[rec.id] != 'undefined') {
+        if (typeof cache[rec.id] != 'undefined' && recursive != 2) {
             return cache[rec.id];
         }
 
@@ -1367,7 +1379,9 @@ function rcube_tasklist_ui(settings)
             }
         }
 
-        cache[rec.id] = match;
+        if (recursive != 1) {
+            cache[rec.id] = match;
+        }
         return match;
     }
 
