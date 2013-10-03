@@ -76,6 +76,7 @@ $labels['onemonthback'] = '1 Monat zurück';
 $labels['nmonthsback'] = '$nr Monate zurück';
 $labels['showurl'] = 'URL anzeigen';
 $labels['showurldescription'] = 'Über die folgende Adresse können Sie mit einem beliebigen Kalenderprogramm Ihren Kalender abrufen (nur lesend), sofern dieses das iCal-Format unterstützt.';
+$labels['caldavurldescription'] = 'Benutzen Sie folgende Addresse in einer <a href="http://de.wikipedia.org/wiki/CalDAV" target="_blank">CalDAV</a>-Anwendung (wie z.B. Evolution oder Mozilla Thunderbird) um diesen spezifischen Kalender mit dem Computer oder Mobiltelefon zu synchronisieren.';
 
 // agenda view
 $labels['listrange'] = 'Angezeigter Bereich:';

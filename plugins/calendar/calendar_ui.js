@@ -2009,6 +2009,14 @@ function rcube_calendar_ui(settings)
         $dialog.dialog('close');
 
       if (calendar.feedurl) {
+        if (calendar.caldavurl) {
+          $('#caldavurl').val(calendar.caldavurl);
+          $('#calendarcaldavurl').show();
+        }
+        else {
+          $('#calendarcaldavurl').hide();
+        }
+
         $dialog.dialog({
           resizable: true,
           closeOnEscape: true,
