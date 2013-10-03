@@ -225,7 +225,8 @@ pre {
 	background-position: right -92px;
 }
 
-#calfeedurl {
+#calfeedurl,
+#caldavurl {
 	width: 98%;
 	background: #fbfbfb;
 	padding: 4px;

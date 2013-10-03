@@ -156,6 +156,24 @@ class kolab_calendar
   }
 
   /**
+   * Compose an URL for CalDAV access to this calendar (if configured)
+   */
+  public function get_caldav_url()
+  {
+    $url = null;
+    if ($template = $this->cal->rc->config->get('calendar_caldav_url', null)) {
+      return strtr($template, array(
+        '%h' => $_SERVER['HTTP_HOST'],
+        '%u' => urlencode($this->cal->rc->get_user_name()),
+        '%i' => urlencode($this->storage->get_uid()),
+        '%n' => urlencode($this->imap_folder),
+      ));
+    }
+
+    return false;
+  }
+
+  /**
    * Return the corresponding kolab_storage_folder instance
    */
   public function get_folder()

@@ -123,6 +123,7 @@ class kolab_driver extends calendar_driver
         'active'   => $cal->storage->is_active(),
         'owner'    => $cal->get_owner(),
         'children' => true,  // TODO: determine if that folder indeed has child folders
+        'caldavurl' => $cal->get_caldav_url(),
       );
     }
 
