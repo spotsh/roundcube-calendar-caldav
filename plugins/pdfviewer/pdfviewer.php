@@ -6,7 +6,7 @@
  * Render PDF files directly in the preview window
  * by using the JavaScript PDF Reader pdf.js by andreasgal (http://mozilla.github.com/pdf.js)
  *
- * @version 0.1
+ * @version 0.1.2
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2013, Kolab Systems AG
