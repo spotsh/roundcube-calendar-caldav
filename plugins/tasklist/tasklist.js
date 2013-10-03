@@ -467,13 +467,14 @@ function rcube_tasklist_ui(settings)
         // clear display
         var id, rec,
             count = 0,
+            cache = {},
             msgbox = $('#listmessagebox').hide(),
             list = $(rcmail.gui_objects.resultlist).html('');
 
         for (var i=0; i < listindex.length; i++) {
             id = listindex[i];
             rec = listdata[id];
-            if (match_filter(rec)) {
+            if (match_filter(rec, cache)) {
                 render_task(rec);
                 count++;
             }
@@ -1333,9 +1334,14 @@ function rcube_tasklist_ui(settings)
     /**
      * Check if the given task matches the current filtermask and tag selection
      */
-    function match_filter(rec)
+    function match_filter(rec, cache, recursive)
     {
-        var match = !filtermask || (filtermask & rec.mask) > 0;
+        // return cached result
+        if (typeof cache[rec.id] != 'undefined') {
+            return cache[rec.id];
+        }
+
+        var match = !filtermask || (filtermask & rec.mask) > 0
 
         if (match && tagsfilter.length) {
             match = rec.tags && rec.tags.length;
@@ -1345,6 +1351,23 @@ function rcube_tasklist_ui(settings)
             }
         }
 
+        // check if a child task matches the tags
+        if (!match && (recursive||0) < 2 && rec.children && rec.children.length) {
+            for (var j=0; !match && j < rec.children.length; j++) {
+                match = match_filter(listdata[rec.children[j]], cache, 1);
+            }
+        }
+
+        // walk up the task tree and check if a parent task matches
+        var parent_id;
+        if (!match && !recursive && (parent_id = rec.parent_id)) {
+            while (!match && parent_id && listdata[parent_id]) {
+                match = match_filter(listdata[parent_id], cache, 2);
+                parent_id = listdata[parent_id].parent_id;
+            }
+        }
+
+        cache[rec.id] = match;
         return match;
     }
 
