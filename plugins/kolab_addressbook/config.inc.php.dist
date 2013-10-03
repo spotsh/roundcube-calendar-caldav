@@ -11,4 +11,12 @@
 */
 $rcmail_config['kolab_addressbook_prio'] = 0;
 
+// Base URL to build fully qualified URIs to access calendars via CALDAV
+// The following replacement variables are supported:
+// %h - Current HTTP host
+// %u - Current webmail user name
+// %n - Folder name
+// %i - Folder UUID
+// $rcmail_config['kolab_addressbook_carddav_url'] = 'http://%h/iRony/addressbooks/%u/%i';
+
 ?>

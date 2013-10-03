@@ -178,6 +178,24 @@ class rcube_kolab_contacts extends rcube_addressbook
         return $this->namespace;
     }
 
+    /**
+     * Compose an URL for CardDAV access to this address book (if configured)
+     */
+    public function get_carddav_url()
+    {
+      $url = null;
+      $rcmail = rcmail::get_instance();
+      if ($template = $rcmail->config->get('kolab_addressbook_carddav_url', null)) {
+        return strtr($template, array(
+          '%h' => $_SERVER['HTTP_HOST'],
+          '%u' => urlencode($rcmail->get_user_name()),
+          '%i' => urlencode($this->storagefolder->get_uid()),
+          '%n' => urlencode($this->imap_folder),
+        ));
+      }
+
+      return false;
+    }
 
     /**
      * Setter for the current group

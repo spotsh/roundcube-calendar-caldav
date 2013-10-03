@@ -18,6 +18,7 @@ rcube_webmail.prototype.set_book_actions = function()
 
     this.enable_command('book-create', true);
     this.enable_command('book-edit', 'book-delete', source && sources[source] && sources[source].kolab && sources[source].editable);
+    this.enable_command('book-showurl', source && sources[source] && sources[source].carddavurl);
 };
 
 rcube_webmail.prototype.book_create = function()
@@ -35,6 +36,29 @@ rcube_webmail.prototype.book_delete = function()
     if (this.env.source != '' && confirm(this.get_label('kolab_addressbook.bookdeleteconfirm'))) {
         var lock = this.set_busy(true, 'kolab_addressbook.bookdeleting');
         this.http_request('plugin.book', '_act=delete&_source='+urlencode(this.book_realname()), lock);
+    }
+};
+
+rcube_webmail.prototype.book_showurl = function()
+{
+    var source = this.env.source ? this.env.address_sources[this.env.source] : null;
+    if (source && source.carddavurl) {
+        $('div.showurldialog:ui-dialog').dialog('close');
+
+        var $dialog = $('<div>').addClass('showurldialog').append('<p>'+rcmail.gettext('carddavurldescription', 'kolab_addressbook')+'</p>'),
+            textbox = $('<textarea>').addClass('urlbox').css('width', '100%').attr('rows', 2).appendTo($dialog);
+
+          $dialog.dialog({
+            resizable: true,
+            closeOnEscape: true,
+            title: rcmail.gettext('bookshowurl', 'kolab_addressbook'),
+            close: function() {
+              $dialog.dialog("destroy").remove();
+            },
+            width: 520
+          }).show();
+
+          textbox.val(source.carddavurl).select();
     }
 };
 
