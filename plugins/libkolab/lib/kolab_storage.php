@@ -979,7 +979,7 @@ class kolab_storage
             }
 
             if (!self::$imap->folder_exists($folder)) {
-                if (!self::$imap->folder_create($folder)) {
+                if (!self::$imap->create_folder($folder)) {
                     return;
                 }
             }
