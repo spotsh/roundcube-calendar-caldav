@@ -663,6 +663,9 @@ class kolab_driver extends calendar_driver
           $event['end'] = $master['end'];
         }
 
+        // unset _dateonly flags in (cached) date objects
+        unset($event['start']->_dateonly, $event['end']->_dateonly);
+
         $success = $storage->update_event($event);
         break;
     }
