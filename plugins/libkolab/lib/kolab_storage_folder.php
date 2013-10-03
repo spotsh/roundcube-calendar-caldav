@@ -260,6 +260,43 @@ class kolab_storage_folder
     }
 
     /**
+     * Helper method to extract folder UID metadata
+     *
+     * @return string Folder's UID
+     */
+    public function get_uid()
+    {
+        // UID is defined in folder METADATA
+        $metakeys = array(kolab_storage::UID_KEY_SHARED, kolab_storage::UID_KEY_PRIVATE, kolab_storage::UID_KEY_CYRUS);
+        $metadata = $this->get_metadata($metakeys);
+        foreach ($metakeys as $key) {
+            if (($uid = $metadata[$key])) {
+                return $uid;
+            }
+        }
+
+        // generate a folder UID and set it to IMAP
+        $uid = rtrim(chunk_split(md5($this->name . $this->get_owner()), 12, '-'), '-');
+        $this->set_uid($uid);
+
+        return $uid;
+    }
+
+    /**
+     * Helper method to set an UID value to the given IMAP folder instance
+     *
+     * @param string Folder's UID
+     * @return boolean True on succes, False on failure
+     */
+    public function set_uid($uid)
+    {
+        if (!($success = $this->set_metadata(array(kolab_storage::UID_KEY_SHARED => $uid)))) {
+            $success = $this->set_metadata(array(kolab_storage::UID_KEY_PRIVATE => $uid));
+        }
+        return $success;
+    }
+
+    /**
      * Check activation status of this folder
      *
      * @return boolean True if enabled, false if not
