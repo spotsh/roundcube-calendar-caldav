@@ -31,6 +31,9 @@ class kolab_storage
     const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
     const NAME_KEY_SHARED   = '/shared/vendor/kolab/displayname';
     const NAME_KEY_PRIVATE  = '/private/vendor/kolab/displayname';
+    const UID_KEY_SHARED    = '/shared/vendor/kolab/uniqueid';
+    const UID_KEY_PRIVATE   = '/private/vendor/kolab/uniqueid';
+    const UID_KEY_CYRUS     = '/shared/vendor/cmu/cyrus-imapd/uniqueid';
 
     public static $version = '3.0';
     public static $last_error;
