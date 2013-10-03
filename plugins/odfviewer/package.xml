@@ -13,11 +13,11 @@
 		<email>bruederli@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2011-12-06</date>
-	<time>12:12:00</time>
+	<date>2013-10-03</date>
+	<time>15:46:00</time>
 	<version>
-		<release>0.2</release>
-		<api>0.2</api>
+		<release>0.3</release>
+		<api>0.3</api>
 	</version>
 	<stability>
 		<release>beta</release>
@@ -28,8 +28,10 @@
 	<contents>
 		<dir baseinstalldir="/" name="/">
 			<file name="odfviewer.php" role="php"></file>
+			<file name="ODFViewerPlugin.js" role="data"></file>
 			<file name="webodf.js" role="data"></file>
-			<file name="webodf.css" role="data"></file>
+			<file name="viewer.js" role="data"></file>
+			<file name="viewer.css" role="data"></file>
 			<file name="odf.html" role="data"></file>
 			<file name="README" role="data"></file>
 			<file name="LICENSE" role="data"></file>
