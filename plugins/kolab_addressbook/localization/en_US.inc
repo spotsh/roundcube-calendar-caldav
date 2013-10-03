@@ -25,6 +25,8 @@ $labels['bookdelete'] = 'Delete address book';
 $labels['bookproperties'] = 'Address book properties';
 $labels['bookname'] = 'Book name';
 $labels['parentbook'] = 'Superior book';
+$labels['bookshowurl'] = 'Show CardDAV URL';
+$labels['carddavurldescription'] = 'Copy this address to a <a href="http://en.wikipedia.org/wiki/CardDAV" target="_blank">CardDAV</a> client application to fully synchronize this specific address book with your computer or mobile device.';
 
 $labels['addressbookprio'] = 'Address book(s) selection/behaviour';
 $labels['personalfirst'] = 'Personal address book(s) first';

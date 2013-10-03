@@ -117,6 +117,7 @@ class kolab_addressbook extends rcube_plugin
                 'undelete' => $abook->undelete && $undelete,
                 'realname' => rcube_charset::convert($abook->get_realname(), 'UTF7-IMAP'), // IMAP folder name
                 'class_name' => $abook->get_namespace(),
+                'carddavurl' => $abook->get_carddav_url(),
                 'kolab'    => true,
             );
         }
