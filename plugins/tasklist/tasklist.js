@@ -560,7 +560,7 @@ function rcube_tasklist_ui(settings)
             oldid = rec.tempid || id,
             oldrec = listdata[oldid],
             oldindex = $.inArray(oldid, listindex),
-            oldparent = oldrec && (oldrec._old_parent_id || oldrec.parent_id),
+            oldparent = oldrec ? (oldrec._old_parent_id || oldrec.parent_id) : null,
             list = me.tasklists[rec.list];
 
         if (oldindex >= 0)
@@ -575,13 +575,22 @@ function rcube_tasklist_ui(settings)
             var oldchilds = listdata[oldparent].children,
                 i = $.inArray(oldid, oldchilds);
             if (i >= 0) {
-                oldchilds = oldchilds.slice(0,i).concat(oldchilds.slice(i+1));
+                listdata[oldparent].children = oldchilds.slice(0,i).concat(oldchilds.slice(i+1));
             }
         }
 
         // register a forward-pointer to child tasks
-        if (rec.parent_id && listdata[rec.parent_id] && listdata[rec.parent_id].children && $.inArray(id, listdata[rec.parent_id].children) >= 0)
+        if (rec.parent_id && listdata[rec.parent_id] && listdata[rec.parent_id].children && $.inArray(id, listdata[rec.parent_id].children) < 0)
             listdata[rec.parent_id].children.push(id);
+
+        // restore pointers to my children
+        if (!listdata[id].children) {
+            listdata[id].children = [];
+            for (var pid in listdata) {
+                if (listdata[pid].parent_id == id)
+                    listdata[id].children.push(pid);
+            }
+        }
 
         if (list.active)
             render_task(rec, oldid);
