@@ -596,32 +596,6 @@ class kolab_storage_cache
     protected function _serialize($object)
     {
         $sql_data = array('changed' => null, 'dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
-        $objtype  = $object['_type'] ? $object['_type'] : $this->folder->type;
-
-        // set type specific values
-        if ($objtype == 'event') {
-            // database runs in server's timezone so using date() is what we want
-            $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
-            $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
-
-            // extend date range for recurring events
-            if ($object['recurrence'] && $object['_formatobj']) {
-                $recurrence = new kolab_date_recurrence($object['_formatobj']);
-                $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
-            }
-        }
-        else if ($objtype == 'task') {
-            if ($object['start'])
-                $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
-            if ($object['due'])
-                $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['due'])   ? $object['due']->format('U')   : $object['due']);
-        }
-        else if ($objtype == 'file') {
-            if (!empty($object['_attachments'])) {
-                reset($object['_attachments']);
-                $sql_data['filename'] = $object['_attachments'][key($object['_attachments'])]['name'];
-            }
-        }
 
         if ($object['changed']) {
             $sql_data['changed'] = date('Y-m-d H:i:s', is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);

@@ -24,5 +24,26 @@
 class kolab_storage_cache_event extends kolab_storage_cache
 {
     protected $extra_cols = array('dtstart','dtend');
-    
+
+    /**
+     * Helper method to convert the given Kolab object into a dataset to be written to cache
+     *
+     * @override
+     */
+    protected function _serialize($object)
+    {
+        $sql_data = parent::_serialize($object);
+
+        // database runs in server's timezone so using date() is what we want
+        $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
+        $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
+
+        // extend date range for recurring events
+        if ($object['recurrence'] && $object['_formatobj']) {
+            $recurrence = new kolab_date_recurrence($object['_formatobj']);
+            $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
+        }
+
+        return $sql_data;
+    }
 }

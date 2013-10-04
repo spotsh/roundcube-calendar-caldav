@@ -24,5 +24,21 @@
 class kolab_storage_cache_file extends kolab_storage_cache
 {
     protected $extra_cols = array('filename');
-    
+
+    /**
+     * Helper method to convert the given Kolab object into a dataset to be written to cache
+     *
+     * @override
+     */
+    protected function _serialize($object)
+    {
+        $sql_data = parent::_serialize($object);
+
+        if (!empty($object['_attachments'])) {
+            reset($object['_attachments']);
+            $sql_data['filename'] = $object['_attachments'][key($object['_attachments'])]['name'];
+        }
+
+        return $sql_data;
+    }
 }

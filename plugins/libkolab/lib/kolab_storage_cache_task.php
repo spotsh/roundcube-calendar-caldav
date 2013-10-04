@@ -24,5 +24,21 @@
 class kolab_storage_cache_task extends kolab_storage_cache
 {
     protected $extra_cols = array('dtstart','dtend');
-    
+
+    /**
+     * Helper method to convert the given Kolab object into a dataset to be written to cache
+     *
+     * @override
+     */
+    protected function _serialize($object)
+    {
+        $sql_data = parent::_serialize($object);
+
+        if ($object['start'])
+            $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
+        if ($object['due'])
+            $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['due'])   ? $object['due']->format('U')   : $object['due']);
+
+        return $sql_data;
+    }
 }
