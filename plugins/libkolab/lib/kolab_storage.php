@@ -157,7 +157,7 @@ class kolab_storage
      * This will search all folders storing objects of the given type.
      *
      * @param string Object UID
-     * @param string Object type (contact,distribution-list,event,task,note)
+     * @param string Object type (contact,event,task,journal,file,note,configuration)
      * @return array The Kolab object represented as hash array or false if not found
      */
     public static function get_object($uid, $type)
@@ -586,7 +586,7 @@ class kolab_storage
      *
      * @param string  Optional root folder
      * @param string  Optional name pattern
-     * @param string  Data type to list folders for (contact,distribution-list,event,task,note,mail)
+     * @param string  Data type to list folders for (contact,event,task,journal,file,note,mail,configuration)
      * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
      * @param array   Will be filled with folder-types data
      *

@@ -7,7 +7,7 @@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@kolabsys.com>
  *
- * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012-2013, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -64,7 +64,6 @@ class kolab_storage_folder
     {
         $this->imap = rcube::get_instance()->get_storage();
         $this->imap->set_options(array('skip_deleted' => true));
-        $this->cache = new kolab_storage_cache($this);
         $this->set_folder($name, $type);
     }
 
@@ -79,10 +78,15 @@ class kolab_storage_folder
     {
         $this->type_annotation = $ftype ? $ftype : kolab_storage::folder_type($name);
 
+        $oldtype = $this->type;
         list($this->type, $suffix) = explode('.', $this->type_annotation);
         $this->default      = $suffix == 'default';
         $this->name         = $name;
         $this->resource_uri = null;
+
+        // get a new cache instance of folder type changed
+        if (!$this->cache || $type != $oldtype)
+            $this->cache = kolab_storage_cache::factory($this);
 
         $this->imap->set_folder($this->name);
         $this->cache->set_folder($this);
@@ -297,6 +301,15 @@ class kolab_storage_folder
     }
 
     /**
+     * Compose a folder Etag identifier
+     */
+    public function get_ctag()
+    {
+        $fdata = $this->get_imap_data();
+        return sprintf('%d-%d-%d', $fdata['UIDVALIDITY'], $fdata['HIGHESTMODSEQ'], $fdata['UIDNEXT']);
+    }
+
+    /**
      * Check activation status of this folder
      *
      * @return boolean True if enabled, false if not
@@ -349,19 +362,12 @@ class kolab_storage_folder
      * @return integer The number of objects of the given type
      * @see self::select()
      */
-    public function count($type_or_query = null)
+    public function count($query = null)
     {
-        if (!$type_or_query)
-            $query = array(array('type','=',$this->type));
-        else if (is_string($type_or_query))
-            $query = array(array('type','=',$type_or_query));
-        else
-            $query = $this->_prepare_query((array)$type_or_query);
-
         // synchronize cache first
         $this->cache->synchronize();
 
-        return $this->cache->count($query);
+        return $this->cache->count($this->_prepare_query($query));
     }
 
 
@@ -379,7 +385,7 @@ class kolab_storage_folder
         $this->cache->synchronize();
 
         // fetch objects from cache
-        return $this->cache->select(array(array('type','=',$type)));
+        return $this->cache->select(array());
     }
 
 
@@ -425,22 +431,24 @@ class kolab_storage_folder
      */
     private function _prepare_query($query)
     {
-        $type = null;
-        foreach ($query as $i => $param) {
-            if ($param[0] == 'type') {
-                $type = $param[2];
+        // string equals type query
+        if (is_string($query)) {
+            if ($this->cache->has_type_col()) {
+                $query = array(array('type','=',$query));
             }
-            else if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed')) {
+            else {
+                return array();
+            }
+        }
+
+        foreach ((array)$query as $i => $param) {
+            if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed')) {
                 if (is_object($param[2]) && is_a($param[2], 'DateTime'))
                     $param[2] = $param[2]->format('U');
                 if (is_numeric($param[2]))
                     $query[$i][2] = date('Y-m-d H:i:s', $param[2]);
             }
         }
-
-        // add type selector if not in $query
-        if (!$type)
-            $query[] = array('type','=',$this->type);
 
         return $query;
     }
