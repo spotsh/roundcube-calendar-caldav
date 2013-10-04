@@ -1565,7 +1565,7 @@ function rcube_tasklist_ui(settings)
             search_request = id;
             search_query = q;
 
-            list_tasks('all');
+            list_tasks();
         }
         else  // empty search input equals reset
             this.reset_search();
