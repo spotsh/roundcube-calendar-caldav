@@ -297,7 +297,10 @@ function rcube_tasklist_ui(settings)
                     }
                     e.bubble = false;
                     break;
-                
+
+                case 'extlink':
+                    return true;
+
                 default:
                     if (e.target.nodeName != 'INPUT')
                         task_show_dialog(id);
@@ -642,7 +645,7 @@ function rcube_tasklist_ui(settings)
             '<div class="progressbar"><div class="progressvalue" style="width:' + (rec.complete * 100) + '%"></div></div>' +
             '<input type="checkbox" name="completed[]" value="1" class="complete" ' + (rec.complete == 1.0 ? 'checked="checked" ' : '') + '/>' + 
             '<span class="flagged"></span>' +
-            '<span class="title">' + Q(rec.title) + '</span>' +
+            '<span class="title">' + text2html(Q(rec.title)) + '</span>' +
             '<span class="tags">' + tags_html + '</span>' +
             '<span class="date">' + Q(rec.date || rcmail.gettext('nodate','tasklist')) + '</span>' +
             '<a href="#" class="actions">V</a>'
@@ -908,7 +911,7 @@ function rcube_tasklist_ui(settings)
 
         // fill dialog data
         $('#task-parent-title').html(Q(rec.parent_title || '')+' &raquo;').css('display', rec.parent_title ? 'block' : 'none');
-        $('#task-title').html(Q(rec.title || ''));
+        $('#task-title').html(text2html(Q(rec.title || '')));
         $('#task-description').html(text2html(rec.description || '', 300, 6))[(rec.description ? 'show' : 'hide')]();
         $('#task-date')[(rec.date ? 'show' : 'hide')]().children('.task-text').html(Q(rec.date || rcmail.gettext('nodate','tasklist')));
         $('#task-time').html(Q(rec.time || ''));
