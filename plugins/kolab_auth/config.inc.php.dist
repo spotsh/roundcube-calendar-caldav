@@ -72,5 +72,9 @@ $rcmail_config['kolab_auth_role_settings'] = Array(
             ),
     );
 
+// List of LDAP addressbooks (keys of ldap_public configuration array)
+// for which base_dn variables (%dc, etc.) will be replaced according to authenticated user DN
+// Note: special name '*' for all LDAP addressbooks
+$rcmail_config['kolab_auth_ldap_addressbooks'] = array('*');
 
 ?>

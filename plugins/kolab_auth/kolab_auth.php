@@ -51,6 +51,9 @@ class kolab_auth extends rcube_plugin
         $this->add_hook('smtp_connect', array($this, 'smtp_connect'));
         $this->add_hook('identity_form', array($this, 'identity_form'));
 
+        // Hook to modify some configuration, e.g. ldap
+        $this->add_hook('config_get', array($this, 'config_get'));
+
         $this->add_hook('write_log', array($this, 'write_log'));
 
         // TODO: This section does not actually seem to work
@@ -71,6 +74,35 @@ class kolab_auth extends rcube_plugin
     public function startup($args)
     {
         $this->load_user_role_plugins_and_settings();
+
+        return $args;
+    }
+
+    /**
+     * Modify some configuration according to LDAP user record
+     */
+    public function config_get($args)
+    {
+        // Replaces ldap_vars (%dc, etc) in public kolab ldap addressbooks
+        // config based on the users base_dn. (for multi domain support)
+        if ($args['name'] == 'ldap_public' && !empty($args['result'])) {
+            $this->load_config();
+
+            $rcmail      = rcube::get_instance();
+            $kolab_books = (array) $rcmail->config->get('kolab_auth_ldap_addressbooks');
+
+            foreach ($args['result'] as $name => $config) {
+                if (in_array($name, $kolab_books) || in_array('*', $kolab_books)) {
+                    $args['result'][$name]['base_dn']        = self::parse_ldap_vars($config['base_dn']);
+                    $args['result'][$name]['search_base_dn'] = self::parse_ldap_vars($config['search_base_dn']);
+                    $args['result'][$name]['bind_dn']        = str_replace('%dn', $_SESSION['kolab_dn'], $config['bind_dn']);
+
+                    if (!empty($config['groups'])) {
+                        $args['result'][$name]['groups']['base_dn'] = self::parse_ldap_vars($config['groups']['base_dn']);
+                    }
+                }
+            }
+        }
 
         return $args;
     }
