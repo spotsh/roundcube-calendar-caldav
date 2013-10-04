@@ -1416,7 +1416,7 @@ function rcube_tasklist_ui(settings)
     function list_remove(id)
     {
         var list = me.tasklists[id];
-        if (list && list.editable && confirm(rcmail.gettext('deletelistconfirm', 'tasklist'))) {
+        if (list && list.editable && confirm(rcmail.gettext(list.children ? 'deletelistconfirmrecursive' : 'deletelistconfirm', 'tasklist'))) {
             saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
             rcmail.http_post('tasklist', { action:'remove', l:{ id:list.id } });
             return true;
@@ -1429,17 +1429,35 @@ function rcube_tasklist_ui(settings)
      */
     function destroy_list(prop)
     {
-        var list = me.tasklists[prop.id],
-            li = rcmail.get_folder_li(prop.id, 'rcmlitasklist');
+        var li, delete_ids = [],
+            list = me.tasklists[prop.id];
 
-        if (li) {
-            $(li).remove();
+            // find sub-lists
+        if (list && list.children) {
+            for (var child_id in me.tasklists) {
+                if (String(child_id).indexOf(prop.id) == 0)
+                    delete_ids.push(child_id);
+            }
         }
-        if (list) {
-            list.active = false;
-            // delete me.tasklists[prop.id];
-            unlock_saving();
-            remove_tasks(list.id);
+        else {
+            delete_ids.push(prop.id);
+        }
+
+        // delete all calendars in the list
+        for (var i=0; i < delete_ids.length; i++) {
+            id = delete_ids[i];
+            list = me.tasklists[id];
+            li = rcmail.get_folder_li(id, 'rcmlitasklist');
+
+            if (li) {
+                $(li).remove();
+            }
+            if (list) {
+                list.active = false;
+                // delete me.tasklists[prop.id];
+                unlock_saving();
+                remove_tasks(list.id);
+            }
         }
     }
 
