@@ -24,5 +24,17 @@
 class kolab_storage_cache_configuration extends kolab_storage_cache
 {
     protected $extra_cols = array('type');
-    
+
+    /**
+     * Helper method to convert the given Kolab object into a dataset to be written to cache
+     *
+     * @override
+     */
+    protected function _serialize($object)
+    {
+        $sql_data = parent::_serialize($object);
+        $sql_data['type'] = $object['type'];
+
+        return $sql_data;
+    }
 }
