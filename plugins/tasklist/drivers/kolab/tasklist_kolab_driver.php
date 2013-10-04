@@ -118,6 +118,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 'active' => $folder->is_active(),
                 'parentfolder' => $path_imap,
                 'default' => $folder->default,
+                'children' => true,  // TODO: determine if that folder indeed has child folders
                 'class_name' => trim($folder->get_namespace() . ($folder->default ? ' default' : '')),
             );
             $this->lists[$tasklist['id']] = $tasklist;
