@@ -339,6 +339,16 @@ class kolab_auth extends rcube_plugin
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready) {
             $args['abort'] = true;
+            $message = sprintf(
+                    'Login failure for user %s from %s in session %s (error %s)',
+                    $user,
+                    rcube_utils::remote_ip(),
+                    session_id(),
+                    "LDAP not ready"
+                );
+
+            rcube::write_log('userlogins', $message);
+
             return $args;
         }
 
@@ -347,6 +357,16 @@ class kolab_auth extends rcube_plugin
 
         if (empty($record)) {
             $args['abort'] = true;
+            $message = sprintf(
+                    'Login failure for user %s from %s in session %s (error %s)',
+                    $user,
+                    rcube_utils::remote_ip(),
+                    session_id(),
+                    "No user record found"
+                );
+
+            rcube::write_log('userlogins', $message);
+
             return $args;
         }
 
@@ -380,6 +400,16 @@ class kolab_auth extends rcube_plugin
 
             if (!$result) {
                 $args['abort'] = true;
+                $message = sprintf(
+                        'Login failure for user %s from %s in session %s (error %s)',
+                        $user,
+                        rcube_utils::remote_ip(),
+                        session_id(),
+                        "Unable to bind with '" . $record['dn'] . "'"
+                    );
+
+                rcube::write_log('userlogins', $message);
+
                 return $args;
             }
 
@@ -421,6 +451,17 @@ class kolab_auth extends rcube_plugin
 
             if (empty($record)) {
                 $args['abort'] = true;
+                $message = sprintf(
+                        'Login failure for user %s (as user %s) from %s in session %s (error %s)',
+                        $user,
+                        $loginas,
+                        rcube_utils::remote_ip(),
+                        session_id(),
+                        "No user record found for '" . $loginas . "'"
+                    );
+
+                rcube::write_log('userlogins', $message);
+
                 return $args;
             }
 
