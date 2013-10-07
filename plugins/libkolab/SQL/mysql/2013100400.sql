@@ -1,13 +1,4 @@
-/**
- * libkolab database schema
- *
- * @version 1.0
- * @author Thomas Bruederli
- * @licence GNU AGPL
- **/
-
-
-DROP TABLE IF EXISTS `kolab_folders`;
+DROP TABLE IF EXISTS `kolab_cache`;
 
 CREATE TABLE `kolab_folders` (
   `ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -18,10 +9,6 @@ CREATE TABLE `kolab_folders` (
   PRIMARY KEY(`ID`),
   INDEX `resource_type` (`resource`, `type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
-
-DROP TABLE IF EXISTS `kolab_cache`;
-
-DROP TABLE IF EXISTS `kolab_cache_contact`;
 
 CREATE TABLE `kolab_cache_contact` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
@@ -40,8 +27,6 @@ CREATE TABLE `kolab_cache_contact` (
   INDEX `contact_type` (`folder_id`,`type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-DROP TABLE IF EXISTS `kolab_cache_event`;
-
 CREATE TABLE `kolab_cache_event` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
   `msguid` BIGINT UNSIGNED NOT NULL,
@@ -58,8 +43,6 @@ CREATE TABLE `kolab_cache_event` (
     REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
-
-DROP TABLE IF EXISTS `kolab_cache_task`;
 
 CREATE TABLE `kolab_cache_task` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
@@ -78,8 +61,6 @@ CREATE TABLE `kolab_cache_task` (
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-DROP TABLE IF EXISTS `kolab_cache_journal`;
-
 CREATE TABLE `kolab_cache_journal` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
   `msguid` BIGINT UNSIGNED NOT NULL,
@@ -97,8 +78,6 @@ CREATE TABLE `kolab_cache_journal` (
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-DROP TABLE IF EXISTS `kolab_cache_note`;
-
 CREATE TABLE `kolab_cache_note` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
   `msguid` BIGINT UNSIGNED NOT NULL,
@@ -113,8 +92,6 @@ CREATE TABLE `kolab_cache_note` (
     REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
-
-DROP TABLE IF EXISTS `kolab_cache_file`;
 
 CREATE TABLE `kolab_cache_file` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
@@ -134,8 +111,6 @@ CREATE TABLE `kolab_cache_file` (
   INDEX `folder_filename` (`folder_id`, `filename`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-DROP TABLE IF EXISTS `kolab_cache_configuration`;
-
 CREATE TABLE `kolab_cache_configuration` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
   `msguid` BIGINT UNSIGNED NOT NULL,
@@ -152,8 +127,6 @@ CREATE TABLE `kolab_cache_configuration` (
   PRIMARY KEY(`folder_id`,`msguid`),
   INDEX `configuration_type` (`folder_id`,`type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
-
-DROP TABLE IF EXISTS `kolab_cache_freebusy`;
 
 CREATE TABLE `kolab_cache_freebusy` (
   `folder_id` BIGINT UNSIGNED NOT NULL,
@@ -172,5 +145,3 @@ CREATE TABLE `kolab_cache_freebusy` (
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-
-INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013100400');
