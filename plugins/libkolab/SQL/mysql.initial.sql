@@ -10,12 +10,12 @@
 DROP TABLE IF EXISTS `kolab_folders`;
 
 CREATE TABLE `kolab_folders` (
-  `ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `folder_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `resource` VARCHAR(255) NOT NULL,
   `type` VARCHAR(32) NOT NULL,
   `synclock` INT(10) NOT NULL DEFAULT '0',
   `ctag` VARCHAR(40) DEFAULT NULL,
-  PRIMARY KEY(`ID`),
+  PRIMARY KEY(`folder_id`),
   INDEX `resource_type` (`resource`, `type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
@@ -35,7 +35,7 @@ CREATE TABLE `kolab_cache_contact` (
   `words` TEXT NOT NULL,
   `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
   CONSTRAINT `fk_kolab_cache_contact_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`),
   INDEX `contact_type` (`folder_id`,`type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
@@ -55,7 +55,7 @@ CREATE TABLE `kolab_cache_event` (
   `dtstart` DATETIME,
   `dtend` DATETIME,
   CONSTRAINT `fk_kolab_cache_event_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
@@ -74,7 +74,7 @@ CREATE TABLE `kolab_cache_task` (
   `dtstart` DATETIME,
   `dtend` DATETIME,
   CONSTRAINT `fk_kolab_cache_task_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
@@ -93,7 +93,7 @@ CREATE TABLE `kolab_cache_journal` (
   `dtstart` DATETIME,
   `dtend` DATETIME,
   CONSTRAINT `fk_kolab_cache_journal_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
@@ -110,7 +110,7 @@ CREATE TABLE `kolab_cache_note` (
   `tags` VARCHAR(255) NOT NULL,
   `words` TEXT NOT NULL,
   CONSTRAINT `fk_kolab_cache_note_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
@@ -128,7 +128,7 @@ CREATE TABLE `kolab_cache_file` (
   `words` TEXT NOT NULL,
   `filename` varchar(255) DEFAULT NULL,
   CONSTRAINT `fk_kolab_cache_file_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`),
   INDEX `folder_filename` (`folder_id`, `filename`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
@@ -147,7 +147,7 @@ CREATE TABLE `kolab_cache_configuration` (
   `words` TEXT NOT NULL,
   `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
   CONSTRAINT `fk_kolab_cache_configuration_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`),
   INDEX `configuration_type` (`folder_id`,`type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
@@ -167,7 +167,7 @@ CREATE TABLE `kolab_cache_freebusy` (
   `dtstart` DATETIME,
   `dtend` DATETIME,
   CONSTRAINT `fk_kolab_cache_freebusy_folder` FOREIGN KEY (`folder_id`)
-    REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 

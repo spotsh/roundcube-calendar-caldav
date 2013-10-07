@@ -746,10 +746,10 @@ class kolab_storage_cache
         if (!empty($this->folder_id))
             return;
 
-        $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT ID, synclock, ctag FROM $this->folders_table WHERE resource=?", $this->resource_uri));
+        $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT folder_id, synclock, ctag FROM $this->folders_table WHERE resource=?", $this->resource_uri));
         if ($sql_arr) {
             $this->metadata = $sql_arr;
-            $this->folder_id = $sql_arr['ID'];
+            $this->folder_id = $sql_arr['folder_id'];
         }
         else {
             $this->db->query("INSERT INTO $this->folders_table (resource, type) VALUES (?, ?)", $this->resource_uri, $this->folder->type);
@@ -767,7 +767,7 @@ class kolab_storage_cache
             return;
 
         $this->_read_folder_data();
-        $sql_query = "SELECT synclock, ctag FROM $this->folders_table WHERE ID=?";
+        $sql_query = "SELECT synclock, ctag FROM $this->folders_table WHERE folder_id=?";
 
         // abort if database is not set-up
         if ($this->db->is_error()) {
@@ -784,7 +784,7 @@ class kolab_storage_cache
         }
 
         // set lock
-        $this->db->query("UPDATE $this->folders_table SET synclock = ? WHERE ID = ?", time(), $this->folder_id);
+        $this->db->query("UPDATE $this->folders_table SET synclock = ? WHERE folder_id = ?", time(), $this->folder_id);
     }
 
     /**
@@ -796,7 +796,7 @@ class kolab_storage_cache
             return;
 
         $this->db->query(
-            "UPDATE $this->folders_table SET synclock = 0, ctag = ? WHERE ID = ?",
+            "UPDATE $this->folders_table SET synclock = 0, ctag = ? WHERE folder_id = ?",
             $this->metadata['ctag'],
             $this->folder_id
         );
