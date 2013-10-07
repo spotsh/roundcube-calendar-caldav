@@ -38,6 +38,7 @@ class kolab_storage_cache
     protected $synclock = false;
     protected $ready = false;
     protected $cache_table;
+    protected $folders_table;
     protected $max_sql_packet;
     protected $max_sync_lock_time = 600;
     protected $binary_items = array(
@@ -78,6 +79,8 @@ class kolab_storage_cache
         $this->enabled = $rcmail->config->get('kolab_cache', false);
 
         if ($this->enabled) {
+            // always read folder cache and lock state from DB master
+            $this->db->set_table_dsn('kolab_folders', 'w');
             // remove sync-lock on script termination
             $rcmail->add_shutdown_function(array($this, '_sync_unlock'));
         }
@@ -103,21 +106,10 @@ class kolab_storage_cache
 
         // compose fully qualified ressource uri for this instance
         $this->resource_uri = $this->folder->get_resource_uri();
+        $this->folders_table = $this->db->table_name('kolab_folders');
         $this->cache_table = $this->db->table_name('kolab_cache_' . $this->folder->type);
         $this->ready = $this->enabled;
-
-        if ($this->enabled) {
-            $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT ID, synclock, ctag FROM kolab_folders WHERE resource=?", $this->resource_uri));
-            if ($sql_arr) {
-                $this->metadata = $sql_arr;
-                $this->folder_id = $sql_arr['ID'];
-            }
-            else {
-                $this->db->query("INSERT INTO kolab_folders (resource, type) VALUES (?, ?)", $this->resource_uri, $this->folder->type);
-                $this->folder_id = $this->db->insert_id('kolab_folders');
-                $this->metadata = array();
-            }
-        }
+        $this->folder_id = null;
     }
 
     /**
@@ -143,7 +135,7 @@ class kolab_storage_cache
         // lock synchronization for this folder or wait if locked
         $this->_sync_lock();
 
-        // check cache status hash first ($this->metadata is set in _sync_lock())
+        // check cache status hash first ($this->metadata is set in _read_folder_data())
         if ($this->metadata['ctag'] != $this->folder->get_ctag()) {
 
             // synchronize IMAP mailbox cache
@@ -215,6 +207,8 @@ class kolab_storage_cache
         // load object if not in memory
         if (!isset($this->objects[$msguid])) {
             if ($this->ready) {
+                $this->_read_folder_data();
+
                 $sql_result = $this->db->query(
                     "SELECT * FROM $this->cache_table ".
                     "WHERE folder_id=? AND msguid=?",
@@ -259,6 +253,7 @@ class kolab_storage_cache
 
         // remove old entry
         if ($this->ready) {
+            $this->_read_folder_data();
             $this->db->query("DELETE FROM $this->cache_table WHERE folder_id=? AND msguid=?",
                 $this->folder_id, $msguid);
         }
@@ -284,6 +279,8 @@ class kolab_storage_cache
     {
         // write to cache
         if ($this->ready) {
+            $this->_read_folder_data();
+
             $sql_data = $this->_serialize($object);
 
             $extra_cols   = $this->extra_cols ? ', ' . join(', ', $this->extra_cols) : '';
@@ -307,7 +304,7 @@ class kolab_storage_cache
                 $args[] = $sql_data[$col];
             }
 
-            $result = call_user_func_array(array($this->db, 'call'), $args);
+            $result = call_user_func_array(array($this->db, 'query'), $args);
 
             if (!$this->db->affected_rows($result)) {
                 rcube::raise_error(array(
@@ -336,6 +333,8 @@ class kolab_storage_cache
 
         // resolve new message UID in target folder
         if ($new_msguid = $target->cache->uid2msguid($uid)) {
+            $this->_read_folder_data();
+
             $this->db->query(
                 "UPDATE $this->cache_table SET folder_id=?, msguid=? ".
                 "WHERE folder_id=? AND msguid=?",
@@ -359,6 +358,8 @@ class kolab_storage_cache
      */
     public function purge($type = null)
     {
+        $this->_read_folder_data();
+
         $result = $this->db->query(
             "DELETE FROM $this->cache_table WHERE folder_id=?".
             $this->folder_id
@@ -377,10 +378,10 @@ class kolab_storage_cache
 
         // resolve new message UID in target folder
         $this->db->query(
-            "UPDATE kolab_folders SET resource=? ".
-            "WHERE folder_id=?",
+            "UPDATE $this->folders_table SET resource=? ".
+            "WHERE resource=?",
             $target->get_resource_uri(),
-            $this->folder_id
+            $this->resource_uri
         );
     }
 
@@ -398,6 +399,8 @@ class kolab_storage_cache
 
         // read from local cache DB (assume it to be synchronized)
         if ($this->ready) {
+            $this->_read_folder_data();
+
             $sql_result = $this->db->query(
                 "SELECT " . ($uids ? 'msguid, uid' : '*') . " FROM $this->cache_table ".
                 "WHERE folder_id=? " . $this->_sql_where($query),
@@ -458,6 +461,8 @@ class kolab_storage_cache
 
         // cache is in sync, we can count records in local DB
         if ($this->synched) {
+            $this->_read_folder_data();
+
             $sql_result = $this->db->query(
                 "SELECT COUNT(*) AS numrows FROM kolab_cache ".
                 "WHERE folder_id=? " . $this->_sql_where($query),
@@ -723,6 +728,27 @@ class kolab_storage_cache
     }
 
     /**
+     * Read this folder's ID and cache metadata
+     */
+    protected function _read_folder_data()
+    {
+        // already done
+        if (!empty($this->folder_id))
+            return;
+
+        $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT ID, synclock, ctag FROM $this->folders_table WHERE resource=?", $this->resource_uri));
+        if ($sql_arr) {
+            $this->metadata = $sql_arr;
+            $this->folder_id = $sql_arr['ID'];
+        }
+        else {
+            $this->db->query("INSERT INTO $this->folders_table (resource, type) VALUES (?, ?)", $this->resource_uri, $this->folder->type);
+            $this->folder_id = $this->db->insert_id('kolab_folders');
+            $this->metadata = array();
+        }
+    }
+
+    /**
      * Check lock record for this folder and wait if locked or set lock
      */
     protected function _sync_lock()
@@ -730,8 +756,8 @@ class kolab_storage_cache
         if (!$this->ready)
             return;
 
-        $sql_query = "SELECT synclock, ctag FROM kolab_folders WHERE ID=?";
-        $this->metadata = $this->db->fetch_assoc($this->db->query($sql_query, $this->folder_id));
+        $this->_read_folder_data();
+        $sql_query = "SELECT synclock, ctag FROM $this->folders_table WHERE ID=?";
 
         // abort if database is not set-up
         if ($this->db->is_error()) {
@@ -748,7 +774,7 @@ class kolab_storage_cache
         }
 
         // set lock
-        $this->db->query("UPDATE kolab_folders SET synclock = ? WHERE ID = ?", time(), $this->folder_id);
+        $this->db->query("UPDATE $this->folders_table SET synclock = ? WHERE ID = ?", time(), $this->folder_id);
     }
 
     /**
@@ -760,7 +786,7 @@ class kolab_storage_cache
             return;
 
         $this->db->query(
-            "UPDATE kolab_folders SET synclock = 0, ctag = ? WHERE ID = ?",
+            "UPDATE $this->folders_table SET synclock = 0, ctag = ? WHERE ID = ?",
             $this->metadata['ctag'],
             $this->folder_id
         );
@@ -786,6 +812,18 @@ class kolab_storage_cache
         }
 
         return $this->uid2msg[$uid];
+    }
+
+    /**
+     * Getter for protected member variables
+     */
+    public function __get($name)
+    {
+        if ($name == 'folder_id') {
+            $this->_read_folder_data();
+        }
+
+        return $this->$name;
     }
 
 }
