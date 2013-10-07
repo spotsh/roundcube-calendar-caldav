@@ -137,6 +137,9 @@ class kolab_storage_cache
             // lock synchronization for this folder or wait if locked
             $this->_sync_lock();
 
+            // disable messages cache if configured to do so
+            $this->bypass(true);
+
             // synchronize IMAP mailbox cache
             $this->imap->folder_sync($this->folder->name);
 
@@ -179,6 +182,8 @@ class kolab_storage_cache
                 // update ctag value (will be written to database in _sync_unlock())
                 $this->metadata['ctag'] = $this->folder->get_ctag();
             }
+
+            $this->bypass(false);
 
             // remove lock
             $this->_sync_unlock();
@@ -577,8 +582,14 @@ class kolab_storage_cache
         if (!$type)
             $type = $this->folder->type;
 
+        $this->bypass(true);
+
         $results = array();
-        foreach ((array)$this->imap->fetch_headers($this->folder->name, $index, false) as $msguid => $headers) {
+        $headers = $this->imap->fetch_headers($this->folder->name, $index, false);
+
+        $this->bypass(false);
+
+        foreach ((array)$headers as $msguid => $headers) {
             $object_type = kolab_format::mime2object_type($headers->others['x-kolab-type']);
 
             // check object type header and abort on mismatch
@@ -823,6 +834,62 @@ class kolab_storage_cache
         }
 
         return $this->$name;
+    }
+
+    /**
+     * Bypass Roundcube messages cache.
+     * Roundcube cache duplicates information already stored in kolab_cache.
+     *
+     * @param bool $disable True disables, False enables messages cache
+     */
+    public function bypass($disable = false)
+    {
+        // if kolab cache is disabled do nothing
+        if (!$this->enabled) {
+            return;
+        }
+
+        static $messages_cache, $cache_bypass;
+
+        if ($messages_cache === null) {
+            $rcmail = rcube::get_instance();
+            $messages_cache = (bool) $rcmail->config->get('messages_cache');
+            $cache_bypass   = (int) $rcmail->config->get('kolab_messages_cache_bypass');
+        }
+
+        if ($messages_cache) {
+            // handle recurrent (multilevel) bypass() calls
+            if ($disable) {
+                $this->cache_bypassed += 1;
+                if ($this->cache_bypassed > 1) {
+                    return;
+                }
+            }
+            else {
+                $this->cache_bypassed -= 1;
+                if ($this->cache_bypassed > 0) {
+                    return;
+                }
+            }
+
+            switch ($cache_bypass) {
+                case 2:
+                    // Disable messages cache completely
+                    $this->imap->set_messages_caching(!$disable);
+                    break;
+
+                case 1:
+                    // We'll disable messages cache, but keep index cache.
+                    // Default mode is both (MODE_INDEX | MODE_MESSAGE)
+                    $mode = rcube_imap_cache::MODE_INDEX;
+
+                    if (!$disable) {
+                        $mode |= rcube_imap_cache::MODE_MESSAGE;
+                    }
+
+                    $this->imap->set_messages_caching(true, $mode);
+            }
+        }
     }
 
 }
