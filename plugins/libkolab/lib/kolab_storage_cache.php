@@ -100,11 +100,14 @@ class kolab_storage_cache
         $this->_sync_lock();
 
         // synchronize IMAP mailbox cache
+        $this->bypass(true);
         $this->imap->folder_sync($this->folder->name);
 
         // compare IMAP index with object cache index
         $imap_index = $this->imap->index($this->folder->name);
         $this->index = $imap_index->get();
+
+        $this->bypass(false);
 
         // determine objects to fetch or to invalidate
         if ($this->ready) {
@@ -523,8 +526,14 @@ class kolab_storage_cache
         if (!$type)
             $type = $this->folder->type;
 
+        $this->bypass(true);
+
         $results = array();
-        foreach ((array)$this->imap->fetch_headers($this->folder->name, $index, false) as $msguid => $headers) {
+        $headers = $this->imap->fetch_headers($this->folder->name, $index, false);
+
+        $this->bypass(false);
+
+        foreach ((array)$headers as $msguid => $headers) {
             $object_type = kolab_format::mime2object_type($headers->others['x-kolab-type']);
 
             // check object type header and abort on mismatch
@@ -782,4 +791,34 @@ class kolab_storage_cache
         return $this->uid2msg[$uid];
     }
 
+    /**
+     * Bypass Roundcube messages cache.
+     * Roundcube cache duplicates information already stored in kolab_cache.
+     *
+     * @param bool $disable True disables, False enables messages cache
+     */
+    public function bypass($disable = false)
+    {
+        // if kolab cache is disabled do nothing
+        if (!$this->enabled) {
+            return;
+        }
+
+        if ($this->messages_cache === null) {
+            $rcmail = rcube::get_instance();
+            $this->messages_cache = (bool) $rcmail->config->get('messages_cache');
+        }
+
+        if ($this->messages_cache) {
+            // we'll disable messages cache, but keep index cache
+            // default mode is both (MODE_INDEX | MODE_MESSAGE)
+            $mode = rcube_imap_cache::MODE_INDEX;
+
+            if (!$disable) {
+                $mode |= rcube_imap_cache::MODE_MESSAGE;
+            }
+
+            $this->imap->set_messages_caching(true, $mode);
+        }
+    }
 }
