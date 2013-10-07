@@ -1,4 +1,4 @@
-<?php>
+<?php
 
 /**
  * Kolab storage cache class providing a local caching layer for Kolab groupware objects.
