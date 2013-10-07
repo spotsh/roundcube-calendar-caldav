@@ -1,4 +1,4 @@
-<?php
+<?php>
 
 /**
  * Kolab storage cache class providing a local caching layer for Kolab groupware objects.
@@ -103,7 +103,7 @@ class kolab_storage_cache
         $this->imap->folder_sync($this->folder->name);
 
         // compare IMAP index with object cache index
-        $imap_index = $this->imap->index($this->folder->name);
+        $imap_index = $this->imap->index($this->folder->name, null, null, true, true);
         $this->index = $imap_index->get();
 
         // determine objects to fetch or to invalidate
