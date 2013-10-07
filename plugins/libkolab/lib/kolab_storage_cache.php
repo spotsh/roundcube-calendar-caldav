@@ -99,15 +99,15 @@ class kolab_storage_cache
         // lock synchronization for this folder or wait if locked
         $this->_sync_lock();
 
-        // synchronize IMAP mailbox cache
+        // disable messages cache if configured to do so
         $this->bypass(true);
+
+        // synchronize IMAP mailbox cache
         $this->imap->folder_sync($this->folder->name);
 
         // compare IMAP index with object cache index
         $imap_index = $this->imap->index($this->folder->name);
         $this->index = $imap_index->get();
-
-        $this->bypass(false);
 
         // determine objects to fetch or to invalidate
         if ($this->ready) {
@@ -142,6 +142,8 @@ class kolab_storage_cache
                 );
             }
         }
+
+        $this->bypass(false);
 
         // remove lock
         $this->_sync_unlock();
@@ -813,11 +815,25 @@ class kolab_storage_cache
         }
 
         if ($messages_cache) {
+            // handle recurrent (multilevel) bypass() calls
+            if ($disable) {
+                $this->cache_bypassed += 1;
+                if ($this->cache_bypassed > 1) {
+                    return;
+                }
+            }
+            else {
+                $this->cache_bypassed -= 1;
+                if ($this->cache_bypassed > 0) {
+                    return;
+                }
+            }
+
             switch ($cache_bypass) {
                 case 2:
                     // Disable messages cache completely
                     $this->imap->set_messages_caching(!$disable);
-                    return;
+                    break;
 
                 case 1:
                     // We'll disable messages cache, but keep index cache.
