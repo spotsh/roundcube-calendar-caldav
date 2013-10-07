@@ -431,17 +431,16 @@ class kolab_storage_folder
     private function _prepare_query($query)
     {
         // string equals type query
+        // FIXME: should not be called this way!
         if (is_string($query)) {
-            if ($this->cache->has_type_col()) {
-                $query = array(array('type','=',$query));
-            }
-            else {
-                return array();
-            }
+            return $this->cache->has_type_col() ? array(array('type','=',$query)) : array();
         }
 
         foreach ((array)$query as $i => $param) {
-            if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed')) {
+            if ($param[0] == 'type' && !$this->cache->has_type_col()) {
+                unset($query[$i]);
+            }
+            else if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed')) {
                 if (is_object($param[2]) && is_a($param[2], 'DateTime'))
                     $param[2] = $param[2]->format('U');
                 if (is_numeric($param[2]))

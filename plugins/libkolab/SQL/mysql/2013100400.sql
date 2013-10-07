@@ -101,7 +101,6 @@ CREATE TABLE `kolab_cache_file` (
   `xml` TEXT NOT NULL,
   `tags` VARCHAR(255) NOT NULL,
   `words` TEXT NOT NULL,
-  `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
   `filename` varchar(255) DEFAULT NULL,
   CONSTRAINT `fk_kolab_cache_file_folder` FOREIGN KEY (`folder_id`)
     REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
