@@ -128,11 +128,14 @@ class kolab_storage_cache
         // increase time limit
         @set_time_limit($this->max_sync_lock_time);
 
-        // lock synchronization for this folder or wait if locked
-        $this->_sync_lock();
+        // read cached folder metadata
+        $this->_read_folder_data();
 
         // check cache status hash first ($this->metadata is set in _read_folder_data())
         if ($this->metadata['ctag'] != $this->folder->get_ctag()) {
+
+            // lock synchronization for this folder or wait if locked
+            $this->_sync_lock();
 
             // synchronize IMAP mailbox cache
             $this->imap->folder_sync($this->folder->name);
@@ -176,10 +179,10 @@ class kolab_storage_cache
                 // update ctag value (will be written to database in _sync_unlock())
                 $this->metadata['ctag'] = $this->folder->get_ctag();
             }
-        }
 
-        // remove lock
-        $this->_sync_unlock();
+            // remove lock
+            $this->_sync_unlock();
+        }
 
         $this->synched = time();
     }
