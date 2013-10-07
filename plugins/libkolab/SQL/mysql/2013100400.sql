@@ -1,11 +1,9 @@
-DROP TABLE IF EXISTS `kolab_cache`;
-
 CREATE TABLE `kolab_folders` (
   `ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `resource` VARCHAR(255) CHARACTER SET ascii NOT NULL,
-  `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
+  `resource` VARCHAR(255)  NOT NULL,
+  `type` VARCHAR(32) NOT NULL,
   `synclock` INT(10) NOT NULL DEFAULT '0',
-  `ctag` VARCHAR(32) DEFAULT NULL,
+  `ctag` VARCHAR(40) DEFAULT NULL,
   PRIMARY KEY(`ID`),
   INDEX `resource_type` (`resource`, `type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
@@ -144,4 +142,34 @@ CREATE TABLE `kolab_cache_freebusy` (
     REFERENCES `kolab_folders`(`ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
+
+
+-- Migrate data from old kolab_cache table
+
+INSERT INTO kolab_folders (resource, type)
+  SELECT DISTINCT resource, type
+  FROM  kolab_cache WHERE type IN ('event','contact','task','file');
+
+INSERT INTO kolab_cache_event (folder_id, msguid, uid, created, changed, data, xml, tags, words, dtstart, dtend)
+  SELECT kolab_folders.ID, msguid, uid, created, changed, data, xml, tags, words, dtstart, dtend
+  FROM kolab_cache LEFT JOIN kolab_folders ON (kolab_folders.resource = kolab_cache.resource)
+  WHERE kolab_cache.type = 'event' AND kolab_folders.ID IS NOT NULL;
+
+INSERT INTO kolab_cache_task (folder_id, msguid, uid, created, changed, data, xml, tags, words, dtstart, dtend)
+  SELECT kolab_folders.ID, msguid, uid, created, changed, data, xml, tags, words, dtstart, dtend
+  FROM kolab_cache LEFT JOIN kolab_folders ON (kolab_folders.resource = kolab_cache.resource)
+  WHERE kolab_cache.type = 'task' AND kolab_folders.ID IS NOT NULL;
+
+INSERT INTO kolab_cache_contact (folder_id, msguid, uid, created, changed, data, xml, tags, words, type)
+  SELECT kolab_folders.ID, msguid, uid, created, changed, data, xml, tags, words, kolab_cache.type
+  FROM kolab_cache LEFT JOIN kolab_folders ON (kolab_folders.resource = kolab_cache.resource)
+  WHERE kolab_cache.type IN ('contact','distribution-list') AND kolab_folders.ID IS NOT NULL;
+
+INSERT INTO kolab_cache_file (folder_id, msguid, uid, created, changed, data, xml, tags, words, filename)
+  SELECT kolab_folders.ID, msguid, uid, created, changed, data, xml, tags, words, filename
+  FROM kolab_cache LEFT JOIN kolab_folders ON (kolab_folders.resource = kolab_cache.resource)
+  WHERE kolab_cache.type = 'file' AND kolab_folders.ID IS NOT NULL;
+
+
+DROP TABLE IF EXISTS `kolab_cache`;
 

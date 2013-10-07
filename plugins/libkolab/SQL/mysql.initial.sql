@@ -11,10 +11,10 @@ DROP TABLE IF EXISTS `kolab_folders`;
 
 CREATE TABLE `kolab_folders` (
   `ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `resource` VARCHAR(255) CHARACTER SET ascii NOT NULL,
-  `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
+  `resource` VARCHAR(255) NOT NULL,
+  `type` VARCHAR(32) NOT NULL,
   `synclock` INT(10) NOT NULL DEFAULT '0',
-  `ctag` VARCHAR(32) DEFAULT NULL,
+  `ctag` VARCHAR(40) DEFAULT NULL,
   PRIMARY KEY(`ID`),
   INDEX `resource_type` (`resource`, `type`)
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
