@@ -41,11 +41,7 @@ class kolab_storage_cache
     protected $folders_table;
     protected $max_sql_packet;
     protected $max_sync_lock_time = 600;
-    protected $binary_items = array(
-        'photo'          => '|<photo><uri>[^;]+;base64,([^<]+)</uri></photo>|i',
-        'pgppublickey'   => '|<key><uri>date:application/pgp-keys;base64,([^<]+)</uri></photo>|i',
-        'pkcs7publickey' => '|<key><uri>date:application/pkcs7-mime;base64,([^<]+)</uri></photo>|i',
-    );
+    protected $binary_items = array();
     protected $extra_cols = array();
 
 
@@ -600,7 +596,7 @@ class kolab_storage_cache
      */
     protected function _serialize($object)
     {
-        $sql_data = array('changed' => null, 'dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
+        $sql_data = array('changed' => null, 'xml' => '', 'tags' => '', 'words' => '');
 
         if ($object['changed']) {
             $sql_data['changed'] = date('Y-m-d H:i:s', is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);

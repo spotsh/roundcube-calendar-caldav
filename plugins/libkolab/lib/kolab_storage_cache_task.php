@@ -32,7 +32,7 @@ class kolab_storage_cache_task extends kolab_storage_cache
      */
     protected function _serialize($object)
     {
-        $sql_data = parent::_serialize($object);
+        $sql_data = parent::_serialize($object) + array('dtstart' => null, 'dtend' => null);
 
         if ($object['start'])
             $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
