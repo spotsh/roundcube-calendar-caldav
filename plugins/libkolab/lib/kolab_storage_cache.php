@@ -804,21 +804,32 @@ class kolab_storage_cache
             return;
         }
 
-        if ($this->messages_cache === null) {
+        static $messages_cache, $cache_bypass;
+
+        if ($messages_cache === null) {
             $rcmail = rcube::get_instance();
-            $this->messages_cache = (bool) $rcmail->config->get('messages_cache');
+            $messages_cache = (bool) $rcmail->config->get('messages_cache');
+            $cache_bypass   = (int) $rcmail->config->get('kolab_messages_cache_bypass');
         }
 
-        if ($this->messages_cache) {
-            // we'll disable messages cache, but keep index cache
-            // default mode is both (MODE_INDEX | MODE_MESSAGE)
-            $mode = rcube_imap_cache::MODE_INDEX;
+        if ($messages_cache) {
+            switch ($cache_bypass) {
+                case 2:
+                    // Disable messages cache completely
+                    $this->imap->set_messages_caching(!$disable);
+                    return;
 
-            if (!$disable) {
-                $mode |= rcube_imap_cache::MODE_MESSAGE;
+                case 1:
+                    // We'll disable messages cache, but keep index cache.
+                    // Default mode is both (MODE_INDEX | MODE_MESSAGE)
+                    $mode = rcube_imap_cache::MODE_INDEX;
+
+                    if (!$disable) {
+                        $mode |= rcube_imap_cache::MODE_MESSAGE;
+                    }
+
+                    $this->imap->set_messages_caching(true, $mode);
             }
-
-            $this->imap->set_messages_caching(true, $mode);
         }
     }
 }
