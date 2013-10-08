@@ -468,7 +468,7 @@ class kolab_storage_cache
             $this->_read_folder_data();
 
             $sql_result = $this->db->query(
-                "SELECT COUNT(*) AS numrows FROM kolab_cache ".
+                "SELECT COUNT(*) AS numrows FROM $this->cache_table ".
                 "WHERE folder_id=? " . $this->_sql_where($query),
                 $this->folder_id
             );
