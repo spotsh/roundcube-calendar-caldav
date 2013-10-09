@@ -198,6 +198,8 @@ class calendar_ui
 
       $html_id = html_identifier($id);
       $class = 'cal-'  . asciiwords($id, true);
+      $listname = html_entity_decode($prop['name'], ENT_COMPAT, RCMAIL_CHARSET);
+      $title = strlen($listname) > 25 ? $listname : '';
 
       if ($prop['readonly'])
         $class .= ' readonly';
@@ -207,7 +209,7 @@ class calendar_ui
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
         html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
         html::span('handle', '&nbsp;') .
-        html::span('calname', $prop['name']));
+        html::span(array('class' => 'calname', 'title' => $title), $prop['name']));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);
