@@ -384,7 +384,7 @@ class kolab_storage_folder
         $this->cache->synchronize();
 
         // fetch objects from cache
-        return $this->cache->select(array());
+        return $this->cache->select($this->_prepare_query($type));
     }
 
 
@@ -433,7 +433,7 @@ class kolab_storage_folder
         // string equals type query
         // FIXME: should not be called this way!
         if (is_string($query)) {
-            return $this->cache->has_type_col() ? array(array('type','=',$query)) : array();
+            return $this->cache->has_type_col() && !empty($type) ? array(array('type','=',$query)) : array();
         }
 
         foreach ((array)$query as $i => $param) {
