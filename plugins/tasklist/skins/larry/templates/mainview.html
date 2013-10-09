@@ -144,7 +144,8 @@ var UI = new rcube_mail_ui();
 
 $(document).ready(function(e){
 	UI.init();
-
+	new rcube_splitter({ id:'taskviewsplitter', p1:'#sidebar', p2:'#mainview-right',
+		orientation:'v', relative:true, start:240, min:180, size:16, offset:2 }).init();
 });
 
 </script>
