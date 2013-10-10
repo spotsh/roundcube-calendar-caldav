@@ -33,6 +33,7 @@ class kolab_calendar
   public $alarms = false;
   public $categories = array();
   public $storage;
+  public $name;
 
   private $cal;
   private $events = array();
@@ -48,7 +49,7 @@ class kolab_calendar
     $this->cal = $calendar;
 
     if (strlen($imap_folder))
-      $this->imap_folder = $imap_folder;
+      $this->imap_folder = $this->name = $imap_folder;
 
     // ID is derrived from folder name
     $this->id = kolab_storage::folder_id($this->imap_folder);

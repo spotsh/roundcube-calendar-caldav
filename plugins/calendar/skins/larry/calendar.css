@@ -157,6 +157,10 @@ pre {
 	position: relative;
 }
 
+#calendarslist li.virtual {
+	padding-top: 2px;
+}
+
 #calendarslist li label {
 	display: block;
 }
@@ -223,6 +227,10 @@ pre {
 
 #calendarslist li.shared.readonly span.calname {
 	background-position: right -92px;
+}
+
+#calendarslist li.virtual span.calname {
+	color: #aaa;
 }
 
 #calfeedurl,

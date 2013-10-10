@@ -195,6 +195,11 @@ body.attachmentwin #topnav .topright {
 	white-space: nowrap;
 }
 
+#tasklists li.virtual {
+	padding-top: 4px;
+	height: 16px;
+}
+
 #tasklists li label {
 	display: block;
 }
@@ -238,6 +243,10 @@ body.attachmentwin #topnav .topright {
 
 #tasklists li.shared.readonly span.listname {
 	background-position: right -214px;
+}
+
+#tasklists li.virtual span.listname {
+	color: #aaa;
 }
 
 #tasklists li input {

@@ -80,21 +80,36 @@ class tasklist_kolab_driver extends tasklist_driver
         }
 
         $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
+        $prefs = $this->rc->config->get('kolab_tasklists', array());
         $listnames = array();
 
-        $prefs = $this->rc->config->get('kolab_tasklists', array());
+        // include virtual folders for a full folder tree
+        if (!$this->rc->output->ajax_call)
+            $folders = $this->_folder_hierarchy($folders, $delim);
 
         foreach ($folders as $folder) {
             $utf7name = $folder->name;
-            $this->folders[$folder->name] = $folder;
 
             $path_imap = explode($delim, $utf7name);
             $editname = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');  // pop off raw name part
             $path_imap = join($delim, $path_imap);
 
-            $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);
+            $fullname = kolab_storage::object_name($utf7name);
+            $name = kolab_storage::folder_displayname($fullname, $listnames);
+
+            // special handling for virtual folders
+            if ($folder->virtual) {
+                $list_id = kolab_storage::folder_id($utf7name);
+                $this->lists[$list_id] = array(
+                    'id' => $list_id,
+                    'name' => $name,
+                    'virtual' => true,
+                );
+                continue;
+            }
 
             if ($folder->get_namespace() == 'personal') {
+                $norename = false;
                 $readonly = false;
                 $alarms = true;
             }
@@ -105,16 +120,20 @@ class tasklist_kolab_driver extends tasklist_driver
                     if (strpos($rights, 'i') !== false)
                       $readonly = false;
                 }
+                $info = $folder->get_folder_info();
+                $norename = $readonly || $info['norename'] || $info['protected'];
             }
 
             $list_id = kolab_storage::folder_id($utf7name);
             $tasklist = array(
                 'id' => $list_id,
                 'name' => $name,
+                'altname' => $fullname,
                 'editname' => $editname,
                 'color' => $folder->get_color('0000CC'),
                 'showalarms' => isset($prefs[$list_id]['showalarms']) ? $prefs[$list_id]['showalarms'] : $alarms,
-                'editable' => !$readonly,
+                'editable' => !$readionly,
+                'norename' => $norename,
                 'active' => $folder->is_active(),
                 'parentfolder' => $path_imap,
                 'default' => $folder->default,
@@ -123,8 +142,41 @@ class tasklist_kolab_driver extends tasklist_driver
             );
             $this->lists[$tasklist['id']] = $tasklist;
             $this->folders[$tasklist['id']] = $folder;
+            $this->folders[$folder->name] = $folder;
         }
     }
+
+    /**
+     * Check the folder tree and add the missing parents as virtual folders
+     */
+    private function _folder_hierarchy($folders, $delim)
+    {
+        $parents = array();
+        $existing = array_map(function($folder){ return $folder->name; }, $folders);
+        foreach ($folders as $id => $folder) {
+            $path = explode($delim, $folder->name);
+            array_pop($path);
+
+            // skip top folders or ones with a custom displayname
+            if (count($path) <= 1 || kolab_storage::custom_displayname($folder->name))
+                continue;
+
+            while (count($path) > 1 && ($parent = join($delim, $path))) {
+                if (!in_array($parent, $existing) && !$parents[$parent]) {
+                    $parents[$parent] = new virtual_kolab_storage_folder($parent, $folder->get_namespace());
+                }
+                array_pop($path);
+            }
+        }
+
+        // add virtual parents to the list and sort again
+        if (count($parents)) {
+            $folders = kolab_storage::sort_folders(array_merge($folders, array_values($parents)));
+        }
+
+        return $folders;
+    }
+
 
     /**
      * Get a list of available task lists from this source
@@ -848,3 +900,26 @@ class tasklist_kolab_driver extends tasklist_driver
     }
 
 }
+
+/**
+ * Helper class that represents a virtual IMAP folder
+ * with a subset of the kolab_storage_folder API.
+ */
+class virtual_kolab_storage_folder
+{
+    public $name;
+    public $namespace;
+    public $virtual = true;
+
+    public function __construct($name, $ns)
+    {
+        $this->name = $name;
+        $this->namespace = $ns;
+    }
+
+    public function get_namespace()
+    {
+        return $this->namespace;
+    }
+}
+

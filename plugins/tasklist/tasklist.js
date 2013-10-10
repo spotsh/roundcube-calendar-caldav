@@ -1413,7 +1413,7 @@ function rcube_tasklist_ui(settings)
             list = { name:'', editable:true, showalarms:true };
 
         // fill edit form
-        var name = $('#taskedit-tasklistame').prop('disabled', !list.editable).val(list.editname || list.name),
+        var name = $('#taskedit-tasklistame').prop('disabled', list.norename||false).val(list.editname || list.name),
             alarms = $('#taskedit-showalarms').prop('checked', list.showalarms).get(0),
             parent = $('#taskedit-parentfolder').val(list.parentfolder);
 
@@ -1465,7 +1465,7 @@ function rcube_tasklist_ui(settings)
     function list_remove(id)
     {
         var list = me.tasklists[id];
-        if (list && list.editable && confirm(rcmail.gettext(list.children ? 'deletelistconfirmrecursive' : 'deletelistconfirm', 'tasklist'))) {
+        if (list && !list.norename && confirm(rcmail.gettext(list.children ? 'deletelistconfirmrecursive' : 'deletelistconfirm', 'tasklist'))) {
             saving_lock = rcmail.set_busy(true, 'tasklist.savingdata');
             rcmail.http_post('tasklist', { action:'remove', l:{ id:list.id } });
             return true;

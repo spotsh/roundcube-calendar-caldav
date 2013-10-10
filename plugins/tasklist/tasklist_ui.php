@@ -100,20 +100,23 @@ class tasklist_ui
             $prop['undelete'] = $this->plugin->driver->undelete;
             $prop['sortable'] = $this->plugin->driver->sortable;
             $prop['attachments'] = $this->plugin->driver->attachments;
-            $jsenv[$id] = $prop;
+
+            if (!$prop['virtual'])
+                $jsenv[$id] = $prop;
 
             $html_id = html_identifier($id);
             $class = 'tasks-'  . asciiwords($id, true);
-            $listname = html_entity_decode($prop['name'], ENT_COMPAT, RCMAIL_CHARSET);
-            $title = strlen($listname) > 25 ? $listname : '';
+            $title = !empty($prop['altname']) && $prop['altname'] != $prop['name'] ? html_entity_decode($prop['altname'], ENT_COMPAT, RCMAIL_CHARSET) : '';
 
-            if (!$prop['editable'])
+            if ($prop['virtual'])
+                $class .= ' virtual';
+            else if (!$prop['editable'])
                 $class .= ' readonly';
             if ($prop['class_name'])
                 $class .= ' '.$prop['class_name'];
 
             $li .= html::tag('li', array('id' => 'rcmlitasklist' . $html_id, 'class' => $class),
-                html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active'])) .
+                ($prop['virtual'] ? '' : html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active']))) .
                 html::span('handle', '&nbsp;') .
                 html::span(array('class' => 'listname', 'title' => $title), $prop['name']));
         }
