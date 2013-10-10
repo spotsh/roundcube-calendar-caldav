@@ -395,11 +395,8 @@ class kolab_storage
         self::setup();
 
         // find custom display name in folder METADATA
-        if (self::$config->get('kolab_custom_display_names', true)) {
-            $metadata = self::$imap->get_metadata($folder, array(self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED));
-            if (($name = $metadata[$folder][self::NAME_KEY_PRIVATE]) || ($name = $metadata[$folder][self::NAME_KEY_SHARED])) {
-                return $name;
-            }
+        if ($name = self::custom_displayname($folder)) {
+            return $name;
         }
 
         $found     = false;
@@ -468,6 +465,21 @@ class kolab_storage
         return $folder;
     }
 
+    /**
+     * Get custom display name (saved in metadata) for the given folder
+     */
+    public static function custom_displayname($folder)
+    {
+      // find custom display name in folder METADATA
+      if (self::$config->get('kolab_custom_display_names', true)) {
+          $metadata = self::$imap->get_metadata($folder, array(self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED));
+          if (($name = $metadata[$folder][self::NAME_KEY_PRIVATE]) || ($name = $metadata[$folder][self::NAME_KEY_SHARED])) {
+              return $name;
+          }
+      }
+
+      return false;
+    }
 
     /**
      * Helper method to generate a truncated folder name to display
@@ -482,7 +494,7 @@ class kolab_storage
                 $length = strlen($names[$i] . ' &raquo; ');
                 $prefix = substr($name, 0, $length);
                 $count  = count(explode(' &raquo; ', $prefix));
-                $name   = str_repeat('&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                $name   = str_repeat('&nbsp;&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
                 break;
             }
         }

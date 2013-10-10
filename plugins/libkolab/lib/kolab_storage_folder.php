@@ -92,7 +92,7 @@ class kolab_storage_folder
     /**
      *
      */
-    private function get_folder_info()
+    public function get_folder_info()
     {
         if (!isset($this->info))
             $this->info = $this->imap->folder_info($this->name);
