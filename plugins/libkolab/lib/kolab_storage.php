@@ -31,6 +31,9 @@ class kolab_storage
     const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
     const NAME_KEY_SHARED   = '/shared/vendor/kolab/displayname';
     const NAME_KEY_PRIVATE  = '/private/vendor/kolab/displayname';
+    const UID_KEY_SHARED    = '/shared/vendor/kolab/uniqueid';
+    const UID_KEY_PRIVATE   = '/private/vendor/kolab/uniqueid';
+    const UID_KEY_CYRUS     = '/shared/vendor/cmu/cyrus-imapd/uniqueid';
 
     public static $version = '3.0';
     public static $last_error;
@@ -154,7 +157,7 @@ class kolab_storage
      * This will search all folders storing objects of the given type.
      *
      * @param string Object UID
-     * @param string Object type (contact,distribution-list,event,task,note)
+     * @param string Object type (contact,event,task,journal,file,note,configuration)
      * @return array The Kolab object represented as hash array or false if not found
      */
     public static function get_object($uid, $type)
@@ -276,6 +279,7 @@ class kolab_storage
     {
         self::setup();
 
+        $oldfolder = self::get_folder($oldname);
         $active = self::folder_is_active($oldname);
         $success = self::$imap->rename_folder($oldname, $newname);
         self::$last_error = self::$imap->get_error_str();
@@ -284,6 +288,11 @@ class kolab_storage
         if ($success && $active) {
             self::set_state($oldnam, false);
             self::set_state($newname, true);
+        }
+
+        // assign existing cache entries to new resource uri
+        if ($success && $oldfolder) {
+            $oldfolder->cache->rename($newname);
         }
 
         return $success;
@@ -577,7 +586,7 @@ class kolab_storage
      *
      * @param string  Optional root folder
      * @param string  Optional name pattern
-     * @param string  Data type to list folders for (contact,distribution-list,event,task,note,mail)
+     * @param string  Data type to list folders for (contact,event,task,journal,file,note,mail,configuration)
      * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
      * @param array   Will be filled with folder-types data
      *
@@ -970,7 +979,7 @@ class kolab_storage
             }
 
             if (!self::$imap->folder_exists($folder)) {
-                if (!self::$imap->folder_create($folder)) {
+                if (!self::$imap->create_folder($folder)) {
                     return;
                 }
             }

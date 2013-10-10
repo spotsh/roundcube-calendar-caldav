@@ -233,6 +233,8 @@ function rcube_tasklist_ui(settings)
                     li.children('.childtasks:first').toggle();
                     $(e.target).toggleClass('collapsed').html(rec.collapsed ? '&#9654;' : '&#9660;');
                     rcmail.http_post('tasks/task', { action:'collapse', t:{ id:rec.id, list:rec.list }, collapsed:rec.collapsed?1:0 });
+                    if (e.shiftKey)  // expand/collapse all childs
+                        li.children('.childtasks:first .childtoggle.'+(rec.collapsed?'expanded':'collapsed')).click();
                     break;
 
                 case 'complete':

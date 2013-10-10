@@ -109,8 +109,8 @@ class tasklist_database_driver extends tasklist_driver
              (user_id, name, color, showalarms)
              VALUES (?, ?, ?, ?)",
             $this->rc->user->ID,
-            $prop['name'],
-            $prop['color'],
+            strval($prop['name']),
+            strval($prop['color']),
             $prop['showalarms']?1:0
         );
 
