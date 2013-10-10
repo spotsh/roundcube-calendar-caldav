@@ -103,15 +103,16 @@ class kolab_storage
      * Get a list of storage folders for the given data type
      *
      * @param string Data type to list folders for (contact,distribution-list,event,task,note)
+     * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
      *
      * @return array List of Kolab_Folder objects (folder names in UTF7-IMAP)
      */
-    public static function get_folders($type)
+    public static function get_folders($type, $subscribed = null)
     {
         $folders = $folderdata = array();
 
         if (self::setup()) {
-            foreach ((array)self::list_folders('', '*', $type, null, $folderdata) as $foldername) {
+            foreach ((array)self::list_folders('', '*', $type, $subscribed, $folderdata) as $foldername) {
                 $folders[$foldername] = new kolab_storage_folder($foldername, $folderdata[$foldername]);
             }
         }
@@ -516,7 +517,7 @@ class kolab_storage
     public static function folder_selector($type, $attrs, $current = '')
     {
         // get all folders of specified type
-        $folders = self::get_folders($type);
+        $folders = self::get_folders($type, false);
 
         $delim = self::$imap->get_hierarchy_delimiter();
         $names = array();
