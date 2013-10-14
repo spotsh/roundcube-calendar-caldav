@@ -493,7 +493,7 @@ class kolab_storage_cache
     protected function _sql_where($query)
     {
         $sql_where = '';
-        foreach ($query as $param) {
+        foreach ((array) $query as $param) {
             if (is_array($param[0])) {
                 $subq = array();
                 foreach ($param[0] as $q) {
