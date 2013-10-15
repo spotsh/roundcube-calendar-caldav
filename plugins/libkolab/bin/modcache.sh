@@ -157,7 +157,7 @@ default:
  */
 function resource_prefix($opts)
 {
-    return 'imap://' . urlencode($opts['username']) . '@' . $opts['host'] . '/';
+    return 'imap://' . str_replace('%', '\\%', urlencode($opts['username'])) . '@' . $opts['host'] . '/';
 }
 
 
