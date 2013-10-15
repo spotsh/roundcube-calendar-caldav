@@ -4,7 +4,7 @@
 /**
  * Kolab storage cache modification script
  *
- * @version 3.0
+ * @version 3.1
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
  * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
@@ -56,7 +56,14 @@ $opts = get_opt(array(
 $opts['username'] = !empty($opts[1]) ? $opts[1] : $opts['user'];
 $action = $opts[0];
 
-$rcmail = rcube::get_instance();
+$rcmail = rcube::get_instance(rcube::INIT_WITH_DB | rcube::INIT_WITH_PLUGINS);
+
+
+// connect to database
+$db = $rcmail->get_dbh();
+$db->db_connect('w');
+if (!$db->is_connected() || $db->is_error())
+    die("No DB connection\n");
 
 
 /*
@@ -68,32 +75,42 @@ switch (strtolower($action)) {
  * Clear/expunge all cache records
  */
 case 'expunge':
+    $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','configuration','event','file','journal','note','task');
+    $folder_types_db = array_map(array($db, 'quote'), $folder_types);
     $expire = strtotime(!empty($opts[2]) ? $opts[2] : 'now - 10 days');
-    $sql_add = " AND created <= '" . date('Y-m-d 00:00:00', $expire) . "'";
-    if ($opts['limit']) {
-        $sql_add .= ' LIMIT ' . intval($opts['limit']);
+    $sql_where = "type IN (" . join(',', $folder_types_db) . ")";
+
+    if ($opts['username']) {
+        $sql_where .= ' AND resource LIKE ?';
     }
 
-case 'clear':
-    // connect to database
-    $db = $rcmail->get_dbh();
-    $db->db_connect('w');
-    if (!$db->is_connected() || $db->is_error())
-        die("No DB connection\n");
+    $sql_query = "DELETE FROM %s WHERE folder_id IN (SELECT folder_id FROM kolab_folders WHERE $sql_where) AND created <= " . $db->quote(date('Y-m-d 00:00:00', $expire));
+    if ($opts['limit']) {
+        $sql_query = ' LIMIT ' . intval($opts['limit']);
+    }
+    foreach ($folder_types as $type) {
+        $table_name = 'kolab_cache_' . $type;
+        $db->query(sprintf($sql_query, $table_name), resource_prefix($opts).'%');
+        echo $db->affected_rows() . " records deleted from '$table_name'\n";
+    }
 
-    $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','distribution-list','event','task','configuration','file');
+    $db->query("UPDATE kolab_folders SET ctag='' WHERE $sql_where", resource_prefix($opts).'%');
+    break;
+
+case 'clear':
+    $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','configuration','event','file','journal','note','task');
     $folder_types_db = array_map(array($db, 'quote'), $folder_types);
 
     if ($opts['all']) {
-        $sql_query = "DELETE FROM kolab_cache WHERE type IN (" . join(',', $folder_types_db) . ")";
+        $sql_query = "DELETE FROM kolab_folders WHERE 1";
     }
     else if ($opts['username']) {
-        $sql_query = "DELETE FROM kolab_cache WHERE type IN (" . join(',', $folder_types_db) . ") AND resource LIKE ?";
+        $sql_query = "DELETE FROM kolab_folders WHERE type IN (" . join(',', $folder_types_db) . ") AND resource LIKE ?";
     }
 
     if ($sql_query) {
         $db->query($sql_query . $sql_add, resource_prefix($opts).'%');
-        echo $db->affected_rows() . " records deleted from 'kolab_cache'\n";
+        echo $db->affected_rows() . " records deleted from 'kolab_folders'\n";
     }
     break;
 
@@ -106,7 +123,7 @@ case 'prewarm':
     $rcmail->plugins->load_plugin('libkolab');
 
     if (authenticate($opts)) {
-        $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','event','task','configuration','file');
+        $folder_types = $opts['type'] ? explode(',', $opts['type']) : array('contact','configuration','event','file','task');
         foreach ($folder_types as $type) {
             // sync every folder of the given type
             foreach (kolab_storage::get_folders($type) as $folder) {
