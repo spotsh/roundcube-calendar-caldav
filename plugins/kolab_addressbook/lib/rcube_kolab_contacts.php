@@ -478,7 +478,7 @@ class rcube_kolab_contacts extends rcube_addressbook
             $count = count($this->filter['ids']);
         }
         else {
-            $count = $this->storagefolder->count();
+            $count = $this->storagefolder->count('contact');
         }
 
         return new rcube_result_set($count, ($this->list_page-1) * $this->page_size);
