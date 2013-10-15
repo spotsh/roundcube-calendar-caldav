@@ -109,7 +109,7 @@ class kolab_driver extends calendar_driver
     $calendars = $names = array();
 
     // include virtual folders for a full folder tree
-    if (!$active && !$personal && !$this->rc->output->ajax_call)
+    if (!$active && !$personal && !$this->rc->output->ajax_call && in_array($this->rc->action, array('index','')))
       $folders = $this->_folder_hierarchy($folders, $this->rc->get_storage()->get_hierarchy_delimiter());
 
     foreach ($folders as $id => $cal) {

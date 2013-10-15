@@ -84,7 +84,7 @@ class tasklist_kolab_driver extends tasklist_driver
         $listnames = array();
 
         // include virtual folders for a full folder tree
-        if (!$this->rc->output->ajax_call)
+        if (!$this->rc->output->ajax_call && in_array($this->rc->action, array('index','')))
             $folders = $this->_folder_hierarchy($folders, $delim);
 
         foreach ($folders as $folder) {
