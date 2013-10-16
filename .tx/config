@@ -28,6 +28,11 @@ file_filter = plugins/kolab_delegation/localization/<lang>.inc
 source_file = plugins/kolab_delegation/localization/en_US.inc
 source_lang = en_US
 
+[kolab.kolab_files]
+file_filter = plugins/kolab_files/localization/<lang>.inc
+source_file = plugins/kolab_files/localization/en_US.inc
+source_lang = en_US
+
 [kolab.kolab_folders]
 file_filter = plugins/kolab_folders/localization/<lang>.inc
 source_file = plugins/kolab_folders/localization/en_US.inc
@@ -47,4 +52,3 @@ source_lang = en_US
 file_filter = plugins/libcalendaring/localization/<lang>.inc
 source_file = plugins/libcalendaring/localization/en_US.inc
 source_lang = en_US
-

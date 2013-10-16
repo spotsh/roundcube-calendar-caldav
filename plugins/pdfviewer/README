@@ -30,12 +30,13 @@ directory:
 $ cd <roundcubedir>/plugins/pdfviewer
 $ cp -r <pdfjsdir>/build/generic/web viewer
 $ cp <pdfjsdir>/build/generic/build/pdf.js viewer/pdf.js
+$ cp <pdfjsdir>/build/generic/build/pdf.worker.js viewer/pdf.worker.js
 $ rm viewer/*.pdf
 
 Then apply the pdfjs-viewer.diff patch to adjust the viewer for the use
 within Roundcube:
 
-$ patch -p1 < pdfjs-viewer.diff
+$ patch -p0 < pdfjs-viewer.diff
 
 Optionally, compress the scripts using Google's Closure Compiler [1]
 or the YUI Compressor [2].

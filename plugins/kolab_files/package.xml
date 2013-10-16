@@ -68,6 +68,10 @@
 			<pearinstaller>
 				<min>1.7.0</min>
 			</pearinstaller>
+            <package>
+                <name>libkolab</name>
+                <uri>http://kolabsys.com</uri>
+            </package>
 		</required>
 	</dependencies>
 	<phprelease/>

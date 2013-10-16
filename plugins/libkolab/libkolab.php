@@ -27,6 +27,8 @@
 
 class libkolab extends rcube_plugin
 {
+    static $http_requests = array();
+
     /**
      * Required startup method of a Roundcube plugin
      */
@@ -58,5 +60,67 @@ class libkolab extends rcube_plugin
     {
         $p['fetch_headers'] = trim($p['fetch_headers'] .' X-KOLAB-TYPE X-KOLAB-MIME-VERSION');
         return $p;
+    }
+
+    /**
+     * Wrapper function to load and initalize the HTTP_Request2 Object
+     *
+     * @param string|Net_Url2 Request URL
+     * @param string          Request method ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT')
+     * @param array           Configuration for this Request instance, that will be merged
+     *                        with default configuration
+     *
+     * @return HTTP_Request2 Request object
+     */
+    public static function http_request($url = '', $method = 'GET', $config = array())
+    {
+        $rcube       = rcube::get_instance();
+        $http_config = (array) $rcube->config->get('kolab_http_request');
+
+        // deprecated configuration options
+        if (empty($http_config)) {
+            foreach (array('ssl_verify_peer', 'ssl_verify_host') as $option) {
+                $value = $rcube->config->get('kolab_' . $option, true);
+                if (is_bool($value)) {
+                    $http_config[$option] = $value;
+                }
+            }
+        }
+
+        if (!empty($config)) {
+            $http_config = array_merge($http_config, $config);
+        }
+
+        $key = md5(serialize($http_config));
+
+        if (!($request = self::$http_requests[$key])) {
+            // load HTTP_Request2
+            require_once 'HTTP/Request2.php';
+
+            try {
+                $request = new HTTP_Request2();
+                $request->setConfig($http_config);
+            }
+            catch (Exception $e) {
+                rcube::raise_error($e, true, true);
+            }
+
+            // proxy User-Agent string
+            $request->setHeader('user-agent', $_SERVER['HTTP_USER_AGENT']);
+
+            self::$http_requests[$key] = $request;
+        }
+
+        // cleanup
+        try {
+            $request->setBody('');
+            $request->setUrl($url);
+            $request->setMethod($method);
+        }
+        catch (Exception $e) {
+            rcube::raise_error($e, true, true);
+        }
+
+        return $request;
     }
 }

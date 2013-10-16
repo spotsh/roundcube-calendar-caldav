@@ -13,11 +13,11 @@
 		<email>bruederli@kolabsys.com</email>
 		<active>yes</active>
 	</lead>
-	<date>2013-01-24</date>
-	<time>12:20:00</time>
+	<date>2013-10-03</date>
+	<time>14:20:00</time>
 	<version>
-		<release>0.1</release>
-		<api>0.1</api>
+		<release>0.1.2</release>
+		<api>0.1.2</api>
 	</version>
 	<stability>
 		<release>beta</release>
@@ -34,6 +34,7 @@
 			<file name="viewer/viewer.js" role="data"></file>
 			<file name="viewer/viewer.css" role="data"></file>
 			<file name="viewer/pdf.js" role="data"></file>
+			<file name="viewer/pdf.worker.js" role="data"></file>
 			<file name="viewer/compatibility.js" role="data"></file>
 			<file name="viewer/debugger.js" role="data"></file>
 			<file name="viewer/l10n.js" role="data"></file>
