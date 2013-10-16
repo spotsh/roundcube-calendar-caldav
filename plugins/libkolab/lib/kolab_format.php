@@ -40,6 +40,7 @@ abstract class kolab_format
     protected $data;
     protected $xmldata;
     protected $xmlobject;
+    protected $formaterror;
     protected $loaded = false;
     protected $version = '3.0';
 
@@ -248,7 +249,7 @@ abstract class kolab_format
                 $log = "Error";
         }
 
-        if ($log) {
+        if ($log && !isset($this->formaterror)) {
             rcube::raise_error(array(
                 'code' => 660,
                 'type' => 'php',
@@ -256,6 +257,8 @@ abstract class kolab_format
                 'line' => __LINE__,
                 'message' => "kolabformat $log: " . kolabformat::errorMessage(),
             ), true);
+
+            $this->formaterror = $ret;
         }
 
         return $ret;
@@ -342,6 +345,7 @@ abstract class kolab_format
      */
     public function load($xml)
     {
+        $this->formaterror = null;
         $read_func = $this->libfunc($this->read_func);
 
         if (is_array($read_func))
@@ -365,6 +369,8 @@ abstract class kolab_format
      */
     public function write($version = null)
     {
+        $this->formaterror = null;
+
         $this->init();
         $write_func = $this->libfunc($this->write_func);
         if (is_array($write_func))
