@@ -1981,10 +1981,17 @@ function rcube_calendar_ui(settings)
         if (form && form.elements._data.value) {
           rcmail.async_upload_form(form, 'import_events', function(e) {
             rcmail.set_busy(false, null, me.saving_lock);
+            $('.ui-dialog-buttonpane button', $dialog.parent()).button('enable');
+
+            // display error message if no sophisticated response from server arrived (e.g. iframe load error)
+            if (me.import_succeeded === null)
+              rcmail.display_message(rcmail.get_label('importerror', 'calendar'), 'error');
           });
 
           // display upload indicator
+          me.import_succeeded = null;
           me.saving_lock = rcmail.set_busy(true, 'uploading');
+          $('.ui-dialog-buttonpane button', $dialog.parent()).button('disable');
         }
       };
       
@@ -1999,6 +2006,7 @@ function rcube_calendar_ui(settings)
         closeOnEscape: false,
         title: rcmail.gettext('importevents', 'calendar'),
         close: function() {
+          $('.ui-dialog-buttonpane button', $dialog.parent()).button('enable');
           $dialog.dialog("destroy").hide();
         },
         buttons: buttons,
@@ -2010,6 +2018,7 @@ function rcube_calendar_ui(settings)
     // callback from server if import succeeded
     this.import_success = function(p)
     {
+      this.import_succeeded = true;
       $("#eventsimport:ui-dialog").dialog('close');
       rcmail.set_busy(false, null, me.saving_lock);
       rcmail.gui_objects.importform.reset();
@@ -2017,6 +2026,13 @@ function rcube_calendar_ui(settings)
       if (p.refetch)
         this.refresh(p);
     };
+
+    // callback from server to report errors on import
+    this.import_error = function(p)
+    {
+      this.import_succeeded = false;
+      rcmail.display_message(p.message || rcmail.get_label('importerror', 'calendar'), 'error');
+    }
 
     // show URL of the given calendar in a dialog box
     this.showurl = function(calendar)
@@ -2780,6 +2796,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.unlock_saving', function(p){ cal.unlock_saving(); });
   rcmail.addEventListener('plugin.refresh_calendar', function(p){ cal.refresh(p); });
   rcmail.addEventListener('plugin.import_success', function(p){ cal.import_success(p); });
+  rcmail.addEventListener('plugin.import_error', function(p){ cal.import_error(p); });
 
   // let's go
   var cal = new rcube_calendar_ui($.extend(rcmail.env.calendar_settings, rcmail.env.libcal_settings));

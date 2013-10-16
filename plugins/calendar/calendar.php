@@ -975,10 +975,18 @@ class calendar extends rcube_plugin
 
     if (!$err && $_FILES['_data']['tmp_name']) {
       $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
-      $events = $this->get_ical()->import_from_file($_FILES['_data']['tmp_name']);
-
-      $count = $errors = 0;
       $rangestart = $_REQUEST['_range'] ? date_create("now -" . intval($_REQUEST['_range']) . " months") : 0;
+      $count = $errors = 0;
+
+      try {
+          $events = $this->get_ical()->import_from_file($_FILES['_data']['tmp_name'], 'UTF-8', true);
+      }
+      catch (Exception $e) {
+          $errors = 1;
+          $msg = $e->getMessage();
+          $events = array();
+      }
+
       foreach ($events as $event) {
         // TODO: correctly handle recurring events which start before $rangestart
         if ($event['end'] < $rangestart && (!$event['recurrence'] || ($event['recurrence']['until'] && $event['recurrence']['until'] < $rangestart)))
@@ -1000,8 +1008,9 @@ class calendar extends rcube_plugin
         $this->rc->output->command('display_message', $this->gettext('importnone'), 'notice');
         $this->rc->output->command('plugin.import_success', array('source' => $calendar));
       }
-      else
-        $this->rc->output->command('display_message', $this->gettext('importerror'), 'error');
+      else {
+        $this->rc->output->command('plugin.import_error', array('message' => $this->gettext('importerror') . ($msg ? ': ' . $msg : '')));
+      }
     }
     else {
       if ($err == UPLOAD_ERR_INI_SIZE || $err == UPLOAD_ERR_FORM_SIZE) {
@@ -1012,7 +1021,7 @@ class calendar extends rcube_plugin
         $msg = rcube_label('fileuploaderror');
       }
 
-      $this->rc->output->command('display_message', $msg, 'error');
+      $this->rc->output->command('plugin.import_error', array('message' => $msg));
       $this->rc->output->command('plugin.unlock_saving', false);
     }
 
