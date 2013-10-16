@@ -114,21 +114,22 @@ class kolab_driver extends calendar_driver
 
     foreach ($folders as $id => $cal) {
       $fullname = $cal->get_name();
-      $name = kolab_storage::folder_displayname($fullname, $names);
+      $listname = kolab_storage::folder_displayname($fullname, $names);
 
       // special handling for virtual folders
       if ($cal->virtual) {
         $calendars[$cal->id] = array(
           'id' => $cal->id,
-          'name' => $name,
+          'name' => $fullname,
+          'listname' => $listname,
           'virtual' => true,
         );
       }
       else {
         $calendars[$cal->id] = array(
           'id'       => $cal->id,
-          'name'     => $name,
-          'altname'  => $fullname,
+          'name'     => $fullname,
+          'listname' => $listname,
           'editname' => $cal->get_foldername(),
           'color'    => $cal->get_color(),
           'readonly' => $cal->readonly,
