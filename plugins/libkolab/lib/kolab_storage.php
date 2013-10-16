@@ -677,13 +677,11 @@ class kolab_storage
      */
     public static function sort_folders($folders)
     {
-        $delimiter = self::$imap->get_hierarchy_delimiter();
         $nsnames = array('personal' => array(), 'shared' => array(), 'other' => array());
         foreach ($folders as $folder) {
             $folders[$folder->name] = $folder;
             $ns = $folder->get_namespace();
-            $level = count(explode($delimiter, $folder->name));
-            $nsnames[$ns][$folder->name] = sprintf('%02d-%s', $level, strtolower(html_entity_decode(self::object_name($folder->name, $ns), ENT_COMPAT, RCUBE_CHARSET)));  // decode &raquo;
+            $nsnames[$ns][$folder->name] = strtolower(html_entity_decode(self::object_name($folder->name, $ns), ENT_COMPAT, RCUBE_CHARSET));  // decode &raquo;
         }
 
         $names = array();
