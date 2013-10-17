@@ -106,7 +106,7 @@ class tasklist_ui
 
             $html_id = html_identifier($id);
             $class = 'tasks-'  . asciiwords($id, true);
-            $title = !empty($prop['altname']) && $prop['altname'] != $prop['name'] ? html_entity_decode($prop['altname'], ENT_COMPAT, RCMAIL_CHARSET) : '';
+            $title = $prop['name'] != $prop['listname'] ? html_entity_decode($prop['name'], ENT_COMPAT, RCMAIL_CHARSET) : '';
 
             if ($prop['virtual'])
                 $class .= ' virtual';
@@ -118,7 +118,7 @@ class tasklist_ui
             $li .= html::tag('li', array('id' => 'rcmlitasklist' . $html_id, 'class' => $class),
                 ($prop['virtual'] ? '' : html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active']))) .
                 html::span('handle', '&nbsp;') .
-                html::span(array('class' => 'listname', 'title' => $title), $prop['name']));
+                html::span(array('class' => 'listname', 'title' => $title), $prop['listname']));
         }
 
         $this->rc->output->set_env('tasklists', $jsenv);

@@ -200,7 +200,7 @@ class calendar_ui
 
       $html_id = html_identifier($id);
       $class = 'cal-'  . asciiwords($id, true);
-      $title = !empty($prop['altname']) && $prop['altname'] != $prop['name'] ? html_entity_decode($prop['altname'], ENT_COMPAT, RCMAIL_CHARSET) : '';
+      $title = $prop['name'] != $prop['listname'] ? html_entity_decode($prop['name'], ENT_COMPAT, RCMAIL_CHARSET) : '';
 
       if ($prop['virtual'])
         $class .= ' virtual';
@@ -212,7 +212,7 @@ class calendar_ui
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
         ($prop['virtual'] ? '' : html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
         html::span('handle', '&nbsp;')) .
-        html::span(array('class' => 'calname', 'title' => $title), $prop['name']));
+        html::span(array('class' => 'calname', 'title' => $title), $prop['listname']));
     }
 
     $this->rc->output->set_env('calendars', $jsenv);

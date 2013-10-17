@@ -95,14 +95,15 @@ class tasklist_kolab_driver extends tasklist_driver
             $path_imap = join($delim, $path_imap);
 
             $fullname = kolab_storage::object_name($utf7name);
-            $name = kolab_storage::folder_displayname($fullname, $listnames);
+            $listname = kolab_storage::folder_displayname($fullname, $listnames);
 
             // special handling for virtual folders
             if ($folder->virtual) {
                 $list_id = kolab_storage::folder_id($utf7name);
                 $this->lists[$list_id] = array(
                     'id' => $list_id,
-                    'name' => $name,
+                    'name' => $fullname,
+                    'listname' => $listname,
                     'virtual' => true,
                 );
                 continue;
@@ -127,8 +128,8 @@ class tasklist_kolab_driver extends tasklist_driver
             $list_id = kolab_storage::folder_id($utf7name);
             $tasklist = array(
                 'id' => $list_id,
-                'name' => $name,
-                'altname' => $fullname,
+                'name' => $fullname,
+                'listname' => $listname,
                 'editname' => $editname,
                 'color' => $folder->get_color('0000CC'),
                 'showalarms' => isset($prefs[$list_id]['showalarms']) ? $prefs[$list_id]['showalarms'] : $alarms,

@@ -111,7 +111,8 @@ class kolab_format_event extends kolab_format_xcal
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && $this->obj->isValid() && $this->obj->uid());
+        return !$this->formaterror && (($this->data && !empty($this->data['start']) && !empty($this->data['end'])) ||
+            (is_object($this->obj) && $this->obj->isValid() && $this->obj->uid()));
     }
 
     /**
