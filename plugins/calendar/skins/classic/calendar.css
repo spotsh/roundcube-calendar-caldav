@@ -253,6 +253,14 @@ pre {
   background-position: -64px -32px;
 }
 
+#calendartoolbar a.import {
+	background-position: -168px 0;
+}
+
+#calendartoolbar a.importSel {
+	background-position: -168px -32px;
+}
+
 #calendartoolbar a.export {
 	background-position: -128px 0;
 }

@@ -36,7 +36,6 @@
     <li><roundcube:button command="calendar-edit" label="calendar.edit" classAct="active" /></li>
     <li><roundcube:button command="calendar-remove" label="calendar.remove" classAct="active" /></li>
     <li><roundcube:button command="calendar-showurl" label="calendar.showurl" classAct="active" /></li>
-    <li><roundcube:button command="events-import" label="calendar.importevents" classAct="active" /></li>
     <roundcube:if condition="env:calendar_driver == 'kolab'" />
     <li class="separator_above"><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
     <roundcube:endif />
@@ -163,6 +162,7 @@
 <div id="calendartoolbar">
   <roundcube:button command="addevent" type="link" class="buttonPas addevent" classAct="button addevent" classSel="button addeventSel" title="calendar.new_event" content=" " />
   <roundcube:button command="print" type="link" class="buttonPas print" classAct="button print" classSel="button printSel" title="calendar.print" content=" " />
+  <roundcube:button command="events-import" type="link" class="buttonPas import" classAct="button import" classSel="button importSel" title="calendar.importevents" content=" " />
   <roundcube:button command="export" type="link" class="buttonPas export" classAct="button export" classSel="button exportSel" title="calendar.export" content=" " />
   <roundcube:container name="toolbar" id="calendartoolbar" />
 </div>
