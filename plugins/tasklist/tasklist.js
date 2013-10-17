@@ -1102,10 +1102,16 @@ function rcube_tasklist_ui(settings)
                 }
             }
 
+            // collect tags
             $('input[type="hidden"]', rcmail.gui_objects.edittagline).each(function(i,elem){
                 if (elem.value)
                     me.selected_task.tags.push(elem.value);
             });
+            // including the "pending" one in the text box
+            var newtag = $('#tagedit-input').val();
+            if (newtag != '') {
+                me.selected_task.tags.push(newtag);
+            }
 
             // serialize alarm settings
             var alarm = $('#taskedit select.edit-alarm-type').val();
