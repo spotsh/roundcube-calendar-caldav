@@ -41,7 +41,7 @@ class kolab_storage_cache_event extends kolab_storage_cache
         // extend date range for recurring events
         if ($object['recurrence'] && $object['_formatobj']) {
             $recurrence = new kolab_date_recurrence($object['_formatobj']);
-            $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
+            $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +10 years'));
         }
 
         return $sql_data;
