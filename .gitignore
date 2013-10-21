@@ -2,3 +2,4 @@
 *.tar.gz.gpg
 *.patch
 plugins/*/config.inc.php
+*.idea
