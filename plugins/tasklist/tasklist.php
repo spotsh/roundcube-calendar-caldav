@@ -90,6 +90,7 @@ class tasklist extends rcube_plugin
             $this->register_action('mail2task', array($this, 'mail_message2task'));
             $this->register_action('get-attachment', array($this, 'attachment_get'));
             $this->register_action('upload', array($this, 'attachment_upload'));
+            $this->add_hook('refresh', array($this, 'refresh'));
 
             $this->collapsed_tasks = array_filter(explode(',', $this->rc->config->get('tasklist_collapsed_tasks', '')));
         }
@@ -540,8 +541,17 @@ class tasklist extends rcube_plugin
 
         }
 */
+        $data = $this->tasks_data($this->driver->list_tasks($filter, $lists), $f, $tags);
+        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'search' => $search, 'data' => $data, 'tags' => array_values(array_unique($tags))));
+    }
+
+    /**
+     * Prepare and sort the given task records to be sent to the client
+     */
+    private function tasks_data($records, $f, &$tags)
+    {
         $data = $tags = $this->task_tree = $this->task_titles = array();
-        foreach ($this->driver->list_tasks($filter, $lists) as $rec) {
+        foreach ($records as $rec) {
             if ($rec['parent_id']) {
                 $this->task_tree[$rec['id']] = $rec['parent_id'];
             }
@@ -558,7 +568,7 @@ class tasklist extends rcube_plugin
         array_walk($data, array($this, 'task_walk_tree'));
         usort($data, array($this, 'task_sort_cmp'));
 
-        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'search' => $search, 'data' => $data, 'tags' => array_values(array_unique($tags))));
+        return $data;
     }
 
     /**
@@ -724,6 +734,28 @@ class tasklist extends rcube_plugin
         exit;
     }
 
+    /**
+     * Handler for keep-alive requests
+     * This will check for updated data in active lists and sync them to the client
+     */
+    public function refresh($attr)
+    {
+        $filter = array(
+            'since'  => $attr['last'],
+            'search' => get_input_value('q', RCUBE_INPUT_GPC),
+            'mask'   => intval(get_input_value('filter', RCUBE_INPUT_GPC)) & self::FILTER_MASK_COMPLETE,
+        );
+        $lists = get_input_value('lists', RCUBE_INPUT_GPC);;
+
+        $updates = $this->driver->list_tasks($filter, $lists);
+        if (!empty($updates)) {
+            $this->rc->output->command('plugin.refresh_task', $this->tasks_data($updates, 255, $tags));
+
+            // update counts
+            $counts = $this->driver->count_tasks($lists);
+            $this->rc->output->command('plugin.update_counts', $counts);
+        }
+    }
 
     /**
      * Handler for pending_alarms plugin hook triggered by the calendar module on keep-alive requests.

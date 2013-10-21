@@ -132,6 +132,7 @@ function rcube_tasklist_ui(settings)
         rcmail.addEventListener('plugin.destroy_tasklist', destroy_list);
         rcmail.addEventListener('plugin.reload_data', function(){ list_tasks(null); });
         rcmail.addEventListener('plugin.unlock_saving', unlock_saving);
+        rcmail.addEventListener('requestrefresh', before_refresh);
 
         // start loading tasks
         fetch_counts();
@@ -436,6 +437,19 @@ function rcube_tasklist_ui(settings)
         // avoid reloading
         me.tasklists[list_id].active = false;
         loadstate.lists = active_lists();
+    }
+
+    /**
+     * Modify query parameters for refresh requests
+     */
+    function before_refresh(query)
+    {
+        query.filter = filtermask == FILTER_MASK_COMPLETE ? FILTER_MASK_COMPLETE : FILTER_MASK_ALL;
+        query.lists = active_lists().join(',');
+        if (search_query)
+            query.q = search_query;
+
+        return query;
     }
 
     /**

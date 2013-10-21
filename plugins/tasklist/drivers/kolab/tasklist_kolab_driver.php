@@ -371,7 +371,7 @@ class tasklist_kolab_driver extends tasklist_driver
         $query = array();
         if ($filter['mask'] & tasklist::FILTER_MASK_COMPLETE)
             $query[] = array('tags','~','x-complete');
-        else
+        else if (empty($filter['since']))
             $query[] = array('tags','!~','x-complete');
 
         // full text search (only works with cache enabled)
@@ -380,6 +380,10 @@ class tasklist_kolab_driver extends tasklist_driver
             foreach (rcube_utils::normalize_string($search, true) as $word) {
                 $query[] = array('words', '~', $word);
             }
+        }
+
+        if ($filter['since']) {
+            $query[] = array('changed', '>=', $filter['since']);
         }
 
         foreach ($lists as $list_id) {
