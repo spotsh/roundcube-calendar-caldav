@@ -724,7 +724,7 @@ class database_driver extends calendar_driver
    *
    * @see calendar_driver::load_events()
    */
-  public function load_events($start, $end, $query = null, $calendars = null)
+  public function load_events($start, $end, $query = null, $calendars = null, $virtual = 1, $modifiedsince = null)
   {
     if (empty($calendars))
       $calendars = array_keys($this->calendars);
@@ -741,6 +741,12 @@ class database_driver extends calendar_driver
         $sql_query[] = $this->rc->db->ilike($col, '%'.$query.'%');
       $sql_add = 'AND (' . join(' OR ', $sql_query) . ')';
     }
+    
+    if (!$virtual)
+      $sql_arr .= ' AND e.recurrence_id = 0';
+    
+    if ($modifiedsince)
+      $sql_add .= ' AND e.changed >= ' . $this->rc->db->quote(date('Y-m-d H:i:s', $modifiedsince));
     
     $events = array();
     if (!empty($calendar_ids)) {

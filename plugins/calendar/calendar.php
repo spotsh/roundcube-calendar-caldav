@@ -126,6 +126,7 @@ class calendar extends rcube_plugin
       $this->register_action('mailtoevent', array($this, 'mail_message2event'));
       $this->register_action('inlineui', array($this, 'get_inline_ui'));
       $this->register_action('check-recent', array($this, 'check_recent'));
+      $this->add_hook('refresh', array($this, 'refresh'));
 
       // remove undo information...
       if ($undo = $_SESSION['calendar_event_undo']) {
@@ -916,6 +917,29 @@ class calendar extends rcube_plugin
     );
     echo $this->encode($events, !empty($query));
     exit;
+  }
+
+  /**
+   * Handler for keep-alive requests
+   * This will check for updated data in active calendars and sync them to the client
+   */
+  public function refresh($attr)
+  {
+    foreach ($this->driver->list_calendars(true) as $cal) {
+      $events = $this->driver->load_events(
+        get_input_value('start', RCUBE_INPUT_GET),
+        get_input_value('end', RCUBE_INPUT_GET),
+        get_input_value('q', RCUBE_INPUT_GET),
+        $cal['id'],
+        1,
+        $attr['last']
+      );
+
+      foreach ($events as $event) {
+        $args = array('source' => $cal['id'], 'update' => $this->_client_event($event));
+        $this->rc->output->command('plugin.refresh_calendar', $args);
+      }
+    }
   }
 
   /**

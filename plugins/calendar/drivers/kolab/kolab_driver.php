@@ -733,20 +733,25 @@ class kolab_driver extends calendar_driver
    * @param  integer Event's new end (unix timestamp)
    * @param  string  Search query (optional)
    * @param  mixed   List of calendar IDs to load events from (either as array or comma-separated string)
-   * @param  boolean Strip virtual events (optional)
+   * @param  boolean Include virtual events (optional)
+   * @param  integer Only list events modified since this time (unix timestamp)
    * @return array A list of event records
    */
-  public function load_events($start, $end, $search = null, $calendars = null, $virtual = 1)
+  public function load_events($start, $end, $search = null, $calendars = null, $virtual = 1, $modifiedsince = null)
   {
     if ($calendars && is_string($calendars))
       $calendars = explode(',', $calendars);
+
+    $query = array();
+    if ($modifiedsince)
+      $query[] = array('changed', '>=', $modifiedsince);
 
     $events = $categories = array();
     foreach (array_keys($this->calendars) as $cid) {
       if ($calendars && !in_array($cid, $calendars))
         continue;
 
-      $events = array_merge($events, $this->calendars[$cid]->list_events($start, $end, $search, $virtual));
+      $events = array_merge($events, $this->calendars[$cid]->list_events($start, $end, $search, $virtual, $query));
       $categories += $this->calendars[$cid]->categories;
     }
     

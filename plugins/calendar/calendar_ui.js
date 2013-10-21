@@ -2103,6 +2103,20 @@ function rcube_calendar_ui(settings)
       fc.fullCalendar('removeEvents', function(e){ return e.temp; });
     };
 
+    // modify query parameters for refresh requests
+    this.before_refresh = function(query)
+    {
+      var view = fc.fullCalendar('getView');
+
+      query.start = date2unixtime(view.visStart);
+      query.end = date2unixtime(view.visEnd);
+
+      if (this.search_query)
+        query.q = this.search_query;
+
+      return query;
+    };
+
 
     /***  event searching  ***/
 
@@ -2797,6 +2811,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.refresh_calendar', function(p){ cal.refresh(p); });
   rcmail.addEventListener('plugin.import_success', function(p){ cal.import_success(p); });
   rcmail.addEventListener('plugin.import_error', function(p){ cal.import_error(p); });
+  rcmail.addEventListener('requestrefresh', function(q){ return cal.before_refresh(q); });
 
   // let's go
   var cal = new rcube_calendar_ui($.extend(rcmail.env.calendar_settings, rcmail.env.libcal_settings));
