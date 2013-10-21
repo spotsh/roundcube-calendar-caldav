@@ -921,10 +921,22 @@ function rcube_tasklist_ui(settings)
         $('#task-completeness .task-text').html(((rec.complete || 0) * 100) + '%');
         $('#task-list .task-text').html(Q(me.tasklists[rec.list] ? me.tasklists[rec.list].name : ''));
 
-        var taglist = $('#task-tags')[(rec.tags && rec.tags.length ? 'show' : 'hide')]().children('.task-text').empty();
+        var itags = get_inherited_tags(rec);
+        var taglist = $('#task-tags')[(rec.tags && rec.tags.length || itags.length ? 'show' : 'hide')]().children('.task-text').empty();
         if (rec.tags && rec.tags.length) {
             $.each(rec.tags, function(i,val){
-                $('<span>').addClass('tag-element').html(Q(val)).data('value', val).appendTo(taglist);
+                $('<span>').addClass('tag-element').html(Q(val)).appendTo(taglist);
+            });
+        }
+
+        // append inherited tags
+        if (itags.length) {
+            $.each(itags, function(i,val){
+                $('<span>').addClass('tag-element inherit').html(Q(val)).appendTo(taglist);
+            });
+            // re-sort tags list
+            $(taglist).children().sortElements(function(a,b){
+                return $.text([a]).toLowerCase() > $.text([b]).toLowerCase() ? 1 : -1;
             });
         }
 

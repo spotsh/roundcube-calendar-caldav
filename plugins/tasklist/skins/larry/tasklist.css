@@ -806,6 +806,12 @@ label.block {
 /*	cursor: pointer; */
 }
 
+.form-section span.tag-element.inherit {
+	color: #666;
+	background: #f2f2f2;
+	border-color: #ddd;
+}
+
 .tagedit-list li.tagedit-listelement-old a.tagedit-close,
 .tagedit-list li.tagedit-listelement-old a.tagedit-break,
 .tagedit-list li.tagedit-listelement-old a.tagedit-delete,
