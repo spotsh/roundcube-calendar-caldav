@@ -605,6 +605,10 @@ class tasklist extends rcube_plugin
             $rec['attachments'][$k]['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
         }
 
+        if (!is_array($rec['tags']))
+            $rec['tags'] = (array)$rec['tags'];
+        sort($rec['tags'], SORT_LOCALE_STRING);
+
         if (in_array($rec['id'], $this->collapsed_tasks))
           $rec['collapsed'] = true;
 
