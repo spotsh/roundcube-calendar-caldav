@@ -47,6 +47,8 @@ class calendar extends rcube_plugin
   public $ical;
   public $ui;
 
+  private $_drivers = null;
+
   public $defaults = array(
     'calendar_default_view' => "agendaWeek",
     'calendar_timeslots'    => 2,
@@ -171,29 +173,64 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Helper method to load the backend driver according to local config
+   * Helper method to load backend drivers according to local config and
+   * activate the driver requested by parameter or by any GPC input.
    */
-  private function load_driver()
+  private function load_driver($driver_name = null)
   {
-    if (is_object($this->driver))
-      return;
+    if($this->_drivers == null)
+    {
+      $this->_drivers = array();
 
-    $driver_name = $this->rc->config->get('calendar_driver', 'database');
-    $driver_class = $driver_name . '_driver';
+      foreach(explode(",", $this->rc->config->get('calendar_driver', 'database')) as $_driver_name)
+      {
+        $_driver_name = trim($_driver_name);
+        $driver_class = $_driver_name . '_driver';
 
-    require_once($this->home . '/drivers/calendar_driver.php');
-    require_once($this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php');
+        require_once($this->home . '/drivers/calendar_driver.php');
+        require_once($this->home . '/drivers/' . $_driver_name . '/' . $driver_class . '.php');
 
-    switch ($driver_name) {
-      case "kolab":
-        $this->require_plugin('libkolab');
-      default:
-        $this->driver = new $driver_class($this);
-        break;
-     }
+        if($_driver_name == "kolab")
+            $this->require_plugin('libkolab');
 
-     if ($this->driver->undelete)
-        $this->driver->undelete = $this->rc->config->get('undo_timeout', 0) > 0;
+        $driver = new $driver_class($this);
+
+        if ($driver->undelete)
+          $driver->undelete = $this->rc->config->get('undo_timeout', 0) > 0;
+
+        $this->_drivers[$_driver_name] = $driver;
+      }
+    }
+
+    if($driver_name == null)
+    {
+      foreach(array("_driver", "driver") as $input_name)
+      {
+        $driver_name = get_input_value($input_name, RCUBE_INPUT_GPC);
+        if($driver_name != null) break;
+      }
+    }
+
+    if($driver_name != null)
+    {
+      if(isset($this->_drivers[$driver_name]))
+      {
+        $this->driver = $this->_drivers[$driver_name];
+      }
+      else
+      {
+        rcube::error("Unknown driver requested \"$driver_name\".", true, true);
+      }
+    }
+    else
+    {
+      // Fallback to default driver
+      if(!$this->driver)
+      {
+        $default_driver_name = trim(explode(",", $this->rc->config->get('calendar_driver', 'database'))[0]);
+        $this->driver = $this->_drivers[$default_driver_name];
+      }
+    }
   }
 
   /**
