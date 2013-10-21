@@ -1377,8 +1377,9 @@ function rcube_tasklist_ui(settings)
 
         if (match && tagsfilter.length) {
             match = rec.tags && rec.tags.length;
+            var alltags = get_inherited_tags(rec).concat(rec.tags || []);
             for (var i=0; match && i < tagsfilter.length; i++) {
-                if ($.inArray(tagsfilter[i], rec.tags) < 0)
+                if ($.inArray(tagsfilter[i], alltags) < 0)
                     match = false;
             }
         }
@@ -1403,6 +1404,23 @@ function rcube_tasklist_ui(settings)
             cache[rec.id] = match;
         }
         return match;
+    }
+
+    /**
+     *
+     */
+    function get_inherited_tags(rec)
+    {
+        var parent_id, itags = [];
+
+        if ((parent_id = rec.parent_id)) {
+            while (parent_id && listdata[parent_id]) {
+                itags = itags.concat(listdata[parent_id].tags || []);
+                parent_id = listdata[parent_id].parent_id;
+            }
+        }
+
+        return itags;
     }
 
     /**
