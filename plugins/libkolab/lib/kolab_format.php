@@ -401,13 +401,13 @@ abstract class kolab_format
         // set some automatic values if missing
         if (empty($object['created']) && method_exists($this->obj, 'setCreated')) {
             $cdt = $this->obj->created();
-            $object['created'] = $cdt && $cdt->isValid() ? self::php_datetime($cdt) : new DateTime('now', self::$timezone);
+            $object['created'] = $cdt && $cdt->isValid() ? self::php_datetime($cdt) : new DateTime('now', new DateTimeZone('UTC'));
             if (!$cdt || !$cdt->isValid())
                 $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
+        $object['changed'] = new DateTime('now', new DateTimeZone('UTC'));
+        $this->obj->setLastModified(self::get_datetime($object['changed']));
 
         // Save custom properties of the given object
         if (isset($object['x-custom'])) {
