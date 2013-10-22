@@ -1083,11 +1083,20 @@ class calendar extends rcube_plugin
   {
     $start = get_input_value('start', RCUBE_INPUT_GET);
     $end = get_input_value('end', RCUBE_INPUT_GET);
-    if (!$start) $start = mktime(0, 0, 0, 1, date('n'), date('Y')-1);
-    if (!$end) $end = mktime(0, 0, 0, 31, 12, date('Y')+10);
+    if (!isset($start))
+      $start = 'today -1 year';
+    if (!is_numeric($start))
+      $start = strtotime($start . ' 00:00:00');
+    if (!$end)
+      $end = 'today +10 years';
+    if (!is_numeric($end))
+      $end = strtotime($end . ' 23:59:59');
+
+    $attachments = get_input_value('attachments', RCUBE_INPUT_GET);
     $calid = $calname = get_input_value('source', RCUBE_INPUT_GET);
-    $calendars = $this->driver->list_calendars(true);
-    
+
+    $calendars = $this->driver->list_calendars();
+
     if ($calendars[$calid]) {
       $calname = $calendars[$calid]['name'] ? $calendars[$calid]['name'] : $calid;
       $calname = preg_replace('/[^a-z0-9_.-]/i', '', html_entity_decode($calname));  // to 7bit ascii
@@ -1100,7 +1109,7 @@ class calendar extends rcube_plugin
     header("Content-Type: text/calendar");
     header("Content-Disposition: inline; filename=".$calname.'.ics');
 
-    $this->get_ical()->export($events, '', true, array($this->driver, 'get_attachment_body'));
+    $this->get_ical()->export($events, '', true, $attachments ? array($this->driver, 'get_attachment_body') : null);
 
     if ($terminate)
       exit;

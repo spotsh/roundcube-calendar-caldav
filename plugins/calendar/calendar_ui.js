@@ -2039,6 +2039,63 @@ function rcube_calendar_ui(settings)
       rcmail.display_message(p.message || rcmail.get_label('importerror', 'calendar'), 'error');
     }
 
+    // open a dialog to select calendars for export
+    this.export_events = function(calendar)
+    {
+      // close show dialog first
+      var $dialog = $("#eventsexport"),
+        form = rcmail.gui_objects.exportform;
+
+      if ($dialog.is(':ui-dialog'))
+        $dialog.dialog('close');
+
+      if (calendar)
+        $('#event-export-calendar').val(calendar.id);
+
+      $('#event-export-range').change(function(e){
+        var custom = $('option:selected', this).val() == 'custom',
+          input = $('#event-export-startdate')
+        input.parent()[(custom?'show':'hide')]();
+        if (custom)
+          input.select();
+      })
+      
+      var buttons = {};
+      buttons[rcmail.gettext('export', 'calendar')] = function() {
+        if (form) {
+          var start = 0, range = $('#event-export-range option:selected', this).val(),
+            source = $('#event-export-calendar option:selected').val(),
+            attachmt = $('#event-export-attachments').get(0).checked;
+
+          if (range == 'custom')
+            start = date2unixtime(parse_datetime('00:00', $('#event-export-startdate').val()));
+          else if (range > 0)
+            start = 'today -' + range + '^months';
+
+          rcmail.goto_url('export_events', { source:source, start:start, attachments:attachmt?1:0 });
+        }
+      };
+      
+      buttons[rcmail.gettext('cancel', 'calendar')] = function() {
+        $dialog.dialog("close");
+      };
+
+      // open jquery UI dialog
+      $dialog.dialog({
+        modal: true,
+        resizable: false,
+        closeOnEscape: false,
+        title: rcmail.gettext('exporttitle', 'calendar'),
+        close: function() {
+          $('.ui-dialog-buttonpane button', $dialog.parent()).button('enable');
+          $dialog.dialog("destroy").hide();
+        },
+        buttons: buttons,
+        width: 520
+      }).show();
+      
+    };
+
     // show URL of the given calendar in a dialog box
     this.showurl = function(calendar)
     {
@@ -2712,6 +2769,8 @@ function rcube_calendar_ui(settings)
       $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
       $('#edit-recurrence-repeat-times').change(function(e){ $('#edit-recurrence-repeat-count').prop('checked', true); });
 
+      $('#event-export-startdate').datepicker(datepicker_settings);
+
       // init attendees autocompletion
       var ac_props;
       // parallel autocompletion
@@ -2810,7 +2869,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('calendar-showurl', function(){ cal.showurl(cal.calendars[cal.selected_calendar]); }, false);
  
   // search and export events
-  rcmail.register_command('export', function(){ rcmail.goto_url('export_events', { source:cal.selected_calendar }); }, true);
+  rcmail.register_command('export', function(){ cal.export_events(cal.calendars[cal.selected_calendar]); }, true);
   rcmail.register_command('search', function(){ cal.quicksearch(); }, true);
   rcmail.register_command('reset-search', function(){ cal.reset_quicksearch(); }, true);
 

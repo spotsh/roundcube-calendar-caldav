@@ -90,6 +90,7 @@ class calendar_ui
     $this->cal->register_handler('plugin.event_rsvp_buttons', array($this, 'event_rsvp_buttons'));
     $this->cal->register_handler('plugin.angenda_options', array($this, 'angenda_options'));
     $this->cal->register_handler('plugin.events_import_form', array($this, 'events_import_form'));
+    $this->cal->register_handler('plugin.events_export_form', array($this, 'events_export_form'));
     $this->cal->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
   }
 
@@ -542,11 +543,12 @@ class calendar_ui
     $select->add(array(
         $this->cal->gettext('onemonthback'),
         $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>2))),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>3))),
         $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>6))),
         $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>12))),
         $this->cal->gettext('all'),
       ),
-      array('1','2','6','12',0));
+      array('1','2','3','6','12',0));
 
     $html .= html::div('form-section',
       html::div(null, $input->show()) .
@@ -568,6 +570,53 @@ class calendar_ui
 
     return html::tag('form', array('action' => $this->rc->url(array('task' => 'calendar', 'action' => 'import_events')),
       'method' => "post", 'enctype' => 'multipart/form-data', 'id' => $attrib['id']),
+      $html
+    );
+  }
+
+  /**
+   * Form to select options for exporting events
+   */
+  function events_export_form($attrib = array())
+  {
+    if (!$attrib['id'])
+      $attrib['id'] = 'rcmExportForm';
+
+    $html .= html::div('form-section',
+      html::label('event-export-calendar', $this->cal->gettext('calendar')) .
+      $this->calendar_select(array('name' => 'calendar', 'id' => 'event-export-calendar'))
+    );
+
+    $select = new html_select(array('name' => 'range', 'id' => 'event-export-range'));
+    $select->add(array(
+        $this->cal->gettext('all'),
+        $this->cal->gettext('onemonthback'),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>2))),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>3))),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>6))),
+        $this->cal->gettext(array('name' => 'nmonthsback', 'vars' => array('nr'=>12))),
+        $this->cal->gettext('customdate'),
+      ),
+      array(0,'1','2','3','6','12','custom'));
+
+    $startdate = new html_inputfield(array('name' => 'start', 'size' => 11, 'id' => 'event-export-startdate'));
+
+    $html .= html::div('form-section',
+      html::label('event-export-range', $this->cal->gettext('exportrange')) .
+      $select->show(0) .
+      html::span(array('style'=>'display:none'), $startdate->show())
+    );
+
+    $checkbox = new html_checkbox(array('name' => 'attachments', 'id' => 'event-export-attachments', 'value' => 1));
+    $html .= html::div('form-section',
+      html::label('event-export-range', $this->cal->gettext('exportattachments')) .
+      $checkbox->show(1)
+    );
+
+    $this->rc->output->add_gui_object('exportform', $attrib['id']);
+
+    return html::tag('form', array('action' => $this->rc->url(array('task' => 'calendar', 'action' => 'export_events')),
+      'method' => "post", 'id' => $attrib['id']),
       $html
     );
   }
