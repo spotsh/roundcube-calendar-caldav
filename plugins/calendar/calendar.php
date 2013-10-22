@@ -108,7 +108,7 @@ class calendar extends rcube_plugin
     }
     else if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
       if ($this->rc->action != 'upload') {
-        $this->load_driver();
+        $this->load_driver(); // Load default driver.
       }
 
       // register calendar actions
@@ -173,34 +173,11 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Helper method to load backend drivers according to local config and
-   * activate the driver requested by parameter or by any GPC input.
+   * Helper method to load the driver requested by parameter or by any GPC input.
    */
   private function load_driver($driver_name = null)
   {
-    if($this->_drivers == null)
-    {
-      $this->_drivers = array();
-
-      foreach(explode(",", $this->rc->config->get('calendar_driver', 'database')) as $_driver_name)
-      {
-        $_driver_name = trim($_driver_name);
-        $driver_class = $_driver_name . '_driver';
-
-        require_once($this->home . '/drivers/calendar_driver.php');
-        require_once($this->home . '/drivers/' . $_driver_name . '/' . $driver_class . '.php');
-
-        if($_driver_name == "kolab")
-            $this->require_plugin('libkolab');
-
-        $driver = new $driver_class($this);
-
-        if ($driver->undelete)
-          $driver->undelete = $this->rc->config->get('undo_timeout', 0) > 0;
-
-        $this->_drivers[$_driver_name] = $driver;
-      }
-    }
+    $this->load_drivers();
 
     if($driver_name == null)
     {
@@ -210,6 +187,8 @@ class calendar extends rcube_plugin
         if($driver_name != null) break;
       }
     }
+
+    rcmail::console("Loading ".($driver_name ? $driver_name : "default")." driver...");
 
     if($driver_name != null)
     {
@@ -227,10 +206,48 @@ class calendar extends rcube_plugin
       // Fallback to default driver
       if(!$this->driver)
       {
-        $default_driver_name = trim(explode(",", $this->rc->config->get('calendar_driver', 'database'))[0]);
+        $default_driver_name = trim($this->rc->config->get('calendar_driver', array('database'))[0]);
         $this->driver = $this->_drivers[$default_driver_name];
       }
     }
+  }
+
+  /**
+   * Helper method to load all configured drivers.
+   */
+  public function load_drivers()
+  {
+    if($this->_drivers == null)
+    {
+      $this->_drivers = array();
+
+      foreach($this->rc->config->get('calendar_driver', array('database')) as $driver_name)
+      {
+        $driver_name = trim($driver_name);
+        $driver_class = $driver_name . '_driver';
+
+        require_once($this->home . '/drivers/calendar_driver.php');
+        require_once($this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php');
+
+        if($driver_name == "kolab")
+          $this->require_plugin('libkolab');
+
+        $driver = new $driver_class($this);
+
+        if ($driver->undelete)
+          $driver->undelete = $this->rc->config->get('undo_timeout', 0) > 0;
+
+        $this->_drivers[$driver_name] = $driver;
+      }
+    }
+  }
+
+  /**
+   * Helpers function to return configured drivers
+   */
+  public function get_drivers()
+  {
+    return $this->_drivers;
   }
 
   /**

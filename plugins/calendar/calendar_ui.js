@@ -1838,7 +1838,10 @@ function rcube_calendar_ui(settings)
         $dialog.dialog('close');
       
       if (!calendar)
+      {
+        // TODO: Add driver type!
         calendar = { name:'', color:'cc0000', editable:true, showalarms:true };
+      }
       
       var form, name, color, alarms;
       
@@ -1847,7 +1850,7 @@ function rcube_calendar_ui(settings)
         type: 'GET',
         dataType: 'html',
         url: rcmail.url('calendar'),
-        data: { action:(calendar.id ? 'form-edit' : 'form-new'), c:{ id:calendar.id } },
+        data: { action:(calendar.id ? 'form-edit' : 'form-new'), c:{ id:calendar.id }, driver: calendar.driver },
         success: function(data) {
           $dialog.html(data);
           // resize and reposition dialog window
