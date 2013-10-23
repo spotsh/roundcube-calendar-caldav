@@ -700,6 +700,7 @@ function rcube_calendar_ui(settings)
         }
 
         data.calendar = calendars.val();
+        data.driver = $("input[name=\"cal_" + data.calendar + "\"]").val();
 
         if (event.id) {
           data.id = event.id;
@@ -1553,7 +1554,7 @@ function rcube_calendar_ui(settings)
     var update_event = function(action, data)
     {
       me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
-      rcmail.http_post('calendar/event', { action:action, e:data });
+      rcmail.http_post('calendar/event', { action:action, e:data, driver:data.driver });
       
       // render event temporarily into the calendar
       if ((data.start && data.end) || data.id) {
@@ -2201,7 +2202,7 @@ function rcube_calendar_ui(settings)
     for (var id in rcmail.env.calendars) {
       cal = rcmail.env.calendars[id];
       this.calendars[id] = $.extend({
-        url: "./?_task=calendar&_action=load_events&source="+escape(id),
+        url: "./?_task=calendar&_action=load_events&source="+escape(id)+"&driver="+cal.driver,
         editable: !cal.readonly,
         className: 'fc-event-cal-'+id,
         id: id

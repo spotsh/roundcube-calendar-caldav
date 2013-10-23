@@ -94,7 +94,7 @@ class calendar_ui
       $this->cal->load_drivers();
       foreach($this->cal->get_drivers() as $driver){
         foreach((array)$driver->list_calendars() as $id => $prop){
-          $prop["driver"] = str_replace("_driver", "", get_class($driver));
+          $prop["driver"] = get_class($driver);
           $this->_cals[$id] = $prop;
           $this->_cal_driver_map[$id] = $driver;
         }
@@ -294,12 +294,20 @@ class calendar_ui
     $attrib['is_escaped'] = true;
     $select = new html_select($attrib);
 
-    foreach ((array)$this->cal->driver->list_calendars() as $id => $prop) {
-      if (!$prop['readonly'])
+    $driver_fields = "";
+    foreach($this->get_calendars() as $id => $prop) {
+      if (!$prop['readonly']) {
         $select->add($prop['name'], $id);
+
+        // TODO: Maybe not the best way to pass calendar drivers to the client ...
+        $driver_fields .= (new html_hiddenfield(
+          array("name" => "cal_".$id,
+                "value" => get_class($this->get_driver($id)))))->show();
+      }
     }
 
-    return $select->show(null);
+
+    return $select->show(null).$driver_fields;
   }
 
   /**

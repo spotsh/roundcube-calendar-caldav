@@ -188,6 +188,9 @@ class calendar extends rcube_plugin
       }
     }
 
+    // Remove possible postfix "_driver" from requested driver name.
+    $driver_name = str_replace("_driver", "", $driver_name);
+
     rcmail::console("Loading ".($driver_name ? $driver_name : "default")." driver...");
 
     if($driver_name != null)
