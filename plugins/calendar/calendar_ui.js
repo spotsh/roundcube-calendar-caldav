@@ -332,7 +332,7 @@ function rcube_calendar_ui(settings)
 
       // list event attendees
       if (calendar.attendees && event.attendees) {
-        var data, dispname, organizer = false, rsvp = false, html = '';
+        var data, dispname, organizer = false, rsvp = false, line,  morelink, html = '',overflow = '';
         for (var j=0; j < event.attendees.length; j++) {
           data = event.attendees[j];
           dispname = Q(data.name || data.email);
@@ -343,12 +343,16 @@ function rcube_calendar_ui(settings)
             else if ((data.status == 'NEEDS-ACTION' || data.status == 'TENTATIVE') && settings.identity.emails.indexOf(';'+data.email) >= 0)
               rsvp = data.status.toLowerCase();
           }
-          html += '<span class="attendee ' + String(data.role == 'ORGANIZER' ? 'organizer' : data.status).toLowerCase() + '">' + dispname + '</span> ';
+          
+          line = '<span class="attendee ' + String(data.role == 'ORGANIZER' ? 'organizer' : data.status).toLowerCase() + '">' + dispname + '</span> ';
+          if (morelink)
+            overflow += line;
+          else
+            html += line;
           
           // stop listing attendees
           if (j == 7 && event.attendees.length >= 7) {
-            html += ' <em>' + rcmail.gettext('andnmore', 'calendar').replace('$nr', event.attendees.length - j - 1) + '</em>';
-            break;
+            morelink = $('<a href="#more" class="morelink"></a>').html(rcmail.gettext('andnmore', 'calendar').replace('$nr', event.attendees.length - j - 1));
           }
         }
         
@@ -357,6 +361,20 @@ function rcube_calendar_ui(settings)
             .children('.event-text')
             .html(html)
             .find('a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
+
+          // display all attendees in a popup when clicking the "more" link
+          if (morelink) {
+            $('#event-attendees .event-text').append(morelink);
+            morelink.click(function(e){
+              rcmail.show_popup_dialog(
+                '<div id="all-event-attendees" class="event-attendees">' + html + overflow + '</div>',
+                rcmail.gettext('tabattendees','calendar'),
+                null,
+                { width:450, modal:false });
+              $('#all-event-attendees a.mailtolink').click(function(e) { rcmail.redirect(rcmail.url('mail/compose', { _to:this.href.substr(7) })); return false; });
+              return false;
+            })
+          }
         }
         
         $('#event-rsvp')[(rsvp&&!organizer?'show':'hide')]();
