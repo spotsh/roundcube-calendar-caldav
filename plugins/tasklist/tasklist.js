@@ -474,8 +474,9 @@ function rcube_tasklist_ui(settings)
                 listdata[listdata[id].parent_id].children.push(id);
         }
 
-        render_tasklist();
         append_tags(response.tags || []);
+        render_tasklist();
+
         rcmail.set_busy(false, 'loading', ui_loading);
     }
 
@@ -488,6 +489,7 @@ function rcube_tasklist_ui(settings)
         var id, rec,
             count = 0,
             cache = {},
+            activetags = {},
             msgbox = $('#listmessagebox').hide(),
             list = $(rcmail.gui_objects.resultlist).html('');
 
@@ -497,10 +499,19 @@ function rcube_tasklist_ui(settings)
             if (match_filter(rec, cache)) {
                 render_task(rec);
                 count++;
+
+                // keep a list of tags from all visible tasks
+                for (var t, j=0; rec.tags && j < rec.tags.length; j++) {
+                    t = rec.tags[j];
+                    if (typeof activetags[t] == 'undefined')
+                        activetags[t] = 0;
+                    activetags[t]++;
+                }
             }
         }
 
         fix_tree_toggles();
+        update_tagcloud(activetags);
 
         if (!count)
             msgbox.html(rcmail.gettext('notasksfound','tasklist')).show();
@@ -559,12 +570,28 @@ function rcube_tasklist_ui(settings)
 
         // append new tags to tag cloud
         $.each(newtags, function(i, tag){
-            $('<li>').attr('rel', tag).data('value', tag).html(Q(tag)).appendTo(rcmail.gui_objects.tagslist);
+            $('<li>').attr('rel', tag).data('value', tag).html(Q(tag) + '<span class="count"></span>').appendTo(rcmail.gui_objects.tagslist);
         });
 
         // re-sort tags list
         $(rcmail.gui_objects.tagslist).children('li').sortElements(function(a,b){
             return $.text([a]).toLowerCase() > $.text([b]).toLowerCase() ? 1 : -1;
+        });
+    }
+
+    /**
+     * Display the given counts to each tag and set those inactive which don't
+     * have any matching tasks in the current view.
+     */
+    function update_tagcloud(counts)
+    {
+        $(rcmail.gui_objects.tagslist).children('li').each(function(i,li){
+            var elem = $(li), tag = elem.attr('rel'),
+                count = counts[tag] || 0;
+
+            elem.children('.count').html(count+'');
+            if (count == 0) elem.addClass('inactive');
+            else            elem.removeClass('inactive');
         });
     }
 
