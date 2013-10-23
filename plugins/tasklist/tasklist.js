@@ -92,6 +92,7 @@ function rcube_tasklist_ui(settings)
     this.add_childtask = add_childtask;
     this.quicksearch = quicksearch;
     this.reset_search = reset_search;
+    this.expand_collapse = expand_collapse;
     this.list_remove = list_remove;
     this.list_edit_dialog = list_edit_dialog;
     this.unlock_saving = unlock_saving;
@@ -517,6 +518,30 @@ function rcube_tasklist_ui(settings)
 
             $('.childtoggle', li)[(childs.length ? 'show' : 'hide')]();
         })
+    }
+
+    /**
+     * Expand/collapse all task items with childs
+     */
+    function expand_collapse(expand)
+    {
+        var collapsed = !expand;
+
+        $('.taskitem .childtasks')[(collapsed ? 'hide' : 'show')]();
+        $('.taskitem .childtoggle')
+            .removeClass(collapsed ? 'expanded' : 'collapsed')
+            .addClass(collapsed ? 'collapsed' : 'expanded')
+            .html(collapsed ? '&#9654;' : '&#9660;');
+
+        // store new toggle collapse states
+        var ids = [];
+        for (var id in listdata) {
+            if (listdata[id].children && listdata[id].children.length)
+                ids.push(id);
+        }
+        if (ids.length) {
+            rcmail.http_post('tasks/task', { action:'collapse', t:{ id:ids.join(',') }, collapsed:collapsed?1:0 });
+        }
     }
 
     /**
@@ -1781,6 +1806,8 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
 
   rcmail.register_command('search', function(){ rctasks.quicksearch(); }, true);
   rcmail.register_command('reset-search', function(){ rctasks.reset_search(); }, true);
+  rcmail.register_command('expand-all', function(){ rctasks.expand_collapse(true); }, true);
+  rcmail.register_command('collapse-all', function(){ rctasks.expand_collapse(false); }, true);
 
   rctasks.init();
 });

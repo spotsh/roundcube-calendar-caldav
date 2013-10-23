@@ -248,13 +248,15 @@ class tasklist extends rcube_plugin
             break;
 
         case 'collapse':
-            if (intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
-                $this->collapsed_tasks[] = $rec['id'];
-            }
-            else {
-                $i = array_search($rec['id'], $this->collapsed_tasks);
-                if ($i !== false)
-                    unset($this->collapsed_tasks[$i]);
+            foreach (explode(',', $rec['id']) as $rec_id) {
+                if (intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
+                    $this->collapsed_tasks[] = $rec_id;
+                }
+                else {
+                    $i = array_search($rec_id, $this->collapsed_tasks);
+                    if ($i !== false)
+                        unset($this->collapsed_tasks[$i]);
+                }
             }
 
             $this->rc->user->save_prefs(array('tasklist_collapsed_tasks' => join(',', array_unique($this->collapsed_tasks))));

@@ -66,7 +66,7 @@ body.attachmentwin #topnav .topright {
 }
 
 #taskselector {
-	margin: -4px 0 0;
+	margin: -4px 40px 0 0;
 	padding: 0;
 }
 
@@ -336,6 +336,27 @@ body.attachmentwin #topnav .topright {
 	background: -ms-linear-gradient(top, #eee 0%, #dfdfdf 100%);
 	background: linear-gradient(top, #eee 0%, #dfdfdf 100%);
 	border-bottom: 1px solid #ccc;
+	position: relative;
+}
+
+#tasksview .buttonbar .buttonbar-right {
+	position: absolute;
+	top: 6px;
+	right: 8px;
+}
+
+.buttonbar-right .listmenu {
+	display: inline-block;
+	cursor: pointer;
+}
+
+.buttonbar-right .listmenu .inner {
+	display: inline-block;
+	height: 18px;
+	width: 20px;
+	padding: 0;
+	background: url(sprites.png) 0 -237px no-repeat;
+	text-indent: -5000px;
 }
 
 #thelist {
@@ -547,9 +568,22 @@ body.attachmentwin #topnav .topright {
 	border-top: 1px solid #219de6;
 }
 
-ul.toolbarmenu li span.add {
+ul.toolbarmenu li span.add,
+ul.toolbarmenu li span.expand,
+ul.toolbarmenu li span.collapse {
 	background-image: url(sprites.png);
+}
+
+ul.toolbarmenu li span.add {
 	background-position: 0 -100px;
+}
+
+ul.toolbarmenu li span.expand {
+	background-position: 0 -258px;
+}
+
+ul.toolbarmenu li span.collapse {
+	background-position: 0 -280px;
 }
 
 ul.toolbarmenu li span.delete {
