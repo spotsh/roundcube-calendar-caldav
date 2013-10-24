@@ -117,7 +117,7 @@ class tasklist_ui
 
             $li .= html::tag('li', array('id' => 'rcmlitasklist' . $html_id, 'class' => $class),
                 ($prop['virtual'] ? '' : html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active']))) .
-                html::span('handle', '&nbsp;') .
+                html::span(array('class' => 'handle', 'title' => $this->plugin->gettext('focusview')), '&nbsp;') .
                 html::span(array('class' => 'listname', 'title' => $title), $prop['listname']));
         }
 

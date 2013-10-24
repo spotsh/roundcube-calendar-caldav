@@ -218,7 +218,7 @@ body.attachmentwin #topnav .topright {
 #tasklists li {
 	margin: 0;
 	height: 20px;
-	padding: 6px 8px 2px;
+	padding: 6px 8px 2px 6px;
 	display: block;
 	position: relative;
 	white-space: nowrap;
@@ -235,10 +235,13 @@ body.attachmentwin #topnav .topright {
 
 #tasklists li span.listname {
 	display: block;
+	position: absolute;
+	top: 7px;
+	left: 26px;
+	right: 26px;
 	cursor: default;
 	padding-bottom: 2px;
 	padding-right: 30px;
-	margin-right: 20px;
 	color: #004458;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -247,7 +250,21 @@ body.attachmentwin #topnav .topright {
 }
 
 #tasklists li span.handle {
-	display: none;
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-right: 4px;
+	background: url(sprites.png) -200px 0 no-repeat;
+	cursor: pointer;
+}
+
+#tasklists li span.handle:hover {
+	background-position: -20px -101px;
+}
+
+#tasklists li.focusview span.handle,
+#tasklists li.focusview span.handle:hover {
+	background-position: -2px -101px;
 }
 
 #tasklists li.selected span.listname {
@@ -276,6 +293,11 @@ body.attachmentwin #topnav .topright {
 
 #tasklists li.virtual span.listname {
 	color: #aaa;
+}
+
+#tasklists li.virtual span.handle {
+	background: none;
+	cursor: default;
 }
 
 #tasklists li input {
@@ -610,7 +632,7 @@ ul.toolbarmenu li span.collapse {
 }
 
 ul.toolbarmenu li span.add {
-	background-position: 0 -100px;
+	background-position: 0 -302px;
 }
 
 ul.toolbarmenu li span.expand {

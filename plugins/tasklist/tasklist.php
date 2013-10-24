@@ -281,7 +281,7 @@ class tasklist extends rcube_plugin
                 foreach ($refresh as $i => $r)
                     $this->encode_task($refresh[$i]);
             }
-            $this->rc->output->command('plugin.refresh_task', $refresh);
+            $this->rc->output->command('plugin.update_task', $refresh);
         }
     }
 
@@ -751,7 +751,7 @@ class tasklist extends rcube_plugin
 
         $updates = $this->driver->list_tasks($filter, $lists);
         if (!empty($updates)) {
-            $this->rc->output->command('plugin.refresh_task', $this->tasks_data($updates, 255, $tags));
+            $this->rc->output->command('plugin.refresh_tasks', $this->tasks_data($updates, 255, $tags), true);
 
             // update counts
             $counts = $this->driver->count_tasks($lists);
