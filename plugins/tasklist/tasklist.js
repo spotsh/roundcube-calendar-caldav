@@ -585,7 +585,7 @@ function rcube_tasklist_ui(settings)
                     helper: tag_draggable_helper,
                     start: tag_draggable_start,
                     appendTo: 'body',
-                    cursor: 'pointer',
+                    cursor: 'pointer'
                 });
             });
 
@@ -1073,7 +1073,7 @@ function rcube_tasklist_ui(settings)
         // append inherited tags
         if (itags.length) {
             $.each(itags, function(i,val){
-                if (!rec.tags || rec.tags.indexOf(val) < 0)
+                if (!rec.tags || $.inArray(val, rec.tags) < 0)
                     $('<span>').addClass('tag-element inherit').html(Q(val)).appendTo(taglist);
             });
             // re-sort tags list
