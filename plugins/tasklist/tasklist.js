@@ -998,7 +998,8 @@ function rcube_tasklist_ui(settings)
         // append inherited tags
         if (itags.length) {
             $.each(itags, function(i,val){
-                $('<span>').addClass('tag-element inherit').html(Q(val)).appendTo(taglist);
+                if (!rec.tags || rec.tags.indexOf(val) < 0)
+                    $('<span>').addClass('tag-element inherit').html(Q(val)).appendTo(taglist);
             });
             // re-sort tags list
             $(taglist).children().sortElements(function(a,b){
@@ -1498,7 +1499,7 @@ function rcube_tasklist_ui(settings)
             }
         }
 
-        return itags;
+        return $.unqiqueStrings(itags);
     }
 
     /**
@@ -1813,6 +1814,22 @@ jQuery.fn.sortElements = (function(){
             else      parent.prepend(node);
             last = node;
         });
+    };
+})();
+
+// equivalent to $.unique() but working on arrays of strings
+jQuery.unqiqueStrings = (function() {
+    return function(arr) {
+        var hash = {}, out = [];
+
+        for (var i = 0; i < arr.length; i++) {
+            hash[arr[i]] = 0;
+        }
+        for (var val in hash) {
+            out.push(val);
+        }
+
+        return out;
     };
 })();
 
