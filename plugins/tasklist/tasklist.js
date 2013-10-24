@@ -64,6 +64,8 @@ function rcube_tasklist_ui(settings)
     var search_request;
     var search_query;
     var completeness_slider;
+    var task_draghelper;
+    var tag_draghelper;
     var me = this;
 
     // general datepicker settings
@@ -337,7 +339,8 @@ function rcube_tasklist_ui(settings)
                     $(input).datepicker('widget').find('button.ui-datepicker-close')
                         .html(rcmail.gettext('nodate','tasklist'))
                         .attr('onclick', '')
-                        .click(function(e){
+                        .unbind('click')
+                        .bind('click', function(e){
                             $(input).datepicker('setDate', null).datepicker('hide');
                         });
                 }, 1);
@@ -570,8 +573,19 @@ function rcube_tasklist_ui(settings)
 
         // append new tags to tag cloud
         $.each(newtags, function(i, tag){
-            $('<li>').attr('rel', tag).data('value', tag).html(Q(tag) + '<span class="count"></span>').appendTo(rcmail.gui_objects.tagslist);
-        });
+            $('<li>').attr('rel', tag).data('value', tag)
+                .html(Q(tag) + '<span class="count"></span>')
+                .appendTo(rcmail.gui_objects.tagslist)
+                .draggable({
+                    addClasses: false,
+                    revert: 'invalid',
+                    revertDuration: 300,
+                    helper: tag_draggable_helper,
+                    start: tag_draggable_start,
+                    appendTo: 'body',
+                    cursor: 'pointer',
+                });
+            });
 
         // re-sort tags list
         $(rcmail.gui_objects.tagslist).children('li').sortElements(function(a,b){
@@ -593,6 +607,59 @@ function rcube_tasklist_ui(settings)
             if (count == 0) elem.addClass('inactive');
             else            elem.removeClass('inactive');
         });
+    }
+
+    /*  Helper functions for drag & drop functionality of tags  */
+    
+    function tag_draggable_helper()
+    {
+        if (!tag_draghelper)
+            tag_draghelper = $('<div class="tag-draghelper"></div>');
+        else
+            tag_draghelper.html('');
+
+        $(this).clone().addClass('tag').appendTo(tag_draghelper);
+        return tag_draghelper;
+    }
+
+    function tag_draggable_start(event, ui)
+    {
+        $('.taskhead').droppable({
+            hoverClass: 'droptarget',
+            accept: tag_droppable_accept,
+            drop: tag_draggable_dropped,
+            addClasses: false
+        });
+    }
+
+    function tag_droppable_accept(draggable)
+    {
+        if (rcmail.busy)
+            return false;
+
+        var tag = draggable.data('value'),
+            drop_id = $(this).data('id'),
+            drop_rec = listdata[drop_id];
+
+        // target already has this tag assigned
+        if (!drop_rec || (drop_rec.tags && $.inArray(tag, drop_rec.tags) >= 0)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function tag_draggable_dropped(event, ui)
+    {
+        var drop_id = $(this).data('id'),
+            tag = ui.draggable.data('value'),
+            rec = listdata[drop_id];
+
+        if (rec && rec.id) {
+            if (!rec.tags) rec.tags = [];
+            rec.tags.push(tag);
+            save_task(rec, 'edit');
+        }
     }
 
     /**
@@ -721,10 +788,10 @@ function rcube_tasklist_ui(settings)
                 revert: 'invalid',
                 addClasses: false,
                 cursorAt: { left:-10, top:12 },
-                helper: draggable_helper,
+                helper: task_draggable_helper,
                 appendTo: 'body',
-                start: draggable_start,
-                stop: draggable_stop,
+                start: task_draggable_start,
+                stop: task_draggable_stop,
                 revertDuration: 300
             });
 
@@ -769,7 +836,7 @@ function rcube_tasklist_ui(settings)
      */
     function resort_task(rec, li, animated)
     {
-        var dir = 0, index, slice, next_li, next_id, next_rec;
+        var dir = 0, index, slice, cmp, next_li, next_id, next_rec, insert_after, past_myself;
 
         // animated moving
         var insert_animated = function(li, before, after) {
@@ -795,33 +862,36 @@ function rcube_tasklist_ui(settings)
         }
 
         // find the right place to insert the task item
-        li.siblings().each(function(i, elem){
+        li.parent().children('.taskitem').each(function(i, elem){
             next_li = $(elem);
             next_id = next_li.attr('rel');
             next_rec = listdata[next_id];
 
             if (next_id == rec.id) {
-                next_li = null;
+                past_myself = true;
                 return 1; // continue
             }
 
-            if (next_rec && task_cmp(rec, next_rec) > 0) {
+            cmp = next_rec ? task_cmp(rec, next_rec) : 0;
+
+            if (cmp > 0 || (cmp == 0 && !past_myself)) {
+                insert_after = next_li;
                 return 1; // continue;
             }
-            else if (next_rec && next_li && task_cmp(rec, next_rec) < 0) {
+            else if (next_li && cmp < 0) {
                 if (animated) insert_animated(li, next_li);
                 else          li.insertBefore(next_li);
-                next_li = null;
-                return false;
+                index = $.inArray(next_id, listindex);
+                return false; // break
             }
         });
 
-        index = $.inArray(next_id, listindex);
+        if (insert_after) {
+            if (animated) insert_animated(li, null, insert_after);
+            else          li.insertAfter(insert_after);
 
-        if (next_li) {
-            if (animated) insert_animated(li, null, next_li);
-            else          li.insertAfter(next_li);
-            index++;
+            next_id = insert_after.attr('rel');
+            index = $.inArray(next_id, listindex);
         }
 
         // insert into list index
@@ -865,20 +935,20 @@ function rcube_tasklist_ui(settings)
 
     /*  Helper functions for drag & drop functionality  */
     
-    function draggable_helper()
+    function task_draggable_helper()
     {
-        if (!draghelper)
-            draghelper = $('<div class="taskitem-draghelper">&#x2714;</div>');
+        if (!task_draghelper)
+            task_draghelper = $('<div class="taskitem-draghelper">&#x2714;</div>');
 
-        return draghelper;
+        return task_draghelper;
     }
 
-    function draggable_start(event, ui)
+    function task_draggable_start(event, ui)
     {
         $('.taskhead, #rootdroppable, #'+rcmail.gui_objects.folderlist.id+' li').droppable({
             hoverClass: 'droptarget',
-            accept: droppable_accept,
-            drop: draggable_dropped,
+            accept: task_droppable_accept,
+            drop: task_draggable_dropped,
             addClasses: false
         });
 
@@ -886,13 +956,13 @@ function rcube_tasklist_ui(settings)
         $('#rootdroppable').show();
     }
 
-    function draggable_stop(event, ui)
+    function task_draggable_stop(event, ui)
     {
         $(this).parent().removeClass('dragging');
         $('#rootdroppable').hide();
     }
 
-    function droppable_accept(draggable)
+    function task_droppable_accept(draggable)
     {
         if (rcmail.busy)
             return false;
@@ -924,7 +994,7 @@ function rcube_tasklist_ui(settings)
         return true;
     }
 
-    function draggable_dropped(event, ui)
+    function task_draggable_dropped(event, ui)
     {
         var drop_id = $(this).data('id'),
             task_id = ui.draggable.data('id'),
@@ -1219,6 +1289,9 @@ function rcube_tasklist_ui(settings)
 
             if (!me.selected_task.list && list.id)
                 me.selected_task.list = list.id;
+
+            if (!me.selected_task.tags.length)
+                me.selected_task.tags = '';
 
             if (save_task(me.selected_task, action))
                 $dialog.dialog('close');

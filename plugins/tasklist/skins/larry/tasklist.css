@@ -189,11 +189,8 @@ body.attachmentwin #topnav .topright {
 
 #tagslist li.inactive {
 	color: #89b3be;
+	padding-right: 0.6em;
 /*	display: none; */
-}
-
-#tagslist li.inactive .count {
-	display: none;
 }
 
 #tagslist li .count {
@@ -211,6 +208,11 @@ body.attachmentwin #topnav .topright {
 	-moz-box-shadow: inset 0 1px 1px 0 #b0ccd7;
 	border-color: #b0ccd7;
 	border-radius: 8px;
+}
+
+.tag-draghelper .tag .count,
+#tagslist li.inactive .count {
+	display: none;
 }
 
 #tasklists li {
@@ -504,6 +506,7 @@ body.attachmentwin #topnav .topright {
 	text-align: right;
 }
 
+.tag-draghelper .tag,
 .taskhead .tags .tag {
 	font-size: 85%;
 	background: #d9ecf4;
@@ -511,6 +514,11 @@ body.attachmentwin #topnav .topright {
 	border-radius: 4px;
 	padding: 1px 7px;
 	margin-right: 3px;
+}
+
+.tag-draghelper li.tag {
+    list-style: none;
+    font-size: 100%;
 }
 
 .taskhead .date {
