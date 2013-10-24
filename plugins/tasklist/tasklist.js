@@ -601,6 +601,21 @@ function rcube_tasklist_ui(settings)
      */
     function update_tagcloud(counts)
     {
+        // compute counts first by iterating over all visible task items
+        if (typeof counts == 'undefined') {
+            counts = {};
+            $('li.taskitem', rcmail.gui_objects.resultlist).each(function(i,li){
+                var t, id = $(li).attr('rel'),
+                    rec = listdata[id];
+                for (var j=0; rec && rec.tags && j < rec.tags.length; j++) {
+                    t = rec.tags[j];
+                    if (typeof counts[t] == 'undefined')
+                        counts[t] = 0;
+                    counts[t]++;
+                }
+            });
+        }
+
         $(rcmail.gui_objects.tagslist).children('li').each(function(i,li){
             var elem = $(li), tag = elem.attr('rel'),
                 count = counts[tag] || 0;
@@ -741,6 +756,7 @@ function rcube_tasklist_ui(settings)
         }
 
         append_tags(rec.tags || []);
+        update_tagcloud();
         fix_tree_toggles();
     }
 
