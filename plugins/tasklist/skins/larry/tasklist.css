@@ -258,12 +258,11 @@ body.attachmentwin #topnav .topright {
 	cursor: pointer;
 }
 
-#tasklists li span.handle:hover {
+#tasklists li:hover span.handle {
 	background-position: -20px -101px;
 }
 
-#tasklists li.focusview span.handle,
-#tasklists li.focusview span.handle:hover {
+#tasklists li.focusview span.handle {
 	background-position: -2px -101px;
 }
 
@@ -539,8 +538,8 @@ body.attachmentwin #topnav .topright {
 }
 
 .tag-draghelper li.tag {
-    list-style: none;
-    font-size: 100%;
+	list-style: none;
+	font-size: 100%;
 }
 
 .taskhead .date {

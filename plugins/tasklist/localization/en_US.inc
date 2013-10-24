@@ -51,6 +51,7 @@ $labels['listactions'] = 'List options...';
 $labels['listname'] = 'Name';
 $labels['showalarms'] = 'Show alarms';
 $labels['import'] = 'Import';
+$labels['viewoptions'] = 'View options';
 $labels['focusview'] = 'View only this list';
 
 // date words
