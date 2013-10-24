@@ -1208,7 +1208,7 @@ function rcube_tasklist_ui(settings)
             }
 
             // task assigned to a new list
-            if (me.selected_task.list && me.selected_task.list != rec.list) {
+            if (me.selected_task.list && listdata[id] && me.selected_task.list != listdata[id].list) {
                 me.selected_task._fromlist = rec.list;
             }
 
