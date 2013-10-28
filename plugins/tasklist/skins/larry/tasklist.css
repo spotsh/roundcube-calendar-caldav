@@ -190,6 +190,7 @@ body.attachmentwin #topnav .topright {
 #tagslist li.inactive {
 	color: #89b3be;
 	padding-right: 0.6em;
+	font-size: 80%;
 /*	display: none; */
 }
 
