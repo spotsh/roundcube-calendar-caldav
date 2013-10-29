@@ -579,6 +579,10 @@ class kolab_calendar
     if (is_array($record['categories']))
       $record['categories'] = $record['categories'][0];
 
+    // The web client only supports DISPLAY type of alarms
+    if (!empty($record['alarms']))
+      $record['alarms'] = preg_replace('/:[A-Z]+$/', 'DISPLAY', $record['alarms']);
+
     // remove empty recurrence array
     if (empty($record['recurrence']))
       unset($record['recurrence']);

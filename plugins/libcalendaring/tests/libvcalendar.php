@@ -153,6 +153,22 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     /**
      * @depends test_import
      */
+    function test_apple_alarms()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/apple-alarms.ics', 'UTF-8');
+        $event = $events[0];
+
+        // alarms
+        $this->assertEquals('-45M:AUDIO', $event['alarms'], "Relative alarm string");
+        $alarm = libcalendaring::parse_alaram_value($event['alarms']);
+        $this->assertEquals('45', $alarm[0], "Alarm value");
+        $this->assertEquals('-M', $alarm[1], "Alarm unit");
+    }
+
+    /**
+     * @depends test_import
+     */
     function test_freebusy()
     {
         $ical = new libvcalendar();
