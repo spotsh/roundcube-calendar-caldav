@@ -135,9 +135,12 @@ function rcube_tasklist_ui(settings)
         rcmail.addEventListener('plugin.insert_tasklist', insert_list);
         rcmail.addEventListener('plugin.update_tasklist', update_list);
         rcmail.addEventListener('plugin.destroy_tasklist', destroy_list);
-        rcmail.addEventListener('plugin.reload_data', function(){ list_tasks(null); });
         rcmail.addEventListener('plugin.unlock_saving', unlock_saving);
         rcmail.addEventListener('requestrefresh', before_refresh);
+        rcmail.addEventListener('plugin.reload_data', function(){
+            list_tasks(null, true);
+            setTimeout(fetch_counts, 200);
+        });
 
         // start loading tasks
         fetch_counts();
@@ -400,7 +403,7 @@ function rcube_tasklist_ui(settings)
     /**
      * List tasks matching the given selector
      */
-    function list_tasks(sel)
+    function list_tasks(sel, force)
     {
         if (rcmail.busy)
             return;
@@ -412,7 +415,7 @@ function rcube_tasklist_ui(settings)
 
         var active = active_lists(),
             basefilter = filtermask == FILTER_MASK_COMPLETE ? FILTER_MASK_COMPLETE : FILTER_MASK_ALL,
-            reload = active.join(',') != loadstate.lists || basefilter != loadstate.filter || loadstate.search != search_query;
+            reload = force || active.join(',') != loadstate.lists || basefilter != loadstate.filter || loadstate.search != search_query;
 
         if (active.length && reload) {
             ui_loading = rcmail.set_busy(true, 'loading');

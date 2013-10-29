@@ -925,19 +925,28 @@ class calendar extends rcube_plugin
    */
   public function refresh($attr)
   {
-    foreach ($this->driver->list_calendars(true) as $cal) {
-      $events = $this->driver->load_events(
-        get_input_value('start', RCUBE_INPUT_GET),
-        get_input_value('end', RCUBE_INPUT_GET),
-        get_input_value('q', RCUBE_INPUT_GET),
-        $cal['id'],
-        1,
-        $attr['last']
-      );
+     // refresh the entire calendar every 10th time to also sync deleted events
+    $refetch =  rand(0,10) == 10;
 
-      foreach ($events as $event) {
-        $args = array('source' => $cal['id'], 'update' => $this->_client_event($event));
-        $this->rc->output->command('plugin.refresh_calendar', $args);
+    foreach ($this->driver->list_calendars(true) as $cal) {
+      if ($refetch) {
+        $this->rc->output->command('plugin.refresh_calendar',
+          array('source' => $cal['id'], 'refetch' => true));
+      }
+      else {
+        $events = $this->driver->load_events(
+          get_input_value('start', RCUBE_INPUT_GET),
+          get_input_value('end', RCUBE_INPUT_GET),
+          get_input_value('q', RCUBE_INPUT_GET),
+          $cal['id'],
+          1,
+          $attr['last']
+        );
+
+        foreach ($events as $event) {
+          $this->rc->output->command('plugin.refresh_calendar',
+            array('source' => $cal['id'], 'update' => $this->_client_event($event)));
+        }
       }
     }
   }

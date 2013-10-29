@@ -742,6 +742,12 @@ class tasklist extends rcube_plugin
      */
     public function refresh($attr)
     {
+        // refresh the entire list every 10th time to also sync deleted items
+        if (rand(0,10) == 10) {
+            $this->rc->output->command('plugin.reload_data');
+            return;
+        }
+
         $filter = array(
             'since'  => $attr['last'],
             'search' => get_input_value('q', RCUBE_INPUT_GPC),
