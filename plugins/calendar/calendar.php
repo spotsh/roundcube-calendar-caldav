@@ -2181,7 +2181,7 @@ class calendar extends rcube_plugin
       $schema = 'https';
       $default_port = 443;
     }
-    $url = $schema . '://' . $_SERVER['HTTP_HOST'];
+    $url = $schema . '://' . preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']);
     if ($_SERVER['SERVER_PORT'] != $default_port)
       $url .= ':' . $_SERVER['SERVER_PORT'];
     if (dirname($_SERVER['SCRIPT_NAME']) != '/')
