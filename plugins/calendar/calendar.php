@@ -163,6 +163,8 @@ class calendar extends rcube_plugin
             'innerclass' => 'icon calendar',
           ))),
           'messagemenu');
+
+        $this->api->output->add_label('calendar.createfrommail');
       }
     }
     

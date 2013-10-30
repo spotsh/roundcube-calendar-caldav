@@ -4,7 +4,7 @@
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
- * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2013, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -37,10 +37,9 @@ function rcube_tasklist(settings)
     /**
      * Open a new task dialog prefilled with contents from the currently selected mail message
      */
-    function create_from_mail()
+    function create_from_mail(uid)
     {
-        var uid;
-        if ((uid = rcmail.get_single_uid())) {
+        if (uid || (uid = rcmail.get_single_uid())) {
             // load calendar UI (scripts and edit dialog template)
             if (!ui_loaded) {
                 $.when(
@@ -53,7 +52,7 @@ function rcube_tasklist(settings)
 
                     ui_loaded = true;
                     me.ui = new rcube_tasklist_ui(settings);
-                    create_from_mail();  // start over
+                    create_from_mail(uid);  // start over
                 });
                 return;
             }
@@ -90,5 +89,14 @@ window.rcmail && rcmail.env.task == 'mail' && rcmail.addEventListener('init', fu
         rcmail.env.message_commands.push('tasklist-create-from-mail');
     else
         rcmail.enable_command('tasklist-create-from-mail', true);
+
+    // add contextmenu item
+    if (window.rcm_contextmenu_register_command) {
+        rcm_contextmenu_register_command(
+            'tasklist-create-from-mail',
+            function(cmd,el){ tasks.create_from_mail() },
+            'tasklist.createfrommail',
+            'moveto');
+        }
 });
 

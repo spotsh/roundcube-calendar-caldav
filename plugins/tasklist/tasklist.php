@@ -113,6 +113,8 @@ class tasklist extends rcube_plugin
                         'innerclass' => 'icon taskadd',
                     ))),
                 'messagemenu');
+
+                $this->api->output->add_label('tasklist.createfrommail');
             }
         }
 
