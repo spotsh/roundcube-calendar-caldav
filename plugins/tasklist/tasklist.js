@@ -120,11 +120,14 @@ function rcube_tasklist_ui(settings)
                 init_tasklist_li(li, id);
             }
 
-            if (me.tasklists[id].editable && !me.selected_list) {
+            if (me.tasklists[id].editable && (!me.selected_list || (me.tasklists[id].active && !me.tasklists[me.selected_list].active))) {
                 me.selected_list = id;
-                rcmail.enable_command('addtask', true);
-                $(li).click();
             }
+        }
+
+        if (me.selected_list) {
+            rcmail.enable_command('addtask', true);
+            $(rcmail.get_folder_li(me.selected_list, 'rcmlitasklist')).click();
         }
 
         // register server callbacks
