@@ -1188,7 +1188,7 @@ function rcube_tasklist_ui(settings)
         var recstarttime = $('#taskedit-starttime').val(rec.starttime || '');
         var complete = $('#taskedit-completeness').val((rec.complete || 0) * 100);
         completeness_slider.slider('value', complete.val());
-        var tasklist = $('#taskedit-tasklist').val(rec.list || 0).prop('disabled', rec.parent_id ? true : false);
+        var tasklist = $('#taskedit-tasklist').val(rec.list || me.selected_list).prop('disabled', rec.parent_id ? true : false);
 
         // tag-edit line
         var tagline = $(rcmail.gui_objects.edittagline).empty();
