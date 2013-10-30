@@ -753,7 +753,7 @@ function rcube_tasklist_ui(settings)
             }
         }
 
-        if (list.active) {
+        if (list.active || rec.tempid) {
             if (!filter || match_filter(rec, {}))
                 render_task(rec, oldid);
         }
