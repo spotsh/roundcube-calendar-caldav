@@ -1003,7 +1003,7 @@ class calendar extends rcube_plugin
       rcube_upload_progress();
     }
 
-    $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
+    @set_time_limit(0);
 
     // process uploaded file if there is no error
     $err = $_FILES['_data']['error'];
@@ -1011,22 +1011,23 @@ class calendar extends rcube_plugin
     if (!$err && $_FILES['_data']['tmp_name']) {
       $calendar = get_input_value('calendar', RCUBE_INPUT_GPC);
       $rangestart = $_REQUEST['_range'] ? date_create("now -" . intval($_REQUEST['_range']) . " months") : 0;
-      $count = $errors = 0;
+      $user_email = $this->rc->user->get_username();
 
-      try {
-          $events = $this->get_ical()->import_from_file($_FILES['_data']['tmp_name'], 'UTF-8', true);
-      }
-      catch (Exception $e) {
-          $errors = 1;
-          $msg = $e->getMessage();
-          $events = array();
-      }
+      $ical = $this->get_ical();
+      $errors = !$ical->fopen($_FILES['_data']['tmp_name']);
+      $count = $i = 0;
+      foreach ($ical as $event) {
+        // keep the browser connection alive on long import jobs
+        if (++$i > 100 && $i % 100 == 0) {
+            echo "<!-- -->";
+            ob_flush();
+        }
 
-      foreach ($events as $event) {
         // TODO: correctly handle recurring events which start before $rangestart
         if ($event['end'] < $rangestart && (!$event['recurrence'] || ($event['recurrence']['until'] && $event['recurrence']['until'] < $rangestart)))
           continue;
 
+        $event['_owner'] = $user_email;
         $event['calendar'] = $calendar;
         if ($this->driver->new_event($event)) {
           $count++;

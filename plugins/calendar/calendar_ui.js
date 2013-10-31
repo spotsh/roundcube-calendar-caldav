@@ -1988,10 +1988,15 @@ function rcube_calendar_ui(settings)
               rcmail.display_message(rcmail.get_label('importerror', 'calendar'), 'error');
           });
 
-          // display upload indicator
+          // display upload indicator (with extended timeout)
+          var timeout = rcmail.env.request_timeout;
+          rcmail.env.request_timeout = 600;
           me.import_succeeded = null;
           me.saving_lock = rcmail.set_busy(true, 'uploading');
           $('.ui-dialog-buttonpane button', $dialog.parent()).button('disable');
+
+          // restore settings
+          rcmail.env.request_timeout = timeout;
         }
       };
       

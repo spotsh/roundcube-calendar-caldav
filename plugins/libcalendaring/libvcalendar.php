@@ -37,13 +37,17 @@ if (!class_exists('\Sabre\VObject\Reader')) {
  * and place the lib files in this plugin's lib directory
  *
  */
-class libvcalendar
+class libvcalendar implements Iterator
 {
     private $timezone;
     private $attach_uri = null;
     private $prodid = '-//Roundcube//Roundcube libcalendaring//Sabre//Sabre VObject//EN';
     private $type_component_map = array('event' => 'VEVENT', 'task' => 'VTODO');
     private $attendee_keymap = array('name' => 'CN', 'status' => 'PARTSTAT', 'role' => 'ROLE', 'cutype' => 'CUTYPE', 'rsvp' => 'RSVP');
+    private $iteratorkey = 0;
+    private $charset;
+    private $forward_exceptions;
+    private $fp;
 
     public $method;
     public $agent = '';
@@ -98,6 +102,13 @@ class libvcalendar
     {
         $this->method = '';
         $this->objects = array();
+        $this->freebusy = array();
+        $this->iteratorkey = 0;
+
+        if ($this->fp) {
+            fclose($this->fp);
+            $this->fp = null;
+        }
     }
 
     /**
@@ -108,24 +119,35 @@ class libvcalendar
     * @param  boolean True if parsing exceptions should be forwarded to the caller
     * @return array List of events extracted from the input
     */
-    public function import($vcal, $charset = 'UTF-8', $forward_exceptions = false)
+    public function import($vcal, $charset = 'UTF-8', $forward_exceptions = false, $memcheck = true)
     {
         // TODO: convert charset to UTF-8 if other
 
         try {
+            // estimate the memory usage and try to avoid fatal errors when allowed memory gets exhausted
+            if ($memcheck) {
+                $count = substr_count($vcal, 'BEGIN:VEVENT');
+                $expected_memory = $count * 70*1024;  // assume ~ 70K per event (empirically determined)
+
+                if (!rcube_utils::mem_check($expected_memory)) {
+                    throw new Exception("iCal file too big");
+                }
+            }
+
             $vobject = VObject\Reader::read($vcal, VObject\Reader::OPTION_FORGIVING | VObject\Reader::OPTION_IGNORE_INVALID_LINES);
             if ($vobject)
                 return $this->import_from_vobject($vobject);
         }
         catch (Exception $e) {
-            rcube::raise_error(array(
-                'code' => 600, 'type' => 'php',
-                'file' => __FILE__, 'line' => __LINE__,
-                'message' => "iCal data parse error: " . $e->getMessage()),
-                true, false);
-
             if ($forward_exceptions) {
                 throw $e;
+            }
+            else {
+                rcube::raise_error(array(
+                    'code' => 600, 'type' => 'php',
+                    'file' => __FILE__, 'line' => __LINE__,
+                    'message' => "iCal data parse error: " . $e->getMessage()),
+                    true, false);
             }
         }
 
@@ -142,17 +164,118 @@ class libvcalendar
     */
     public function import_from_file($filepath, $charset = 'UTF-8', $forward_exceptions = false)
     {
-        $this->objects = array();
-        $fp = fopen($filepath, 'r');
+        if ($this->fopen($filepath, $charset, $forward_exceptions)) {
+            while ($this->_parse_next(false)) {
+                // nop
+            }
+
+            fclose($this->fp);
+            $this->fp = null;
+        }
+
+        return $this->objects;
+    }
+
+    /**
+     * Open a file to read iCalendar events sequentially
+     *
+     * @param  string File path to read from
+     * @param  string Input charset (from envelope)
+     * @param  boolean True if parsing exceptions should be forwarded to the caller
+     * @return boolean True if file contents are considered valid
+     */
+    public function fopen($filepath, $charset = 'UTF-8', $forward_exceptions = false)
+    {
+        $this->reset();
+
+        // just to be sure...
+        @ini_set('auto_detect_line_endings', true);
+
+        $this->charset = $charset;
+        $this->forward_exceptions = $forward_exceptions;
+        $this->fp = fopen($filepath, 'r');
 
         // check file content first
-        $begin = fread($fp, 1024);
+        $begin = fread($this->fp, 1024);
         if (!preg_match('/BEGIN:VCALENDAR/i', $begin)) {
-            return $this->objects;
+            return false;
         }
-        fclose($fp);
 
-        return $this->import(file_get_contents($filepath), $charset, $forward_exceptions);
+        // read vcalendar header (with timezone defintion)
+        $this->vhead = '';
+        fseek($this->fp, 0);
+        while (($line = fgets($this->fp, 512)) !== false) {
+            if (preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $line))
+                break;
+            $this->vhead .= $line;
+        }
+        fseek($this->fp, -strlen($line), SEEK_CUR);
+
+        return $this->_parse_next();
+    }
+
+    /**
+     * Parse the next event/todo/freebusy object from the input file
+     */
+    private function _parse_next($reset = true)
+    {
+        if ($reset) {
+            $this->iteratorkey = 0;
+            $this->objects = array();
+            $this->freebusy = array();
+        }
+
+        $next = $this->_next_component();
+        $buffer = $next;
+
+        // load the next component(s) too, as they could contain recurrence exceptions
+        while (preg_match('/(RRULE|RECURRENCE-ID)[:;]/i', $next)) {
+            $next = $this->_next_component();
+            $buffer .= $next;
+        }
+
+        // parse the vevent block surrounded with the vcalendar heading
+        if (strlen($buffer) && preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $buffer)) {
+            try {
+                $this->import($this->vhead . $buffer . "END:VCALENDAR", $this->charset, true, false);
+            }
+            catch (Exception $e) {
+                if ($this->forward_exceptions) {
+                    throw new VObject\ParseException($e->getMessage() . " in\n" . $buffer);
+                }
+                else {
+                    // write the failing section to error log
+                    rcube::raise_error(array(
+                        'code' => 600, 'type' => 'php',
+                        'file' => __FILE__, 'line' => __LINE__,
+                        'message' => $e->getMessage() . " in\n" . $buffer),
+                        true, false);
+                }
+
+                // advance to next
+                return $this->_parse_next($reset);
+            }
+
+            return count($this->objects) > 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Helper method to read the next calendar component from the file
+     */
+    private function _next_component()
+    {
+        $buffer = '';
+        while (($line = fgets($this->fp, 1024)) !== false) {
+            $buffer .= $line;
+            if (preg_match('/END:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
+                break;
+            }
+        }
+
+        return $buffer;
     }
 
     /**
@@ -163,7 +286,7 @@ class libvcalendar
      */
     public function import_from_vobject($vobject)
     {
-        $this->objects = $this->freebusy = $seen = array();
+        $seen = array();
 
         if ($vobject->name == 'VCALENDAR') {
             $this->method = strval($vobject->METHOD);
@@ -845,6 +968,41 @@ class libvcalendar
                 $this->_to_ical($ex, $vcal, $get_attachment, $recurrence_id);
             }
         }
+    }
+
+
+    /*** Implement PHP 5 Iterator interface to make foreach work ***/
+
+    function current()
+    {
+        return $this->objects[$this->iteratorkey];
+    }
+
+    function key()
+    {
+        return $this->iteratorkey;
+    }
+
+    function next()
+    {
+        $this->iteratorkey++;
+
+        // read next chunk if we're reading from a file
+        if (!$this->objects[$this->iteratorkey] && $this->fp) {
+            $this->_parse_next(true);
+        }
+
+        return $this->valid();
+    }
+
+    function rewind()
+    {
+        $this->iteratorkey = 0;
+    }
+
+    function valid()
+    {
+        return !empty($this->objects[$this->iteratorkey]);
     }
 
 }

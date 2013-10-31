@@ -373,7 +373,7 @@ abstract class kolab_format_xcal extends kolab_format
         if ($object['alarms']) {
             list($offset, $type) = explode(":", $object['alarms']);
 
-            if ($type == 'EMAIL') {  // email alarms implicitly go to event owner
+            if ($type == 'EMAIL' && !empty($object['_owner'])) {  // email alarms implicitly go to event owner
                 $recipients = new vectorcontactref;
                 $recipients->push(new ContactReference(ContactReference::EmailReference, $object['_owner']));
                 $alarm = new Alarm($object['title'], strval($object['description']), $recipients);

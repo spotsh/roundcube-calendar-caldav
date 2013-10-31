@@ -318,8 +318,8 @@ class kolab_storage_cache
         }
 
         // keep a copy in memory for fast access
-        $this->objects[$msguid] = $object;
-        $this->uid2msg[$object['uid']] = $msguid;
+        $this->objects = array($msguid => $object);
+        $this->uid2msg = array($object['uid'] => $msguid);
     }
 
 

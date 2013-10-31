@@ -317,7 +317,7 @@ class kolab_calendar
     }
     else {
       $event['id'] = $event['uid'];
-      $this->events[$event['uid']] = $this->_to_rcube_event($object);
+      $this->events = array($event['uid'] => $this->_to_rcube_event($object));
     }
     
     return $saved;

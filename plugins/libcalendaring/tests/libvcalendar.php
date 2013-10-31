@@ -167,6 +167,22 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @depends test_import_from_file
+     */
+    function test_attachment()
+    {
+        $ical = new libvcalendar();
+
+        $events = $ical->import_from_file(__DIR__ . '/resources/attachment.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals(2, count($events));
+        $this->assertEquals(1, count($event['attachments']));
+        $this->assertEquals('image/png', $event['attachments'][0]['mimetype']);
+        $this->assertEquals('500px-Opensource.svg.png', $event['attachments'][0]['name']);
+    }
+
+    /**
      * @depends test_import
      */
     function test_freebusy()
