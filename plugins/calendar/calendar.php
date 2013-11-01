@@ -1217,7 +1217,7 @@ class calendar extends rcube_plugin
     if ($event['recurrence']) {
       $event['recurrence_text'] = $this->_recurrence_text($event['recurrence']);
       if ($event['recurrence']['UNTIL'])
-        $event['recurrence']['UNTIL'] = $this->lib->adjust_timezone($event['recurrence']['UNTIL'])->format('c');
+        $event['recurrence']['UNTIL'] = $this->lib->adjust_timezone($event['recurrence']['UNTIL'], $event['allday'])->format('c');
       unset($event['recurrence']['EXCEPTIONS']);
     }
 
@@ -1248,8 +1248,8 @@ class calendar extends rcube_plugin
 
     return array(
       '_id'   => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
-      'start' => $this->lib->adjust_timezone($event['start'])->format('c'),
-      'end'   => $this->lib->adjust_timezone($event['end'])->format('c'),
+      'start' => $this->lib->adjust_timezone($event['start'], $event['allday'])->format('c'),
+      'end'   => $this->lib->adjust_timezone($event['end'], $event['allday'])->format('c'),
       // 'changed' might be empty for event recurrences (Bug #2185)
       'changed' => $event['changed'] ? $this->lib->adjust_timezone($event['changed'])->format('c') : null,
       'title'       => strval($event['title']),

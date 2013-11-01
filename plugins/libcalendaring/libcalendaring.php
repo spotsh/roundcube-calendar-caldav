@@ -120,14 +120,14 @@ class libcalendaring extends rcube_plugin
      * @param mixed Any kind of a date representation (DateTime object, string or unix timestamp)
      * @return object DateTime object in user's timezone
      */
-    public function adjust_timezone($dt)
+    public function adjust_timezone($dt, $dateonly = false)
     {
         if (is_numeric($dt))
             $dt = new DateTime('@'.$dt);
         else if (is_string($dt))
             $dt = new DateTime($dt);
 
-        if ($dt instanceof DateTime) {
+        if ($dt instanceof DateTime && !($dt->_dateonly || $dateonly)) {
             $dt->setTimezone($this->timezone);
         }
 
