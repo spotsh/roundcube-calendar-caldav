@@ -175,11 +175,11 @@ function rcube_tasklist_ui(settings)
 
         // click-handler on tags list
         $(rcmail.gui_objects.tagslist).click(function(e){
-            if (e.target.nodeName != 'LI')
-                return false;
-
-            var item = $(e.target),
+            var item = e.target.nodeName == 'LI' ? $(e.target) : $(e.target).closest('li'),
                 tag = item.data('value');
+
+            if (!tag)
+                return false;
 
             // reset selection on regular clicks
             var index = $.inArray(tag, tagsfilter);
