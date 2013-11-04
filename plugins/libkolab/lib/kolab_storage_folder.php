@@ -764,6 +764,7 @@ class kolab_storage_folder
             // update cache with new UID
             if ($result) {
                 $object['_msguid'] = $result;
+                $object['_mailbox'] = $this->name;
                 $this->cache->insert($result, $object);
 
                 // remove temp file
