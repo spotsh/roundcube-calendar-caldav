@@ -364,7 +364,7 @@ class kolab_storage_cache
         $this->_read_folder_data();
 
         $result = $this->db->query(
-            "DELETE FROM $this->cache_table WHERE folder_id=?".
+            "DELETE FROM $this->cache_table WHERE folder_id=?",
             $this->folder_id
         );
         return $this->db->affected_rows($result);
