@@ -30,7 +30,7 @@ CREATE TABLE `kolab_cache_contact` (
   `created` DATETIME DEFAULT NULL,
   `changed` DATETIME DEFAULT NULL,
   `data` TEXT NOT NULL,
-  `xml` TEXT NOT NULL,
+  `xml` LONGTEXT NOT NULL,
   `tags` VARCHAR(255) NOT NULL,
   `words` TEXT NOT NULL,
   `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
@@ -172,4 +172,4 @@ CREATE TABLE `kolab_cache_freebusy` (
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
 
-INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013100400');
+INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013110400');
