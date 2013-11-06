@@ -88,15 +88,6 @@ class calendar extends rcube_plugin
     require($this->home . '/lib/calendar_ui.php');
     $this->ui = new calendar_ui($this);
 
-    // load Calendar user interface which includes jquery-ui
-    if (!$this->rc->output->ajax_call && !$this->rc->output->env['framed']) {
-      $this->ui->init();
-
-      // settings are required in (almost) every GUI step
-      if ($this->rc->action != 'attend')
-        $this->rc->output->set_env('calendar_settings', $this->load_settings());
-    }
-
     // catch iTIP confirmation requests that don're require a valid session
     if ($this->rc->action == 'attend' && !empty($_REQUEST['_t'])) {
       $this->add_hook('startup', array($this, 'itip_attend_response'));
@@ -104,8 +95,32 @@ class calendar extends rcube_plugin
     else if ($this->rc->action == 'feed' && !empty($_REQUEST['_cal'])) {
       $this->add_hook('startup', array($this, 'ical_feed_export'));
     }
-    else if ($this->rc->task == 'calendar' && $this->rc->action != 'save-pref') {
-      if ($this->rc->action != 'upload') {
+    else {
+      // default startup routine
+      $this->add_hook('startup', array($this, 'startup'));
+    }
+  }
+
+  /**
+   * Startup hook
+   */
+  public function startup($args)
+  {
+    // the calendar module can be enabled/disabled by the kolab_auth plugin
+    if ($this->rc->config->get('calendar_disabled', false) || !$this->rc->config->get('calendar_enabled', true))
+        return;
+
+    // load Calendar user interface
+    if (!$this->rc->output->ajax_call && !$this->rc->output->env['framed']) {
+      $this->ui->init();
+
+      // settings are required in (almost) every GUI step
+      if ($args['action'] != 'attend')
+        $this->rc->output->set_env('calendar_settings', $this->load_settings());
+    }
+
+    if ($args['task'] == 'calendar' && $args['action'] != 'save-pref') {
+      if ($args['action'] != 'upload') {
         $this->load_driver();
       }
 
@@ -138,19 +153,19 @@ class calendar extends rcube_plugin
         }
       }
     }
-    else if ($this->rc->task == 'settings') {
+    else if ($args['task'] == 'settings') {
       // add hooks for Calendar settings
       $this->add_hook('preferences_sections_list', array($this, 'preferences_sections_list'));
       $this->add_hook('preferences_list', array($this, 'preferences_list'));
       $this->add_hook('preferences_save', array($this, 'preferences_save')); 
     }
-    else if ($this->rc->task == 'mail') {
+    else if ($args['task'] == 'mail') {
       // hooks to catch event invitations on incoming mails
-      if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
+      if ($args['action'] == 'show' || $args['action'] == 'preview') {
         $this->add_hook('message_load', array($this, 'mail_message_load'));
         $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
       }
-      
+
       // add 'Create event' item to message menu
       if ($this->api->output->type == 'html') {
         $this->api->add_content(html::tag('li', null, 
@@ -167,7 +182,7 @@ class calendar extends rcube_plugin
         $this->api->output->add_label('calendar.createfrommail');
       }
     }
-    
+
     // add hooks to display alarms
     $this->add_hook('pending_alarms', array($this, 'pending_alarms'));
     $this->add_hook('dismiss_alarms', array($this, 'dismiss_alarms'));

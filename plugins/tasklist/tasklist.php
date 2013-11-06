@@ -71,13 +71,26 @@ class tasklist extends rcube_plugin
         // load plugin configuration
         $this->load_config();
 
-        // load localizations
-        $this->add_texts('localization/', $this->rc->task == 'tasks' && (!$this->rc->action || $this->rc->action == 'print'));
-        $this->rc->load_language($_SESSION['language'], array('tasks.tasks' => $this->gettext('navtitle')));  // add label for task title
-
         $this->timezone = $this->lib->timezone;
 
-        if ($this->rc->task == 'tasks' && $this->rc->action != 'save-pref') {
+        // proceed initialization in startup hook
+        $this->add_hook('startup', array($this, 'startup'));
+    }
+
+    /**
+     * Startup hook
+     */
+    public function startup($args)
+    {
+        // the tasks module can be enabled/disabled by the kolab_auth plugin
+        if ($this->rc->config->get('tasklist_disabled', false) || !$this->rc->config->get('tasklist_enabled', true))
+            return;
+
+        // load localizations
+        $this->add_texts('localization/', $args['task'] == 'tasks' && (!$args['action'] || $args['action'] == 'print'));
+        $this->rc->load_language($_SESSION['language'], array('tasks.tasks' => $this->gettext('navtitle')));  // add label for task title
+
+        if ($args['task'] == 'tasks' && $args['action'] != 'save-pref') {
             $this->load_driver();
 
             // register calendar actions
@@ -94,9 +107,9 @@ class tasklist extends rcube_plugin
 
             $this->collapsed_tasks = array_filter(explode(',', $this->rc->config->get('tasklist_collapsed_tasks', '')));
         }
-        else if ($this->rc->task == 'mail') {
+        else if ($args['task'] == 'mail') {
             // TODO: register hooks to catch ical/vtodo email attachments
-            if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
+            if ($args['action'] == 'show' || $args['action'] == 'preview') {
                 // $this->add_hook('message_load', array($this, 'mail_message_load'));
                 // $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
             }
