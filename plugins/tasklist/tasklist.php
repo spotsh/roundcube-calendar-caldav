@@ -387,6 +387,11 @@ class tasklist extends rcube_plugin
             }
         }
 
+        // convert tags to array, filter out empty entries
+        if (isset($rec['tags']) && !is_array($rec['tags'])) {
+            $rec['tags'] = array_filter((array)$rec['tags']);
+        }
+
         // alarms cannot work without a date
         if ($rec['alarms'] && !$rec['date'] && !$rec['startdate'] && strpos($rec['alarms'], '@') === false)
             $rec['alarms'] = '';
