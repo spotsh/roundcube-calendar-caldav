@@ -2103,6 +2103,10 @@ function rcube_calendar_ui(settings)
         if (me.fisheye_date)
           me.fisheye_view(me.fisheye_date);
       }
+      // refetch all calendars
+      else if (p.refetch) {
+        fc.fullCalendar('refetchEvents');
+      }
 
       // remove temp events
       fc.fullCalendar('removeEvents', function(e){ return e.temp; });
