@@ -123,7 +123,7 @@ abstract class kolab_format
             if (!$dateonly)
                 $result->setTime($datetime->format('G'), $datetime->format('i'), $datetime->format('s'));
 
-            if ($tz && in_array($tz->getName(), array('UTC','GMT','+00:00')))
+            if ($tz && in_array($tz->getName(), array('UTC', 'GMT', '+00:00', 'Z')))
                 $result->setUTC(true);
             else if ($tz !== false)
                 $result->setTimezone($tz->getName());
