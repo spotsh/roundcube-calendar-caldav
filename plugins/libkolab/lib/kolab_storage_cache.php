@@ -117,6 +117,15 @@ class kolab_storage_cache
     }
 
     /**
+     * Getter for the numeric ID used in cache tables
+     */
+    public function get_folder_id()
+    {
+        $this->_read_folder_data();
+        return $this->folder_id;
+    }
+
+    /**
      * Synchronize local cache data with remote
      */
     public function synchronize()
@@ -341,7 +350,7 @@ class kolab_storage_cache
             $this->db->query(
                 "UPDATE $this->cache_table SET folder_id=?, msguid=? ".
                 "WHERE folder_id=? AND msguid=?",
-                $target->folder_id,
+                $target->cache->get_folder_id(),
                 $new_msguid,
                 $this->folder_id,
                 $msguid
