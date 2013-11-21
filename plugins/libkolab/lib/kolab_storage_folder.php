@@ -280,7 +280,7 @@ class kolab_storage_folder
         }
 
         // generate a folder UID and set it to IMAP
-        $uid = rtrim(chunk_split(md5($this->name . $this->get_owner()), 12, '-'), '-');
+        $uid = rtrim(chunk_split(md5($this->name . $this->get_owner() . uniqid('-', true)), 12, '-'), '-');
         $this->set_uid($uid);
 
         return $uid;
