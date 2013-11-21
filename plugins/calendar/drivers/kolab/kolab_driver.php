@@ -110,7 +110,7 @@ class kolab_driver extends calendar_driver
 
     // include virtual folders for a full folder tree
     if (!$active && !$personal && !$this->rc->output->ajax_call && in_array($this->rc->action, array('index','')))
-      $folders = $this->_folder_hierarchy($folders, $this->rc->get_storage()->get_hierarchy_delimiter());
+      $folders = kolab_storage::folder_hierarchy($folders);
 
     foreach ($folders as $id => $cal) {
       $fullname = $cal->get_name();
@@ -145,39 +145,6 @@ class kolab_driver extends calendar_driver
     }
 
     return $calendars;
-  }
-
-  /**
-   * Check the folder tree and add the missing parents as virtual folders
-   */
-  private function _folder_hierarchy($folders, $delim)
-  {
-    $parents = array();
-    $existing = array_map(function($folder){ return $folder->get_name(); }, $folders);
-    foreach ($folders as $id => $folder) {
-      $path = explode($delim, $folder->name);
-      array_pop($path);
-
-      // skip top folders or ones with a custom displayname
-      if (count($path) <= 1 || kolab_storage::custom_displayname($folder->name))
-        continue;
-
-      while (count($path) > 1 && ($parent = join($delim, $path))) {
-        if (!in_array($parent, $existing) && !$parents[$parent]) {
-          $name = kolab_storage::object_name($parent, $folder->get_namespace());
-          $parents[$parent] = new virtual_kolab_calendar($name, $folder->get_namespace());
-          $parents[$parent]->id = kolab_storage::folder_id($parent);
-        }
-        array_pop($path);
-      }
-    }
-
-    // add virtual parents to the list and sort again
-    if (count($parents)) {
-      $folders = kolab_storage::sort_folders(array_merge($folders, array_values($parents)));
-    }
-
-    return $folders;
   }
 
   /**
@@ -1278,32 +1245,3 @@ class kolab_driver extends calendar_driver
   }
 
 }
-
-
-/**
- * Helper class that represents a virtual IMAP folder
- * with a subset of the kolab_calendar API.
- */
-class virtual_kolab_calendar
-{
-    public $name;
-    public $namespace;
-    public $virtual = true;
-
-    public function __construct($name, $ns)
-    {
-        $this->name = $name;
-        $this->namespace = $ns;
-    }
-
-    public function get_name()
-    {
-        return $this->name;
-    }
-
-    public function get_namespace()
-    {
-        return $this->namespace;
-    }
-}
-

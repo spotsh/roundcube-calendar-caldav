@@ -85,7 +85,7 @@ class tasklist_kolab_driver extends tasklist_driver
 
         // include virtual folders for a full folder tree
         if (!$this->rc->output->ajax_call && in_array($this->rc->action, array('index','')))
-            $folders = $this->_folder_hierarchy($folders, $delim);
+            $folders = kolab_storage::folder_hierarchy($folders);
 
         foreach ($folders as $folder) {
             $utf7name = $folder->name;
@@ -146,38 +146,6 @@ class tasklist_kolab_driver extends tasklist_driver
             $this->folders[$folder->name] = $folder;
         }
     }
-
-    /**
-     * Check the folder tree and add the missing parents as virtual folders
-     */
-    private function _folder_hierarchy($folders, $delim)
-    {
-        $parents = array();
-        $existing = array_map(function($folder){ return $folder->name; }, $folders);
-        foreach ($folders as $id => $folder) {
-            $path = explode($delim, $folder->name);
-            array_pop($path);
-
-            // skip top folders or ones with a custom displayname
-            if (count($path) <= 1 || kolab_storage::custom_displayname($folder->name))
-                continue;
-
-            while (count($path) > 1 && ($parent = join($delim, $path))) {
-                if (!in_array($parent, $existing) && !$parents[$parent]) {
-                    $parents[$parent] = new virtual_kolab_storage_folder($parent, $folder->get_namespace());
-                }
-                array_pop($path);
-            }
-        }
-
-        // add virtual parents to the list and sort again
-        if (count($parents)) {
-            $folders = kolab_storage::sort_folders(array_merge($folders, array_values($parents)));
-        }
-
-        return $folders;
-    }
-
 
     /**
      * Get a list of available task lists from this source
@@ -905,26 +873,3 @@ class tasklist_kolab_driver extends tasklist_driver
     }
 
 }
-
-/**
- * Helper class that represents a virtual IMAP folder
- * with a subset of the kolab_storage_folder API.
- */
-class virtual_kolab_storage_folder
-{
-    public $name;
-    public $namespace;
-    public $virtual = true;
-
-    public function __construct($name, $ns)
-    {
-        $this->name = $name;
-        $this->namespace = $ns;
-    }
-
-    public function get_namespace()
-    {
-        return $this->namespace;
-    }
-}
-

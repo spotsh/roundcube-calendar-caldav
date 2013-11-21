@@ -433,7 +433,7 @@ class kolab_storage
                     // get username
                     $pos    = strpos($folder, $delim);
                     if ($pos) {
-                        $prefix = '('.substr($folder, 0, $pos).') ';
+                        $prefix = '('.substr($folder, 0, $pos).')';
                         $folder = substr($folder, $pos+1);
                     }
                     else {
@@ -525,8 +525,8 @@ class kolab_storage
      */
     public static function folder_selector($type, $attrs, $current = '')
     {
-        // get all folders of specified type
-        $folders = self::get_folders($type, false);
+        // get all folders of specified type (sorted)
+        $folders = self::get_folders($type, true);
 
         $delim = self::$imap->get_hierarchy_delimiter();
         $names = array();
@@ -540,13 +540,15 @@ class kolab_storage
         // Filter folders list
         foreach ($folders as $c_folder) {
             $name = $c_folder->name;
+
             // skip current folder and it's subfolders
             if ($len && ($name == $current || strpos($name, $current.$delim) === 0)) {
                 continue;
             }
 
             // always show the parent of current folder
-            if ($p_len && $name == $parent) { }
+            if ($p_len && $name == $parent) {
+            }
             // skip folders where user have no rights to create subfolders
             else if ($c_folder->get_owner() != $_SESSION['username']) {
                 $rights = $c_folder->get_myrights();
@@ -555,16 +557,13 @@ class kolab_storage
                 }
             }
 
+            // Make sure parent folder is listed (might be skipped e.g. if it's namespace root)
+            if ($p_len && !isset($names[$parent]) && strpos($name, $parent.$delim) === 0) {
+                $names[$parent] = self::object_name($parent);
+            }
+
             $names[$name] = self::object_name($name);
         }
-
-        // Make sure parent folder is listed (might be skipped e.g. if it's namespace root)
-        if ($p_len && !isset($names[$parent])) {
-            $names[$parent] = self::object_name($parent);
-        }
-
-        // Sort folders list
-        asort($names, SORT_LOCALE_STRING);
 
         // Build SELECT field of parent folder
         $attrs['is_escaped'] = true;
@@ -643,7 +642,8 @@ class kolab_storage
                     unset($folderdata[$folder]);
                 }
             }
-            return array_keys($folderdata);
+
+            return self::$imap->sort_folder_list(array_keys($folderdata), true);
         }
 
         // Get folders list
@@ -683,26 +683,75 @@ class kolab_storage
      */
     public static function sort_folders($folders)
     {
-        $pad = '  ';
+        $pad     = '  ';
+        $out     = array();
         $nsnames = array('personal' => array(), 'shared' => array(), 'other' => array());
+
         foreach ($folders as $folder) {
             $folders[$folder->name] = $folder;
             $ns = $folder->get_namespace();
             $nsnames[$ns][$folder->name] = strtolower(html_entity_decode(self::object_name($folder->name, $ns), ENT_COMPAT, RCUBE_CHARSET)) . $pad;  // decode &raquo;
         }
 
-        $names = array();
-        foreach ($nsnames as $ns => $dummy) {
-            asort($nsnames[$ns], SORT_LOCALE_STRING);
-            $names += $nsnames[$ns];
-        }
-
-        $out = array();
-        foreach ($names as $utf7name => $name) {
-            $out[] = $folders[$utf7name];
+        // $folders is a result of get_folders() we can assume folders were already sorted
+        foreach (array_keys($nsnames) as $ns) {
+            // asort($nsnames[$ns], SORT_LOCALE_STRING);
+            foreach (array_keys($nsnames[$ns]) as $utf7name) {
+                $out[] = $folders[$utf7name];
+            }
         }
 
         return $out;
+    }
+
+
+    /**
+     * Check the folder tree and add the missing parents as virtual folders
+     *
+     * @param array $folders Folders list
+     *
+     * @return array Folders list
+     */
+    public static function folder_hierarchy($folders)
+    {
+        $_folders = array();
+        $existing = array_map(function($folder){ return $folder->get_name(); }, $folders);
+        $delim    = rcube::get_instance()->get_storage()->get_hierarchy_delimiter();
+
+        foreach ($folders as $idx => $folder) {
+            $path = explode($delim, $folder->name);
+            array_pop($path);
+
+            // skip top folders or ones with a custom displayname
+            if (count($path) <= 1 || kolab_storage::custom_displayname($folder->name)) {
+            }
+            else {
+                $parents = array();
+
+                while (count($path) > 1 && ($parent = join($delim, $path))) {
+                    $name = kolab_storage::object_name($parent, $folder->get_namespace());
+                    if (!in_array($name, $existing)) {
+                        $parents[$parent] = new virtual_kolab_storage_folder($name, $folder->get_namespace());
+                        $parents[$parent]->id = kolab_storage::folder_id($parent);
+                        $existing[] = $name;
+                    }
+
+                    array_pop($path);
+                }
+
+                if (!empty($parents)) {
+                    $parents = array_reverse(array_values($parents));
+                    foreach ($parents as $parent) {
+                        $_folders[] = $parent;
+                    }
+                }
+            }
+
+            $_folders[] = $folder;
+            unset($folders[$idx]);
+        }
+
+        return $_folders;
     }
 
 
@@ -1046,4 +1095,31 @@ class kolab_storage
         }
     }
 
+}
+
+/**
+ * Helper class that represents a virtual IMAP folder
+ * with a subset of the kolab_storage_folder API.
+ */
+class virtual_kolab_storage_folder
+{
+    public $name;
+    public $namespace;
+    public $virtual = true;
+
+    public function __construct($name, $ns)
+    {
+        $this->name = $name;
+        $this->namespace = $ns;
+    }
+
+    public function get_namespace()
+    {
+        return $this->namespace;
+    }
+
+    public function get_name()
+    {
+        return $this->name;
+    }
 }
