@@ -557,7 +557,6 @@ class libvcalendar implements Iterator
                 switch ($prop->name) {
                 case 'TRIGGER':
                     foreach ($prop->parameters as $param) {
-                        console(strval($param->name), strval($param->value));
                         if ($param->name == 'VALUE' && $param->value == 'DATE-TIME') {
                             $trigger = '@' . $prop->getDateTime()->format('U');
                         }
