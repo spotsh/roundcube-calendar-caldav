@@ -158,7 +158,7 @@ pre {
 }
 
 #calendarslist li.virtual {
-	padding-top: 2px;
+	height: 12px;
 }
 
 #calendarslist li label {
@@ -231,6 +231,7 @@ pre {
 
 #calendarslist li.virtual span.calname {
 	color: #aaa;
+	top: 2px;
 }
 
 #calfeedurl,

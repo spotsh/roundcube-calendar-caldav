@@ -226,8 +226,7 @@ body.attachmentwin #topnav .topright {
 }
 
 #tasklists li.virtual {
-	padding-top: 4px;
-	height: 16px;
+	height: 12px;
 }
 
 #tasklists li label {
@@ -293,6 +292,7 @@ body.attachmentwin #topnav .topright {
 
 #tasklists li.virtual span.listname {
 	color: #aaa;
+	top: 2px;
 }
 
 #tasklists li.virtual span.handle {

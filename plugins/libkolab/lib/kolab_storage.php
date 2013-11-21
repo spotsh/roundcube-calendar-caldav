@@ -437,9 +437,10 @@ class kolab_storage
                         $folder = substr($folder, $pos+1);
                     }
                     else {
-                        $prefix = '('.$folder.')';
+                        $prefix = $folder;
                         $folder = '';
                     }
+
                     $found  = true;
                     $folder_ns = 'other';
                     break;
@@ -467,7 +468,7 @@ class kolab_storage
         $folder = str_replace(html::quote($delim), ' &raquo; ', $folder);
 
         if ($prefix)
-            $folder = html::quote($prefix) . ' ' . $folder;
+            $folder = html::quote($prefix) . ($folder !== '' ? ' ' . $folder : '');
 
         if (!$folder_ns)
             $folder_ns = 'personal';
@@ -492,7 +493,8 @@ class kolab_storage
     }
 
     /**
-     * Helper method to generate a truncated folder name to display
+     * Helper method to generate a truncated folder name to display.
+     * Note: $origname is a string returned by self::object_name()
      */
     public static function folder_displayname($origname, &$names)
     {
@@ -504,10 +506,29 @@ class kolab_storage
                 $length = strlen($names[$i] . ' &raquo; ');
                 $prefix = substr($name, 0, $length);
                 $count  = count(explode(' &raquo; ', $prefix));
-                $name   = str_repeat('&nbsp;&nbsp;&nbsp;', $count-1) . '&raquo; ' . substr($name, $length);
+                $diff   = 1;
+
+                // check if prefix folder is in other users namespace
+                for ($n = count($names)-1; $n >= 0; $n--) {
+                    if (strpos($prefix, '(' . $names[$n] . ') ') === 0) {
+                        $diff = 0;
+                        break;
+                    }
+                }
+
+                $name = str_repeat('&nbsp;&nbsp;&nbsp;', $count - $diff) . '&raquo; ' . substr($name, $length);
+                break;
+            }
+            // other users namespace and parent folder exists
+            else if (strpos($name, '(' . $names[$i] . ') ') === 0) {
+                $length = strlen('(' . $names[$i] . ') ');
+                $prefix = substr($name, 0, $length);
+                $count  = count(explode(' &raquo; ', $prefix));
+                $name   = str_repeat('&nbsp;&nbsp;&nbsp;', $count) . '&raquo; ' . substr($name, $length);
                 break;
             }
         }
+
         $names[] = $origname;
 
         return $name;
