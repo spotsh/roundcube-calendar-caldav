@@ -74,7 +74,8 @@ class odfviewer extends rcube_plugin
   {
     if (!$args['download'] && $args['mimetype'] && in_array($args['mimetype'], $this->odf_mimetypes)) {
       if (empty($_GET['_load'])) {
-        $suffix = preg_match('/(\.\w+)$/', $args['part']->filename, $m) ? $m[1] : '.odt';
+        $exts = rcube_mime::get_mime_extensions($args['mimetype']);
+        $suffix = $exts ? '.'.$exts[0] : '.odt';
         $fn = md5(session_id() . $_SERVER['REQUEST_URI']) . $suffix;
 
         // FIXME: copy file to disk because only apache can send the file correctly
