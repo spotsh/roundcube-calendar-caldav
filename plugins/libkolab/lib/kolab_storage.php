@@ -752,8 +752,7 @@ class kolab_storage
                 while (count($path) > 1 && ($parent = join($delim, $path))) {
                     $name = kolab_storage::object_name($parent, $folder->get_namespace());
                     if (!in_array($name, $existing)) {
-                        $parents[$parent] = new virtual_kolab_storage_folder($name, $folder->get_namespace());
-                        $parents[$parent]->id = kolab_storage::folder_id($parent);
+                        $parents[$parent] = new virtual_kolab_storage_folder($parent, $name, $folder->get_namespace());
                         $existing[] = $name;
                     }
 
@@ -1124,13 +1123,15 @@ class kolab_storage
  */
 class virtual_kolab_storage_folder
 {
+    public $id;
     public $name;
     public $namespace;
     public $virtual = true;
 
-    public function __construct($name, $ns)
+    public function __construct($realname, $name, $ns)
     {
-        $this->name = $name;
+        $this->id        = kolab_storage::folder_id($realname);
+        $this->name      = $name;
         $this->namespace = $ns;
     }
 
@@ -1141,6 +1142,7 @@ class virtual_kolab_storage_folder
 
     public function get_name()
     {
+        // this is already kolab_storage::object_name() result
         return $this->name;
     }
 }

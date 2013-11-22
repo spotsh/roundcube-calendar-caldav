@@ -94,7 +94,7 @@ class tasklist_kolab_driver extends tasklist_driver
             $editname = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');  // pop off raw name part
             $path_imap = join($delim, $path_imap);
 
-            $fullname = kolab_storage::object_name($utf7name);
+            $fullname = $folder->get_name();
             $listname = kolab_storage::folder_displayname($fullname, $listnames);
 
             // special handling for virtual folders
