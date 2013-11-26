@@ -1823,7 +1823,7 @@ function rcube_tasklist_ui(settings)
 
         $('.popupmenu:visible').each(function(i, elem){
             var menu = $(elem), id = elem.id;
-            if (target.id != id+'link' && (!menu.data('sticky') || !target_overlaps(e.target, elem))) {
+            if (id && target.id != id+'link' && (!menu.data('sticky') || !target_overlaps(e.target, elem))) {
                 menu.hide();
                 count++;
             }
