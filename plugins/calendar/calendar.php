@@ -1864,11 +1864,12 @@ class calendar extends rcube_plugin
 
     $html = '';
     foreach ($this->ics_parts as $mime_id) {
-      $part = $this->message->mime_parts[$mime_id];
+      $part    = $this->message->mime_parts[$mime_id];
       $charset = $part->ctype_parameters['charset'] ? $part->ctype_parameters['charset'] : RCMAIL_CHARSET;
-      $events = $this->ical->import($this->message->get_part_content($mime_id), $charset);
-      $title = $this->gettext('title');
-      
+      $events  = $this->ical->import($this->message->get_part_content($mime_id), $charset);
+      $title   = $this->gettext('title');
+      $date    = rcube_utils::anytodatetime($this->message->headers->date);
+
       // successfully parsed events?
       if (empty($events))
           continue;
@@ -1913,13 +1914,21 @@ class calendar extends rcube_plugin
               break;
             }
           }
-          
-          $dom_id = asciiwords($event['uid'], true);
-          $buttons = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $rsvp_buttons);
-          $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $import_button);
+
+          $dom_id      = asciiwords($event['uid'], true);
+          $buttons     = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $rsvp_buttons);
+          $buttons    .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $import_button);
           $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
-          
-          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed']->format('U'), 'sequence' => intval($event['sequence']), 'fallback' => $status)) . ')', 'docready');
+          $changed     = is_object($event['changed']) ? $event['changed'] : $date;
+
+          $script = json_serialize(array(
+            'uid'      => $event['uid'],
+            'changed'  => $changed ? $changed->format('U') : 0,
+            'sequence' => intval($event['sequence']),
+            'fallback' => $status,
+          ));
+
+          $this->rc->output->add_script("rcube_calendar.fetch_event_rsvp_status($script)", 'docready');
         }
         else if ($this->ical->method == 'CANCEL') {
           $title = $this->gettext('itipcancellation');
@@ -1937,13 +1946,21 @@ class calendar extends rcube_plugin
             'onclick' => "rcube_calendar.remove_event_from_mail('" . JQ($event['uid']) . "', '" . JQ($event['title']) . "')",
             'value' => $this->gettext('removefromcalendar'),
           ));
-          
-          $dom_id = asciiwords($event['uid'], true);
-          $buttons = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $button_remove);
-          $buttons .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $button_import);
+
+          $dom_id      = asciiwords($event['uid'], true);
+          $buttons     = html::div(array('id' => 'rsvp-'.$dom_id, 'style' => 'display:none'), $button_remove);
+          $buttons    .= html::div(array('id' => 'import-'.$dom_id, 'style' => 'display:none'), $button_import);
           $buttons_pre = html::div(array('id' => 'loading-'.$dom_id, 'class' => 'rsvp-status loading'), $this->gettext('loading'));
-          
-          $this->rc->output->add_script('rcube_calendar.fetch_event_rsvp_status(' . json_serialize(array('uid' => $event['uid'], 'changed' => $event['changed']->format('U'), 'sequence' => intval($event['sequence']), 'fallback' => 'CANCELLED')) . ')', 'docready');
+          $changed     = is_object($event['changed']) ? $event['changed'] : $date;
+
+          $script = json_serialize(array(
+            'uid'      => $event['uid'],
+            'changed'  => $changed ? $changed->format('U') : 0,
+            'sequence' => intval($event['sequence']),
+            'fallback' => 'CANCELLED',
+          ));
+
+          $this->rc->output->add_script("rcube_calendar.fetch_event_rsvp_status($script)", 'docready');
         }
         else {
           $buttons = html::tag('input', array(
