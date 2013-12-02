@@ -387,7 +387,7 @@ function kolab_files_upload_input(button)
     file.css({top: (e.pageY - offset.top - 10) + 'px', left: (e.pageX - offset.left - 10) + 'px'});
   }
 
-  file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5})
+  file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5, title: link.attr('title')})
     .change(function() { rcmail.files_upload('#filesuploadform'); })
     .click(function() { setTimeout(function() { link.mouseleave(); }, 20); })
     // opacity:0 does the trick, display/visibility doesn't work
