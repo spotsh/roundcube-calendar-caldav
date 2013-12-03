@@ -610,6 +610,9 @@ class kolab_files_engine
             $this->request->setUrl($url);
         }
 
+        // some HTTP server configurations require this header
+        $this->request->setHeader('accept', "application/json,text/javascript,*/*");
+
         return $this->request;
     }
 
