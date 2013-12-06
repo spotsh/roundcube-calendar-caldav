@@ -149,24 +149,27 @@ class kolab_auth extends rcube_plugin
 
         if (!empty($role_plugins)) {
             foreach ($role_plugins as $role_dn => $plugins) {
-                $role_plugins[self::parse_ldap_vars($role_dn)] = $plugins;
+                $role_dn = self::parse_ldap_vars($role_dn);
+                if (!empty($role_plugins[$role_dn])) {
+                    $role_plugins[$role_dn] = array_unique(array_merge((array)$role_plugins[$role_dn], $plugins));
+                } else {
+                    $role_plugins[$role_dn] = $plugins;
+                }
             }
         }
 
         if (!empty($role_settings)) {
             foreach ($role_settings as $role_dn => $settings) {
-                $role_settings[self::parse_ldap_vars($role_dn)] = $settings;
+                if (!empty($role_settings[$role_dn])) {
+                        $role_settings[$role_dn] = array_merge((array)$role_settings[$role_dn], $settings);
+                } else {
+                    $role_settings[$role_dn] = $settings;
+                }
             }
         }
 
         foreach ($_SESSION['user_roledns'] as $role_dn) {
-            if (isset($role_plugins[$role_dn]) && is_array($role_plugins[$role_dn])) {
-                foreach ($role_plugins[$role_dn] as $plugin) {
-                    $this->require_plugin($plugin);
-                }
-            }
-
-            if (isset($role_settings[$role_dn]) && is_array($role_settings[$role_dn])) {
+            if (!empty($role_settings[$role_dn]) && is_array($role_settings[$role_dn])) {
                 foreach ($role_settings[$role_dn] as $setting_name => $setting) {
                     if (!isset($setting['mode'])) {
                         $setting['mode'] = 'override';
@@ -188,7 +191,7 @@ class kolab_auth extends rcube_plugin
 
                     $dont_override = (array) $rcmail->config->get('dont_override');
 
-                    if (!isset($setting['allow_override']) || !$setting['allow_override']) {
+                    if (empty($setting['allow_override'])) {
                         $rcmail->config->set('dont_override', array_merge($dont_override, array($setting_name)));
                     }
                     else {
@@ -202,6 +205,19 @@ class kolab_auth extends rcube_plugin
                             $rcmail->config->set('dont_override', $_dont_override);
                         }
                     }
+
+                    if ($setting_name == 'skin') {
+                        if ($rcmail->output->type == 'html') {
+                            $rcmail->output->set_skin($setting['value']);
+                            $rcmail->output->set_env('skin', $setting['value']);
+                        }
+                    }
+                }
+            }
+
+            if (!empty($role_plugins[$role_dn])) {
+                foreach ((array)$role_plugins[$role_dn] as $plugin) {
+                    $this->require_plugin($plugin);
                 }
             }
         }
