@@ -383,10 +383,15 @@ function kolab_files_upload_input(button)
     file = $('<input>'),
     offset = link.offset();
 
-  file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5})
+  function move_file_input(e) {
+    file.css({top: (e.pageY - offset.top - 10) + 'px', left: (e.pageX - offset.left - 10) + 'px'});
+  }
+
+  file.attr({name: 'file[]', type: 'file', multiple: 'multiple', size: 5, title: link.attr('title')})
     .change(function() { rcmail.files_upload('#filesuploadform'); })
+    .click(function() { setTimeout(function() { link.mouseleave(); }, 20); })
     // opacity:0 does the trick, display/visibility doesn't work
-    .css({opacity: 0, cursor: 'pointer', outline: 'none', position: 'absolute', top: '10000px', left: '10000px'});
+    .css({opacity: 0, cursor: 'pointer', outline: 'none', position: 'absolute'});
 
   // In FF and IE we need to move the browser file-input's button under the cursor
   // Thanks to the size attribute above we know the length of the input field
@@ -394,17 +399,31 @@ function kolab_files_upload_input(button)
     file.css({marginLeft: '-80px'});
 
   // Note: now, I observe problem with cursor style on FF < 4 only
-  link.css({overflow: 'hidden', cursor: 'pointer'})
+  // Need position: relative (Bug #2615)
+  link.css({overflow: 'hidden', cursor: 'pointer', position: 'relative'})
+    .mouseenter(function() { this.__active = true; })
     // place button under the cursor
     .mousemove(function(e) {
-      if (rcmail.commands['files-upload'])
-        file.css({top: (e.pageY - offset.top - 10) + 'px', left: (e.pageX - offset.left - 10) + 'px'});
+      if (rcmail.commands['files-upload'] && this.__active)
+        move_file_input(e);
       // move the input away if button is disabled
       else
         $(this).mouseleave();
     })
-    .mouseleave(function() { file.css({top: '10000px', left: '10000px'}); })
+    .mouseleave(function() {
+      file.css({top: '-10000px', left: '-10000px'});
+      this.__active = false;
+    })
     .attr('onclick', '') // remove default button action
+    .click(function(e) {
+      // forward click if mouse-enter event was missed
+      if (rcmail.commands['files-upload'] && !this.__active) {
+        this.__active = true;
+        move_file_input(e);
+        file.trigger(e);
+      }
+    })
+    .mouseleave() // initially disable/hide input
     .append(file);
 };
 

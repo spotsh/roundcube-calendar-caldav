@@ -581,35 +581,23 @@ class kolab_files_engine
         $url = $this->url . '/api/';
 
         if (!$this->request) {
-            require_once 'HTTP/Request2.php';
+            $config = array(
+                'store_body'       => true,
+                'follow_redirects' => true,
+            );
 
+            $this->request = libkolab::http_request($url, 'GET', $config);
+        }
+        else {
+            // cleanup
             try {
-                $request = new HTTP_Request2();
-                $request->setConfig(array(
-                    'store_body'       => true,
-                    'follow_redirects' => true,
-                    'ssl_verify_peer'  => $this->rc->config->get('kolab_ssl_verify_peer', true),
-                    'ssl_verify_host'  => $this->rc->config->get('kolab_ssl_verify_host', true),
-                ));
-
-                $this->request = $request;
+                $this->request->setBody('');
+                $this->request->setUrl($url);
+                $this->request->setMethod(HTTP_Request2::METHOD_GET);
             }
             catch (Exception $e) {
                 rcube::raise_error($e, true, true);
             }
-
-            // proxy User-Agent string
-            $this->request->setHeader('user-agent', $_SERVER['HTTP_USER_AGENT']);
-        }
-
-        // cleanup
-        try {
-            $this->request->setBody('');
-            $this->request->setUrl($url);
-            $this->request->setMethod(HTTP_Request2::METHOD_GET);
-        }
-        catch (Exception $e) {
-            rcube::raise_error($e, true, true);
         }
 
         if ($token) {
@@ -621,6 +609,9 @@ class kolab_files_engine
             $url->setQueryVariables($get);
             $this->request->setUrl($url);
         }
+
+        // some HTTP server configurations require this header
+        $this->request->setHeader('accept', "application/json,text/javascript,*/*");
 
         return $this->request;
     }
@@ -939,7 +930,7 @@ class kolab_files_engine
                 $id = $attachment['id'];
 
                 // store new attachment in session
-                unset($attachment['status'], $attachment['abort']);
+                unset($attachment['data'], $attachment['status'], $attachment['abort']);
                 $COMPOSE['attachments'][$id] = $attachment;
 
                 if (($icon = $COMPOSE['deleteicon']) && is_file($icon)) {

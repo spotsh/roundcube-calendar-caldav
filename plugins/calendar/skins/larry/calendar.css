@@ -157,6 +157,10 @@ pre {
 	position: relative;
 }
 
+#calendarslist li.virtual {
+	height: 12px;
+}
+
 #calendarslist li label {
 	display: block;
 }
@@ -225,7 +229,13 @@ pre {
 	background-position: right -92px;
 }
 
-#calfeedurl {
+#calendarslist li.virtual span.calname {
+	color: #aaa;
+	top: 2px;
+}
+
+#calfeedurl,
+#caldavurl {
 	width: 98%;
 	background: #fbfbfb;
 	padding: 4px;
@@ -419,35 +429,43 @@ a.miniColors-trigger {
 	outline: none;
 }
 
-#event-attendees span.attendee {
+.event-attendees span.attendee {
 	padding-right: 18px;
 	margin-right: 0.5em;
 	background: url(images/attendee-status.gif) right 0 no-repeat;
 }
 
-#event-attendees span.attendee a.mailtolink {
+.event-attendees span.attendee a.mailtolink {
 	text-decoration: none;
 	white-space: nowrap;
+	outline: none;
 }
 
-#event-attendees span.attendee a.mailtolink:hover {
+.event-attendees span.attendee a.mailtolink:hover {
 	text-decoration: underline;
 }
 
-#event-attendees span.accepted {
+.event-attendees span.accepted {
 	background-position: right -20px;
 }
 
-#event-attendees span.declined {
+.event-attendees span.declined {
 	background-position: right -40px;
 }
 
-#event-attendees span.tentative {
+.event-attendees span.tentative {
 	background-position: right -60px;
 }
 
-#event-attendees span.organizer {
+.event-attendees span.organizer {
 	background-position: right -80px;
+}
+
+#all-event-attendees span.attendee {
+	display: block;
+	margin-bottom: 0.4em;
+	padding-bottom: 0.3em;
+	border-bottom: 1px solid #ddd;
 }
 
 .calendarmain .fc-view-table td.fc-list-header,

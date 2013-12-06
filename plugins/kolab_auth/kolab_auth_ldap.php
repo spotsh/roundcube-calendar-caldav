@@ -287,7 +287,8 @@ class kolab_auth_ldap extends rcube_ldap_generic
                 if ($limit && $limit <= $i) {
                     break;
                 }
-                $dn = $result->get_dn();
+                $dn        = $result->get_dn();
+                $entry     = rcube_ldap_generic::normalize_entry($entry);
                 $list[$dn] = $this->field_mapping($dn, $entry);
                 $i++;
             }
@@ -369,7 +370,8 @@ class kolab_auth_ldap extends rcube_ldap_generic
         if (!$user) {
             $user = $_SESSION['username'];
         }
-        else if (isset($this->icache[$user])) {
+
+        if (isset($this->icache[$user])) {
             list($user, $dc) = $this->icache[$user];
         }
         else {
@@ -411,6 +413,8 @@ class kolab_auth_ldap extends rcube_ldap_generic
         }
 
         $replaces = array('%dc' => $dc, '%d' => $d, '%fu' => $user, '%u' => $u);
+
+        $this->parse_replaces = $replaces;
 
         return strtr($str, $replaces);
     }
@@ -456,6 +460,16 @@ class kolab_auth_ldap extends rcube_ldap_generic
 
             return $domain ? 'dc=' . implode(',dc=', explode('.', $domain)) : null;
         }
+    }
+
+    /**
+     * Returns variables used for replacement in (last) parse_vars() call
+     *
+     * @return array Variable-value hash array
+     */
+    public function get_parse_vars()
+    {
+        return $this->parse_replaces;
     }
 
     /**

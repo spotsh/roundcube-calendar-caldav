@@ -58,6 +58,10 @@ class kolab_addressbook_ui
             $options = array('book-create', 'book-edit', 'book-delete');
             $idx     = 0;
 
+            if ($this->rc->config->get('kolab_addressbook_carddav_url')) {
+              $options[] = 'book-showurl';
+            }
+
             foreach ($options as $command) {
                 $content = html::tag('li', $idx ? null : array('class' => 'separator_above'),
                     $this->plugin->api->output->button(array(
@@ -82,7 +86,8 @@ class kolab_addressbook_ui
             $this->plugin->api->add_content($content, 'groupoptions');
 
             $this->rc->output->add_label('kolab_addressbook.bookdeleteconfirm',
-                'kolab_addressbook.bookdeleting');
+                'kolab_addressbook.bookdeleting', 'kolab_addressbook.bookshowurl',
+                'kolab_addressbook.carddavurldescription');
         }
         // book create/edit form
         else {

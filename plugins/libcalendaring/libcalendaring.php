@@ -75,10 +75,17 @@ class libcalendaring extends rcube_plugin
         $this->rc = rcube::get_instance();
 
         // set user's timezone
-        $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
+        try {
+            $this->timezone = new DateTimeZone($this->rc->config->get('timezone', 'GMT'));
+        }
+        catch (Exception $e) {
+            $this->timezone = new DateTimeZone('GMT');
+        }
+
         $now = new DateTime('now', $this->timezone);
-        $this->gmt_offset = $now->getOffset();
-        $this->dst_active = $now->format('I');
+
+        $this->gmt_offset      = $now->getOffset();
+        $this->dst_active      = $now->format('I');
         $this->timezone_offset = $this->gmt_offset / 3600 - $this->dst_active;
 
         $this->add_texts('localization/', false);
@@ -113,14 +120,17 @@ class libcalendaring extends rcube_plugin
      * @param mixed Any kind of a date representation (DateTime object, string or unix timestamp)
      * @return object DateTime object in user's timezone
      */
-    public function adjust_timezone($dt)
+    public function adjust_timezone($dt, $dateonly = false)
     {
         if (is_numeric($dt))
             $dt = new DateTime('@'.$dt);
         else if (is_string($dt))
             $dt = new DateTime($dt);
 
-        $dt->setTimezone($this->timezone);
+        if ($dt instanceof DateTime && !($dt->_dateonly || $dateonly)) {
+            $dt->setTimezone($this->timezone);
+        }
+
         return $dt;
     }
 
@@ -305,7 +315,7 @@ class libcalendaring extends rcube_plugin
     {
         if ($val[0] == '@')
             return array(substr($val, 1));
-        else if (preg_match('/([+-])(\d+)([HMD])/', $val, $m))
+        else if (preg_match('/([+-])P?T?(\d+)([HMSDW])/', $val, $m))
             return array($m[2], $m[1].$m[3]);
 
         return false;
@@ -766,6 +776,7 @@ class libcalendaring extends rcube_plugin
             'dddd' => 'l',
             'ddd'  => 'D',
             'dd'   => 'd',
+            'd'    => 'j',
             'HH'   => '**',
             'hh'   => '%%',
             'H'    => 'G',
@@ -796,6 +807,7 @@ class libcalendaring extends rcube_plugin
             'F' => 'MMMM',
             'm' => 'MM',
             'n' => 'M',
+            'j' => 'd',
             'd' => 'dd',
             'D' => 'ddd',
             'l' => 'dddd',

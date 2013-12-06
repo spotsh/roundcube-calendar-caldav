@@ -73,6 +73,7 @@ class tasklist_database_driver extends tasklist_driver
           $arr['showalarms'] = intval($arr['showalarms']);
           $arr['active'] = !in_array($arr['id'], $hidden);
           $arr['name'] = html::quote($arr['name']);
+          $arr['listname'] = html::quote($arr['name']);
           $arr['editable'] = true;
           $this->lists[$arr['id']] = $arr;
           $list_ids[] = $this->rc->db->quote($arr['id']);
@@ -109,8 +110,8 @@ class tasklist_database_driver extends tasklist_driver
              (user_id, name, color, showalarms)
              VALUES (?, ?, ?, ?)",
             $this->rc->user->ID,
-            $prop['name'],
-            $prop['color'],
+            strval($prop['name']),
+            strval($prop['color']),
             $prop['showalarms']?1:0
         );
 
@@ -285,7 +286,7 @@ class tasklist_database_driver extends tasklist_driver
 
         if ($filter['mask'] & tasklist::FILTER_MASK_COMPLETE)
             $sql_add .= ' AND complete=1';
-        else  // don't show complete tasks by default
+        else if (empty($filter['since']))  // don't show complete tasks by default
             $sql_add .= ' AND complete<1';
 
         if ($filter['mask'] & tasklist::FILTER_MASK_FLAGGED)
@@ -298,6 +299,10 @@ class tasklist_database_driver extends tasklist_driver
             foreach (array('title','description','organizer','attendees') as $col)
                 $sql_query[] = $this->rc->db->ilike($col, '%'.$filter['search'].'%');
             $sql_add = 'AND (' . join(' OR ', $sql_query) . ')';
+        }
+
+        if ($filter['since'] && is_numeric($filter['since'])) {
+            $sql_add .= ' AND changed >= ' . $this->rc->db->quote(date('Y-m-d H:i:s', $filter['since']));
         }
 
         $tasks = array();

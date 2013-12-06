@@ -63,7 +63,7 @@ class kolab_format_task extends kolab_format_xcal
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && $this->obj->isValid());
+        return !$this->formaterror && ($this->data || (is_object($this->obj) && $this->obj->isValid()));
     }
 
     /**

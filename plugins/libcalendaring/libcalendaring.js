@@ -281,7 +281,7 @@ function rcube_libcalendaring(settings)
         var mailto_pattern = new RegExp('([^\\s\\n\\(\\);]+@'+utf_domain+')', 'ig');
 
         return html
-            .replace(link_pattern, '<a href="$1$2" target="_blank">$1$2</a>')
+            .replace(link_pattern, '<a href="$1$2" class="extlink" target="_blank">$1$2</a>')
             .replace(mailto_pattern, '<a href="mailto:$1">$1</a>')
             .replace(/(mailto:)([^"]+)"/g, '$1$2" onclick="rcmail.command(\'compose\', \'$2\');return false"')
             .replace(/\n/g, "<br/>");

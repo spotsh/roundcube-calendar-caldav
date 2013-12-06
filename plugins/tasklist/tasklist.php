@@ -71,13 +71,26 @@ class tasklist extends rcube_plugin
         // load plugin configuration
         $this->load_config();
 
-        // load localizations
-        $this->add_texts('localization/', $this->rc->task == 'tasks' && (!$this->rc->action || $this->rc->action == 'print'));
-        $this->rc->load_language($_SESSION['language'], array('tasks.tasks' => $this->gettext('navtitle')));  // add label for task title
-
         $this->timezone = $this->lib->timezone;
 
-        if ($this->rc->task == 'tasks' && $this->rc->action != 'save-pref') {
+        // proceed initialization in startup hook
+        $this->add_hook('startup', array($this, 'startup'));
+    }
+
+    /**
+     * Startup hook
+     */
+    public function startup($args)
+    {
+        // the tasks module can be enabled/disabled by the kolab_auth plugin
+        if ($this->rc->config->get('tasklist_disabled', false) || !$this->rc->config->get('tasklist_enabled', true))
+            return;
+
+        // load localizations
+        $this->add_texts('localization/', $args['task'] == 'tasks' && (!$args['action'] || $args['action'] == 'print'));
+        $this->rc->load_language($_SESSION['language'], array('tasks.tasks' => $this->gettext('navtitle')));  // add label for task title
+
+        if ($args['task'] == 'tasks' && $args['action'] != 'save-pref') {
             $this->load_driver();
 
             // register calendar actions
@@ -90,12 +103,13 @@ class tasklist extends rcube_plugin
             $this->register_action('mail2task', array($this, 'mail_message2task'));
             $this->register_action('get-attachment', array($this, 'attachment_get'));
             $this->register_action('upload', array($this, 'attachment_upload'));
+            $this->add_hook('refresh', array($this, 'refresh'));
 
             $this->collapsed_tasks = array_filter(explode(',', $this->rc->config->get('tasklist_collapsed_tasks', '')));
         }
-        else if ($this->rc->task == 'mail') {
+        else if ($args['task'] == 'mail') {
             // TODO: register hooks to catch ical/vtodo email attachments
-            if ($this->rc->action == 'show' || $this->rc->action == 'preview') {
+            if ($args['action'] == 'show' || $args['action'] == 'preview') {
                 // $this->add_hook('message_load', array($this, 'mail_message_load'));
                 // $this->add_hook('template_object_messagebody', array($this, 'mail_messagebody_html'));
             }
@@ -112,6 +126,8 @@ class tasklist extends rcube_plugin
                         'innerclass' => 'icon taskadd',
                     ))),
                 'messagemenu');
+
+                $this->api->output->add_label('tasklist.createfrommail');
             }
         }
 
@@ -247,13 +263,15 @@ class tasklist extends rcube_plugin
             break;
 
         case 'collapse':
-            if (intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
-                $this->collapsed_tasks[] = $rec['id'];
-            }
-            else {
-                $i = array_search($rec['id'], $this->collapsed_tasks);
-                if ($i !== false)
-                    unset($this->collapsed_tasks[$i]);
+            foreach (explode(',', $rec['id']) as $rec_id) {
+                if (intval(get_input_value('collapsed', RCUBE_INPUT_GPC))) {
+                    $this->collapsed_tasks[] = $rec_id;
+                }
+                else {
+                    $i = array_search($rec_id, $this->collapsed_tasks);
+                    if ($i !== false)
+                        unset($this->collapsed_tasks[$i]);
+                }
             }
 
             $this->rc->user->save_prefs(array('tasklist_collapsed_tasks' => join(',', array_unique($this->collapsed_tasks))));
@@ -278,7 +296,7 @@ class tasklist extends rcube_plugin
                 foreach ($refresh as $i => $r)
                     $this->encode_task($refresh[$i]);
             }
-            $this->rc->output->command('plugin.refresh_task', $refresh);
+            $this->rc->output->command('plugin.update_task', $refresh);
         }
     }
 
@@ -380,6 +398,11 @@ class tasklist extends rcube_plugin
             catch (Exception $e) {
                 $rec['startdate'] = $rec['starttime'] = null;
             }
+        }
+
+        // convert tags to array, filter out empty entries
+        if (isset($rec['tags']) && !is_array($rec['tags'])) {
+            $rec['tags'] = array_filter((array)$rec['tags']);
         }
 
         // alarms cannot work without a date
@@ -540,8 +563,17 @@ class tasklist extends rcube_plugin
 
         }
 */
+        $data = $this->tasks_data($this->driver->list_tasks($filter, $lists), $f, $tags);
+        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'search' => $search, 'data' => $data, 'tags' => array_values(array_unique($tags))));
+    }
+
+    /**
+     * Prepare and sort the given task records to be sent to the client
+     */
+    private function tasks_data($records, $f, &$tags)
+    {
         $data = $tags = $this->task_tree = $this->task_titles = array();
-        foreach ($this->driver->list_tasks($filter, $lists) as $rec) {
+        foreach ($records as $rec) {
             if ($rec['parent_id']) {
                 $this->task_tree[$rec['id']] = $rec['parent_id'];
             }
@@ -558,7 +590,7 @@ class tasklist extends rcube_plugin
         array_walk($data, array($this, 'task_walk_tree'));
         usort($data, array($this, 'task_sort_cmp'));
 
-        $this->rc->output->command('plugin.data_ready', array('filter' => $f, 'lists' => $lists, 'search' => $search, 'data' => $data, 'tags' => array_values(array_unique($tags))));
+        return $data;
     }
 
     /**
@@ -604,6 +636,10 @@ class tasklist extends rcube_plugin
         foreach ((array)$rec['attachments'] as $k => $attachment) {
             $rec['attachments'][$k]['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
         }
+
+        if (!is_array($rec['tags']))
+            $rec['tags'] = (array)$rec['tags'];
+        sort($rec['tags'], SORT_LOCALE_STRING);
 
         if (in_array($rec['id'], $this->collapsed_tasks))
           $rec['collapsed'] = true;
@@ -720,6 +756,34 @@ class tasklist extends rcube_plugin
         exit;
     }
 
+    /**
+     * Handler for keep-alive requests
+     * This will check for updated data in active lists and sync them to the client
+     */
+    public function refresh($attr)
+    {
+        // refresh the entire list every 10th time to also sync deleted items
+        if (rand(0,10) == 10) {
+            $this->rc->output->command('plugin.reload_data');
+            return;
+        }
+
+        $filter = array(
+            'since'  => $attr['last'],
+            'search' => get_input_value('q', RCUBE_INPUT_GPC),
+            'mask'   => intval(get_input_value('filter', RCUBE_INPUT_GPC)) & self::FILTER_MASK_COMPLETE,
+        );
+        $lists = get_input_value('lists', RCUBE_INPUT_GPC);;
+
+        $updates = $this->driver->list_tasks($filter, $lists);
+        if (!empty($updates)) {
+            $this->rc->output->command('plugin.refresh_tasks', $this->tasks_data($updates, 255, $tags), true);
+
+            // update counts
+            $counts = $this->driver->count_tasks($lists);
+            $this->rc->output->command('plugin.update_counts', $counts);
+        }
+    }
 
     /**
      * Handler for pending_alarms plugin hook triggered by the calendar module on keep-alive requests.

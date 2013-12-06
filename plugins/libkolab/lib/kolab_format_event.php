@@ -111,7 +111,8 @@ class kolab_format_event extends kolab_format_xcal
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && $this->obj->isValid() && $this->obj->uid());
+        return !$this->formaterror && (($this->data && !empty($this->data['start']) && !empty($this->data['end'])) ||
+            (is_object($this->obj) && $this->obj->isValid() && $this->obj->uid()));
     }
 
     /**
@@ -138,6 +139,17 @@ class kolab_format_event extends kolab_format_xcal
             'attendees'   => array(),
         );
 
+        // derive event end from duration (#1916)
+        if (!$object['end'] && $object['start'] && ($duration = $this->obj->duration()) && $duration->isValid()) {
+            $interval = new DateInterval('PT0S');
+            $interval->d = $duration->weeks() * 7 + $duration->days();
+            $interval->h = $duration->hours();
+            $interval->i = $duration->minutes();
+            $interval->s = $duration->seconds();
+            $object['end'] = clone $object['start'];
+            $object['end']->add($interval);
+        }
+
         // organizer is part of the attendees list in Roundcube
         if ($object['organizer']) {
             $object['organizer']['role'] = 'ORGANIZER';
@@ -151,20 +163,22 @@ class kolab_format_event extends kolab_format_xcal
         else if ($status == kolabformat::StatusCancelled)
           $object['cancelled'] = true;
 
+        // this is an exception object
+        if ($this->obj->recurrenceID()->isValid()) {
+            $object['thisandfuture'] = $this->obj->thisAndFuture();
+        }
         // read exception event objects
-        if (($exceptions = $this->obj->exceptions()) && is_object($exceptions) && $exceptions->size()) {
+        else if (($exceptions = $this->obj->exceptions()) && is_object($exceptions) && $exceptions->size()) {
+            $recurrence_exceptions = array();
             for ($i=0; $i < $exceptions->size(); $i++) {
                 if (($exobj = $exceptions->get($i))) {
                     $exception = new kolab_format_event($exobj);
                     if ($exception->is_valid()) {
-                        $object['recurrence']['EXCEPTIONS'][] = $this->expand_exception($exception->to_array(), $object);
+                        $recurrence_exceptions[] = $this->expand_exception($exception->to_array(), $object);
                     }
                 }
             }
-        }
-        // this is an exception object
-        else if ($this->obj->recurrenceID()->isValid()) {
-          $object['thisandfuture'] = $this->obj->thisAndFuture();
+            $object['recurrence']['EXCEPTIONS'] = $recurrence_exceptions;
         }
 
         return $this->data = $object;

@@ -12,7 +12,7 @@
  *
  **/
 
-CREATE TABLE `calendars` (
+CREATE TABLE IF NOT EXISTS `calendars` (
   `calendar_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `name` varchar(255) NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE `calendars` (
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-CREATE TABLE `events` (
+CREATE TABLE IF NOT EXISTS `events` (
   `event_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `calendar_id` int(11) UNSIGNED NOT NULL DEFAULT '0',
   `recurrence_id` int(11) UNSIGNED NOT NULL DEFAULT '0',
@@ -55,7 +55,7 @@ CREATE TABLE `events` (
     REFERENCES `calendars`(`calendar_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-CREATE TABLE `attachments` (
+CREATE TABLE IF NOT EXISTS `attachments` (
   `attachment_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `event_id` int(11) UNSIGNED NOT NULL DEFAULT '0',
   `filename` varchar(255) NOT NULL DEFAULT '',
@@ -67,7 +67,7 @@ CREATE TABLE `attachments` (
     REFERENCES `events`(`event_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-CREATE TABLE `itipinvitations` (
+CREATE TABLE IF NOT EXISTS `itipinvitations` (
   `token` VARCHAR(64) NOT NULL,
   `event_uid` VARCHAR(255) NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0',
@@ -80,4 +80,4 @@ CREATE TABLE `itipinvitations` (
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-INSERT INTO system (name, value) VALUES ('calendar-database-version', '2013051600');
+REPLACE INTO system (name, value) VALUES ('calendar-database-version', '2013051600');

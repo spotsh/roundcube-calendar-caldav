@@ -23,6 +23,11 @@
 
 use \Sabre\VObject;
 
+// load Sabre\VObject classes
+if (!class_exists('\Sabre\VObject\Reader')) {
+    require_once __DIR__ . '/lib/Sabre/VObject/includes.php';
+}
+
 /**
  * Class to parse and build vCalendar (iCalendar) files
  *
@@ -32,27 +37,28 @@ use \Sabre\VObject;
  * and place the lib files in this plugin's lib directory
  *
  */
-class libvcalendar
+class libvcalendar implements Iterator
 {
     private $timezone;
     private $attach_uri = null;
     private $prodid = '-//Roundcube//Roundcube libcalendaring//Sabre//Sabre VObject//EN';
     private $type_component_map = array('event' => 'VEVENT', 'task' => 'VTODO');
     private $attendee_keymap = array('name' => 'CN', 'status' => 'PARTSTAT', 'role' => 'ROLE', 'cutype' => 'CUTYPE', 'rsvp' => 'RSVP');
+    private $iteratorkey = 0;
+    private $charset;
+    private $forward_exceptions;
+    private $fp;
 
     public $method;
+    public $agent = '';
     public $objects = array();
+    public $freebusy = array();
 
     /**
      * Default constructor
      */
     function __construct($tz = null)
     {
-        // load Sabre\VObject classes
-        if (!class_exists('\Sabre\VObject\Reader')) {
-            require_once(__DIR__ . '/lib/Sabre/VObject/includes.php');
-        }
-
         $this->timezone = $tz;
         $this->prodid = '-//Roundcube//Roundcube libcalendaring ' . RCUBE_VERSION . '//Sabre//Sabre VObject ' . VObject\Version::VERSION . '//EN';
     }
@@ -82,12 +88,27 @@ class libvcalendar
     }
 
     /**
+     * Setter for a user-agent string to tweak input/output accordingly
+     */
+    public function set_agent($agent)
+    {
+        $this->agent = $agent;
+    }
+
+    /**
      * Free resources by clearing member vars
      */
     public function reset()
     {
         $this->method = '';
         $this->objects = array();
+        $this->freebusy = array();
+        $this->iteratorkey = 0;
+
+        if ($this->fp) {
+            fclose($this->fp);
+            $this->fp = null;
+        }
     }
 
     /**
@@ -95,24 +116,39 @@ class libvcalendar
     *
     * @param  string vCalendar input
     * @param  string Input charset (from envelope)
+    * @param  boolean True if parsing exceptions should be forwarded to the caller
     * @return array List of events extracted from the input
     */
-    public function import($vcal, $charset = 'UTF-8')
+    public function import($vcal, $charset = 'UTF-8', $forward_exceptions = false, $memcheck = true)
     {
         // TODO: convert charset to UTF-8 if other
 
         try {
+            // estimate the memory usage and try to avoid fatal errors when allowed memory gets exhausted
+            if ($memcheck) {
+                $count = substr_count($vcal, 'BEGIN:VEVENT');
+                $expected_memory = $count * 70*1024;  // assume ~ 70K per event (empirically determined)
+
+                if (!rcube_utils::mem_check($expected_memory)) {
+                    throw new Exception("iCal file too big");
+                }
+            }
+
             $vobject = VObject\Reader::read($vcal, VObject\Reader::OPTION_FORGIVING | VObject\Reader::OPTION_IGNORE_INVALID_LINES);
             if ($vobject)
                 return $this->import_from_vobject($vobject);
         }
         catch (Exception $e) {
-            throw $e;
-            rcube::raise_error(array(
-                'code' => 600, 'type' => 'php',
-                'file' => __FILE__, 'line' => __LINE__,
-                'message' => "iCal data parse error: " . $e->getMessage()),
-                true, false);
+            if ($forward_exceptions) {
+                throw $e;
+            }
+            else {
+                rcube::raise_error(array(
+                    'code' => 600, 'type' => 'php',
+                    'file' => __FILE__, 'line' => __LINE__,
+                    'message' => "iCal data parse error: " . $e->getMessage()),
+                    true, false);
+            }
         }
 
         return array();
@@ -121,22 +157,125 @@ class libvcalendar
     /**
     * Read iCalendar events from a file
     *
-    * @param string File path to read from
+    * @param  string File path to read from
+    * @param  string Input charset (from envelope)
+    * @param  boolean True if parsing exceptions should be forwarded to the caller
     * @return array List of events extracted from the file
     */
-    public function import_from_file($filepath)
+    public function import_from_file($filepath, $charset = 'UTF-8', $forward_exceptions = false)
     {
-        $this->objects = array();
-        $fp = fopen($filepath, 'r');
+        if ($this->fopen($filepath, $charset, $forward_exceptions)) {
+            while ($this->_parse_next(false)) {
+                // nop
+            }
+
+            fclose($this->fp);
+            $this->fp = null;
+        }
+
+        return $this->objects;
+    }
+
+    /**
+     * Open a file to read iCalendar events sequentially
+     *
+     * @param  string File path to read from
+     * @param  string Input charset (from envelope)
+     * @param  boolean True if parsing exceptions should be forwarded to the caller
+     * @return boolean True if file contents are considered valid
+     */
+    public function fopen($filepath, $charset = 'UTF-8', $forward_exceptions = false)
+    {
+        $this->reset();
+
+        // just to be sure...
+        @ini_set('auto_detect_line_endings', true);
+
+        $this->charset = $charset;
+        $this->forward_exceptions = $forward_exceptions;
+        $this->fp = fopen($filepath, 'r');
 
         // check file content first
-        $begin = fread($fp, 1024);
+        $begin = fread($this->fp, 1024);
         if (!preg_match('/BEGIN:VCALENDAR/i', $begin)) {
-            return $this->objects;
+            return false;
         }
-        fclose($fp);
 
-        return $this->import(file_get_contents($filepath));
+        // read vcalendar header (with timezone defintion)
+        $this->vhead = '';
+        fseek($this->fp, 0);
+        while (($line = fgets($this->fp, 512)) !== false) {
+            if (preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $line))
+                break;
+            $this->vhead .= $line;
+        }
+        fseek($this->fp, -strlen($line), SEEK_CUR);
+
+        return $this->_parse_next();
+    }
+
+    /**
+     * Parse the next event/todo/freebusy object from the input file
+     */
+    private function _parse_next($reset = true)
+    {
+        if ($reset) {
+            $this->iteratorkey = 0;
+            $this->objects = array();
+            $this->freebusy = array();
+        }
+
+        $next = $this->_next_component();
+        $buffer = $next;
+
+        // load the next component(s) too, as they could contain recurrence exceptions
+        while (preg_match('/(RRULE|RECURRENCE-ID)[:;]/i', $next)) {
+            $next = $this->_next_component();
+            $buffer .= $next;
+        }
+
+        // parse the vevent block surrounded with the vcalendar heading
+        if (strlen($buffer) && preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $buffer)) {
+            try {
+                $this->import($this->vhead . $buffer . "END:VCALENDAR", $this->charset, true, false);
+            }
+            catch (Exception $e) {
+                if ($this->forward_exceptions) {
+                    throw new VObject\ParseException($e->getMessage() . " in\n" . $buffer);
+                }
+                else {
+                    // write the failing section to error log
+                    rcube::raise_error(array(
+                        'code' => 600, 'type' => 'php',
+                        'file' => __FILE__, 'line' => __LINE__,
+                        'message' => $e->getMessage() . " in\n" . $buffer),
+                        true, false);
+                }
+
+                // advance to next
+                return $this->_parse_next($reset);
+            }
+
+            return count($this->objects) > 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Helper method to read the next calendar component from the file
+     */
+    private function _next_component()
+    {
+        $buffer = '';
+        while (($line = fgets($this->fp, 1024)) !== false) {
+            $buffer .= $line;
+            if (preg_match('/END:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
+                break;
+            }
+        }
+
+        return $buffer;
     }
 
     /**
@@ -147,10 +286,11 @@ class libvcalendar
      */
     public function import_from_vobject($vobject)
     {
-        $this->objects = $seen = array();
+        $seen = array();
 
         if ($vobject->name == 'VCALENDAR') {
             $this->method = strval($vobject->METHOD);
+            $this->agent  = strval($vobject->PRODID);
 
             foreach ($vobject->getBaseComponents() as $ve) {
                 if ($ve->name == 'VEVENT' || $ve->name == 'VTODO') {
@@ -170,10 +310,38 @@ class libvcalendar
                         $this->objects[] = $object;
                     }
                 }
+                else if ($ve->name == 'VFREEBUSY') {
+                    $this->objects[] = $this->_parse_freebusy($ve);
+                }
             }
         }
 
         return $this->objects;
+    }
+
+    /**
+     * Getter for free-busy periods
+     */
+    public function get_busy_periods()
+    {
+        $out = array();
+        foreach ((array)$this->freebusy['periods'] as $period) {
+            if ($period[2] != 'FREE') {
+                $out[] = $period;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Helper method to determine whether the connected client is an Apple device
+     */
+    private function is_apple()
+    {
+        return stripos($this->agent, 'Apple') !== false
+            || stripos($this->agent, 'Mac OS X') !== false
+            || stripos($this->agent, 'iOS/') !== false;
     }
 
     /**
@@ -187,19 +355,21 @@ class libvcalendar
         $event = array(
             'uid'     => strval($ve->UID),
             'title'   => strval($ve->SUMMARY),
-            'created' => $ve->CREATED ? $ve->CREATED->getDateTime() : null,
-            'changed' => null,
             '_type'   => $ve->name == 'VTODO' ? 'task' : 'event',
             // set defaults
             'priority' => 0,
             'attendees' => array(),
+            'x-custom' => array(),
         );
 
-        if ($ve->{'LAST-MODIFIED'}) {
-            $event['changed'] = $ve->{'LAST-MODIFIED'}->getDateTime();
-        }
-        else if ($ve->DTSTAMP) {
-            $event['changed'] = $ve->DTSTAMP->getDateTime();
+        // Catch possible exceptions when date is invalid (Bug #2144)
+        // We can skip these fields, they aren't critical
+        foreach (array('CREATED' => 'created', 'LAST-MODIFIED' => 'changed', 'DTSTAMP' => 'changed') as $attr => $field) {
+            try {
+                if (!$event[$field] && $ve->{$attr}) {
+                    $event[$field] = $ve->{$attr}->getDateTime();
+                }
+            } catch (Exception $e) {}
         }
 
         // map other attributes to internal fields
@@ -271,8 +441,14 @@ class libvcalendar
                 $event['complete'] = intval($prop->value);
                 break;
 
-            case 'DESCRIPTION':
             case 'LOCATION':
+            case 'DESCRIPTION':
+                if ($this->is_apple()) {
+                    $event[strtolower($prop->name)] = str_replace('\,', ',', $prop->value);
+                    break;
+                }
+                // else: fall through
+
             case 'URL':
                 $event[strtolower($prop->name)] = $prop->value;
                 break;
@@ -362,10 +538,7 @@ class libvcalendar
             }
 
             // sanity-check and fix end date
-            if (empty($event['end'])) {
-                $event['end'] = clone $event['start'];
-            }
-            else if ($event['end'] < $event['start']) {
+            if (!empty($event['end']) && $event['end'] < $event['start']) {
                 $event['end'] = clone $event['start'];
             }
         }
@@ -376,11 +549,10 @@ class libvcalendar
         }
 
         // find alarms
-        if ($valarms = $ve->select('VALARM')) {
+        foreach ($ve->select('VALARM') as $valarm) {
             $action = 'DISPLAY';
             $trigger = null;
 
-            $valarm = reset($valarms);
             foreach ($valarm->children as $prop) {
                 switch ($prop->name) {
                 case 'TRIGGER':
@@ -390,7 +562,7 @@ class libvcalendar
                         }
                     }
                     if (!$trigger) {
-                        $trigger = preg_replace('/PT/', '', $prop->value);
+                        $trigger = preg_replace('/PT?/', '', $prop->value);
                     }
                     break;
 
@@ -400,8 +572,10 @@ class libvcalendar
                 }
             }
 
-            if ($trigger)
+            if ($trigger && strtoupper($action) != 'NONE') {
                 $event['alarms'] = $trigger . ':' . $action;
+                break;
+            }
         }
 
         // assign current timezone to event start/end
@@ -422,11 +596,70 @@ class libvcalendar
         }
 
         // minimal validation
-        if (empty($event['uid']) || empty($event['start']) != empty($event['end'])) {
+        if (empty($event['uid']) || ($event['_type'] == 'event' && empty($event['start']) != empty($event['end']))) {
             throw new VObject\ParseException('Object validation failed: missing mandatory object properties');
         }
 
         return $event;
+    }
+
+    /**
+     * Parse the given vfreebusy component into an array representation
+     */
+    private function _parse_freebusy($ve)
+    {
+        $this->freebusy = array('_type' => 'freebusy', 'periods' => array());
+        $seen = array();
+
+        foreach ($ve->children as $prop) {
+            if (!($prop instanceof VObject\Property))
+                continue;
+
+            switch ($prop->name) {
+            case 'DTSTART':
+            case 'DTEND':
+                $propmap = array('DTSTART' => 'start', 'DTEND' => 'end');
+                $this->freebusy[$propmap[$prop->name]] =  self::convert_datetime($prop);
+                break;
+
+            case 'ORGANIZER':
+                $this->freebusy['organizer'] = preg_replace('/^mailto:/i', '', $prop->value);
+                break;
+
+            case 'FREEBUSY':
+                // The freebusy component can hold more than 1 value, separated by commas.
+                $periods = explode(',', $prop->value);
+                $fbtype = strval($prop['FBTYPE']) ?: 'BUSY';
+
+                // skip dupes
+                if ($seen[$prop->value.':'.$fbtype]++)
+                    continue;
+
+                foreach ($periods as $period) {
+                    // Every period is formatted as [start]/[end]. The start is an
+                    // absolute UTC time, the end may be an absolute UTC time, or
+                    // duration (relative) value.
+                    list($busyStart, $busyEnd) = explode('/', $period);
+
+                    $busyStart = VObject\DateTimeParser::parse($busyStart);
+                    $busyEnd = VObject\DateTimeParser::parse($busyEnd);
+                    if ($busyEnd instanceof \DateInterval) {
+                        $tmp = clone $busyStart;
+                        $tmp->add($busyEnd);
+                        $busyEnd = $tmp;
+                    }
+
+                    if ($busyEnd && $busyEnd > $busyStart)
+                        $this->freebusy['periods'][] = array($busyStart, $busyEnd, $fbtype);
+                }
+                break;
+
+            case 'COMMENT':
+                $this->freebusy['comment'] = $prop->value;
+            }
+        }
+
+        return $this->freebusy;
     }
 
     /**
@@ -465,11 +698,13 @@ class libvcalendar
      * @param string Property name
      * @param object DateTime
      */
-    public static function datetime_prop($name, $dt, $utc = false)
+    public static function datetime_prop($name, $dt, $utc = false, $dateonly = null)
     {
+        $is_utc = $utc || (($tz = $dt->getTimezone()) && in_array($tz->getName(), array('UTC','GMT','Z')));
+        $is_dateonly = $dateonly === null ? (bool)$dt->_dateonly : (bool)$dateonly;
         $vdt = new VObject\Property\DateTime($name);
-        $vdt->setDateTime($dt, $dt->_dateonly ? VObject\Property\DateTime::DATE :
-            ($utc ? VObject\Property\DateTime::UTC : VObject\Property\DateTime::LOCALTZ));
+        $vdt->setDateTime($dt, $is_dateonly ? VObject\Property\DateTime::DATE :
+            ($is_utc ? VObject\Property\DateTime::UTC : VObject\Property\DateTime::LOCALTZ));
         return $vdt;
     }
 
@@ -511,6 +746,7 @@ class libvcalendar
     public function export($objects, $method = null, $write = false, $get_attachment = false, $recurrence_id = null)
     {
         $memory_limit = parse_bytes(ini_get('memory_limit'));
+        $this->method = $method;
 
         // encapsulate in VCALENDAR container
         $vcal = VObject\Component::create('VCALENDAR');
@@ -556,6 +792,10 @@ class libvcalendar
         $ve = VObject\Component::create($this->type_component_map[$type]);
         $ve->add('UID', $event['uid']);
 
+        // set DTSTAMP according to RFC 5545, 3.8.7.2.
+        $dtstamp = !empty($event['changed']) && !empty($this->method) ? $event['changed'] : new DateTime();
+        $ve->add(self::datetime_prop('DTSTAMP', $dtstamp, true));
+
         // all-day events end the next day
         if ($event['allday'] && !empty($event['end'])) {
             $event['end'] = clone $event['end'];
@@ -565,11 +805,11 @@ class libvcalendar
         if (!empty($event['created']))
             $ve->add(self::datetime_prop('CREATED', $event['created'], true));
         if (!empty($event['changed']))
-            $ve->add(self::datetime_prop('DTSTAMP', $event['changed'], true));
+            $ve->add(self::datetime_prop('LAST-MODIFIED', $event['changed'], true));
         if (!empty($event['start']))
-            $ve->add(self::datetime_prop('DTSTART', $event['start'], false));
+            $ve->add(self::datetime_prop('DTSTART', $event['start'], false, (bool)$event['allday']));
         if (!empty($event['end']))
-            $ve->add(self::datetime_prop('DTEND',   $event['end'], false));
+            $ve->add(self::datetime_prop('DTEND',   $event['end'], false, (bool)$event['allday']));
         if (!empty($event['due']))
             $ve->add(self::datetime_prop('DUE',   $event['due'], false));
 
@@ -579,7 +819,7 @@ class libvcalendar
         $ve->add('SUMMARY', $event['title']);
 
         if ($event['location'])
-            $ve->add('LOCATION', $event['location']);
+            $ve->add($this->is_apple() ? new vobject_location_property('LOCATION', $event['location']) : new VObject\Property('LOCATION', $event['location']));
         if ($event['description'])
             $ve->add('DESCRIPTION', strtr($event['description'], array("\r\n" => "\n", "\r" => "\n"))); // normalize line endings
 
@@ -639,7 +879,8 @@ class libvcalendar
             $va = VObject\Component::create('VALARM');
             list($trigger, $va->action) = explode(':', $event['alarms']);
             $val = libcalendaring::parse_alaram_value($trigger);
-            if ($val[1]) $va->add('TRIGGER', preg_replace('/^([-+])(.+)/', '\\1PT\\2', $trigger));
+            $period = $val[1] && preg_match('/[HMS]$/', $val[1]) ? 'PT' : 'P';
+            if ($val[1]) $va->add('TRIGGER', preg_replace('/^([-+])P?T?(.+)/', "\\1$period\\2", $trigger));
             else         $va->add('TRIGGER', gmdate('Ymd\THis\Z', $val[0]), array('VALUE' => 'DATE-TIME'));
             $ve->add($va);
         }
@@ -728,4 +969,87 @@ class libvcalendar
         }
     }
 
+
+    /*** Implement PHP 5 Iterator interface to make foreach work ***/
+
+    function current()
+    {
+        return $this->objects[$this->iteratorkey];
+    }
+
+    function key()
+    {
+        return $this->iteratorkey;
+    }
+
+    function next()
+    {
+        $this->iteratorkey++;
+
+        // read next chunk if we're reading from a file
+        if (!$this->objects[$this->iteratorkey] && $this->fp) {
+            $this->_parse_next(true);
+        }
+
+        return $this->valid();
+    }
+
+    function rewind()
+    {
+        $this->iteratorkey = 0;
+    }
+
+    function valid()
+    {
+        return !empty($this->objects[$this->iteratorkey]);
+    }
+
+}
+
+
+/**
+ * Override Sabre\VObject\Property that quotes commas in the location property
+ * because Apple clients treat that property as list.
+ */
+class vobject_location_property extends VObject\Property
+{
+    /**
+     * Turns the object back into a serialized blob.
+     *
+     * @return string
+     */
+    public function serialize()
+    {
+        $str = $this->name;
+
+        foreach ($this->parameters as $param) {
+            $str.=';' . $param->serialize();
+        }
+
+        $src = array(
+            '\\',
+            "\n",
+            ',',
+        );
+        $out = array(
+            '\\\\',
+            '\n',
+            '\,',
+        );
+        $str.=':' . str_replace($src, $out, $this->value);
+
+        $out = '';
+        while (strlen($str) > 0) {
+            if (strlen($str) > 75) {
+                $out.= mb_strcut($str, 0, 75, 'utf-8') . "\r\n";
+                $str = ' ' . mb_strcut($str, 75, strlen($str), 'utf-8');
+            } else {
+                $out.= $str . "\r\n";
+                $str = '';
+                break;
+            }
+        }
+
+        return $out;
+    }
 }

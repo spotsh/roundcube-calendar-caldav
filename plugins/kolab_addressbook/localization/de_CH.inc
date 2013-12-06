@@ -25,6 +25,8 @@ $labels['bookdelete'] = 'Adressbuch löschen';
 $labels['bookproperties'] = 'Eigenschaften des Adressbuchs';
 $labels['bookname'] = 'Name des Buches';
 $labels['parentbook'] = 'Übergeordnetes Buch';
+$labels['bookshowurl'] = 'CardDAV-URL anzeigen';
+$labels['carddavurldescription'] = 'Benutzen Sie folgende Addresse in einer <a href="http://en.wikipedia.org/wiki/CardDAV" target="_blank">CalDAV</a>-Anwendung um dieses spezifische Adressbuch mit dem Computer oder Mobiltelefon zu synchronisieren.';
 
 $labels['addressbookprio'] = 'Reihenfolge der Adressbücher';
 $labels['personalfirst'] = 'Private(s) Adressbuch/Adressbücher zuerst';

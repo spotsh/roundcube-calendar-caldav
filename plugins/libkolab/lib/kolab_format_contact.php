@@ -268,7 +268,7 @@ class kolab_format_contact extends kolab_format
      */
     public function is_valid()
     {
-        return $this->data || (is_object($this->obj) && $this->obj->uid() /*$this->obj->isValid()*/);
+        return !$this->formaterror && ($this->data || (is_object($this->obj) && $this->obj->uid() /*$this->obj->isValid()*/));
     }
 
     /**

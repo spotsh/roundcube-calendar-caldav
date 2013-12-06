@@ -67,3 +67,4 @@ $labels['invalidstartduedates'] = 'Beginn der Aufgabe darf nicht größer als da
 $labels['deletetasktconfirm'] = 'Möchten Sie diese Aufgabe wirklich löschen?';
 $labels['deleteparenttasktconfirm'] = 'Möchten Sie diese Aufgabe inklusive aller Teilaufgaben wirklich löschen?';
 $labels['deletelistconfirm'] = 'Möchten Sie diese Liste mit allen Aufgaben wirklich löschen?';
+$labels['deletelistconfirmrecursive'] = 'Möchten Sie diese Liste mit allen Aufgaben und Unter-Listen wirklich löschen?';

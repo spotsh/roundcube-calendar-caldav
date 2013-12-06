@@ -59,6 +59,10 @@
 				<li class="nodate"><a href="#nodate"><roundcube:label name="tasklist.nodate" ucfirst="true" /></a></li>
 				<li class="complete"><a href="#complete"><roundcube:label name="tasklist.complete" /><span class="count"></span></a></li>
 			</ul>
+
+			<div class="buttonbar-right">
+				<roundcube:button name="taskviewmenulink" id="taskviewmenulink" type="link" title="tasklist.viewoptions" class="listmenu viewoptions" onclick="UI.show_popup('taskviewmenu');return false" innerClass="inner" content="&#9881;" />
+			</div>
 		</div>
 		
 		<div class="scroller">
@@ -89,6 +93,13 @@
 		<roundcube:if condition="env:tasklist_driver == 'kolab'" />
 		<li><roundcube:button command="folders" task="settings" type="link" label="managefolders" classAct="active" /></li>
 		<roundcube:endif />
+	</ul>
+</div>
+
+<div id="taskviewmenu" class="popupmenu">
+	<ul class="toolbarmenu">
+		<li><roundcube:button command="expand-all" label="expand-all" class="icon" classAct="icon active" innerclass="icon expand" /></li>
+		<li><roundcube:button command="collapse-all" label="collapse-all" class="icon" classAct="icon active" innerclass="icon collapse" /></li>
 	</ul>
 </div>
 
@@ -144,7 +155,10 @@ var UI = new rcube_mail_ui();
 
 $(document).ready(function(e){
 	UI.init();
-
+	new rcube_splitter({ id:'taskviewsplitter', p1:'#sidebar', p2:'#mainview-right',
+		orientation:'v', relative:true, start:240, min:180, size:16, offset:2 }).init();
+	new rcube_splitter({ id:'taskviewsplitterv', p1:'#tagsbox', p2:'#tasklistsbox',
+		orientation:'h', relative:true, start:242, min:120, size:16, offset:6 }).init();
 });
 
 </script>

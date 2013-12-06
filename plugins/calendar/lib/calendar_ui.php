@@ -235,20 +235,25 @@ class calendar_ui
       $prop['attachments'] = $driver->attachments;
       $prop['undelete'] = $driver->undelete;
       $prop['feedurl'] = $this->cal->get_url(array('_cal' => $this->cal->ical_feed_hash($id) . '.ics', 'action' => 'feed'));
-      $jsenv[$id] = $prop;
+
+      if (!$prop['virtual'])
+        $jsenv[$id] = $prop;
 
       $html_id = html_identifier($id);
       $class = 'cal-'  . asciiwords($id, true);
+      $title = $prop['name'] != $prop['listname'] ? html_entity_decode($prop['name'], ENT_COMPAT, RCMAIL_CHARSET) : '';
 
-      if ($prop['readonly'])
+      if ($prop['virtual'])
+        $class .= ' virtual';
+      else if ($prop['readonly'])
         $class .= ' readonly';
       if ($prop['class_name'])
         $class .= ' '.$prop['class_name'];
 
       $li .= html::tag('li', array('id' => 'rcmlical' . $html_id, 'class' => $class),
-        html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
-        html::span('handle', '&nbsp;') .
-        html::span('calname', $prop['name']));
+        ($prop['virtual'] ? '' : html::tag('input', array('type' => 'checkbox', 'name' => '_cal[]', 'value' => $id, 'checked' => $prop['active']), '') .
+        html::span('handle', '&nbsp;')) .
+        html::span(array('class' => 'calname', 'title' => $title), $prop['listname']));
     }
   
     $this->rc->output->set_env('calendars', $jsenv);

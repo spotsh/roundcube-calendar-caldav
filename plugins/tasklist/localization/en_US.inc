@@ -51,6 +51,8 @@ $labels['listactions'] = 'List options...';
 $labels['listname'] = 'Name';
 $labels['showalarms'] = 'Show alarms';
 $labels['import'] = 'Import';
+$labels['viewoptions'] = 'View options';
+$labels['focusview'] = 'View only this list';
 
 // date words
 $labels['on'] = 'on';
@@ -66,3 +68,4 @@ $labels['invalidstartduedates'] = 'Start date must not be greater than due date.
 $labels['deletetasktconfirm'] = 'Do you really want to delete this task?';
 $labels['deleteparenttasktconfirm'] = 'Do you really want to delete this task and all its subtasks?';
 $labels['deletelistconfirm'] = 'Do you really want to delete this list with all its tasks?';
+$labels['deletelistconfirmrecursive'] = 'Do you really want to delete this list with all its sub-lists and tasks?';

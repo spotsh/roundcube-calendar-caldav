@@ -6,7 +6,7 @@
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
- * Copyright (C) 2012, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2012-2013, Kolab Systems AG <contact@kolabsys.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,24 +24,44 @@
 
 class kolab_storage_cache
 {
-    private $db;
-    private $imap;
-    private $folder;
-    private $uid2msg;
-    private $objects;
-    private $index = array();
-    private $resource_uri;
-    private $enabled = true;
-    private $synched = false;
-    private $synclock = false;
-    private $ready = false;
-    private $max_sql_packet;
-    private $max_sync_lock_time = 600;
-    private $binary_items = array(
-        'photo'          => '|<photo><uri>[^;]+;base64,([^<]+)</uri></photo>|i',
-        'pgppublickey'   => '|<key><uri>date:application/pgp-keys;base64,([^<]+)</uri></photo>|i',
-        'pkcs7publickey' => '|<key><uri>date:application/pkcs7-mime;base64,([^<]+)</uri></photo>|i',
-    );
+    protected $db;
+    protected $imap;
+    protected $folder;
+    protected $uid2msg;
+    protected $objects;
+    protected $index = array();
+    protected $metadata = array();
+    protected $folder_id;
+    protected $resource_uri;
+    protected $enabled = true;
+    protected $synched = false;
+    protected $synclock = false;
+    protected $ready = false;
+    protected $cache_table;
+    protected $folders_table;
+    protected $max_sql_packet;
+    protected $max_sync_lock_time = 600;
+    protected $binary_items = array();
+    protected $extra_cols = array();
+
+
+    /**
+     * Factory constructor
+     */
+    public static function factory(kolab_storage_folder $storage_folder)
+    {
+        $subclass = 'kolab_storage_cache_' . $storage_folder->type;
+        if (class_exists($subclass)) {
+            return new $subclass($storage_folder);
+        }
+        else {
+            rcube::raise_error(array(
+                'code' => 900,
+                'type' => 'php',
+                'message' => "No kolab_storage_cache class found for folder of type " . $storage_folder->type
+            ), true);
+        }
+    }
 
 
     /**
@@ -55,6 +75,8 @@ class kolab_storage_cache
         $this->enabled = $rcmail->config->get('kolab_cache', false);
 
         if ($this->enabled) {
+            // always read folder cache and lock state from DB master
+            $this->db->set_table_dsn('kolab_folders', 'w');
             // remove sync-lock on script termination
             $rcmail->add_shutdown_function(array($this, '_sync_unlock'));
         }
@@ -80,9 +102,28 @@ class kolab_storage_cache
 
         // compose fully qualified ressource uri for this instance
         $this->resource_uri = $this->folder->get_resource_uri();
+        $this->folders_table = $this->db->table_name('kolab_folders');
+        $this->cache_table = $this->db->table_name('kolab_cache_' . $this->folder->type);
         $this->ready = $this->enabled;
+        $this->folder_id = null;
     }
 
+    /**
+     * Returns true if this cache supports query by type
+     */
+    public function has_type_col()
+    {
+        return in_array('type', $this->extra_cols);
+    }
+
+    /**
+     * Getter for the numeric ID used in cache tables
+     */
+    public function get_folder_id()
+    {
+        $this->_read_folder_data();
+        return $this->folder_id;
+    }
 
     /**
      * Synchronize local cache data with remote
@@ -96,52 +137,65 @@ class kolab_storage_cache
         // increase time limit
         @set_time_limit($this->max_sync_lock_time);
 
-        // lock synchronization for this folder or wait if locked
-        $this->_sync_lock();
+        // read cached folder metadata
+        $this->_read_folder_data();
 
-        // synchronize IMAP mailbox cache
-        $this->imap->folder_sync($this->folder->name);
+        // check cache status hash first ($this->metadata is set in _read_folder_data())
+        if ($this->metadata['ctag'] != $this->folder->get_ctag()) {
+            // lock synchronization for this folder or wait if locked
+            $this->_sync_lock();
 
-        // compare IMAP index with object cache index
-        $imap_index = $this->imap->index($this->folder->name);
-        $this->index = $imap_index->get();
+            // disable messages cache if configured to do so
+            $this->bypass(true);
 
-        // determine objects to fetch or to invalidate
-        if ($this->ready) {
-            // read cache index
-            $sql_result = $this->db->query(
-                "SELECT msguid, uid FROM kolab_cache WHERE resource=? AND type<>?",
-                $this->resource_uri,
-                'lock'
-            );
+            // synchronize IMAP mailbox cache
+            $this->imap->folder_sync($this->folder->name);
 
-            $old_index = array();
-            while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
-                $old_index[] = $sql_arr['msguid'];
-                $this->uid2msg[$sql_arr['uid']] = $sql_arr['msguid'];
-            }
+            // compare IMAP index with object cache index
+            $imap_index = $this->imap->index($this->folder->name, null, null, true, true);
+            $this->index = $imap_index->get();
 
-            // fetch new objects from imap
-            foreach (array_diff($this->index, $old_index) as $msguid) {
-                if ($object = $this->folder->read_object($msguid, '*')) {
-                    $this->_extended_insert($msguid, $object);
-                }
-            }
-            $this->_extended_insert(0, null);
-
-            // delete invalid entries from local DB
-            $del_index = array_diff($old_index, $this->index);
-            if (!empty($del_index)) {
-                $quoted_ids = join(',', array_map(array($this->db, 'quote'), $del_index));
-                $this->db->query(
-                    "DELETE FROM kolab_cache WHERE resource=? AND msguid IN ($quoted_ids)",
-                    $this->resource_uri
+            // determine objects to fetch or to invalidate
+            if ($this->ready) {
+                // read cache index
+                $sql_result = $this->db->query(
+                    "SELECT msguid, uid FROM $this->cache_table WHERE folder_id=?",
+                    $this->folder_id
                 );
-            }
-        }
 
-        // remove lock
-        $this->_sync_unlock();
+                $old_index = array();
+                while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
+                    $old_index[] = $sql_arr['msguid'];
+                    $this->uid2msg[$sql_arr['uid']] = $sql_arr['msguid'];
+                }
+
+                // fetch new objects from imap
+                foreach (array_diff($this->index, $old_index) as $msguid) {
+                    if ($object = $this->folder->read_object($msguid, '*')) {
+                        $this->_extended_insert($msguid, $object);
+                    }
+                }
+                $this->_extended_insert(0, null);
+
+                // delete invalid entries from local DB
+                $del_index = array_diff($old_index, $this->index);
+                if (!empty($del_index)) {
+                    $quoted_ids = join(',', array_map(array($this->db, 'quote'), $del_index));
+                    $this->db->query(
+                        "DELETE FROM $this->cache_table WHERE folder_id=? AND msguid IN ($quoted_ids)",
+                        $this->folder_id
+                    );
+                }
+
+                // update ctag value (will be written to database in _sync_unlock())
+                $this->metadata['ctag'] = $this->folder->get_ctag();
+            }
+
+            $this->bypass(false);
+
+            // remove lock
+            $this->_sync_unlock();
+        }
 
         $this->synched = time();
     }
@@ -165,11 +219,12 @@ class kolab_storage_cache
         // load object if not in memory
         if (!isset($this->objects[$msguid])) {
             if ($this->ready) {
+                $this->_read_folder_data();
+
                 $sql_result = $this->db->query(
-                    "SELECT * FROM kolab_cache ".
-                    "WHERE resource=? AND type=? AND msguid=?",
-                    $this->resource_uri,
-                    $type ?: $this->folder->type,
+                    "SELECT * FROM $this->cache_table ".
+                    "WHERE folder_id=? AND msguid=?",
+                    $this->folder_id,
                     $msguid
                 );
 
@@ -210,8 +265,9 @@ class kolab_storage_cache
 
         // remove old entry
         if ($this->ready) {
-            $this->db->query("DELETE FROM kolab_cache WHERE resource=? AND msguid=? AND type<>?",
-                $this->resource_uri, $msguid, 'lock');
+            $this->_read_folder_data();
+            $this->db->query("DELETE FROM $this->cache_table WHERE folder_id=? AND msguid=?",
+                $this->folder_id, $msguid);
         }
 
         if ($object) {
@@ -235,26 +291,32 @@ class kolab_storage_cache
     {
         // write to cache
         if ($this->ready) {
-            $sql_data = $this->_serialize($object);
-            $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
+            $this->_read_folder_data();
 
-            $result = $this->db->query(
-                "INSERT INTO kolab_cache ".
-                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words, filename)".
-                " VALUES (?, ?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ?, ?, ?, ?)",
-                $this->resource_uri,
-                $objtype,
+            $sql_data = $this->_serialize($object);
+
+            $extra_cols   = $this->extra_cols ? ', ' . join(', ', $this->extra_cols) : '';
+            $extra_fields = $this->extra_cols ? str_repeat(', ?', count($this->extra_cols)) : '';
+
+            $args = array(
+                "INSERT INTO $this->cache_table ".
+                " (folder_id, msguid, uid, created, changed, data, xml, tags, words $extra_cols)".
+                " VALUES (?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?, ? $extra_fields)",
+                $this->folder_id,
                 $msguid,
                 $object['uid'],
                 $sql_data['changed'],
                 $sql_data['data'],
                 $sql_data['xml'],
-                $sql_data['dtstart'],
-                $sql_data['dtend'],
                 $sql_data['tags'],
                 $sql_data['words'],
-                $sql_data['filename']
             );
+
+            foreach ($this->extra_cols as $col) {
+                $args[] = $sql_data[$col];
+            }
+
+            $result = call_user_func_array(array($this->db, 'query'), $args);
 
             if (!$this->db->affected_rows($result)) {
                 rcube::raise_error(array(
@@ -265,8 +327,8 @@ class kolab_storage_cache
         }
 
         // keep a copy in memory for fast access
-        $this->objects[$msguid] = $object;
-        $this->uid2msg[$object['uid']] = $msguid;
+        $this->objects = array($msguid => $object);
+        $this->uid2msg = array($object['uid'] => $msguid);
     }
 
 
@@ -283,14 +345,15 @@ class kolab_storage_cache
 
         // resolve new message UID in target folder
         if ($new_msguid = $target->cache->uid2msguid($uid)) {
+            $this->_read_folder_data();
+
             $this->db->query(
-                "UPDATE kolab_cache SET resource=?, msguid=? ".
-                "WHERE resource=? AND msguid=? AND type<>?",
-                $target->get_resource_uri(),
+                "UPDATE $this->cache_table SET folder_id=?, msguid=? ".
+                "WHERE folder_id=? AND msguid=?",
+                $target->cache->get_folder_id(),
                 $new_msguid,
-                $this->resource_uri,
-                $msguid,
-                'lock'
+                $this->folder_id,
+                $msguid
             );
         }
         else {
@@ -307,15 +370,32 @@ class kolab_storage_cache
      */
     public function purge($type = null)
     {
+        $this->_read_folder_data();
+
         $result = $this->db->query(
-            "DELETE FROM kolab_cache WHERE resource=?".
-            ($type ? ' AND type=?' : ''),
-            $this->resource_uri,
-            $type
+            "DELETE FROM $this->cache_table WHERE folder_id=?",
+            $this->folder_id
         );
         return $this->db->affected_rows($result);
     }
 
+    /**
+     * Update resource URI for existing cache entries
+     *
+     * @param string Target IMAP folder to move it to
+     */
+    public function rename($new_folder)
+    {
+        $target = kolab_storage::get_folder($new_folder);
+
+        // resolve new message UID in target folder
+        $this->db->query(
+            "UPDATE $this->folders_table SET resource=? ".
+            "WHERE resource=?",
+            $target->get_resource_uri(),
+            $this->resource_uri
+        );
+    }
 
     /**
      * Select Kolab objects filtered by the given query
@@ -331,10 +411,12 @@ class kolab_storage_cache
 
         // read from local cache DB (assume it to be synchronized)
         if ($this->ready) {
+            $this->_read_folder_data();
+
             $sql_result = $this->db->query(
-                "SELECT " . ($uids ? 'msguid, uid' : '*') . " FROM kolab_cache ".
-                "WHERE resource=? " . $this->_sql_where($query),
-                $this->resource_uri
+                "SELECT " . ($uids ? 'msguid, uid' : '*') . " FROM $this->cache_table ".
+                "WHERE folder_id=? " . $this->_sql_where($query),
+                $this->folder_id
             );
 
             while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
@@ -391,10 +473,12 @@ class kolab_storage_cache
 
         // cache is in sync, we can count records in local DB
         if ($this->synched) {
+            $this->_read_folder_data();
+
             $sql_result = $this->db->query(
-                "SELECT COUNT(*) AS numrows FROM kolab_cache ".
-                "WHERE resource=? " . $this->_sql_where($query),
-                $this->resource_uri
+                "SELECT COUNT(*) AS numrows FROM $this->cache_table ".
+                "WHERE folder_id=? " . $this->_sql_where($query),
+                $this->folder_id
             );
 
             $sql_arr = $this->db->fetch_assoc($sql_result);
@@ -415,10 +499,10 @@ class kolab_storage_cache
     /**
      * Helper method to compose a valid SQL query from pseudo filter triplets
      */
-    private function _sql_where($query)
+    protected function _sql_where($query)
     {
         $sql_where = '';
-        foreach ($query as $param) {
+        foreach ((array) $query as $param) {
             if (is_array($param[0])) {
                 $subq = array();
                 foreach ($param[0] as $q) {
@@ -460,7 +544,7 @@ class kolab_storage_cache
      * Helper method to convert the given pseudo-query triplets into
      * an associative filter array with 'equals' values only
      */
-    private function _query2assoc($query)
+    protected function _query2assoc($query)
     {
         // extract object type from query parameter
         $filter = array();
@@ -479,7 +563,7 @@ class kolab_storage_cache
      * @param string IMAP folder to read from
      * @return array List of parsed Kolab objects
      */
-    private function _fetch($index, $type = null, $folder = null)
+    protected function _fetch($index, $type = null, $folder = null)
     {
         $results = array();
         foreach ((array)$index as $msguid) {
@@ -501,13 +585,19 @@ class kolab_storage_cache
      * @param string IMAP folder to read from
      * @return array List of parsed Kolab objects
      */
-    private function _fetch_uids($index, $type = null)
+    protected function _fetch_uids($index, $type = null)
     {
         if (!$type)
             $type = $this->folder->type;
 
+        $this->bypass(true);
+
         $results = array();
-        foreach ((array)$this->imap->fetch_headers($this->folder->name, $index, false) as $msguid => $headers) {
+        $headers = $this->imap->fetch_headers($this->folder->name, $index, false);
+
+        $this->bypass(false);
+
+        foreach ((array)$headers as $msguid => $headers) {
             $object_type = kolab_format::mime2object_type($headers->others['x-kolab-type']);
 
             // check object type header and abort on mismatch
@@ -526,35 +616,9 @@ class kolab_storage_cache
     /**
      * Helper method to convert the given Kolab object into a dataset to be written to cache
      */
-    private function _serialize($object)
+    protected function _serialize($object)
     {
-        $sql_data = array('changed' => null, 'dtstart' => null, 'dtend' => null, 'xml' => '', 'tags' => '', 'words' => '');
-        $objtype  = $object['_type'] ? $object['_type'] : $this->folder->type;
-
-        // set type specific values
-        if ($objtype == 'event') {
-            // database runs in server's timezone so using date() is what we want
-            $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
-            $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['end'])   ? $object['end']->format('U')   : $object['end']);
-
-            // extend date range for recurring events
-            if ($object['recurrence'] && $object['_formatobj']) {
-                $recurrence = new kolab_date_recurrence($object['_formatobj']);
-                $sql_data['dtend'] = date('Y-m-d 23:59:59', $recurrence->end() ?: strtotime('now +1 year'));
-            }
-        }
-        else if ($objtype == 'task') {
-            if ($object['start'])
-                $sql_data['dtstart'] = date('Y-m-d H:i:s', is_object($object['start']) ? $object['start']->format('U') : $object['start']);
-            if ($object['due'])
-                $sql_data['dtend']   = date('Y-m-d H:i:s', is_object($object['due'])   ? $object['due']->format('U')   : $object['due']);
-        }
-        else if ($objtype == 'file') {
-            if (!empty($object['_attachments'])) {
-                reset($object['_attachments']);
-                $sql_data['filename'] = $object['_attachments'][key($object['_attachments'])]['name'];
-            }
-        }
+        $sql_data = array('changed' => null, 'xml' => '', 'tags' => '', 'words' => '');
 
         if ($object['changed']) {
             $sql_data['changed'] = date('Y-m-d H:i:s', is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);
@@ -596,7 +660,7 @@ class kolab_storage_cache
     /**
      * Helper method to turn stored cache data into a valid storage object
      */
-    private function _unserialize($sql_arr)
+    protected function _unserialize($sql_arr)
     {
         $object = unserialize($sql_arr['data']);
 
@@ -608,11 +672,11 @@ class kolab_storage_cache
         }
 
         // add meta data
-        $object['_type'] = $sql_arr['type'];
+        $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
         $object['_msguid'] = $sql_arr['msguid'];
         $object['_mailbox'] = $this->folder->name;
         $object['_size'] = strlen($sql_arr['xml']);
-        $object['_formatobj'] = kolab_format::factory($sql_arr['type'], 3.0, $sql_arr['xml']);
+        $object['_formatobj'] = kolab_format::factory($object['_type'], 3.0, $sql_arr['xml']);
 
         return $object;
     }
@@ -623,37 +687,35 @@ class kolab_storage_cache
      * @param int  Message UID. Set 0 to commit buffered inserts
      * @param array Kolab object to cache
      */
-    private function _extended_insert($msguid, $object)
+    protected function _extended_insert($msguid, $object)
     {
         static $buffer = '';
 
         $line = '';
         if ($object) {
             $sql_data = $this->_serialize($object);
-            $objtype = $object['_type'] ? $object['_type'] : $this->folder->type;
-
             $values = array(
-                $this->db->quote($this->resource_uri),
-                $this->db->quote($objtype),
+                $this->db->quote($this->folder_id),
                 $this->db->quote($msguid),
                 $this->db->quote($object['uid']),
                 $this->db->now(),
                 $this->db->quote($sql_data['changed']),
                 $this->db->quote($sql_data['data']),
                 $this->db->quote($sql_data['xml']),
-                $this->db->quote($sql_data['dtstart']),
-                $this->db->quote($sql_data['dtend']),
                 $this->db->quote($sql_data['tags']),
                 $this->db->quote($sql_data['words']),
-                $this->db->quote($sql_data['filename']),
             );
+            foreach ($this->extra_cols as $col) {
+                $values[] = $this->db->quote($sql_data[$col]);
+            }
             $line = '(' . join(',', $values) . ')';
         }
 
         if ($buffer && (!$msguid || (strlen($buffer) + strlen($line) > $this->max_sql_packet()))) {
+            $extra_cols = $this->extra_cols ? ', ' . join(', ', $this->extra_cols) : '';
             $result = $this->db->query(
-                "INSERT INTO kolab_cache ".
-                " (resource, type, msguid, uid, created, changed, data, xml, dtstart, dtend, tags, words, filename)".
+                "INSERT INTO $this->cache_table ".
+                " (folder_id, msguid, uid, created, changed, data, xml, tags, words $extra_cols)".
                 " VALUES $buffer"
             );
             if (!$this->db->affected_rows($result)) {
@@ -672,7 +734,7 @@ class kolab_storage_cache
     /**
      * Returns max_allowed_packet from mysql config
      */
-    private function max_sql_packet()
+    protected function max_sql_packet()
     {
         if (!$this->max_sql_packet) {
             // mysql limit or max 4 MB
@@ -684,16 +746,36 @@ class kolab_storage_cache
     }
 
     /**
+     * Read this folder's ID and cache metadata
+     */
+    protected function _read_folder_data()
+    {
+        // already done
+        if (!empty($this->folder_id))
+            return;
+
+        $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT folder_id, synclock, ctag FROM $this->folders_table WHERE resource=?", $this->resource_uri));
+        if ($sql_arr) {
+            $this->metadata = $sql_arr;
+            $this->folder_id = $sql_arr['folder_id'];
+        }
+        else {
+            $this->db->query("INSERT INTO $this->folders_table (resource, type) VALUES (?, ?)", $this->resource_uri, $this->folder->type);
+            $this->folder_id = $this->db->insert_id('kolab_folders');
+            $this->metadata = array();
+        }
+    }
+
+    /**
      * Check lock record for this folder and wait if locked or set lock
      */
-    private function _sync_lock()
+    protected function _sync_lock()
     {
         if (!$this->ready)
             return;
 
-        $sql_query = "SELECT msguid AS locked, ".$this->db->unixtimestamp('created')." AS created FROM kolab_cache ".
-            "WHERE resource=? AND type=?";
-        $sql_arr = $this->db->fetch_assoc($this->db->query($sql_query, $this->resource_uri, 'lock'));
+        $this->_read_folder_data();
+        $sql_query = "SELECT synclock, ctag FROM $this->folders_table WHERE folder_id=?";
 
         // abort if database is not set-up
         if ($this->db->is_error()) {
@@ -704,28 +786,13 @@ class kolab_storage_cache
         $this->synclock = true;
 
         // wait if locked (expire locks after 10 minutes)
-        while ($sql_arr && intval($sql_arr['locked']) > 0 && $sql_arr['created'] + $this->max_sync_lock_time > time()) {
+        while ($this->metadata && intval($this->metadata['synclock']) > 0 && $this->metadata['synclock'] + $this->max_sync_lock_time > time()) {
             usleep(500000);
-            $sql_arr = $this->db->fetch_assoc($this->db->query($sql_query, $this->resource_uri, 'lock'));
+            $this->metadata = $this->db->fetch_assoc($this->db->query($sql_query, $this->folder_id));
         }
 
-        // create lock record if not exists
-        if (!$sql_arr) {
-            $this->db->query(
-                "INSERT INTO kolab_cache (resource, type, msguid, created, uid, data, xml, tags, words)".
-                " VALUES (?, ?, 1, " . $this->db->now() . ", '', '', '', '', '')",
-                $this->resource_uri,
-                'lock'
-            );
-        }
-        else {
-            $this->db->query(
-                "UPDATE kolab_cache SET msguid = 1, created = " . $this->db->now() .
-                " WHERE resource = ? AND type = ?",
-                $this->resource_uri,
-                'lock'
-            );
-        }
+        // set lock
+        $this->db->query("UPDATE $this->folders_table SET synclock = ? WHERE folder_id = ?", time(), $this->folder_id);
     }
 
     /**
@@ -737,9 +804,9 @@ class kolab_storage_cache
             return;
 
         $this->db->query(
-            "UPDATE kolab_cache SET msguid = 0 WHERE resource = ? AND type = ?",
-            $this->resource_uri,
-            'lock'
+            "UPDATE $this->folders_table SET synclock = 0, ctag = ? WHERE folder_id = ?",
+            $this->metadata['ctag'],
+            $this->folder_id
         );
 
         $this->synclock = false;
@@ -763,6 +830,74 @@ class kolab_storage_cache
         }
 
         return $this->uid2msg[$uid];
+    }
+
+    /**
+     * Getter for protected member variables
+     */
+    public function __get($name)
+    {
+        if ($name == 'folder_id') {
+            $this->_read_folder_data();
+        }
+
+        return $this->$name;
+    }
+
+    /**
+     * Bypass Roundcube messages cache.
+     * Roundcube cache duplicates information already stored in kolab_cache.
+     *
+     * @param bool $disable True disables, False enables messages cache
+     */
+    public function bypass($disable = false)
+    {
+        // if kolab cache is disabled do nothing
+        if (!$this->enabled) {
+            return;
+        }
+
+        static $messages_cache, $cache_bypass;
+
+        if ($messages_cache === null) {
+            $rcmail = rcube::get_instance();
+            $messages_cache = (bool) $rcmail->config->get('messages_cache');
+            $cache_bypass   = (int) $rcmail->config->get('kolab_messages_cache_bypass');
+        }
+
+        if ($messages_cache) {
+            // handle recurrent (multilevel) bypass() calls
+            if ($disable) {
+                $this->cache_bypassed += 1;
+                if ($this->cache_bypassed > 1) {
+                    return;
+                }
+            }
+            else {
+                $this->cache_bypassed -= 1;
+                if ($this->cache_bypassed > 0) {
+                    return;
+                }
+            }
+
+            switch ($cache_bypass) {
+                case 2:
+                    // Disable messages cache completely
+                    $this->imap->set_messages_caching(!$disable);
+                    break;
+
+                case 1:
+                    // We'll disable messages cache, but keep index cache.
+                    // Default mode is both (MODE_INDEX | MODE_MESSAGE)
+                    $mode = rcube_imap_cache::MODE_INDEX;
+
+                    if (!$disable) {
+                        $mode |= rcube_imap_cache::MODE_MESSAGE;
+                    }
+
+                    $this->imap->set_messages_caching(true, $mode);
+            }
+        }
     }
 
 }

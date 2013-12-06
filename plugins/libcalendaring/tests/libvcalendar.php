@@ -41,6 +41,10 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, count($events));
         $event = $events[0];
 
+        $this->assertInstanceOf('DateTime', $event['created'], "'created' property is DateTime object");
+        $this->assertInstanceOf('DateTime', $event['changed'], "'changed' property is DateTime object");
+        $this->assertEquals('UTC', $event['created']->getTimezone()->getName(), "'created' date is in UTC");
+
         $this->assertInstanceOf('DateTime', $event['start'], "'start' property is DateTime object");
         $this->assertInstanceOf('DateTime', $event['end'], "'end' property is DateTime object");
         $this->assertEquals('08-01', $event['start']->format('m-d'), "Start date is August 1st");
@@ -68,6 +72,25 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
 
         $events = $ical->import_from_file(__DIR__ . '/resources/invalid.txt', 'UTF-8');
         $this->assertEmpty($events);
+    }
+
+    function test_invalid_dates()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/invalid-dates.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals(1, count($events), "Import event data");
+        $this->assertFalse(array_key_exists('created', $event), "No created date field");
+        $this->assertFalse(array_key_exists('changed', $event), "No changed date field");
+    }
+
+    function test_invalid_vevent()
+    {
+        $this->setExpectedException('\Sabre\VObject\ParseException');
+
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/invalid-event.ics', 'UTF-8', true);
     }
 
     /**
@@ -125,6 +148,78 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         // categories, class
         $this->assertEquals('libcalendaring tests', join(',', (array)$event['categories']), "Event categories");
         $this->assertEquals('confidential', $event['sensitivity'], "Class/sensitivity = confidential");
+    }
+
+    /**
+     * @depends test_import
+     */
+    function test_apple_alarms()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/apple-alarms.ics', 'UTF-8');
+        $event = $events[0];
+
+        // alarms
+        $this->assertEquals('-45M:AUDIO', $event['alarms'], "Relative alarm string");
+        $alarm = libcalendaring::parse_alaram_value($event['alarms']);
+        $this->assertEquals('45', $alarm[0], "Alarm value");
+        $this->assertEquals('-M', $alarm[1], "Alarm unit");
+    }
+
+    /**
+     * @depends test_import_from_file
+     */
+    function test_attachment()
+    {
+        $ical = new libvcalendar();
+
+        $events = $ical->import_from_file(__DIR__ . '/resources/attachment.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals(2, count($events));
+        $this->assertEquals(1, count($event['attachments']));
+        $this->assertEquals('image/png', $event['attachments'][0]['mimetype']);
+        $this->assertEquals('500px-Opensource.svg.png', $event['attachments'][0]['name']);
+    }
+
+    /**
+     * @depends test_import
+     */
+    function test_freebusy()
+    {
+        $ical = new libvcalendar();
+        $ical->import_from_file(__DIR__ . '/resources/freebusy.ifb', 'UTF-8');
+        $freebusy = $ical->freebusy;
+
+        $this->assertInstanceOf('DateTime', $freebusy['start'], "'start' property is DateTime object");
+        $this->assertInstanceOf('DateTime', $freebusy['end'], "'end' property is DateTime object");
+        $this->assertEquals(11, count($freebusy['periods']), "Number of freebusy periods defined");
+        $this->assertEquals(9, count($ical->get_busy_periods()), "Number of busy periods found");
+    }
+
+    /**
+     * @depends test_import
+     */
+    function test_freebusy_dummy()
+    {
+        $ical = new libvcalendar();
+        $ical->import_from_file(__DIR__ . '/resources/dummy.ifb', 'UTF-8');
+        $freebusy = $ical->freebusy;
+
+        $this->assertEquals(0, count($freebusy['periods']), "Ignore 0-length freebudy periods");
+        $this->assertContains('dummy', $freebusy['comment'], "Parse comment");
+    }
+
+    function test_vtodo()
+    {
+        $ical = new libvcalendar();
+        $tasks = $ical->import_from_file(__DIR__ . '/resources/vtodo.ics', 'UTF-8', true);
+        $task = $tasks[0];
+
+        $this->assertInstanceOf('DateTime', $task['start'],   "'start' property is DateTime object");
+        $this->assertInstanceOf('DateTime', $task['due'],     "'due' property is DateTime object");
+        $this->assertEquals('-1D:DISPLAY',  $task['alarms'],  "Taks alarm value");
+        $this->assertEquals(1, count($task['x-custom']),      "Custom properties");
     }
 
     /**
@@ -258,6 +353,19 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertContains('END:VCALENDAR',   $output, "VCALENDAR encapsulation END");
         $this->assertEquals($num, substr_count($output, 'BEGIN:VEVENT'), "VEVENT encapsulation BEGIN");
         $this->assertEquals($num, substr_count($output, 'END:VEVENT'),   "VEVENT encapsulation END");
+    }
+
+    function test_datetime()
+    {
+        $localtime = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('Europe/Berlin')));
+        $localdate = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01', new DateTimeZone('Europe/Berlin')), false, true);
+        $utctime   = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('UTC')));
+        $asutctime = libvcalendar::datetime_prop('DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('Europe/Berlin')), true);
+
+        $this->assertContains('TZID=Europe/Berlin', $localtime->serialize());
+        $this->assertContains('VALUE=DATE', $localdate->serialize());
+        $this->assertContains('20130901T120000Z', $utctime->serialize());
+        $this->assertContains('20130901T100000Z', $asutctime->serialize());
     }
 
     function get_attachment_data($id, $event)

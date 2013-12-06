@@ -6,10 +6,10 @@
  * Render Open Documents directly in the preview window
  * by using the WebODF library by Tobias Hintze http://webodf.org/
  *
- * @version 0.2
+ * @version 0.3
  * @author Thomas Bruederli <bruederli@kolabsys.com>
  *
- * Copyright (C) 2011, Kolab Systems AG
+ * Copyright (C) 2011-2013, Kolab Systems AG
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -74,7 +74,8 @@ class odfviewer extends rcube_plugin
   {
     if (!$args['download'] && $args['mimetype'] && in_array($args['mimetype'], $this->odf_mimetypes)) {
       if (empty($_GET['_load'])) {
-        $suffix = preg_match('/(\.\w+)$/', $args['part']->filename, $m) ? $m[1] : '.odt';
+        $exts = rcube_mime::get_mime_extensions($args['mimetype']);
+        $suffix = $exts ? '.'.$exts[0] : '.odt';
         $fn = md5(session_id() . $_SERVER['REQUEST_URI']) . $suffix;
 
         // FIXME: copy file to disk because only apache can send the file correctly

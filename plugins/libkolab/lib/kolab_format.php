@@ -40,6 +40,7 @@ abstract class kolab_format
     protected $data;
     protected $xmldata;
     protected $xmlobject;
+    protected $formaterror;
     protected $loaded = false;
     protected $version = '3.0';
 
@@ -104,13 +105,17 @@ abstract class kolab_format
         }
         $result = new cDateTime();
 
-        // got a unix timestamp (in UTC)
-        if (is_numeric($datetime)) {
-            $datetime = new DateTime('@'.$datetime, new DateTimeZone('UTC'));
-            if ($tz) $datetime->setTimezone($tz);
+        try {
+            // got a unix timestamp (in UTC)
+            if (is_numeric($datetime)) {
+                $datetime = new DateTime('@'.$datetime, new DateTimeZone('UTC'));
+                if ($tz) $datetime->setTimezone($tz);
+            }
+            else if (is_string($datetime) && strlen($datetime)) {
+                $datetime = new DateTime($datetime, $tz ?: null);
+            }
         }
-        else if (is_string($datetime) && strlen($datetime))
-            $datetime = new DateTime($datetime, $tz ?: null);
+        catch (Exception $e) {}
 
         if ($datetime instanceof DateTime) {
             $result->setDate($datetime->format('Y'), $datetime->format('n'), $datetime->format('j'));
@@ -118,7 +123,7 @@ abstract class kolab_format
             if (!$dateonly)
                 $result->setTime($datetime->format('G'), $datetime->format('i'), $datetime->format('s'));
 
-            if ($tz && $tz->getName() == 'UTC')
+            if ($tz && in_array($tz->getName(), array('UTC', 'GMT', '+00:00', 'Z')))
                 $result->setUTC(true);
             else if ($tz !== false)
                 $result->setTimezone($tz->getName());
@@ -244,7 +249,7 @@ abstract class kolab_format
                 $log = "Error";
         }
 
-        if ($log) {
+        if ($log && !isset($this->formaterror)) {
             rcube::raise_error(array(
                 'code' => 660,
                 'type' => 'php',
@@ -252,6 +257,8 @@ abstract class kolab_format
                 'line' => __LINE__,
                 'message' => "kolabformat $log: " . kolabformat::errorMessage(),
             ), true);
+
+            $this->formaterror = $ret;
         }
 
         return $ret;
@@ -338,6 +345,7 @@ abstract class kolab_format
      */
     public function load($xml)
     {
+        $this->formaterror = null;
         $read_func = $this->libfunc($this->read_func);
 
         if (is_array($read_func))
@@ -361,6 +369,8 @@ abstract class kolab_format
      */
     public function write($version = null)
     {
+        $this->formaterror = null;
+
         $this->init();
         $write_func = $this->libfunc($this->write_func);
         if (is_array($write_func))
@@ -389,23 +399,32 @@ abstract class kolab_format
             $this->obj->setUid($object['uid']);
 
         // set some automatic values if missing
-        if (method_exists($this->obj, 'setCreated') && !$this->obj->created()) {
-            if (empty($object['created']))
-                $object['created'] = new DateTime('now', self::$timezone);
-            $this->obj->setCreated(self::get_datetime($object['created']));
+        if (empty($object['created']) && method_exists($this->obj, 'setCreated')) {
+            $cdt = $this->obj->created();
+            $object['created'] = $cdt && $cdt->isValid() ? self::php_datetime($cdt) : new DateTime('now', new DateTimeZone('UTC'));
+            if (!$cdt || !$cdt->isValid())
+                $this->obj->setCreated(self::get_datetime($object['created']));
         }
 
-        $object['changed'] = new DateTime('now', self::$timezone);
-        $this->obj->setLastModified(self::get_datetime($object['changed'], new DateTimeZone('UTC')));
+        $object['changed'] = new DateTime('now', new DateTimeZone('UTC'));
+        $this->obj->setLastModified(self::get_datetime($object['changed']));
 
         // Save custom properties of the given object
-        if (!empty($object['x-custom'])) {
+        if (isset($object['x-custom'])) {
             $vcustom = new vectorcs;
-            foreach ($object['x-custom'] as $cp) {
+            foreach ((array)$object['x-custom'] as $cp) {
                 if (is_array($cp))
                     $vcustom->push(new CustomProperty($cp[0], $cp[1]));
             }
             $this->obj->setCustomProperties($vcustom);
+        }
+        else {  // load custom properties from XML for caching (#2238)
+            $object['x-custom'] = array();
+            $vcustom = $this->obj->customProperties();
+            for ($i=0; $i < $vcustom->size(); $i++) {
+                $cp = $vcustom->get($i);
+                $object['x-custom'][] = array($cp->identifier, $cp->value);
+            }
         }
     }
 

@@ -80,21 +80,37 @@ class tasklist_kolab_driver extends tasklist_driver
         }
 
         $delim = $this->rc->get_storage()->get_hierarchy_delimiter();
+        $prefs = $this->rc->config->get('kolab_tasklists', array());
         $listnames = array();
 
-        $prefs = $this->rc->config->get('kolab_tasklists', array());
+        // include virtual folders for a full folder tree
+        if (!$this->rc->output->ajax_call && in_array($this->rc->action, array('index','')))
+            $folders = kolab_storage::folder_hierarchy($folders);
 
         foreach ($folders as $folder) {
             $utf7name = $folder->name;
-            $this->folders[$folder->name] = $folder;
 
             $path_imap = explode($delim, $utf7name);
             $editname = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');  // pop off raw name part
             $path_imap = join($delim, $path_imap);
 
-            $name = kolab_storage::folder_displayname(kolab_storage::object_name($utf7name), $listnames);
+            $fullname = $folder->get_name();
+            $listname = kolab_storage::folder_displayname($fullname, $listnames);
+
+            // special handling for virtual folders
+            if ($folder->virtual) {
+                $list_id = kolab_storage::folder_id($utf7name);
+                $this->lists[$list_id] = array(
+                    'id' => $list_id,
+                    'name' => $fullname,
+                    'listname' => $listname,
+                    'virtual' => true,
+                );
+                continue;
+            }
 
             if ($folder->get_namespace() == 'personal') {
+                $norename = false;
                 $readonly = false;
                 $alarms = true;
             }
@@ -105,23 +121,29 @@ class tasklist_kolab_driver extends tasklist_driver
                     if (strpos($rights, 'i') !== false)
                       $readonly = false;
                 }
+                $info = $folder->get_folder_info();
+                $norename = $readonly || $info['norename'] || $info['protected'];
             }
 
             $list_id = kolab_storage::folder_id($utf7name);
             $tasklist = array(
                 'id' => $list_id,
-                'name' => $name,
+                'name' => $fullname,
+                'listname' => $listname,
                 'editname' => $editname,
                 'color' => $folder->get_color('0000CC'),
                 'showalarms' => isset($prefs[$list_id]['showalarms']) ? $prefs[$list_id]['showalarms'] : $alarms,
-                'editable' => !$readonly,
+                'editable' => !$readionly,
+                'norename' => $norename,
                 'active' => $folder->is_active(),
                 'parentfolder' => $path_imap,
                 'default' => $folder->default,
+                'children' => true,  // TODO: determine if that folder indeed has child folders
                 'class_name' => trim($folder->get_namespace() . ($folder->default ? ' default' : '')),
             );
             $this->lists[$tasklist['id']] = $tasklist;
             $this->folders[$tasklist['id']] = $folder;
+            $this->folders[$folder->name] = $folder;
         }
     }
 
@@ -317,7 +339,7 @@ class tasklist_kolab_driver extends tasklist_driver
         $query = array();
         if ($filter['mask'] & tasklist::FILTER_MASK_COMPLETE)
             $query[] = array('tags','~','x-complete');
-        else
+        else if (empty($filter['since']))
             $query[] = array('tags','!~','x-complete');
 
         // full text search (only works with cache enabled)
@@ -326,6 +348,10 @@ class tasklist_kolab_driver extends tasklist_driver
             foreach (rcube_utils::normalize_string($search, true) as $word) {
                 $query[] = array('words', '~', $word);
             }
+        }
+
+        if ($filter['since']) {
+            $query[] = array('changed', '>=', $filter['since']);
         }
 
         foreach ($lists as $list_id) {
@@ -539,7 +565,7 @@ class tasklist_kolab_driver extends tasklist_driver
             'title' => $record['title'],
 #            'location' => $record['location'],
             'description' => $record['description'],
-            'tags' => (array)$record['categories'],
+            'tags' => array_filter((array)$record['categories']),
             'flagged' => $record['priority'] == 1,
             'complete' => $record['status'] == 'COMPLETED' ? 1 : floatval($record['complete'] / 100),
             'parent_id' => $record['parent_id'],
