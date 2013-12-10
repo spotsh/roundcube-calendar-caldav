@@ -448,14 +448,14 @@ class caldav_driver extends database_driver
      *
      * @see database_driver::load_events()
      */
-    public function load_events($start, $end, $query = null, $cal_ids = null)
+    public function load_events($start, $end, $query = null, $cal_ids = null, $virtual = 1, $modifiedsince = null)
     {
         foreach($this->sync_clients as $cal_id => $cal_sync) {
             if(!$cal_sync->is_synced())
                 $this->_sync_calendar($cal_id);
         }
 
-        return parent::load_events($start, $end, $query = null, $cal_ids = null);
+        return parent::load_events($start, $end, $query, $cal_ids, $virtual, $modifiedsince);
     }
 
     /**
