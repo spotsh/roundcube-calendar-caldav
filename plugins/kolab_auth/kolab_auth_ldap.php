@@ -207,7 +207,7 @@ class kolab_auth_ldap extends rcube_ldap_generic
     /**
      * Search records (simplified version of rcube_ldap::search)
      *
-     * @param mixed   $fields   The field name of array of field names to search in
+     * @param mixed   $fields   The field name or array of field names to search in
      * @param mixed   $value    Search value (or array of values when $fields is array)
      * @param int     $mode     Matching mode:
      *                          0 - partial (*abc*),
@@ -221,6 +221,10 @@ class kolab_auth_ldap extends rcube_ldap_generic
      */
     function search($fields, $value, $mode=1, $required = array(), $limit = 0)
     {
+        if (empty($fields)) {
+            return array();
+        }
+
         $mode = intval($mode);
 
         // use AND operator for advanced searches
@@ -236,8 +240,13 @@ class kolab_auth_ldap extends rcube_ldap_generic
         }
 
         foreach ((array)$fields as $idx => $field) {
-            $val = is_array($value) ? $value[$idx] : $value;
-            if ($attrs = (array) $this->fieldmap[$field]) {
+            $val   = is_array($value) ? $value[$idx] : $value;
+            $attrs = (array) $this->fieldmap[$field];
+
+            if (empty($attrs)) {
+                $filter .= "($field=$wp" . rcube_ldap_generic::quote_string($val) . "$ws)";
+            }
+            else {
                 if (count($attrs) > 1)
                     $filter .= '(|';
                 foreach ($attrs as $f)
@@ -254,7 +263,13 @@ class kolab_auth_ldap extends rcube_ldap_generic
         foreach ((array)$required as $field) {
             if (in_array($field, (array)$fields))  // required field is already in search filter
                 continue;
-            if ($attrs = (array) $this->fieldmap[$field]) {
+
+            $attrs = (array) $this->fieldmap[$field];
+
+            if (empty($attrs)) {
+                $req_filter .= "($field=*)";
+            }
+            else {
                 if (count($attrs) > 1)
                     $req_filter .= '(|';
                 foreach ($attrs as $f)
