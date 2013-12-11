@@ -131,6 +131,7 @@ class calendar_ui
     $this->cal->register_handler('plugin.angenda_options', array($this, 'angenda_options'));
     $this->cal->register_handler('plugin.events_import_form', array($this, 'events_import_form'));
     $this->cal->register_handler('plugin.searchform', array($this->rc->output, 'search_form'));  // use generic method from rcube_template
+    $this->cal->register_handler('plugin.calendar_create_menu', array($this, 'calendar_create_menu'));
   }
 
   /**
@@ -679,6 +680,25 @@ class calendar_ui
     $this->attachmentlist_id = $attrib['id'];
 
     return html::tag('ul', $attrib, '', html::$common_attrib);
+  }
+
+  /**
+   * Handler for menu to choose the driver for calendar creation.
+   */
+  function calendar_create_menu($attrib = array())
+  {
+    $content = "";
+    foreach($this->cal->get_drivers() as $name => $driver)
+    {
+      $content .= html::tag('li', null, $this->rc->output->button(
+          array('label' => $this->cal->gettext("calendar.".$name),
+                'class' => 'active',
+                'prop' => json_encode(array('driver' => $name)),
+                'command' => 'calendar-create',
+                'title' => 'calendar.createcalendar')));
+    }
+
+    return $content;
   }
 
   /**

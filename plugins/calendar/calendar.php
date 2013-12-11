@@ -190,47 +190,14 @@ class calendar extends rcube_plugin
     $this->add_hook('dismiss_alarms', array($this, 'dismiss_alarms'));
   }
 
-  /**
-   * Helper method to load the driver requested by parameter or by any GPC input.
+  /*
+   * Helper method to get configured driver names.
    */
-  private function load_driver($driver_name = null)
+  public function get_driver_names()
   {
-    $this->load_drivers();
-
-    if($driver_name == null)
-    {
-      foreach(array("_driver", "driver") as $input_name)
-      {
-        $driver_name = get_input_value($input_name, RCUBE_INPUT_GPC);
-        if($driver_name != null) break;
-      }
-    }
-
-    // Remove possible postfix "_driver" from requested driver name.
-    $driver_name = str_replace("_driver", "", $driver_name);
-
-    rcmail::console("Loading ".($driver_name ? $driver_name : "default")." driver...");
-
-    if($driver_name != null)
-    {
-      if(isset($this->_drivers[$driver_name]))
-      {
-        $this->driver = $this->_drivers[$driver_name];
-      }
-      else
-      {
-        rcube::error("Unknown driver requested \"$driver_name\".", true, true);
-      }
-    }
-    else
-    {
-      // Fallback to default driver
-      if(!$this->driver)
-      {
-        $default_driver_name = trim($this->rc->config->get('calendar_driver', array('database'))[0]);
-        $this->driver = $this->_drivers[$default_driver_name];
-      }
-    }
+    $driver_names = $this->rc->config->get('calendar_driver', array('database'));
+    if(!is_array($driver_names)) $driver_names = array($driver_names);
+    return $driver_names;
   }
 
   /**
@@ -242,7 +209,7 @@ class calendar extends rcube_plugin
     {
       $this->_drivers = array();
 
-      foreach($this->rc->config->get('calendar_driver', array('database')) as $driver_name)
+      foreach($this->get_driver_names() as $driver_name)
       {
         $driver_name = trim($driver_name);
         $driver_class = $driver_name . '_driver';
@@ -264,11 +231,55 @@ class calendar extends rcube_plugin
   }
 
   /**
-   * Helpers function to return configured drivers
+   * Helpers function to return loaded drivers
    */
   public function get_drivers()
   {
+    $this->load_drivers();
     return $this->_drivers;
+  }
+
+  /**
+   * Helper method to load the driver requested by parameter or by any GPC input.
+   */
+  private function load_driver($driver_name = null)
+  {
+    $this->load_drivers();
+
+    if($driver_name == null)
+    {
+      foreach(array("_driver", "driver") as $input_name)
+      {
+        $driver_name = get_input_value($input_name, RCUBE_INPUT_GPC);
+        if($driver_name != null) break;
+      }
+    }
+
+    // Remove possible postfix "_driver" from requested driver name.
+    $driver_name = str_replace("_driver", "", $driver_name);
+
+    if($driver_name != null)
+    {
+      if(isset($this->_drivers[$driver_name]))
+      {
+        rcmail::console("Loading ".$driver_name." driver ...");
+        $this->driver = $this->_drivers[$driver_name];
+      }
+      else
+      {
+        rcube::error("Unknown driver requested \"$driver_name\".", true, true);
+      }
+    }
+    else
+    {
+      // Fallback to default driver
+      if(!$this->driver)
+      {
+        $default_driver_name = trim($this->get_driver_names()[0]);
+        rcmail::console("Loading ".$default_driver_name." driver as default ...");
+        $this->driver = $this->_drivers[$default_driver_name];
+      }
+    }
   }
 
   /**

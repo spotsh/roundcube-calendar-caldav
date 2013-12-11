@@ -1866,12 +1866,6 @@ function rcube_calendar_ui(settings)
       if ($dialog.is(':ui-dialog'))
         $dialog.dialog('close');
       
-      if (!calendar)
-      {
-        // TODO: Add driver type!
-        calendar = { name:'', color:'cc0000', editable:true, showalarms:true };
-      }
-      
       var form, name, color, alarms;
       
       $dialog.html(rcmail.get_label('loading'));
@@ -1917,7 +1911,7 @@ function rcube_calendar_ui(settings)
           data.showalarms = alarms.checked ? 1 : 0;
 
         me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
-        rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data });
+        rcmail.http_post('calendar', { action:(calendar.id ? 'edit' : 'new'), c:data, driver: calendar.driver });
         $dialog.dialog("close");
       };
 
@@ -1944,7 +1938,7 @@ function rcube_calendar_ui(settings)
     this.calendar_remove = function(calendar)
     {
       if (confirm(rcmail.gettext(calendar.children ? 'deletecalendarconfirmrecursive' : 'deletecalendarconfirm', 'calendar'))) {
-        rcmail.http_post('calendar', { action:'remove', c:{ id:calendar.id } });
+        rcmail.http_post('calendar', { action:'remove', c:{ id:calendar.id }, driver: calendar.driver });
         return true;
       }
       return false;
@@ -2817,7 +2811,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('print', function(){ cal.print_calendars(); }, true);
 
   // configure list operations
-  rcmail.register_command('calendar-create', function(){ cal.calendar_edit_dialog(null); }, true);
+  rcmail.register_command('calendar-create', function(props){ cal.calendar_edit_dialog($.extend($.parseJSON(props), { name:'', color:'cc0000', editable:true, showalarms:true })); }, true);
   rcmail.register_command('calendar-edit', function(){ cal.calendar_edit_dialog(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('calendar-remove', function(){ cal.calendar_remove(cal.calendars[cal.selected_calendar]); }, false);
   rcmail.register_command('events-import', function(){ cal.import_events(cal.calendars[cal.selected_calendar]); }, true);
