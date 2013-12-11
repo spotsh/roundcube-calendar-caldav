@@ -160,57 +160,61 @@ class calendar_ui
   function calendar_css($attrib = array())
   {
     $mode = $this->rc->config->get('calendar_event_coloring', $this->cal->defaults['calendar_event_coloring']);
-    $categories = $this->cal->driver->list_categories();
     $css = "\n";
+
+    foreach($this->cal->get_drivers() as $name => $driver)
+    {
+      $categories = $driver->list_categories();
     
-    foreach ((array)$categories as $class => $color) {
-      if (empty($color))
-        continue;
-      
-      $class = 'cat-' . asciiwords(strtolower($class), true);
-      $css  .= ".$class { color: #$color }\n";
-      if ($mode > 0) {
-        if ($mode == 2) {
-          $css .= ".fc-event-$class .fc-event-bg {";
-          $css .= " opacity: 0.9;";
-          $css .= " filter: alpha(opacity=90);";
+      foreach ((array)$categories as $class => $color) {
+        if (empty($color))
+          continue;
+
+        $class = 'cat-' . asciiwords(strtolower($class), true);
+        $css  .= ".$class { color: #$color }\n";
+        if ($mode > 0) {
+          if ($mode == 2) {
+            $css .= ".fc-event-$class .fc-event-bg {";
+            $css .= " opacity: 0.9;";
+            $css .= " filter: alpha(opacity=90);";
+          }
+          else {
+            $css .= ".fc-event-$class.fc-event-skin, ";
+            $css .= ".fc-event-$class .fc-event-skin, ";
+            $css .= ".fc-event-$class .fc-event-inner {";
+          }
+          $css .= " background-color: #" . $color . ";";
+          if ($mode % 2)
+            $css .= " border-color: #$color;";
+          $css .= "}\n";
         }
-        else {
-          $css .= ".fc-event-$class.fc-event-skin, ";
-          $css .= ".fc-event-$class .fc-event-skin, ";
-          $css .= ".fc-event-$class .fc-event-inner {";
-        }
-        $css .= " background-color: #" . $color . ";";
-        if ($mode % 2)
+      }
+
+      $calendars = $driver->list_calendars();
+      foreach ((array)$calendars as $id => $prop) {
+        if (!$prop['color'])
+          continue;
+        $color = $prop['color'];
+        $class = 'cal-' . asciiwords($id, true);
+        $css .= "li.$class, #eventshow .$class { color: #$color }\n";
+        if ($mode != 1) {
+          if ($mode == 3) {
+            $css .= ".fc-event-$class .fc-event-bg {";
+            $css .= " opacity: 0.9;";
+            $css .= " filter: alpha(opacity=90);";
+          }
+          else {
+            $css .= ".fc-event-$class, ";
+            $css .= ".fc-event-$class .fc-event-inner {";
+          }
+          if (!$attrib['printmode'])
+            $css .= " background-color: #$color;";
+          if ($mode % 2 == 0)
           $css .= " border-color: #$color;";
-        $css .= "}\n";
-      }
-    }
-    
-    $calendars = $this->cal->driver->list_calendars();
-    foreach ((array)$calendars as $id => $prop) {
-      if (!$prop['color'])
-        continue;
-      $color = $prop['color'];
-      $class = 'cal-' . asciiwords($id, true);
-      $css .= "li.$class, #eventshow .$class { color: #$color }\n";
-      if ($mode != 1) {
-        if ($mode == 3) {
-          $css .= ".fc-event-$class .fc-event-bg {";
-          $css .= " opacity: 0.9;";
-          $css .= " filter: alpha(opacity=90);";
+          $css .= "}\n";
         }
-        else {
-          $css .= ".fc-event-$class, ";
-          $css .= ".fc-event-$class .fc-event-inner {";
-        }
-        if (!$attrib['printmode'])
-          $css .= " background-color: #$color;";
-        if ($mode % 2 == 0)
-        $css .= " border-color: #$color;";
-        $css .= "}\n";
+        $css .= ".$class .handle { background-color: #$color; }";
       }
-      $css .= ".$class .handle { background-color: #$color; }";
     }
     
     return html::tag('style', array('type' => 'text/css'), $css);

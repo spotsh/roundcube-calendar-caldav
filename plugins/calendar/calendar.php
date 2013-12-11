@@ -356,8 +356,16 @@ class calendar extends rcube_plugin
 
     $this->rc->output->set_env('timezone', $this->timezone->getName());
     $this->rc->output->set_env('calendar_driver', $this->rc->config->get('calendar_driver'), false);
-    $this->rc->output->set_env('mscolors', $this->driver->get_color_values());
     $this->rc->output->set_env('identities-selector', $this->ui->identity_select(array('id' => 'edit-identities-list')));
+
+    // Merge color values for available drivers
+    $mscolors = array();
+    foreach($this->get_drivers() as $name => $driver)
+    {
+      $colors = $driver->get_color_values();
+      if($colors !== false) $mscolor = array_merge($mscolors, $colors);
+    }
+    $this->rc->output->set_env('mscolors', array_unique($mscolors));
 
     $view = get_input_value('view', RCUBE_INPUT_GPC);
     if (in_array($view, array('agendaWeek', 'agendaDay', 'month', 'table')))
