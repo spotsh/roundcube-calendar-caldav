@@ -653,7 +653,9 @@ class kolab_storage_cache
             }
         }
 
-        $sql_data['data'] = serialize($data);
+        // use base64 encoding (Bug #1912, #2662)
+        $sql_data['data'] = base64_encode(serialize($data));
+
         return $sql_data;
     }
 
@@ -662,7 +664,22 @@ class kolab_storage_cache
      */
     protected function _unserialize($sql_arr)
     {
+        // check if data is a base64-encoded string, for backward compat.
+        if (strpos(substr($sql_arr['data'], 0, 64), ':') === false) {
+            $sql_arr['data'] = base64_decode($sql_arr['data']);
+        }
+
         $object = unserialize($sql_arr['data']);
+
+        // de-serialization failed
+        if ($object === false) {
+            rcube::raise_error(array(
+                'code' => 900, 'type' => 'php',
+                'message' => "Malformed data for {$this->resource_uri}/{$sql_arr['msguid']} object."
+            ), true);
+
+            return null;
+        }
 
         // decode binary properties
         foreach ($this->binary_items as $key => $regexp) {
@@ -672,10 +689,10 @@ class kolab_storage_cache
         }
 
         // add meta data
-        $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
-        $object['_msguid'] = $sql_arr['msguid'];
-        $object['_mailbox'] = $this->folder->name;
-        $object['_size'] = strlen($sql_arr['xml']);
+        $object['_type']      = $sql_arr['type'] ?: $this->folder->type;
+        $object['_msguid']    = $sql_arr['msguid'];
+        $object['_mailbox']   = $this->folder->name;
+        $object['_size']      = strlen($sql_arr['xml']);
         $object['_formatobj'] = kolab_format::factory($object['_type'], 3.0, $sql_arr['xml']);
 
         return $object;
