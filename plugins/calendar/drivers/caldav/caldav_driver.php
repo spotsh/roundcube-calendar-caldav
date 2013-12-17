@@ -1,7 +1,7 @@
 <?php
 
 /**
- * iCalendar/CalDAV driver for the Calendar plugin
+ * CalDAV driver for the Calendar plugin
  *
  * @author Daniel Morlock <daniel.morlock@awesome-it.de>
  *
@@ -33,9 +33,9 @@ require_once(dirname(__FILE__) . '/caldav_sync.php');
 
 class caldav_driver extends database_driver
 {
-    const CALDAV_OBJ_TYPE_CAL = "vcal";
-    const CALDAV_OBJ_TYPE_EVENT = "vevent";
-    const CALDAV_OBJ_TYPE_TODO = "vtodo";
+    const OBJ_TYPE_VCAL = "vcal";
+    const OBJ_TYPE_VEVENT = "vevent";
+    const OBJ_TYPE_VTODO = "vtodo";
 
     private $sync_clients = array();
     
@@ -65,7 +65,7 @@ class caldav_driver extends database_driver
         
         // Set debug state
         if(self::$debug === null)
-            self::$debug = $this->rc->config->get('calendar_debug', False);         
+            self::$debug = $this->rc->config->get('calendar_caldav_debug', False);
 
         $this->_init_sync_clients();
 
@@ -181,7 +181,7 @@ class caldav_driver extends database_driver
     public function calendar_form($action, $calendar, $formfields)
     {
         $cal_id = $calendar["id"];
-        $props = $this->_get_caldav_props($cal_id, self::CALDAV_OBJ_TYPE_CAL);
+        $props = $this->_get_caldav_props($cal_id, self::OBJ_TYPE_VCAL);
 
         $input_caldav_url = new html_inputfield( array(
             "name" => "caldav_url",
@@ -237,7 +237,7 @@ class caldav_driver extends database_driver
                 "pass" => $prop["caldav_pass"]
             );
 
-            return $this->_set_caldav_props($obj_id, self::CALDAV_OBJ_TYPE_CAL, $props);
+            return $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
         }
 
         return false;
@@ -252,7 +252,7 @@ class caldav_driver extends database_driver
     {
         if (parent::edit_calendar($prop) !== false)
         {
-            return $this->_set_caldav_props($prop["id"], self::CALDAV_OBJ_TYPE_CAL, array(
+            return $this->_set_caldav_props($prop["id"], self::OBJ_TYPE_VCAL, array(
                 "url" => self::_encode_url($prop["caldav_url"]),
                 "user" => $prop["caldav_user"],
                 "pass" => $prop["caldav_pass"]
@@ -271,7 +271,7 @@ class caldav_driver extends database_driver
     {
         if (parent::remove_calendar($prop))
         {
-            $this->_remove_caldav_props($prop["id"], self::CALDAV_OBJ_TYPE_CAL);
+            $this->_remove_caldav_props($prop["id"], self::OBJ_TYPE_VCAL);
             return true;
         }
 
@@ -292,7 +292,7 @@ class caldav_driver extends database_driver
 
             while ($result && ($arr = $this->rc->db->fetch_assoc($result))) 
             {
-                $props = $this->_get_caldav_props($arr["id"], self::CALDAV_OBJ_TYPE_CAL);
+                $props = $this->_get_caldav_props($arr["id"], self::OBJ_TYPE_VCAL);
                 if($props !== false) {
                     self::debug_log("Initialize sync client for calendar ".$arr["id"]);
                     $this->sync_clients[$arr["id"]] = new caldav_sync($arr["id"], $props);
@@ -330,7 +330,7 @@ class caldav_driver extends database_driver
                         "tag" => $update["etag"]
                     );
 
-                    $this->_set_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT, $props);
+                    $this->_set_caldav_props($event_id, self::OBJ_TYPE_VEVENT, $props);
                     array_push($event_ids, $event_id);
                     $num_updated ++;
                 }
@@ -353,7 +353,7 @@ class caldav_driver extends database_driver
                         "tag" => $update["etag"]
                     );
 
-                    $this->_set_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT, $props);
+                    $this->_set_caldav_props($event_id, self::OBJ_TYPE_VEVENT, $props);
                     array_push($event_ids, $event_id);
                     $num_created ++;
                 }
@@ -411,7 +411,7 @@ class caldav_driver extends database_driver
             {
                 array_push($events, $event);
                 array_push($caldav_props,
-                    $this->_get_caldav_props($event["id"], self::CALDAV_OBJ_TYPE_EVENT));
+                    $this->_get_caldav_props($event["id"], self::OBJ_TYPE_VEVENT));
             }
         }
 
@@ -434,9 +434,9 @@ class caldav_driver extends database_driver
             }
 
             // Update calendar ctag ...
-            $cal_props = $this->_get_caldav_props($cal_id, self::CALDAV_OBJ_TYPE_CAL);
+            $cal_props = $this->_get_caldav_props($cal_id, self::OBJ_TYPE_VCAL);
             $cal_props["tag"] = $cal_sync->get_ctag();
-            $this->_set_caldav_props($cal_id, self::CALDAV_OBJ_TYPE_CAL, $cal_props);
+            $this->_set_caldav_props($cal_id, self::OBJ_TYPE_VCAL, $cal_props);
         }
 
         self::debug_log("Successfully synced calendar id \"$cal_id\".");
@@ -483,7 +483,7 @@ class caldav_driver extends database_driver
             else
             {
                 self::debug_log("Successfully pushed event \"$event_id\" to caldav server.");
-                $this->_set_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT, $props);
+                $this->_set_caldav_props($event_id, self::OBJ_TYPE_VEVENT, $props);
 
                 // Trigger calendar sync to update ctags and etags.
                 $this->_sync_calendar($cal_id);
@@ -517,7 +517,7 @@ class caldav_driver extends database_driver
             $event = parent::get_event(array("id" => $event_id));
 
             $sync_client = $this->sync_clients[$cal_id];
-            $props = $this->_get_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT);
+            $props = $this->_get_caldav_props($event_id, self::OBJ_TYPE_VEVENT);
             $success = $sync_client->update_event($event, $props);
 
             if($success === true)
@@ -560,7 +560,7 @@ class caldav_driver extends database_driver
     {
         $event_id = (int)$event["id"];
         $cal_id = (int)$event["calendar"];
-        $props = $this->_get_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT);
+        $props = $this->_get_caldav_props($event_id, self::OBJ_TYPE_VEVENT);
         $event = parent::get_event($event);
 
         if(parent::remove_event($event, $force))
@@ -584,8 +584,8 @@ class caldav_driver extends database_driver
                 $new_props = $props;
                 $new_props["obj_id"] = $new_event_id;
 
-                $this->_remove_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT);
-                $this->_set_caldav_props($event_id, self::CALDAV_OBJ_TYPE_EVENT, $new_props);
+                $this->_remove_caldav_props($event_id, self::OBJ_TYPE_VEVENT);
+                $this->_set_caldav_props($event_id, self::OBJ_TYPE_VEVENT, $new_props);
 
                 return false;
             }
