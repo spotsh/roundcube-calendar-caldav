@@ -26,8 +26,8 @@ require_once(dirname(__FILE__) . '/caldav_sync.php');
 
 /**
  * TODO
- * - Database contraint: obj_id, obj_type must be unique.
- * - Postgresql, SQlite scipts.
+ * - Database constraint: obj_id, obj_type must be unique.
+ * - Postgresql, Sqlite scripts.
  *
  */
 
