@@ -29,8 +29,9 @@ class ical_sync
 
     private $cal_id = null;
     private $url = null;
+    private $ical = null;
 
-    private $sync_period = 5; // seconds
+    private $sync_period = 300; // seconds
 
     /**
      *  Default constructor for calendar synchronization adapter.
@@ -41,6 +42,7 @@ class ical_sync
      */
     public function __construct($cal_id, $props)
     {
+        $this->ical = libcalendaring::get_ical();
         $this->cal_id = $cal_id;
         $this->url = $props["url"];
     }
@@ -51,30 +53,61 @@ class ical_sync
      * @see ical_sync::$sync_period Which defines amount of time after which the remote calendar ctag
      *      is going to be re-checked. Within this time range, to remote sync will be triggered.
      *
-     * @return True if the current calendar needs to be synched, false otherwise.
+     * @return True if the current calendar needs to be synced, false otherwise.
      */
     public function is_synced()
     {
-        $last_sync = $_SESSION["calendar_ical_last_sync"];
-        return (!$last_sync || (time() - $last_sync) >= $this->sync_period);
+        if(!is_array($_SESSION["calendar_ical_last_sync"]))
+            $_SESSION["calendar_ical_last_sync"] = array();
+
+        $last_sync = $_SESSION["calendar_ical_last_sync"][$this->cal_id];
+
+        if(!$last_sync || (time() - $last_sync) >= $this->sync_period)
+        {
+            $_SESSION["calendar_ical_last_sync"][$this->cal_id] = time();
+            ical_driver::debug_log("Sync check: Calendar \"$this->cal_id\" needs to be synced!");
+            return false;
+        }
+        else
+        {
+            ical_driver::debug_log("Sync check: Calendar \"$this->cal_id\" is in sync!");
+            return true;
+        }
     }
 
     /**
      * Fetches events from iCAL resource and returns updates.
      *
      * @param array List of local events.
-     * @param array List of iCAL properties for each event.
-     * @return array Tuple containing the following lists:
-     *
-     * Properties for events to be created or to be updated with the keys:
-     *  local_event: The local event in case of an update.
+     * @return array A list of tuples for events to be created or to be updated with the keys:
+     *  local_event: The local event in case of an update, otherwise null.
      * remote_event: The current event retrieved from the iCAL resource.
      *
      * A list of event ids that are in sync.
      */
-    public function get_updates($events, $ical_props)
+    public function get_updates($events)
     {
-        // TODO
+        $vcal = file_get_contents($this->url);
+        $updates = array();
+        if($vcal !== false)
+        {
+            // Hash existing events by uid.
+            $events_hash = array();
+            foreach($events as $event) {
+                $events_hash[$event['uid']] = $event;
+            }
+
+            foreach ($this->ical->import($vcal) as $remote_event) {
+
+                $local_event = null;
+                if($events_hash[$remote_event['uid']])
+                    $local_event = $events_hash[$remote_event['uid']];
+
+                array_push($updates, array('local_event' => $local_event, 'remote_event' => $remote_event));
+            }
+        }
+
+        return $updates;
     }
 }
 

@@ -35,7 +35,7 @@ class caldav_sync
     private $pass = null;
     private $url = null;
 
-    private $sync_period = 5; // seconds
+    private $sync_period = 10; // seconds
 
     /**
      *  Default constructor for calendar synchronization adapter.
@@ -83,10 +83,14 @@ class caldav_sync
      */
     public function is_synced($force = false)
     {
-        $last_sync = $_SESSION["calendar_caldav_last_sync"];
+        if(!is_array($_SESSION["calendar_caldav_last_sync"]))
+            $_SESSION["calendar_caldav_last_sync"] = array();
+
+        $last_sync = $_SESSION["calendar_caldav_last_sync"][$this->cal_id];
+
         if (!$last_sync || (time() - $last_sync) >= $this->sync_period)
         {
-            $_SESSION["calendar_caldav_last_sync"] = time();
+            $_SESSION["calendar_caldav_last_sync"][$this->cal_id] = time();
             $is_synced = $this->ctag == $this->caldav->get_ctag();
 
             caldav_driver::debug_log("Sync check: Calendar \"$this->cal_id\" ".($is_synced ? "is synced." : "needs update!"));
