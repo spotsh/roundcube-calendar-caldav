@@ -33,7 +33,7 @@ require_once(dirname(__FILE__) . '/ical_sync.php');
 
 class ical_driver extends database_driver
 {
-    const OBJ_TYPE_ICAL = "vcal";
+    const OBJ_TYPE_ICAL = "ical";
     const OBJ_TYPE_VEVENT = "vevent";
     const OBJ_TYPE_VTODO = "vtodo";
 
@@ -46,8 +46,9 @@ class ical_driver extends database_driver
 
     private $cal;
     private $rc;
+    private $_calendars = null;
 
-    static private $debug = null;
+    static private $debug = true; // TODO: null;
 
     /**
      * Default constructor
@@ -65,7 +66,7 @@ class ical_driver extends database_driver
 
         // Set debug state
         if (self::$debug === null)
-            self::$debug = $this->rc->config->get('calendar_ical_debug', False);
+            self::$debug = $this->rc->config->get('calendar_ical_debug', false);
 
         $this->_init_sync_clients();
 
@@ -78,7 +79,7 @@ class ical_driver extends database_driver
     static public function debug_log($msg)
     {
         if (self::$debug === true)
-            rcmail::console($msg);
+            rcmail::console(__CLASS__.': '.$msg);
     }
 
     /**
@@ -96,8 +97,8 @@ class ical_driver extends database_driver
         $this->_remove_ical_props($obj_id, $obj_type);
 
         $query = $this->rc->db->query(
-            "INSERT INTO " . $this->db_ical_props . " (obj_id, obj_type, url, tag, user, pass) " .
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO " . $this->db_ical_props . " (obj_id, obj_type, url) " .
+            "VALUES (?, ?, ?)",
             $obj_id,
             $obj_type,
             $props["url"]);
@@ -139,6 +140,42 @@ class ical_driver extends database_driver
             return $prop;
 
         return false;
+    }
+
+    /**
+     * Get a list of available calendars from this source
+     *
+     * @param bool $active Return only active calendars
+     * @param bool $personal Return only personal calendars
+     *
+     * @return array List of calendars
+     */
+    public function list_calendars($active = false, $personal = false)
+    {
+        // Read calendars from database and remove those without iCAL props.
+        $calendars = array();
+        foreach(parent::list_calendars($active, $personal) as $cal)
+        {
+            if($this->_get_ical_props($cal['id'], self::OBJ_TYPE_ICAL) !== false)
+                array_push($calendars, $cal);
+        }
+
+        return $calendars;
+    }
+
+    /**
+     * Initializes calendar sync clients.
+     */
+    private function _init_sync_clients()
+    {
+        foreach($this->list_calendars() as $cal)
+        {
+            $props = $this->_get_ical_props($cal["id"], self::OBJ_TYPE_ICAL);
+            if ($props !== false) {
+                self::debug_log("Initialize sync client for calendar " . $cal["id"]);
+                $this->sync_clients[$cal["id"]] = new ical_sync($cal["id"], $props);
+            }
+        }
     }
 
     /**
@@ -237,27 +274,6 @@ class ical_driver extends database_driver
     }
 
     /**
-     * Initializes calendar sync clients.
-     */
-    private function _init_sync_clients()
-    {
-        if (!empty($this->rc->user->ID)) {
-            $calendar_ids = array();
-            $result = $this->rc->db->query(
-                "SELECT calendar_id AS id FROM " . $this->db_calendars . " " .
-                "WHERE user_id=? ORDER BY name", $this->rc->user->ID);
-
-            while ($result && ($arr = $this->rc->db->fetch_assoc($result))) {
-                $props = $this->_get_ical_props($arr["id"], self::OBJ_TYPE_ICAL);
-                if ($props !== false) {
-                    self::debug_log("Initialize sync client for calendar " . $arr["id"]);
-                    $this->sync_clients[$arr["id"]] = new ical_sync($arr["id"], $props);
-                }
-            }
-        }
-    }
-
-    /**
      * Performs ical updates on given events.
      *
      * @param array ical and event properties to update. See ical_sync::get_updates().
@@ -275,17 +291,14 @@ class ical_driver extends database_driver
             if (isset($update["local_event"])) {
                 // let edit_event() do all the magic
                 if (parent::edit_event($update["remote_event"] + (array)$update["local_event"])) {
+
                     $event_id = $update["local_event"]["id"];
+                    array_push($event_ids, $event_id);
+
+                    $num_updated++;
+
                     self::debug_log("Updated event \"$event_id\".");
 
-                    $props = array(
-                        "url" => $update["url"],
-                        "tag" => $update["etag"]
-                    );
-
-                    $this->_set_ical_props($event_id, self::OBJ_TYPE_VEVENT, $props);
-                    array_push($event_ids, $event_id);
-                    $num_updated++;
                 } else {
                     self::debug_log("Could not perform event update: " . print_r($update, true));
                 }
@@ -293,16 +306,13 @@ class ical_driver extends database_driver
             else {
                 $event_id = parent::new_event($update["remote_event"]);
                 if ($event_id) {
+
+                    array_push($event_ids, $event_id);
+
+                    $num_created++;
+
                     self::debug_log("Created event \"$event_id\".");
 
-                    $props = array(
-                        "url" => $update["url"],
-                        "tag" => $update["etag"]
-                    );
-
-                    $this->_set_ical_props($event_id, self::OBJ_TYPE_VEVENT, $props);
-                    array_push($event_ids, $event_id);
-                    $num_created++;
                 } else {
                     self::debug_log("Could not perform event creation: " . print_r($update, true));
                 }
@@ -346,29 +356,23 @@ class ical_driver extends database_driver
 
         $cal_sync = $this->sync_clients[$cal_id];
         $events = array();
-        $ical_props = array();
 
-        // Ignore recurrence events and read ical props
+        // Ignore recurrence events
         foreach ($this->_load_all_events($cal_id) as $event) {
             if ($event["recurrence_id"] == 0) {
                 array_push($events, $event);
-                array_push($ical_props,
-                    $this->_get_ical_props($event["id"], self::OBJ_TYPE_VEVENT));
             }
         }
 
-        $updates = $cal_sync->get_updates($events, $ical_props);
+        $updates = $cal_sync->get_updates($events);
         if ($updates) {
-            list($updates, $synced_event_ids) = $updates;
             $updated_event_ids = $this->_perform_updates($updates);
 
             // Delete events that are not in sync or updated.
             foreach ($events as $event) {
-                if (array_search($event["id"], $updated_event_ids) === false && // No updated event
-                    array_search($event["id"], $synced_event_ids) === false
-                ) // No in-sync event
+                if (array_search($event["id"], $updated_event_ids) === false)
                 {
-                    // Assume: Event not in sync and not updated, so delete!
+                    // Assume: Event was not updated, so delete!
                     parent::remove_event($event, true);
                     self::debug_log("Remove event \"" . $event["id"] . "\".");
                 }
@@ -395,7 +399,7 @@ class ical_driver extends database_driver
     }
 
 
-    // TODO: Mark this calendar as readonly!
+    // TODO: Mark calendar as readonly!
     public function new_event($event)
     {
         return false;

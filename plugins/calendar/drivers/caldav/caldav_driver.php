@@ -78,7 +78,7 @@ class caldav_driver extends database_driver
     static public function debug_log($msg)
     {
         if(self::$debug === true)
-            rcmail::console($msg);
+            rcmail::console(__CLASS__.': '.$msg);
     }
 
     /**
@@ -148,6 +148,42 @@ class caldav_driver extends database_driver
             return $prop;
 
         return false;
+    }
+
+    /**
+     * Get a list of available calendars from this source
+     *
+     * @param bool $active Return only active calendars
+     * @param bool $personal Return only personal calendars
+     *
+     * @return array List of calendars
+     */
+    public function list_calendars($active = false, $personal = false)
+    {
+        // Read calendars from database and remove those without iCAL props.
+        $calendars = array();
+        foreach(parent::list_calendars($active, $personal) as $cal)
+        {
+            if($this->_get_caldav_props($cal['id'], self::OBJ_TYPE_VCAL) !== false)
+                array_push($calendars, $cal);
+        }
+
+        return $calendars;
+    }
+
+    /**
+     * Initializes calendar sync clients.
+     */
+    private function _init_sync_clients()
+    {
+        foreach($this->list_calendars() as $cal)
+        {
+            $props = $this->_get_caldav_props($cal["id"], self::OBJ_TYPE_VCAL);
+            if($props !== false) {
+                self::debug_log("Initialize sync client for calendar ".$cal["id"]);
+                $this->sync_clients[$cal["id"]] = new caldav_sync($cal["id"], $props);
+            }
+        }
     }
 
     /**
@@ -276,29 +312,6 @@ class caldav_driver extends database_driver
         }
 
         return false;
-    }
-    
-    /**
-     * Initializes calendar sync clients.
-     */
-    private function _init_sync_clients()
-    {
-        if (!empty($this->rc->user->ID))
-        {
-            $calendar_ids = array();
-            $result = $this->rc->db->query(
-                "SELECT calendar_id AS id FROM ".$this->db_calendars." ".
-                "WHERE user_id=? ORDER BY name", $this->rc->user->ID);
-
-            while ($result && ($arr = $this->rc->db->fetch_assoc($result))) 
-            {
-                $props = $this->_get_caldav_props($arr["id"], self::OBJ_TYPE_VCAL);
-                if($props !== false) {
-                    self::debug_log("Initialize sync client for calendar ".$arr["id"]);
-                    $this->sync_clients[$arr["id"]] = new caldav_sync($arr["id"], $props);
-                }
-            }
-        }
     }
 
     /**
