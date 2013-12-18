@@ -31,9 +31,6 @@ class calendar_ui
   private $ready = false;
   public $screen;
 
-  private $_cals = null;
-  private $_cal_driver_map = null;
-
   function __construct($cal)
   {
     $this->cal = $cal;
@@ -65,43 +62,6 @@ class calendar_ui
     $this->cal->include_stylesheet($skin_path . '/calendar.css');
     
     $this->ready = true;
-  }
-
-  /**
-   * Get driver for given calendar id.
-   */
-  private function get_driver($cal_id)
-  {
-    if($this->_cal_driver_map == null)
-      $this->get_calendars();
-
-    if(!isset($this->_cal_driver_map[$cal_id]))
-      rcmail::error("No driver found for calendar \"$cal_id\".", true, true);
-
-    return $this->_cal_driver_map[$cal_id];
-  }
-
-  /**
-   * Helper function to build calendar to driver map and calendar array.
-   */
-  private function get_calendars()
-  {
-    if($this->_cals == null || $this->_cal_driver_map == null)
-    {
-      $this->_cals = array();
-      $this->_cal_driver_map = array();
-
-      $this->cal->load_drivers();
-      foreach($this->cal->get_drivers() as $driver){
-        foreach((array)$driver->list_calendars() as $id => $prop){
-          $prop["driver"] = get_class($driver);
-          $this->_cals[$id] = $prop;
-          $this->_cal_driver_map[$id] = $driver;
-        }
-      }
-    }
-
-    return $this->_cals;
   }
 
   /**
@@ -226,9 +186,9 @@ class calendar_ui
   function calendar_list($attrib = array())
   {
     $li = '';
-    foreach($this->get_calendars() as $id => $prop)
+    foreach($this->cal->get_calendars() as $id => $prop)
     {
-      $driver = $this->get_driver($id);
+      $driver = $this->cal->get_driver_by_cal($id);
 
       if ($attrib['activeonly'] && !$prop['active'])
         continue;
