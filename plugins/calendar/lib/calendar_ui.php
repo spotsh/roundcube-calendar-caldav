@@ -305,14 +305,9 @@ class calendar_ui
     $select = new html_select($attrib);
 
     $driver_fields = "";
-    foreach($this->get_calendars() as $id => $prop) {
+    foreach($this->cal->get_calendars() as $id => $prop) {
       if (!$prop['readonly']) {
         $select->add($prop['name'], $id);
-
-        // TODO: Maybe not the best way to pass calendar drivers to the client ...
-        $driver_fields .= (new html_hiddenfield(
-          array("name" => "cal_".$id,
-                "value" => get_class($this->get_driver($id)))))->show();
       }
     }
 

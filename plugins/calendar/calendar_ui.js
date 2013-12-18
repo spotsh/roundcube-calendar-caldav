@@ -80,15 +80,6 @@ function rcube_calendar_ui(settings)
 
     /***  private methods  ***/
 
-    // Returns driver name for the given calendar id.
-    var get_cal_driver = function(cal_id)
-    {
-      var $input_driver = $("input[name=\"cal_" + cal_id + "\"]");
-      if($input_driver.length > 0) return $input_driver.val();
-
-      return null;
-    };
-
     // same as str.split(delimiter) but it ignores delimiters within quoted strings
     var explode_quoted_string = function(str, delimiter)
     {
@@ -1579,10 +1570,8 @@ function rcube_calendar_ui(settings)
     // post the given event data to server
     var update_event = function(action, data)
     {
-      var driver = get_cal_driver(data.calendar);
-
       me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
-      rcmail.http_post('calendar/event', { action:action, e:data, driver:driver });
+      rcmail.http_post('calendar/event', { action:action, e:data });
       
       // render event temporarily into the calendar
       if ((data.start && data.end) || data.id) {
