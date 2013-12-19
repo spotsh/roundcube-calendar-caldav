@@ -299,7 +299,8 @@ class calendar_ui
     $attrib['name'] = 'categories';
     $select = new html_select($attrib);
     $select->add('---', '');
-    foreach (array_keys((array)$this->cal->driver->list_categories()) as $cat) {
+    // TODO: Categories are taken from kolab driver by default. Use categories from all available drivers.
+    foreach (array_keys((array)$this->cal->get_driver_by_name("kolab")->list_categories()) as $cat) {
       $select->add($cat, $cat);
     }
 
@@ -358,7 +359,9 @@ class calendar_ui
    */
   function alarm_select($attrib = array())
   {
-    return $this->cal->lib->alarm_select($attrib, $this->cal->driver->alarm_types, $this->cal->driver->alarm_absolute);
+    // TODO: Don't know what this does but it seems that it is called very early where no GPC information is available.
+    $driver = $this->cal->get_driver_by_name("kolab");
+    return $this->cal->lib->alarm_select($attrib, $driver->alarm_types, $driver->alarm_absolute);
   }
 
   /**
@@ -669,6 +672,7 @@ class calendar_ui
     // compose default calendar form fields
     $input_name = new html_inputfield(array('name' => 'name', 'id' => 'calendar-name', 'size' => 20));
     $input_color = new html_inputfield(array('name' => 'color', 'id' => 'calendar-color', 'size' => 6));
+    $driver = $this->cal->get_driver_by_gpc();
 
     $formfields = array(
       'name' => array(
@@ -683,7 +687,7 @@ class calendar_ui
       ),
     );
 
-    if ($this->cal->driver->alarms) {
+    if ($driver->alarms) {
       $checkbox = new html_checkbox(array('name' => 'showalarms', 'id' => 'calendar-showalarms', 'value' => 1));
       $formfields['showalarms'] = array(
         'label' => $this->cal->gettext('showalarms'),
@@ -694,7 +698,7 @@ class calendar_ui
 
     // allow driver to extend or replace the form content
     return html::tag('form', array('action' => "#", 'method' => "get", 'id' => 'calendarpropform'),
-      $this->cal->driver->calendar_form($action, $calendar, $formfields)
+      $driver->calendar_form($action, $calendar, $formfields)
     );
   }
 

@@ -62,14 +62,14 @@ class caldav_driver extends database_driver
         $this->db_events = $this->rc->config->get('db_table_events', $db->table_name($this->db_events));
         $this->db_calendars = $this->rc->config->get('db_table_calendars', $db->table_name($this->db_calendars));
         $this->db_attachments = $this->rc->config->get('db_table_attachments', $db->table_name($this->db_attachments));
-
-        parent::__construct($cal);
         
         // Set debug state
         if(self::$debug === null)
             self::$debug = $this->rc->config->get('calendar_caldav_debug', False);
 
         $this->_init_sync_clients();
+
+        parent::__construct($cal);
     }
 
     /**
