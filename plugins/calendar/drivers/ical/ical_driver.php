@@ -64,13 +64,13 @@ class ical_driver extends database_driver
         $this->db_calendars = $this->rc->config->get('db_table_calendars', $db->table_name($this->db_calendars));
         $this->db_attachments = $this->rc->config->get('db_table_attachments', $db->table_name($this->db_attachments));
 
+        parent::__construct($cal);
+
         // Set debug state
         if (self::$debug === null)
             self::$debug = $this->rc->config->get('calendar_ical_debug', false);
 
         $this->_init_sync_clients();
-
-        parent::__construct($cal);
     }
 
     /**
@@ -154,10 +154,10 @@ class ical_driver extends database_driver
     {
         // Read calendars from database and remove those without iCAL props.
         $calendars = array();
-        foreach(parent::list_calendars($active, $personal) as $cal)
+        foreach(parent::list_calendars($active, $personal) as $id => $cal)
         {
-            if($this->_get_ical_props($cal['id'], self::OBJ_TYPE_ICAL) !== false)
-                array_push($calendars, $cal);
+            if($this->_get_ical_props($id, self::OBJ_TYPE_ICAL) !== false)
+                $calendars[$id] = $cal;
         }
 
         return $calendars;
