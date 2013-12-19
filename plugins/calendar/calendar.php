@@ -253,7 +253,7 @@ class calendar extends rcube_plugin
     }
     else
     {
-      rcube::error("Unknown driver requested \"$name\".", true, true);
+      rcube::raise_error("Unknown driver requested \"$name\".", true, true);
       return null;
     }
   }
@@ -264,7 +264,7 @@ class calendar extends rcube_plugin
    *
    * @return mixed Driver object or null if no such driver exists.
    */
-  private function get_driver_by_gpc()
+  public function get_driver_by_gpc()
   {
     $this->load_drivers();
     $driver_name = null;
@@ -285,12 +285,12 @@ class calendar extends rcube_plugin
       }
       else
       {
-        rcube::error("Unknown driver requested \"$driver_name\".", true, true);
+        rcube::raise_error("Unknown driver requested \"$driver_name\".", true, true);
       }
     }
     else
     {
-      rcube::error("No driver name found in GPC.", true, true);
+      rcube::raise_error("No driver name found in GPC.", true, true);
     }
   }
 
@@ -304,8 +304,9 @@ class calendar extends rcube_plugin
     if ($this->_cal_driver_map == null)
       $this->get_calendars();
 
-    if (!isset($this->_cal_driver_map[$cal_id]))
-      rcmail::error("No driver found for calendar \"$cal_id\".", true, true);
+    if (!isset($this->_cal_driver_map[$cal_id])){
+      rcube::raise_error("No driver found for calendar \"$cal_id\".", true, true);
+    }
 
     return $this->_cal_driver_map[$cal_id];
   }
@@ -831,7 +832,7 @@ class calendar extends rcube_plugin
 
     // TODO: Don't know whether this can happen. If yes, we should handle it!
     if(!$driver)
-      rcube::error("No driver found for event \"" . $event['id'] . "\".", true, true);
+      rcube::raise_error("No driver found for event \"" . $event['id'] . "\".", true, true);
     
     // don't notify if modifying a recurring instance (really?)
     if ($event['_savemode'] && $event['_savemode'] != 'all' && $event['_notify'])
