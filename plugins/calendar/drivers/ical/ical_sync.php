@@ -79,9 +79,11 @@ class ical_sync
      * Fetches events from iCAL resource and returns updates.
      *
      * @param array List of local events.
-     * @return array A list of tuples for events to be created or to be updated with the keys:
-     *  local_event: The local event in case of an update, otherwise null.
-     * remote_event: The current event retrieved from the iCAL resource.
+     * @return array Tuple containing the following lists:
+     *
+     * Hash list for iCAL events to be created or to be updated with the keys:
+     *  local_event: The local event in case of an update.
+     * remote_event: The current event retrieved from caldav server.
      *
      * A list of event ids that are in sync.
      */
@@ -89,6 +91,7 @@ class ical_sync
     {
         $vcal = file_get_contents($this->url);
         $updates = array();
+        $synced = array();
         if($vcal !== false)
         {
             // Hash existing events by uid.
@@ -99,11 +102,22 @@ class ical_sync
 
             foreach ($this->ical->import($vcal) as $remote_event) {
 
+                // Attach remote event to current calendar
+                $remote_events["calendar"] = $this->cal_id;
+
                 $local_event = null;
                 if($events_hash[$remote_event['uid']])
                     $local_event = $events_hash[$remote_event['uid']];
 
-                array_push($updates, array('local_event' => $local_event, 'remote_event' => $remote_event));
+                // Determine whether event don't need an update.
+                if($local_event && $local_event["changed"] >= $remote_event["changed"])
+                {
+                    array_push($synced, $local_event["id"]);
+                }
+                else
+                {
+                    array_push($updates, array('local_event' => $local_event, 'remote_event' => $remote_event));
+                }
             }
         }
 

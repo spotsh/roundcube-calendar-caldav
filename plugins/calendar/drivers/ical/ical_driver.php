@@ -365,12 +365,15 @@ class ical_driver extends database_driver
         }
 
         $updates = $cal_sync->get_updates($events);
-        if ($updates) {
+        if($updates)
+        {
+            list($updates, $synced_event_ids) = $updates;
             $updated_event_ids = $this->_perform_updates($updates);
 
             // Delete events that are not in sync or updated.
             foreach ($events as $event) {
-                if (array_search($event["id"], $updated_event_ids) === false)
+                if (array_search($event["id"], $updated_event_ids) === false &&
+                    array_search($event["id"], $synced_event_ids) === false)
                 {
                     // Assume: Event was not updated, so delete!
                     parent::remove_event($event, true);
