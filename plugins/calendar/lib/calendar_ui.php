@@ -653,7 +653,7 @@ class calendar_ui
     foreach($this->cal->get_drivers() as $name => $driver)
     {
       $content .= html::tag('li', null, $this->rc->output->button(
-          array('label' => $this->cal->gettext("calendar.".$name),
+          array('label' => 'calendar.calendar_'.$name,
                 'class' => 'active',
                 'prop' => json_encode(array('driver' => $name)),
                 'command' => 'calendar-create',

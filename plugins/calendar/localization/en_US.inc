@@ -20,6 +20,9 @@ $labels['coloringmode3'] = 'Category for outline, calendar for content';
 
 // calendar
 $labels['calendar'] = 'Calendar';
+$labels['calendar_kolab'] = 'Kolab Calendar';
+$labels['calendar_caldav'] = 'CalDAV Calendar';
+$labels['calendar_ical'] = 'iCAL Calendar';
 $labels['calendars'] = 'Calendars';
 $labels['category'] = 'Category';
 $labels['categories'] = 'Categories';

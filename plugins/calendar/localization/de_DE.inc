@@ -20,6 +20,9 @@ $labels['coloringmode3'] = 'Kategoriefarbe außen, Kalenderfarbe innen';
 
 // calendar
 $labels['calendar'] = 'Kalender';
+$labels['calendar_kolab'] = 'Kolab Kalender';
+$labels['calendar_caldav'] = 'CalDAV Kalender';
+$labels['calendar_ical'] = 'iCAL Kalender';
 $labels['calendars'] = 'Kalender';
 $labels['category'] = 'Kategorie';
 $labels['categories'] = 'Kategorien';
