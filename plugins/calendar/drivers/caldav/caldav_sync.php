@@ -211,14 +211,15 @@ class caldav_sync
             array_push($urls, $update["url"]);
         }
 
-        // Get remote events and attach to the appropriate updates.
-        // Note that this assumes unique event URL's!
         $events = $this->caldav->get_events($urls);
         foreach($updates as &$update)
         {
+            // Attach remote events to the appropriate updates.
+            // Note that this assumes unique event URL's!
             $url = $update["url"];
             if($events[$url]) {
                 $update["remote_event"] = $events[$url];
+                $update["remote_event"]["calendar"] = $this->cal_id;
             }
         }
 
