@@ -46,7 +46,6 @@ class ical_driver extends database_driver
 
     private $cal;
     private $rc;
-    private $_calendars = null;
 
     static private $debug = true; // TODO: null;
 
