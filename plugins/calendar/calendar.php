@@ -580,7 +580,7 @@ class calendar extends rcube_plugin
       $field_id = 'rcmfd_alarm';
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
-      foreach ($this->_get_driver()->alarm_types as $type)
+      foreach ($this->get_driver_by_name("kolab")->alarm_types as $type)
         $select_type->add(rcube_label(strtolower("alarm{$type}option"), 'libcalendaring'), $type);
 
       $p['blocks']['view']['options']['alarmtype'] = array(
