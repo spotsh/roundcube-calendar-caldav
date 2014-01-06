@@ -29,7 +29,7 @@ class kolab_storage_cache
     protected $folder;
     protected $uid2msg;
     protected $objects;
-    protected $index = array();
+    protected $index = null;
     protected $metadata = array();
     protected $folder_id;
     protected $resource_uri;
@@ -58,8 +58,10 @@ class kolab_storage_cache
             rcube::raise_error(array(
                 'code' => 900,
                 'type' => 'php',
-                'message' => "No kolab_storage_cache class found for folder of type " . $storage_folder->type
+                'message' => "No kolab_storage_cache class found for folder '$storage_folder->name' of type '$storage_folder->type'"
             ), true);
+
+            return new kolab_storage_cache($storage_folder);
         }
     }
 
@@ -104,7 +106,7 @@ class kolab_storage_cache
         $this->resource_uri = $this->folder->get_resource_uri();
         $this->folders_table = $this->db->table_name('kolab_folders');
         $this->cache_table = $this->db->table_name('kolab_cache_' . $this->folder->type);
-        $this->ready = $this->enabled;
+        $this->ready = $this->enabled && !empty($this->folder->type);
         $this->folder_id = null;
     }
 
@@ -438,16 +440,12 @@ class kolab_storage_cache
             $filter = $this->_query2assoc($query);
 
             // use 'list' for folder's default objects
-            if ($filter['type'] == $this->type) {
+            if (is_array($this->index) && $filter['type'] == $this->type) {
                 $index = $this->index;
             }
             else {  // search by object type
                 $search = 'UNDELETED HEADER X-Kolab-Type ' . kolab_format::KTYPE_PREFIX . $filter['type'];
                 $index  = $this->imap->search_once($this->folder->name, $search)->get();
-            }
-
-            if ($index->is_error()) {
-                return null;
             }
 
             // fetch all messages in $index from IMAP
