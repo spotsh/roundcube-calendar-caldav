@@ -355,6 +355,7 @@ class kolab_auth extends rcube_plugin
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready) {
             $args['abort'] = true;
+            $args['kolab_ldap_error'] = true;
             $message = sprintf(
                     'Login failure for user %s from %s in session %s (error %s)',
                     $user,
