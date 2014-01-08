@@ -1540,6 +1540,7 @@ function rcube_tasklist_ui(settings)
         }
 
         li.remove();
+        delete listdata[id];
     }
 
     /**
