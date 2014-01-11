@@ -948,7 +948,7 @@ class calendar extends rcube_plugin
         $html = html::div('rsvp-status', $status != 'CANCELLED' ? $this->gettext('acceptinvitation') : '');
         if (is_numeric($event['changed']))
           $event['changed'] = new DateTime('@'.$event['changed']);
-        $this->load_driver();
+
         if ($existing = $driver->get_event($event, true, false, true)) {
           $latest = ($event['sequence'] && $existing['sequence'] == $event['sequence']) || (!$event['sequence'] && $existing['changed'] && $existing['changed'] >= $event['changed']);
           $emails = $this->get_user_emails();
