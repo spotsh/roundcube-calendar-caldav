@@ -2193,7 +2193,9 @@ class calendar extends rcube_plugin
     if (!empty($events) && ($event = $events[$index])) {
       // find writeable calendar to store event
       $cal_id = !empty($_REQUEST['_calendar']) ? get_input_value('_calendar', RCUBE_INPUT_POST) : null;
-      $driver = $this->get_driver_by_cal($cal_id);
+      if($cal_id) $driver = $this->get_driver_by_cal($cal_id);
+      // TODO: Fallback for import events via mail. This might be changed to a pre-configured default driver!
+      else $driver = $this->get_driver_by_name("kolab");
       $calendars = $driver->list_calendars(false, true);
       $calendar = $calendars[$cal_id] ?: $this->get_default_calendar(true);
 
