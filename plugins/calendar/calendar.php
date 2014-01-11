@@ -830,9 +830,10 @@ class calendar extends rcube_plugin
     if($event['calendar'])
       $driver = $this->get_driver_by_cal($event['calendar']);
 
-    // TODO: Don't know whether this can happen. If yes, we should handle it!
+    // This can happen if creating a new event outside the calendar e.g. from an ical file attached to an email.
+    // TODO: Fallback to hard-coded kolab driver! Ask for appropriate calendar or use a configured default driver?
     if(!$driver)
-      rcube::raise_error("No driver found for event \"" . $event['id'] . "\".", true, true);
+        $driver = $this->get_driver_by_name("kolab");
     
     // don't notify if modifying a recurring instance (really?)
     if ($event['_savemode'] && $event['_savemode'] != 'all' && $event['_notify'])
