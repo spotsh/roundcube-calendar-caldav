@@ -121,7 +121,7 @@ class ical_sync
             }
         }
 
-        return $updates;
+        return array($updates, $synced);
     }
 }
 
