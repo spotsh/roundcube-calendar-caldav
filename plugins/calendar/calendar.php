@@ -369,6 +369,7 @@ class calendar extends rcube_plugin
   public function get_default_calendar($writeable = false)
   {
     $default_id = $this->rc->config->get('calendar_default_calendar');
+    $first = null;
 
     foreach($this->get_drivers() as $driver){
       $calendars = $driver->list_calendars(false, true);
@@ -376,10 +377,9 @@ class calendar extends rcube_plugin
       if (!$calendar || ($writeable && $calendar['readonly'])) {
         foreach ($calendars as $cal) {
           if ($cal['default']) {
-            $calendar = $cal;
-            break;
+            return $cal;
           }
-          if (!$writeable || !$cal['readonly']) {
+          if (!$first && (!$writeable || !$cal['readonly'])) {
             $first = $cal;
           }
         }
