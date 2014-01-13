@@ -2193,11 +2193,19 @@ class calendar extends rcube_plugin
     if (!empty($events) && ($event = $events[$index])) {
       // find writeable calendar to store event
       $cal_id = !empty($_REQUEST['_calendar']) ? get_input_value('_calendar', RCUBE_INPUT_POST) : null;
-      if($cal_id) $driver = $this->get_driver_by_cal($cal_id);
-      // TODO: Fallback for import events via mail. This might be changed to a pre-configured default driver!
-      else $driver = $this->get_driver_by_name("kolab");
-      $calendars = $driver->list_calendars(false, true);
-      $calendar = $calendars[$cal_id] ?: $this->get_default_calendar(true);
+      $calendar = null;
+
+      if(!$cal_id) {
+        $calendar = $this->get_default_calendar(true);
+        $cal_id = $calendar['id'];
+      }
+
+      $driver = $this->get_driver_by_cal($cal_id);
+
+      if(!$calendar) {
+        $calendars = $driver->list_calendars(false, true);
+        $calendar = $calendars[$cal_id] ?: $this->get_default_calendar(true);
+      }
 
       // update my attendee status according to submitted method
       if (!empty($status)) {
@@ -2220,7 +2228,6 @@ class calendar extends rcube_plugin
         
         // check for existing event with the same UID
         $existing = $driver->get_event($event['uid'], true, false, true);
-        
         if ($existing) {
           // only update attendee status
           if ($this->ical->method == 'REPLY') {
