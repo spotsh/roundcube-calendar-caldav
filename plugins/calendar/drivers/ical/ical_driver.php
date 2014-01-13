@@ -155,6 +155,9 @@ class ical_driver extends database_driver
         $calendars = array();
         foreach(parent::list_calendars($active, $personal) as $id => $cal)
         {
+            // iCal calendars are readonly!
+            $cal["readonly"] = true;
+
             if($this->_get_ical_props($id, self::OBJ_TYPE_ICAL) !== false)
                 $calendars[$id] = $cal;
         }
