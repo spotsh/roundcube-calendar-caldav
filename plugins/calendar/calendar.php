@@ -1700,9 +1700,16 @@ class calendar extends rcube_plugin
   {
     $fblist = array();
     foreach($this->get_drivers() as $driver){
-      $fblist = array_merge($fblist, $driver->driver->get_freebusy_list($email, $start, $end));
+      if($driver->freebusy) {
+        $cur = $driver->get_freebusy_list($email, $start, $end);
+        if($cur) {
+          $fblist = array_merge($fblist, $cur);
+        }
+      }
     }
-    return;
+
+    if(sizeof($fblist) == 0) return false;
+    else return $fblist;
   }
 
   /**
