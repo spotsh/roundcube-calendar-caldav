@@ -118,7 +118,7 @@ class kolab_date_recurrence
         }
 
         // determine a reasonable end date if none given
-        if (!$event['recurrence']['COUNT']) {
+        if (!$event['recurrence']['COUNT'] && $event['start'] instanceof DateTime) {
           switch ($event['recurrence']['FREQ']) {
             case 'YEARLY':  $intvl = 'P100Y'; break;
             case 'MONTHLY': $intvl = 'P20Y';  break;
