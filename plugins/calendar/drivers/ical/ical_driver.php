@@ -47,7 +47,14 @@ class ical_driver extends database_driver
     private $cal;
     private $rc;
 
-    static private $debug = true; // TODO: null;
+    static private $debug = null;
+
+    // features this backend supports
+    public $alarms = true;
+    public $attendees = true;
+    public $freebusy = false;
+    public $attachments = true;
+    public $alarm_types = array('DISPLAY');
 
     /**
      * Default constructor
