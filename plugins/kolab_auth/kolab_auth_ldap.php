@@ -329,9 +329,12 @@ class kolab_auth_ldap extends rcube_ldap_generic
 
         // fields mapping
         foreach ($this->fieldmap as $field => $attr) {
-            if (isset($entry[$attr])) {
-                $entry[$field] = $entry[$attr];
+            // $entry is indexed by lower-case attribute names
+            $attr_lc = strtolower($attr);
+            if (isset($entry[$attr_lc])) {
+                $entry[$field] = $entry[$attr_lc];
             }
+            // @TODO: consider returning also $entry[$attr] when $attr != $attr_lc
         }
 
         return $entry;
