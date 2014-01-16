@@ -31,6 +31,7 @@
 class kolab_auth extends rcube_plugin
 {
     static $ldap;
+    private $username;
     private $data = array();
 
     public function init()
@@ -54,10 +55,13 @@ class kolab_auth extends rcube_plugin
         // Hook to modify some configuration, e.g. ldap
         $this->add_hook('config_get', array($this, 'config_get'));
 
+        // Hook to modify logging directory
         $this->add_hook('write_log', array($this, 'write_log'));
+        $this->username = $_SESSION['username'];
 
-        // TODO: This section does not actually seem to work
-        if ($rcmail->config->get('kolab_auth_auditlog', false)) {
+        // Enable debug logs per-user, this enables logging only after
+        // user has logged in
+        if (!empty($_SESSION['username']) && $rcmail->config->get('kolab_auth_auditlog')) {
             $rcmail->config->set('debug_level', 1);
             $rcmail->config->set('devel_mode', true);
             $rcmail->config->set('smtp_log', true);
@@ -231,42 +235,26 @@ class kolab_auth extends rcube_plugin
             return $args;
         }
 
-        $args['abort'] = true;
+        // log_driver == 'file' is assumed here
+        $log_dir  = $rcmail->config->get('log_dir', RCUBE_INSTALL_PATH . 'logs');
 
-        if ($rcmail->config->get('log_driver') == 'syslog') {
-            $prio = $args['name'] == 'errors' ? LOG_ERR : LOG_INFO;
-            syslog($prio, $args['line']);
-            return $args;
+        // Append original username + target username for audit-logging
+        if ($rcmail->config->get('kolab_auth_auditlog') && !empty($_SESSION['kolab_auth_admin'])) {
+            $args['dir'] = $log_dir . '/' . strtolower($_SESSION['kolab_auth_admin']) . '/' . strtolower($this->username);
+
+            // Attempt to create the directory
+            if (!is_dir($args['dir'])) {
+                @mkdir($args['dir'], 0750, true);
+            }
         }
-        else {
-            $line = sprintf("[%s]: %s\n", $args['date'], $args['line']);
-
-            // log_driver == 'file' is assumed here
-            $log_dir  = $rcmail->config->get('log_dir', INSTALL_PATH . 'logs');
-            $log_path = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
-
-            // Append original username + target username
-            if (!is_dir($log_path)) {
-                // Attempt to create the directory
-                if (@mkdir($log_path, 0750, true)) {
-                    $log_dir = $log_path;
-                }
+        // Define the user log directory if a username is provided
+        else if ($rcmail->config->get('per_user_logging') && !empty($this->username)) {
+            $user_log_dir = $log_dir . '/' . strtolower($this->username);
+            if (is_writable($user_log_dir)) {
+                $args['dir'] = $user_log_dir;
             }
-            else {
-                $log_dir = $log_path;
-            }
-
-            // try to open specific log file for writing
-            $logfile = $log_dir.'/'.$args['name'];
-
-            if ($fp = fopen($logfile, 'a')) {
-                fwrite($fp, $line);
-                fflush($fp);
-                fclose($fp);
-                return $args;
-            }
-            else {
-                trigger_error("Error writing to log file $logfile; Please check permissions", E_USER_WARNING);
+            else if ($args['name'] != 'errors') {
+                $args['abort'] = true;  // don't log if unauthenticed
             }
         }
 
@@ -351,6 +339,9 @@ class kolab_auth extends rcube_plugin
             $args['abort'] = true;
             return $args;
         }
+
+        // temporarily set the current username to the one submitted
+        $this->username = $user;
 
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready) {
@@ -482,7 +473,7 @@ class kolab_auth extends rcube_plugin
                 return $args;
             }
 
-            $args['user'] = $loginas;
+            $args['user'] = $this->username = $loginas;
 
             // Mark session to use SASL proxy for IMAP authentication
             $_SESSION['kolab_auth_admin']    = strtolower($origname);
@@ -505,7 +496,7 @@ class kolab_auth extends rcube_plugin
             $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
         }
         if ($this->data['user_login']) {
-            $args['user'] = $this->data['user_login'];
+            $args['user'] = $this->username = $this->data['user_login'];
         }
 
         // User name for identity (first log in)
