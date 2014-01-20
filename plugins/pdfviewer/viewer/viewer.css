@@ -20,6 +20,8 @@
 
 html {
   height: 100%;
+  /* Font size is needed to make the activity bar the correct size. */
+  font-size: 10px;
 }
 
 body {
@@ -45,8 +47,7 @@ select {
 #viewerContainer:-webkit-full-screen {
   top: 0px;
   border-top: 2px solid transparent;
-  background-color: #404040;
-  background-image: url(images/texture.png);
+  background-color: #000;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -56,8 +57,7 @@ select {
 #viewerContainer:-moz-full-screen {
   top: 0px;
   border-top: 2px solid transparent;
-  background-color: #404040;
-  background-image: url(images/texture.png);
+  background-color: #000;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -74,15 +74,13 @@ select {
 }
 
 #viewerContainer:-ms-fullscreen::-ms-backdrop {
-  background-color: #404040;
-  background-image: url(images/texture.png);
+  background-color: #000;
 }
 
 #viewerContainer:fullscreen {
   top: 0px;
   border-top: 2px solid transparent;
-  background-color: #404040;
-  background-image: url(images/texture.png);
+  background-color: #000;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -167,6 +165,7 @@ html[dir='rtl'] .innerCenter {
 #outerContainer {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 #sidebarContainer {
@@ -400,6 +399,7 @@ html[dir='rtl'] .secondaryToolbar {
   max-width: 200px;
   max-height: 400px;
   overflow-y: auto;
+  margin-bottom: -4px;
 }
 
 .doorHanger,
@@ -894,20 +894,25 @@ html[dir="rtl"] .secondaryToolbarButton.print::before {
   content: url(images/toolbarButton-download.png);
 }
 
-.toolbarButton.bookmark {
+.toolbarButton.bookmark,
+.secondaryToolbarButton.bookmark {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  margin-top: 3px;
   padding-top: 4px;
+  text-decoration: none;
+}
+.secondaryToolbarButton.bookmark {
+  padding-top: 5px;
 }
 
-#viewBookmark[href='#'] {
+.bookmark[href='#'] {
   opacity: .5;
   pointer-events: none;
 }
 
-.toolbarButton.bookmark::before {
+.toolbarButton.bookmark::before,
+.secondaryToolbarButton.bookmark::before {
   content: url(images/toolbarButton-bookmark.png);
 }
 
@@ -944,9 +949,11 @@ html[dir="rtl"] .secondaryToolbarButton {
   padding-right: 24px;
   text-align: right;
 }
-
-#secondaryToolbarButtonContainer :last-child {
-  margin-bottom: 0;
+html[dir="ltr"] .secondaryToolbarButton.bookmark {
+  padding-left: 27px;
+}
+html[dir="rtl"] .secondaryToolbarButton.bookmark {
+  padding-right: 27px;
 }
 
 html[dir="ltr"] .secondaryToolbarButton > span {
@@ -970,6 +977,10 @@ html[dir="rtl"] .secondaryToolbarButton > span {
 
 .secondaryToolbarButton.rotateCw::before {
   content: url(images/secondaryToolbarButton-rotateCw.png);
+}
+
+.secondaryToolbarButton.handTool::before {
+  content: url(images/secondaryToolbarButton-handTool.png);
 }
 
 .verticalToolbarSeparator {
@@ -1023,6 +1034,7 @@ html[dir='rtl'] .verticalToolbarSeparator {
 }
 
 .toolbarField.pageNumber {
+  -moz-appearance: textfield; /* hides the spinner in moz */
   min-width: 16px;
   text-align: right;
   width: 40px;
@@ -1070,6 +1082,11 @@ html[dir='rtl'] .verticalToolbarSeparator {
 
 .thumbnail {
   float: left;
+  margin-bottom: 5px;
+}
+
+#thumbnailView > a:last-of-type > .thumbnail {
+  margin-bottom: 10px;
 }
 
 .thumbnail:not([data-loaded]) {
@@ -1188,22 +1205,6 @@ html[dir='rtl'] .outlineItem > a {
   color: hsla(0,0%,100%,.8);
   font-style: italic;
   cursor: default;
-}
-
-#findScrollView {
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 10px;
-  width: 280px;
-}
-
-#sidebarControls {
-  position:absolute;
-  width: 180px;
-  height: 32px;
-  left: 15px;
-  bottom: 35px;
 }
 
 .canvasWrapper {
@@ -1417,6 +1418,10 @@ canvas {
   background: white;
   color: black;
   margin-top: 5px;
+  visibility: hidden;
+  position: fixed;
+  right: 0;
+  top: 0;
 }
 
 #PDFBug {
@@ -1476,6 +1481,32 @@ canvas {
 #viewer.textLayer-shadow .textLayer > div {
   background-color: rgba(255,255,255, .6);
   color: black;
+}
+
+.grab-to-pan-grab * {
+  cursor: url("images/grab.cur"), move !important;
+  cursor: -webkit-grab !important;
+  cursor: -moz-grab !important;
+  cursor: grab !important;
+}
+.grab-to-pan-grabbing,
+.grab-to-pan-grabbing * {
+  cursor: url("images/grabbing.cur"), move !important;
+  cursor: -webkit-grabbing !important;
+  cursor: -moz-grabbing !important;
+  cursor: grabbing !important;
+}
+.grab-to-pan-grab input,
+.grab-to-pan-grab textarea,
+.grab-to-pan-grab button,
+.grab-to-pan-grab button *,
+.grab-to-pan-grab select,
+.grab-to-pan-grab option {
+  cursor: auto !important;
+}
+.grab-to-pan-grab a[href],
+.grab-to-pan-grab a[href] * {
+  cursor: pointer !important;
 }
 
 @page {

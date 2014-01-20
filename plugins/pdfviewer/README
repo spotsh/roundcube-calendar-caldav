@@ -44,6 +44,9 @@ or the YUI Compressor [2].
 $ <roundcubedir>/bin/jsshrink.sh viewer/pdf.js ECMASCRIPT5
 $ <roundcubedir>/bin/jsshrink.sh viewer/viewer.js ECMASCRIPT5
 
+This will create minimized versions in viewer/*.min.js which are
+linked by the viewer.html template.
+
 [1] http://closure-compiler.googlecode.com/
 [2] http://developer.yahoo.com/yui/compressor/
 

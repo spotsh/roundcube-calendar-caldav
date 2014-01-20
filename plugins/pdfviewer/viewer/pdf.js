@@ -1,166 +1,7610 @@
-"undefined"===typeof PDFJS&&(("undefined"!==typeof window?window:this).PDFJS={});PDFJS.version="0.8.573";PDFJS.build="e97e003";
-(function(){var D,V;function S(b){ba>=na&&(J("Info: "+b),PDFJS.LogManager.notify("info",b))}function F(b){ba>=ca&&(J("Warning: "+b),PDFJS.LogManager.notify("warn",b))}function m(b){if(1<arguments.length){var a=["Error:"];a.push.apply(a,arguments);J.apply(null,a);b=[].join.call(arguments," ")}else J("Error: "+b);var a=J,c;try{throw Error();}catch(e){c=e.stack?e.stack.split("\n").slice(2).join("\n"):""}a(c);PDFJS.LogManager.notify("error",b);throw Error(b);}function K(b){F("TODO: "+b)}function oa(b,
-a){if(!a)return b;if(0<=a.indexOf(":"))return a;if("/"==a.charAt(0)){var c=b.indexOf("://"),c=b.indexOf("/",c+3);return b.substring(0,c)+a}var e=b.length,c=b.lastIndexOf("#"),e=0<=c?c:e,c=b.lastIndexOf("?",e),c=b.lastIndexOf("/",0<=c?c:e);return b.substring(0,c+1)+a}function Y(b,a){if(!b)return!1;var c=b.indexOf(":");if(0>c)return a;switch(b.substr(0,c)){case "http":case "https":case "ftp":case "mailto":return!0;default:return!1}}function W(b,a,c){Object.defineProperty(b,a,{value:c,enumerable:!0,
-configurable:!0,writable:!1});return c}function T(b){var a,c=b.length,e="";if("\u00fe"===b[0]&&"\u00ff"===b[1])for(a=2;a<c;a+=2)e+=String.fromCharCode(b.charCodeAt(a)<<8|b.charCodeAt(a+1));else for(a=0;a<c;++a)var d=pa[b.charCodeAt(a)],e=e+(d?String.fromCharCode(d):b.charAt(a));return e}function L(b){return"boolean"==typeof b}function M(b){return b instanceof Name}function O(b,a){if(!(b instanceof Dict))return!1;if(!a)return!0;var c=b.get("Type");return M(c)&&c.name==a}function B(b){return b instanceof
-Array}function X(b){return"object"==typeof b&&null!==b&&void 0!==b&&"getBytes"in b}function da(b){if("object"!=typeof b)return!1;if(!O(b))if(X(b))b=b.dict;else return!1;return b.has("FunctionType")}function Z(b,a){this.name=b;this.comObj=a;this.callbackIndex=1;var c=this.callbacks={},e=this.actionHandler={};e.console_log=[function(a){J.apply(null,a)}];e.console_error="console"in v?[function(a){v.console.error.apply(null,a)}]:[function(a){J.apply(null,a)}];e._warn=[function(a){F(a)}];a.onmessage=function(d){var b=
-d.data;if(b.isReply)if(d=b.callbackId,b.callbackId in c){var f=c[d];delete c[d];f(b.data)}else m("Cannot resolve callback "+d);else b.action in e?(d=e[b.action],b.callbackId?(f=new x,f.then(function(c){a.postMessage({isReply:!0,callbackId:b.callbackId,data:c})}),d[0].call(d[1],b.data,f)):d[0].call(d[1],b.data)):m("Unkown action from worker: "+b.action)}}function qa(b,a,c){var e=new Image;e.onload=function(){c.resolve(b,e)};e.src="data:image/jpeg;base64,"+window.btoa(a)}function ea(b,a){var c=document.createElement("canvas");
-c.width=b;c.height=a;return c}function fa(b){b.mozCurrentTransform||(b._scaleX=b._scaleX||1,b._scaleY=b._scaleY||1,b._originalSave=b.save,b._originalRestore=b.restore,b._originalRotate=b.rotate,b._originalScale=b.scale,b._originalTranslate=b.translate,b._originalTransform=b.transform,b._originalSetTransform=b.setTransform,b._transformMatrix=[b._scaleX,0,0,b._scaleY,0,0],b._transformStack=[],Object.defineProperty(b,"mozCurrentTransform",{get:function(){return this._transformMatrix}}),Object.defineProperty(b,
-"mozCurrentTransformInverse",{get:function(){var a=this._transformMatrix,c=a[0],e=a[1],d=a[2],b=a[3],f=a[4],a=a[5],k=c*b-e*d,h=e*d-c*b;return[b/k,e/h,d/h,c/k,(b*f-d*a)/h,(e*f-c*a)/k]}}),b.save=function(){var a=this._transformMatrix;this._transformStack.push(a);this._transformMatrix=a.slice(0,6);this._originalSave()},b.restore=function(){var a=this._transformStack.pop();a&&(this._transformMatrix=a,this._originalRestore())},b.translate=function(a,c){var e=this._transformMatrix;e[4]=e[0]*a+e[2]*c+e[4];
-e[5]=e[1]*a+e[3]*c+e[5];this._originalTranslate(a,c)},b.scale=function(a,c){var e=this._transformMatrix;e[0]*=a;e[1]*=a;e[2]*=c;e[3]*=c;this._originalScale(a,c)},b.transform=function(a,c,e,d,g,f){var k=this._transformMatrix;this._transformMatrix=[k[0]*a+k[2]*c,k[1]*a+k[3]*c,k[0]*e+k[2]*d,k[1]*e+k[3]*d,k[0]*g+k[2]*f+k[4],k[1]*g+k[3]*f+k[5]];b._originalTransform(a,c,e,d,g,f)},b.setTransform=function(a,c,e,d,g,f){this._transformMatrix=[a,c,e,d,g,f];b._originalSetTransform(a,c,e,d,g,f)},b.rotate=function(a){var c=
-Math.cos(a),e=Math.sin(a),d=this._transformMatrix;this._transformMatrix=[d[0]*c+d[2]*e,d[1]*c+d[3]*e,d[0]*-e+d[2]*c,d[1]*-e+d[3]*c,d[4],d[5]];this._originalRotate(a)})}function ra(b){var a=b.width,c=b.height,e,d,g=a+1,f=new Uint8Array(g*(c+1)),k=new Uint8Array([0,2,4,0,1,0,5,4,8,10,0,8,0,2,1,0]),h=3,l=b.data,n=4*a,t=0;0!==l[3]&&(f[0]=1,++t);for(e=1;e<a;e++)l[h]!==l[h+4]&&(f[e]=l[h]?2:1,++t),h+=4;0!==l[h]&&(f[e]=2,++t);h+=4;for(b=1;b<c;b++){d=b*g;l[h-n]!==l[h]&&(f[d]=l[h]?1:8,++t);var y=(l[h]?4:0)+
-(l[h-n]?8:0);for(e=1;e<a;e++)y=(y>>2)+(l[h+4]?4:0)+(l[h-n+4]?8:0),k[y]&&(f[d+e]=k[y],++t),h+=4;l[h-n]!==l[h]&&(f[d+e]=l[h]?2:4,++t);h+=4;if(1E3<t)return null}h-=n;d=b*g;0!==l[h]&&(f[d]=8,++t);for(e=1;e<a;e++)l[h]!==l[h+4]&&(f[d+e]=l[h]?4:8,++t),h+=4;0!==l[h]&&(f[d+e]=4,++t);if(1E3<t)return null;var k=new Int32Array([0,g,-1,0,-g,0,0,0,1]),q=[];for(b=0;t&&b<=c;b++){h=b*g;for(e=h+a;h<e&&!f[h];)h++;if(h!==e){e=[h%g,b];d=f[h];l=h;do{n=k[d];do h+=n;while(!f[h]);n=f[h];5!==n&&10!==n?(d=n,f[h]=0):(d=n&51*
-d>>4,f[h]&=d>>2|d<<2);e.push(h%g);e.push(h/g|0);--t}while(l!==h);q.push(e);--b}}return function(f){f.save();f.scale(1/a,-1/c);f.translate(0,-c);f.beginPath();for(var d=0,e=q.length;d<e;d++){var b=q[d];f.moveTo(b[0],b[1]);for(var k=2,h=b.length;k<h;k+=2)f.lineTo(b[k],b[k+1])}f.fill();f.beginPath();f.restore()}}var v="undefined"===typeof window?this:window,U="undefined"==typeof window,ca=1,na=5,ba=ca,$=[0.0010,0,0,0.0010,0,0];V=0;v.PDFJS||(v.PDFJS={});v.PDFJS.pdfBug=!1;var J=function(){return"console"in
-v&&"log"in v.console?v.console.log.bind(v.console):function(){}}();PDFJS.isValidUrl=Y;PDFJS.LogManager=function(){var b=[];return{addLogger:function(a){b.push(a)},notify:function(a,c){for(var e=0,d=b.length;e<d;e++){var g=b[e];if(g[a])g[a](c)}}}}();var ga=PDFJS.PasswordResponses={NEED_PASSWORD:1,INCORRECT_PASSWORD:2};(function(){function b(a,c){this.name="PasswordException";this.message=a;this.code=c}b.prototype=Error();return b.constructor=b})();(function(){function b(a,c){this.name="UnknownErrorException";
-this.message=a;this.details=c}b.prototype=Error();return b.constructor=b})();(function(){function b(a){this.name="InvalidPDFException";this.message=a}b.prototype=Error();return b.constructor=b})();(function(){function b(a){this.name="MissingPDFException";this.message=a}b.prototype=Error();return b.constructor=b})();var sa=function(){function b(a){this.message=a}b.prototype=Error();b.prototype.name="NotImplementedException";return b.constructor=b}();(function(){function b(a,c){this.begin=a;this.end=
-c;this.message="Missing data [begin, end)"}b.prototype=Error();b.prototype.name="MissingDataException";return b.constructor=b})();(function(){function b(a){this.message=a}b.prototype=Error();b.prototype.name="XRefParseException";return b.constructor=b})();var ha=[1,0,0,1,0,0],s=PDFJS.Util=function(){function b(){}b.makeCssRgb=function(a){return"rgb("+a[0]+","+a[1]+","+a[2]+")"};b.makeCssCmyk=function(a){a=p.singletons.cmyk.getRgb(a,0);return b.makeCssRgb(a)};b.transform=function(a,c){return[a[0]*
-c[0]+a[2]*c[1],a[1]*c[0]+a[3]*c[1],a[0]*c[2]+a[2]*c[3],a[1]*c[2]+a[3]*c[3],a[0]*c[4]+a[2]*c[5]+a[4],a[1]*c[4]+a[3]*c[5]+a[5]]};b.applyTransform=function(a,c){return[a[0]*c[0]+a[1]*c[2]+c[4],a[0]*c[1]+a[1]*c[3]+c[5]]};b.applyInverseTransform=function(a,c){var e=c[0]*c[3]-c[1]*c[2];return[(a[0]*c[3]-a[1]*c[2]+c[2]*c[5]-c[4]*c[3])/e,(-a[0]*c[1]+a[1]*c[0]+c[4]*c[1]-c[5]*c[0])/e]};b.getAxialAlignedBoundingBox=function(a,c){var e=b.applyTransform(a,c),d=b.applyTransform(a.slice(2,4),c),g=b.applyTransform([a[0],
-a[3]],c),f=b.applyTransform([a[2],a[1]],c);return[Math.min(e[0],d[0],g[0],f[0]),Math.min(e[1],d[1],g[1],f[1]),Math.max(e[0],d[0],g[0],f[0]),Math.max(e[1],d[1],g[1],f[1])]};b.inverseTransform=function(a){var c=a[0]*a[3]-a[1]*a[2];return[a[3]/c,-a[1]/c,-a[2]/c,a[0]/c,(a[2]*a[5]-a[4]*a[3])/c,(a[4]*a[1]-a[5]*a[0])/c]};b.apply3dTransform=function(a,c){return[a[0]*c[0]+a[1]*c[1]+a[2]*c[2],a[3]*c[0]+a[4]*c[1]+a[5]*c[2],a[6]*c[0]+a[7]*c[1]+a[8]*c[2]]};b.singularValueDecompose2dScale=function(a){var c=[a[0],
-a[2],a[1],a[3]],e=a[0]*c[0]+a[1]*c[2],d=a[2]*c[1]+a[3]*c[3],b=(e+d)/2;a=Math.sqrt((e+d)*(e+d)-4*(e*d-(a[2]*c[0]+a[3]*c[2])*(a[0]*c[1]+a[1]*c[3])))/2;c=b-a||1;return[Math.sqrt(b+a||1),Math.sqrt(c)]};b.normalizeRect=function(a){var c=a.slice(0);a[0]>a[2]&&(c[0]=a[2],c[2]=a[0]);a[1]>a[3]&&(c[1]=a[3],c[3]=a[1]);return c};b.intersect=function(a,c){function e(a,c){return a-c}var d=[a[0],a[2],c[0],c[2]].sort(e),g=[a[1],a[3],c[1],c[3]].sort(e),f=[];a=b.normalizeRect(a);c=b.normalizeRect(c);if(d[0]===a[0]&&
-d[1]===c[0]||d[0]===c[0]&&d[1]===a[0])f[0]=d[1],f[2]=d[2];else return!1;if(g[0]===a[1]&&g[1]===c[1]||g[0]===c[1]&&g[1]===a[1])f[1]=g[1],f[3]=g[2];else return!1;return f};b.sign=function(a){return 0>a?-1:1};b.concatenateToArray=function(a,c){Array.prototype.push.apply(a,c)};b.prependToArray=function(a,c){Array.prototype.unshift.apply(a,c)};b.extendObj=function(a,c){for(var e in c)a[e]=c[e]};b.getInheritableProperty=function(a,c){for(;a&&!a.has(c);)a=a.get("Parent");return a?a.get(c):null};b.inherit=
-function(a,c,e){a.prototype=Object.create(c.prototype);a.prototype.constructor=a;for(var d in e)a.prototype[d]=e[d]};b.loadScript=function(a,c){var e=document.createElement("script"),d=!1;e.setAttribute("src",a);c&&(e.onload=function(){d||c();d=!0});document.getElementsByTagName("head")[0].appendChild(e)};return b}();PDFJS.PageViewport=function(){function b(a,c,e,d,b,f){this.viewBox=a;this.scale=c;this.rotation=e;this.offsetX=d;this.offsetY=b;var k=(a[2]+a[0])/2,h=(a[3]+a[1])/2,l,n,t;e%=360;switch(0>
-e?e+360:e){case 180:e=-1;n=l=0;t=1;break;case 90:e=0;n=l=1;t=0;break;case 270:e=0;n=l=-1;t=0;break;default:e=1,n=l=0,t=-1}f&&(n=-n,t=-t);0===e?(d=Math.abs(h-a[1])*c+d,b=Math.abs(k-a[0])*c+b,f=Math.abs(a[3]-a[1])*c,a=Math.abs(a[2]-a[0])*c):(d=Math.abs(k-a[0])*c+d,b=Math.abs(h-a[1])*c+b,f=Math.abs(a[2]-a[0])*c,a=Math.abs(a[3]-a[1])*c);this.transform=[e*c,l*c,n*c,t*c,d-e*c*k-n*c*h,b-l*c*k-t*c*h];this.width=f;this.height=a;this.fontScale=c}b.prototype={clone:function(a){a=a||{};var c="scale"in a?a.scale:
-this.scale,e="rotation"in a?a.rotation:this.rotation;return new b(this.viewBox.slice(),c,e,this.offsetX,this.offsetY,a.dontFlip)},convertToViewportPoint:function(a,c){return s.applyTransform([a,c],this.transform)},convertToViewportRectangle:function(a){var c=s.applyTransform([a[0],a[1]],this.transform);a=s.applyTransform([a[2],a[3]],this.transform);return[c[0],c[1],a[0],a[1]]},convertToPdfPoint:function(a,c){return s.applyInverseTransform([a,c],this.transform)}};return b}();var pa=[0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,728,711,710,729,733,731,730,732,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8226,8224,8225,8230,8212,8211,402,8260,8249,8250,8722,8240,8222,8220,8221,8216,8217,8218,8482,64257,64258,321,338,352,376,381,305,322,339,353,382,0,8364],x=PDFJS.Promise=function(){function b(){this._status=a;this._handlers=[]}var a=0,c=2,e={handlers:[],
-running:!1,unhandledRejections:[],pendingRejectionCheck:!1,scheduleHandlers:function(c){c._status!=a&&(this.handlers=this.handlers.concat(c._handlers),c._handlers=[],this.running||(this.running=!0,setTimeout(this.runHandlers.bind(this),0)))},runHandlers:function(){for(;0<this.handlers.length;){var a=this.handlers.shift(),e=a.thisPromise._status,f=a.thisPromise._value;try{1===e?"function"==typeof a.onResolve&&(f=a.onResolve(f)):"function"===typeof a.onReject&&(f=a.onReject(f),e=1,a.thisPromise._unhandledRejection&&
-this.removeUnhandeledRejection(a.thisPromise))}catch(b){e=c,f=b}a.nextPromise._updateStatus(e,f)}this.running=!1},addUnhandledRejection:function(a){this.unhandledRejections.push({promise:a,time:Date.now()});this.scheduleRejectionCheck()},removeUnhandeledRejection:function(a){a._unhandledRejection=!1;for(var c=0;c<this.unhandledRejections.length;c++)this.unhandledRejections[c].promise===a&&(this.unhandledRejections.splice(c),c--)},scheduleRejectionCheck:function(){this.pendingRejectionCheck||(this.pendingRejectionCheck=
-!0,setTimeout(function(){this.pendingRejectionCheck=!1;for(var a=Date.now(),c=0;c<this.unhandledRejections.length;c++)if(500<a-this.unhandledRejections[c].time){var f=this.unhandledRejections[c].promise._value,e="Unhandled rejection: "+f;f.stack&&(e+="\n"+f.stack);F(e);this.unhandledRejections.splice(c);c--}this.unhandledRejections.length&&this.scheduleRejectionCheck()}.bind(this),500))}};b.all=function(a){function e(a){f._status!==c&&(h=[],f.reject(a))}var f=new b,k=a.length,h=[];if(0===k)return f.resolve(h),
-f;for(var l=0,n=a.length;l<n;++l)a[l].then(function(a){return function(e){f._status!==c&&(h[a]=e,k--,0===k&&f.resolve(h))}}(l),e);return f};b.prototype={_status:null,_value:null,_handlers:null,_unhandledRejection:null,_updateStatus:function(a,b){1!==this._status&&this._status!==c&&(1==a&&b&&"function"===typeof b.then?b.then(this._updateStatus.bind(this,1),this._updateStatus.bind(this,c)):(this._status=a,this._value=b,a===c&&0===this._handlers.length&&(this._unhandledRejection=!0,e.addUnhandledRejection(this)),
-e.scheduleHandlers(this)))},get isResolved(){return 1===this._status},get isRejected(){return this._status===c},resolve:function(a){this._updateStatus(1,a)},reject:function(a){this._updateStatus(c,a)},then:function(a,c){var f=new b;this._handlers.push({thisPromise:this,onResolve:a,onReject:c,nextPromise:f});e.scheduleHandlers(this);return f}};return b}(),ta=function(){function b(){this.started={};this.times=[];this.enabled=!0}b.prototype={time:function(a){this.enabled&&(a in this.started&&F("Timer is already running for "+
-a),this.started[a]=Date.now())},timeEnd:function(a){this.enabled&&(a in this.started||F("Timer has not been started for "+a),this.times.push({name:a,start:this.started[a],end:Date.now()}),delete this.started[a])},toString:function(){for(var a=this.times,c="",e=0,d=0,b=a.length;d<b;++d){var f=a[d].name;f.length>e&&(e=f.length)}d=0;for(b=a.length;d<b;++d){for(var k=a[d],f=k.end-k.start,k=k.name;k.length<e;)k+=" ";c+=k+" "+f+"ms\n"}return c}};return b}();PDFJS.createBlob=function(b,a){if("function"===
-typeof Blob)return new Blob([b],{type:a});var c=new MozBlobBuilder;c.append(b);return c.getBlob(a)};Z.prototype={on:function(b,a,c){var e=this.actionHandler;e[b]&&m('There is already an actionName called "'+b+'"');e[b]=[a,c]},send:function(b,a,c){b={action:b,data:a};c&&(a=this.callbackIndex++,this.callbacks[a]=c,b.callbackId=a);this.comObj.postMessage(b)}};var p=function(){function b(){m("should not call ColorSpace constructor")}b.prototype={getRgb:function(a,c){m("Should not call ColorSpace.getRgb")},
-getRgbItem:function(a,c,e,d){m("Should not call ColorSpace.getRgbItem")},getRgbBuffer:function(a,c,e,d,b,f){m("Should not call ColorSpace.getRgbBuffer")},getOutputLength:function(a){m("Should not call ColorSpace.getOutputLength")},isPassthrough:function(a){return!1},createRgbBuffer:function(a,c,e,d){if(this.isPassthrough(d))return a.subarray(c);var b=new Uint8Array(3*e),f=1<<d;if(1===this.numComps&&e>f&&"DeviceGray"!==this.name&&"DeviceRGB"!==this.name){for(var k=8>=d?new Uint8Array(f):new Uint16Array(f),
-h=0;h<f;h++)k[h]=h;var l=new Uint8Array(3*f);this.getRgbBuffer(k,0,f,l,0,d);for(h=d=0;h<e;++h)f=3*a[c++],b[d++]=l[f],b[d++]=l[f+1],b[d++]=l[f+2];return b}this.getRgbBuffer(a,c,e,b,0,d);return b},usesZeroToOneRange:!0};b.parse=function(a,c,e){a=b.parseToIR(a,c,e);return a instanceof ia?a:b.fromIR(a)};b.fromIR=function(a){var c=B(a)?a[0]:a;switch(c){case "DeviceGrayCS":return this.singletons.gray;case "DeviceRgbCS":return this.singletons.rgb;case "DeviceCmykCS":return this.singletons.cmyk;case "PatternCS":return(a=
-a[1])&&(a=b.fromIR(a)),new ua(a);case "IndexedCS":var c=a[2],e=a[3];return new va(b.fromIR(a[1]),c,e);case "AlternateCS":return c=a[3],new ia(a[1],b.fromIR(a[2]),P.fromIR(c));case "LabCS":return new wa(a[1].WhitePoint,a[1].BlackPoint,a[1].Range);default:m("Unkown name "+c)}return null};b.parseToIR=function(a,c,e){if(M(a)){var d=e.get("ColorSpace");O(d)&&(d=d.get(a.name))&&(a=d)}a=c.fetchIfRef(a);if(M(a))switch(this.mode=d=a.name,d){case "DeviceGray":case "G":return"DeviceGrayCS";case "DeviceRGB":case "RGB":return"DeviceRgbCS";
-case "DeviceCMYK":case "CMYK":return"DeviceCmykCS";case "Pattern":return["PatternCS",null];default:m("unrecognized colorspace "+d)}else if(B(a))switch(this.mode=d=a[0].name,d){case "DeviceGray":case "G":return"DeviceGrayCS";case "DeviceRGB":case "RGB":return"DeviceRgbCS";case "DeviceCMYK":case "CMYK":return"DeviceCmykCS";case "CalGray":return"DeviceGrayCS";case "CalRGB":return"DeviceRgbCS";case "ICCBased":d=c.fetchIfRef(a[1]).dict.get("N");if(1==d)return"DeviceGrayCS";if(3==d)return"DeviceRgbCS";
-if(4==d)return"DeviceCmykCS";break;case "Pattern":return(a=a[1])&&(a=b.parseToIR(a,c,e)),["PatternCS",a];case "Indexed":case "I":return e=b.parseToIR(a[1],c,e),d=a[2]+1,c=c.fetchIfRef(a[3]),X(c)&&(c=c.getBytes()),["IndexedCS",e,d,c];case "Separation":case "DeviceN":var g=a[1],d=1;M(g)?d=1:B(g)&&(d=g.length);e=b.parseToIR(a[2],c,e);c=P.getIR(c,c.fetchIfRef(a[3]));return["AlternateCS",d,e,c];case "Lab":return["LabCS",a[1].getAll()];default:m('unimplemented color space object "'+d+'"')}else m('unrecognized color space object: "'+
-a+'"');return null};b.isDefaultDecode=function(a,c){if(!a)return!0;if(2*c!==a.length)return F("The decode map is not the correct length"),!0;for(var e=0,d=a.length;e<d;e+=2)if(0!==a[e]||1!=a[e+1])return!1;return!0};b.singletons={get gray(){return W(this,"gray",new xa)},get rgb(){return W(this,"rgb",new ya)},get cmyk(){return W(this,"cmyk",new za)}};return b}(),ia=function(){function b(a,c,e){this.name="Alternate";this.numComps=a;this.defaultColor=new Float32Array(a);for(var d=0;d<a;++d)this.defaultColor[d]=
-1;this.base=c;this.tintFn=e}b.prototype={getRgb:function(a,c){var e=new Uint8Array(3);this.getRgbItem(a,c,e,0);return e},getRgbItem:function(a,c,e,d){a="subarray"in a?a.subarray(c,c+this.numComps):Array.prototype.slice.call(a,c,c+this.numComps);a=this.tintFn(a);this.base.getRgbItem(a,0,e,d)},getRgbBuffer:function(a,c,e,d,b,f){var k=this.tintFn,h=this.base;f=1/((1<<f)-1);for(var l=h.numComps,n=h.usesZeroToOneRange,t=h.isPassthrough(8)||!n,y=t?b:0,q=t?d:new Uint8Array(l*e),r=this.numComps,m=new Float32Array(r),
-u=0;u<e;u++){for(var w=0;w<r;w++)m[w]=a[c++]*f;var s=k(m);if(n)for(w=0;w<l;w++)q[y++]=255*s[w];else h.getRgbItem(s,0,q,y),y+=l}t||h.getRgbBuffer(q,0,e,d,b,8)},getOutputLength:function(a){return this.base.getOutputLength(a*this.base.numComps/this.numComps)},isPassthrough:p.prototype.isPassthrough,createRgbBuffer:p.prototype.createRgbBuffer,isDefaultDecode:function(a){return p.isDefaultDecode(a,this.numComps)},usesZeroToOneRange:!0};return b}(),ua=function(){function b(a){this.name="Pattern";this.base=
-a}b.prototype={};return b}(),va=function(){function b(a,c,e){this.name="Indexed";this.numComps=1;this.defaultColor=new Uint8Array([0]);this.base=a;this.highVal=c;a=a.numComps*c;var d;if(X(e))d=new Uint8Array(a),e=e.getBytes(a),d.set(e);else if("string"==typeof e)for(d=new Uint8Array(a),c=0;c<a;++c)d[c]=e.charCodeAt(c);else e instanceof Uint8Array||e instanceof Array?d=e:m("Unrecognized lookup table: "+e);this.lookup=d}b.prototype={getRgb:function(a,c){return this.base.getRgb(this.lookup,a[c]*this.base.numComps)},
-getRgbItem:function(a,c,e,d){this.base.getRgbItem(this.lookup,a[c]*this.base.numComps,e,d)},getRgbBuffer:function(a,c,e,d,b){for(var f=this.base,k=f.numComps,h=f.getOutputLength(k),l=this.lookup,n=0;n<e;++n){var t=a[c++]*k;f.getRgbBuffer(l,t,1,d,b,8);b+=h}},getOutputLength:function(a){return this.base.getOutputLength(a*this.base.numComps)},isPassthrough:p.prototype.isPassthrough,createRgbBuffer:p.prototype.createRgbBuffer,isDefaultDecode:function(a){return!0},usesZeroToOneRange:!0};return b}(),xa=
-function(){function b(){this.name="DeviceGray";this.numComps=1;this.defaultColor=new Float32Array([0])}b.prototype={getRgb:function(a,c){var e=new Uint8Array(3);this.getRgbItem(a,c,e,0);return e},getRgbItem:function(a,c,e,d){a=255*a[c]|0;e[d]=e[d+1]=e[d+2]=0>a?0:255<a?255:a},getRgbBuffer:function(a,c,e,d,b,f){f=255/((1<<f)-1);for(var k=0;k<e;++k){var h=f*a[c++]|0;d[b++]=h;d[b++]=h;d[b++]=h}},getOutputLength:function(a){return 3*a},isPassthrough:p.prototype.isPassthrough,createRgbBuffer:p.prototype.createRgbBuffer,
-isDefaultDecode:function(a){return p.isDefaultDecode(a,this.numComps)},usesZeroToOneRange:!0};return b}(),ya=function(){function b(){this.name="DeviceRGB";this.numComps=3;this.defaultColor=new Float32Array([0,0,0])}b.prototype={getRgb:function(a,c){var e=new Uint8Array(3);this.getRgbItem(a,c,e,0);return e},getRgbItem:function(a,c,e,d){var b=255*a[c]|0,f=255*a[c+1]|0;a=255*a[c+2]|0;e[d]=0>b?0:255<b?255:b;e[d+1]=0>f?0:255<f?255:f;e[d+2]=0>a?0:255<a?255:a},getRgbBuffer:function(a,c,e,d,b,f){e*=3;if(8==
-f)d.set(a.subarray(c,c+e),b);else{f=255/((1<<f)-1);for(var k=0;k<e;++k)d[b++]=f*a[c++]|0}},getOutputLength:function(a){return a},isPassthrough:function(a){return 8==a},createRgbBuffer:p.prototype.createRgbBuffer,isDefaultDecode:function(a){return p.isDefaultDecode(a,this.numComps)},usesZeroToOneRange:!0};return b}(),za=function(){function b(a,e,d,b,f){var k=a[e+0]*d,h=a[e+1]*d,l=a[e+2]*d;d*=a[e+3];a=k*(-4.387332384609988*k+54.48615194189176*h+18.82290502165302*l+212.25662451639585*d+-285.2331026137004)+
-h*(1.7149763477362134*h-5.6096736904047315*l+-17.873870861415444*d-5.497006427196366)+l*(-2.5217340131683033*l-21.248923337353073*d+17.5119270841813)+d*(-21.86122147463605*d-189.48180835922747)+255;e=k*(8.841041422036149*k+60.118027045597366*h+6.871425592049007*l+31.159100130055922*d+-79.2970844816548)+h*(-15.310361306967817*h+17.575251261109482*l+131.35250912493976*d-190.9453302588951)+l*(4.444339102852739*l+9.8632861493405*d-24.86741582555878)+d*(-20.737325471181034*d-187.80453709719578)+255;k=
-k*(0.8842522430003296*k+8.078677503112928*h+30.89978309703729*l-0.23883238689178934*d+-14.183576799673286)+h*(10.49593273432072*h+63.02378494754052*l+50.606957656360734*d-112.23884253719248)+l*(0.03296041114873217*l+115.60384449646641*d+-193.58209356861505)+d*(-22.33816807309886*d-180.12613974708367)+255;b[f]=255<a?255:0>a?0:a;b[f+1]=255<e?255:0>e?0:e;b[f+2]=255<k?255:0>k?0:k}function a(){this.name="DeviceCMYK";this.numComps=4;this.defaultColor=new Float32Array([0,0,0,1])}a.prototype={getRgb:function(a,
-e){var d=new Uint8Array(3);b(a,e,1,d,0);return d},getRgbItem:function(a,e,d,g){b(a,e,1,d,g)},getRgbBuffer:function(a,e,d,g,f,k){k=1/((1<<k)-1);for(var h=0;h<d;h++)b(a,e,k,g,f),e+=4,f+=3},getOutputLength:function(a){return 3*(a>>2)},isPassthrough:p.prototype.isPassthrough,createRgbBuffer:p.prototype.createRgbBuffer,isDefaultDecode:function(a){return p.isDefaultDecode(a,this.numComps)},usesZeroToOneRange:!0};return a}(),wa=function(){function b(a,c,b){this.name="Lab";this.numComps=3;this.defaultColor=
-new Float32Array([0,0,0]);a||m("WhitePoint missing - required for color space Lab");c=c||[0,0,0];b=b||[-100,100,-100,100];this.XW=a[0];this.YW=a[1];this.ZW=a[2];this.amin=b[0];this.amax=b[1];this.bmin=b[2];this.bmax=b[3];this.XB=c[0];this.YB=c[1];this.ZB=c[2];(0>this.XW||0>this.ZW||1!==this.YW)&&m("Invalid WhitePoint components, no fallback available");if(0>this.XB||0>this.YB||0>this.ZB)S("Invalid BlackPoint, falling back to default"),this.XB=this.YB=this.ZB=0;if(this.amin>this.amax||this.bmin>this.bmax)S("Invalid Range, falling back to defaults"),
-this.amin=-100,this.amax=100,this.bmin=-100,this.bmax=100}function a(a){return a>=6/29?a*a*a:108/841*(a-4/29)}function c(c,d,b,f,k,h){var l=d[b],n=d[b+1];d=d[b+2];!1!==f&&(l=0+100*l/f,n=c.amin+n*(c.amax-c.amin)/f,d=c.bmin+d*(c.bmax-c.bmin)/f);n=n>c.amax?c.amax:n<c.amin?c.amin:n;d=d>c.bmax?c.bmax:d<c.bmin?c.bmin:d;f=(l+16)/116;l=f-d/200;n=c.XW*a(f+n/500);f=c.YW*a(f);l=c.ZW*a(l);1>c.ZW?(c=3.1339*n+-1.617*f+-0.4906*l,d=-0.9785*n+1.916*f+0.0333*l,n=0.072*n+-0.229*f+1.4057*l):(c=3.2406*n+-1.5372*f+-0.4986*
-l,d=-0.9689*n+1.8758*f+0.0415*l,n=0.0557*n+-0.204*f+1.057*l);k[h]=255*Math.sqrt(0>c?0:1<c?1:c);k[h+1]=255*Math.sqrt(0>d?0:1<d?1:d);k[h+2]=255*Math.sqrt(0>n?0:1<n?1:n)}b.prototype={getRgb:function(a,d){var b=new Uint8Array(3);c(this,a,d,!1,b,0);return b},getRgbItem:function(a,b,g,f){c(this,a,b,!1,g,f)},getRgbBuffer:function(a,b,g,f,k,h){h=(1<<h)-1;for(var l=0;l<g;l++)c(this,a,b,h,f,k),b+=3,k+=3},getOutputLength:function(a){return a},isPassthrough:p.prototype.isPassthrough,isDefaultDecode:function(a){return!0},
-usesZeroToOneRange:!1};return b}();D=3;var ja=function(){function b(){m("should not call Pattern constructor")}b.prototype={getPattern:function(a){m("Should not call Pattern.getStyle: "+a)}};b.shadingFromIR=function(a){return N[a[0]].fromIR(a)};b.parseShading=function(a,c,b,d){a=X(a)?a.dict:a;var g=a.get("ShadingType");switch(g){case 2:case D:return new N.RadialAxial(a,c,b,d);default:return K("Unsupported shading type: "+g),new N.Dummy}};return b}(),N={SMALL_NUMBER:0.01};N.RadialAxial=function(){function b(a,
-c,b,d,g){this.matrix=c;this.coordsArr=a.get("Coords");this.shadingType=a.get("ShadingType");this.type="Pattern";this.ctx=g;c=a.get("ColorSpace","CS");this.cs=c=p.parse(c,b,d);d=0;var f=1;a.has("Domain")&&(g=a.get("Domain"),d=g[0],f=g[1]);var k=g=!1;a.has("Extend")&&(k=a.get("Extend"),g=k[0],k=k[1]);if(!(this.shadingType!==D||g&&k)){var h=this.coordsArr[0],l=this.coordsArr[1],n=this.coordsArr[2],t=this.coordsArr[3],y=this.coordsArr[4],q=this.coordsArr[5],h=Math.sqrt((h-t)*(h-t)+(l-y)*(l-y));n<=q+h&&
-q<=n+h&&F("Unsupported radial gradient.")}this.extendStart=g;this.extendEnd=k;n=a.get("Function");if(B(n)){for(var r=[],q=0,h=n.length;q<h;q++)l=b.fetchIfRef(n[q]),da(l)||m("Invalid function"),r.push(P.parse(b,l));n=function(a){for(var c=[],f=0,b=r.length;f<b;f++)c.push(r[f](a)[0]);return c}}else da(n)||m("Invalid function"),n=P.parse(b,n);q=f-d;h=q/10;b=this.colorStops=[];if(d>=f||0>=h)S("Bad shading domain.");else{for(l=d;l<=f;l+=h)t=c.getRgb(n([l]),0),t=s.makeCssRgb(t),b.push([(l-d)/q,t]);d="transparent";
-a.has("Background")&&(t=c.getRgb(a.get("Background"),0),d=s.makeCssRgb(t));g||(b.unshift([0,d]),b[1][0]+=N.SMALL_NUMBER);k||(b[b.length-1][0]-=N.SMALL_NUMBER,b.push([1,d]));this.colorStops=b}}b.fromIR=function(a){var c=a[1],b=a[2],d=a[3],g=a[4],f=a[5],k=a[6];return{type:"Pattern",getPattern:function(a){var l;2==c?l=a.createLinearGradient(d[0],d[1],g[0],g[1]):c==D&&(l=a.createRadialGradient(d[0],d[1],f,g[0],g[1],k));a=0;for(var n=b.length;a<n;++a){var t=b[a];l.addColorStop(t[0],t[1])}return l}}};b.prototype=
-{getIR:function(){var a=this.coordsArr,c=this.shadingType;if(2==c)var b=[a[0],a[1]],d=[a[2],a[3]],g=null,f=null;else c==D?(b=[a[0],a[1]],d=[a[3],a[4]],g=a[2],f=a[5]):m("getPattern type unknown: "+c);if(a=this.matrix)b=s.applyTransform(b,a),d=s.applyTransform(d,a);return["RadialAxial",c,this.colorStops,b,d,g,f]}};return b}();N.Dummy=function(){function b(){this.type="Pattern"}b.fromIR=function(){return{type:"Pattern",getPattern:function(){return"hotpink"}}};b.prototype={getIR:function(){return["Dummy"]}};
-return b}();var Aa=function(){function b(a,c,b,d,g,f){this.name=a[1][0].name;this.operatorList=a[2];this.matrix=a[3]||[1,0,0,1,0,0];this.bbox=a[4];this.xstep=a[5];this.ystep=a[6];this.paintType=a[7];this.tilingType=a[8];this.color=c;this.objs=d;this.commonObjs=g;this.baseTransform=f;this.type="Pattern";this.ctx=b}b.getIR=function(a,c,b){var d=c.get("Matrix"),g=c.get("BBox"),f=c.get("XStep"),k=c.get("YStep"),h=c.get("PaintType");c=c.get("TilingType");return["TilingPattern",b,a,d,g,f,k,h,c]};b.prototype=
-{createPatternCanvas:function(a){var c=this.operatorList,b=this.bbox,d=this.xstep,g=this.ystep,f=this.paintType,k=this.color,h=this.objs,l=this.commonObjs;K("TilingType: "+this.tilingType);var n=b[0],t=b[1],y=b[2],q=b[3],r=[n,t],m=[n+d,t+g],u=m[0]-r[0],m=m[1]-r[1],w=s.singularValueDecompose2dScale(this.matrix),p=s.singularValueDecompose2dScale(this.baseTransform),w=[w[0]*p[0],w[1]*p[1]],u=Math.min(Math.ceil(Math.abs(u*w[0])),3E3),m=Math.min(Math.ceil(Math.abs(m*w[1])),3E3),w=G.getCanvas("pattern",
-u,m,!0),p=w.context,h=new ka(p,l,h);h.groupLevel=a.groupLevel;this.setFillAndStrokeStyleToContext(p,f,k);this.setScale(u,m,d,g);this.transformToScale(h);h.transform.apply(h,[1,0,0,1,-r[0],-r[1]]);this.clipBbox(h,b,n,t,y,q);h.executeOperatorList(c);return w.canvas},setScale:function(a,c,b,d){this.scale=[a/b,c/d]},transformToScale:function(a){var c=this.scale;a.transform.apply(a,[c[0],0,0,c[1],0,0])},scaleToContext:function(){var a=this.scale;this.ctx.scale(1/a[0],1/a[1])},clipBbox:function(a,c,b,d,
-g,f){c&&B(c)&&4==c.length&&(a.rectangle(b,d,g-b,f-d),a.clip(),a.endPath())},setFillAndStrokeStyleToContext:function(a,c,b){switch(c){case 1:c=this.ctx;a.fillStyle=c.fillStyle;a.strokeStyle=c.strokeStyle;break;case 2:c=p.singletons.rgb.getRgb(b,0);c=s.makeCssRgb(c);a.fillStyle=c;a.strokeStyle=c;break;default:m("Unsupported paint type: "+c)}},getPattern:function(a,c){var b=this.createPatternCanvas(c);a=this.ctx;a.setTransform.apply(a,this.baseTransform);a.transform.apply(a,this.matrix);this.scaleToContext();
-return a.createPattern(b,"repeat")}};return b}(),P=function(){return{getSampleArray:function(b,a,c,e){for(var d=1,g=0,f=b.length;g<f;g++)d*=b[g];d*=a;b=[];var f=a=0,k=1/(Math.pow(2,c)-1);e=e.getBytes((d*c+7)/8);for(var h=0,g=0;g<d;g++){for(;a<c;)f<<=8,f|=e[h++],a+=8;a-=c;b.push((f>>a)*k);f&=(1<<a)-1}return b},getIR:function(b,a){var c=a.dict;c||(c=a);var e=[this.constructSampled,null,this.constructInterpolated,this.constructStiched,this.constructPostScript],d=c.get("FunctionType");(e=e[d])||m("Unknown type of function");
-return e.call(this,a,c,b)},fromIR:function(b){switch(b[0]){case 0:return this.constructSampledFromIR(b);case 2:return this.constructInterpolatedFromIR(b);case 3:return this.constructStichedFromIR(b);default:return this.constructPostScriptFromIR(b)}},parse:function(b,a){var c=this.getIR(b,a);return this.fromIR(c)},constructSampled:function(b,a){function c(a){for(var c=a.length,f=[],b=0,d=0;d<c;d+=2)f[b]=[a[d],a[d+1]],++b;return f}var e=a.get("Domain"),d=a.get("Range");e&&d||m("No domain or range");
-var g=e.length/2,f=d.length/2,e=c(e),d=c(d),k=a.get("Size"),h=a.get("BitsPerSample"),l=a.get("Order")||1;1!==l&&K("No support for cubic spline interpolation: "+l);l=a.get("Encode");if(!l)for(var l=[],n=0;n<g;++n)l.push(0),l.push(k[n]-1);var l=c(l),n=(n=a.get("Decode"))?c(n):d,t=this.getSampleArray(k,f,h,b);return[0,g,e,l,n,t,k,f,Math.pow(2,h)-1,d]},constructSampledFromIR:function(b){return function(a){var c=b[1],e=b[2],d=b[3],g=b[4],f=b[5],k=b[6],h=b[7],l=b[9];c!=a.length&&m("Incorrect number of arguments: "+
-c+" != "+a.length);for(var n=1<<c,t=new Float64Array(n),y=new Uint32Array(n),q=0;q<n;q++)t[q]=1;for(var r=h,s=1,u=0;u<c;++u){for(var q=e[u][0],w=e[u][1],p=Math.min(Math.max(a[u],q),w),E=d[u][0]+(p-q)*((d[u][1]-d[u][0])/(w-q)),w=k[u],E=Math.min(Math.max(E,0),w-1),q=E<w-1?Math.floor(E):E-1,p=q+1-E,E=E-q,z=q*r,v=z+r,q=0;q<n;q++)q&s?(t[q]*=E,y[q]+=v):(t[q]*=p,y[q]+=z);r*=w;s<<=1}a=new Float64Array(h);for(q=0;q<h;++q){for(u=c=0;u<n;u++)c+=f[y[u]+q]*t[u];c=g[q][0]+(c-0)*((g[q][1]-g[q][0])/1);a[q]=Math.min(Math.max(c,
-l[q][0]),l[q][1])}return a}},constructInterpolated:function(b,a){var c=a.get("C0")||[0],e=a.get("C1")||[1],d=a.get("N");B(c)&&B(e)||m("Illegal dictionary for interpolated function");for(var g=c.length,f=[],k=0;k<g;++k)f.push(e[k]-c[k]);return[2,c,f,d]},constructInterpolatedFromIR:function(b){var a=b[1],c=b[2],e=b[3],d=c.length;return function(b){b=1==e?b[0]:Math.pow(b[0],e);for(var f=[],k=0;k<d;++k)f.push(a[k]+b*c[k]);return f}},constructStiched:function(b,a,c){(b=a.get("Domain"))||m("No domain");
-1!=b.length/2&&m("Bad domain for stiched function");for(var e=a.get("Functions"),d=[],g=0,f=e.length;g<f;++g)d.push(P.getIR(c,c.fetchIfRef(e[g])));c=a.get("Bounds");a=a.get("Encode");return[3,b,c,a,d]},constructStichedFromIR:function(b){var a=b[1],c=b[2],e=b[3];b=b[4];for(var d=[],g=0,f=b.length;g<f;g++)d.push(P.fromIR(b[g]));return function(f){f=f[0];var b=a[0],l=a[1];f>l?f=l:f<b&&(f=b);b=0;for(l=c.length;b<l&&!(f<c[b]);++b);l=a[0];0<b&&(l=c[b-1]);var g=a[1];b<c.length&&(g=c[b]);var t=e[2*b];return d[b]([t+
-(f-l)*(e[2*b+1]-t)/(g-l)])}},constructPostScript:function(b,a,c){c=a.get("Domain");a=a.get("Range");c||m("No domain.");a||m("No range.");b=new Ba(b);b=(new Ca(b)).parse();return[4,c,a,b]},constructPostScriptFromIR:function(b){var a=b[1],c=b[2],e=c.length/2,d=new Da(b[3]),g=new Ea;return function(f){for(var b=[],h=0,l=a.length/2;h<l;++h)b.push(f[h]);f=b.join("_");if(g.has(f))return g.get(f);b=d.execute(b);l=[];for(h=e-1;0<=h;--h){var n=b.pop(),t=2*h;n<c[t]?n=c[t]:n>c[t+1]&&(n=c[t+1]);l[h]=n}g.set(f,
-l);return l}}}}(),Ea=function(){function b(){this.cache={};this.total=0}b.prototype={has:function(a){return a in this.cache},get:function(a){return this.cache[a]},set:function(a,c){1024>this.total&&(this.cache[a]=c,this.total++)}};return b}(),Fa=function(){function b(a){this.stack=a||[]}b.prototype={push:function(a){100<=this.stack.length&&m("PostScript function stack overflow.");this.stack.push(a)},pop:function(){0>=this.stack.length&&m("PostScript function stack underflow.");return this.stack.pop()},
-copy:function(a){100<=this.stack.length+a&&m("PostScript function stack overflow.");var c=this.stack,b=c.length-a;for(a-=1;0<=a;a--,b++)c.push(c[b])},index:function(a){this.push(this.stack[this.stack.length-a-1])},roll:function(a,c){var b=this.stack,d=b.length-a,g=b.length-1,f=d+(c-Math.floor(c/a)*a),k,h,l;k=d;for(h=g;k<h;k++,h--)l=b[k],b[k]=b[h],b[h]=l;k=d;for(h=f-1;k<h;k++,h--)l=b[k],b[k]=b[h],b[h]=l;k=f;for(h=g;k<h;k++,h--)l=b[k],b[k]=b[h],b[h]=l}};return b}(),Da=function(){function b(a,c){this.operators=
-a;this.operands=c}b.prototype={execute:function(a){a=new Fa(a);for(var c=0,b=this.operators,d=b.length,g,f;c<d;)if(g=b[c++],"number"==typeof g)a.push(g);else switch(g){case "jz":f=a.pop();(g=a.pop())||(c=f);break;case "j":c=g=a.pop();break;case "abs":g=a.pop();a.push(Math.abs(g));break;case "add":f=a.pop();g=a.pop();a.push(g+f);break;case "and":f=a.pop();g=a.pop();L(g)&&L(f)?a.push(g&&f):a.push(g&f);break;case "atan":g=a.pop();a.push(Math.atan(g));break;case "bitshift":f=a.pop();g=a.pop();0<g?a.push(g<<
-f):a.push(g>>f);break;case "ceiling":g=a.pop();a.push(Math.ceil(g));break;case "copy":g=a.pop();a.copy(g);break;case "cos":g=a.pop();a.push(Math.cos(g));break;case "cvi":g=a.pop()|0;a.push(g);break;case "cvr":break;case "div":f=a.pop();g=a.pop();a.push(g/f);break;case "dup":a.copy(1);break;case "eq":f=a.pop();g=a.pop();a.push(g==f);break;case "exch":a.roll(2,1);break;case "exp":f=a.pop();g=a.pop();a.push(Math.pow(g,f));break;case "false":a.push(!1);break;case "floor":g=a.pop();a.push(Math.floor(g));
-break;case "ge":f=a.pop();g=a.pop();a.push(g>=f);break;case "gt":f=a.pop();g=a.pop();a.push(g>f);break;case "idiv":f=a.pop();g=a.pop();a.push(g/f|0);break;case "index":g=a.pop();a.index(g);break;case "le":f=a.pop();g=a.pop();a.push(g<=f);break;case "ln":g=a.pop();a.push(Math.log(g));break;case "log":g=a.pop();a.push(Math.log(g)/Math.LN10);break;case "lt":f=a.pop();g=a.pop();a.push(g<f);break;case "mod":f=a.pop();g=a.pop();a.push(g%f);break;case "mul":f=a.pop();g=a.pop();a.push(g*f);break;case "ne":f=
-a.pop();g=a.pop();a.push(g!=f);break;case "neg":a.pop();a.push(-f);break;case "not":g=a.pop();L(g)&&L(f)?a.push(g&&f):a.push(g&f);break;case "or":f=a.pop();g=a.pop();L(g)&&L(f)?a.push(g||f):a.push(g|f);break;case "pop":a.pop();break;case "roll":f=a.pop();g=a.pop();a.roll(g,f);break;case "round":g=a.pop();a.push(Math.round(g));break;case "sin":g=a.pop();a.push(Math.sin(g));break;case "sqrt":g=a.pop();a.push(Math.sqrt(g));break;case "sub":f=a.pop();g=a.pop();a.push(g-f);break;case "true":a.push(!0);
-break;case "truncate":g=a.pop();g=0>g?Math.ceil(g):Math.floor(g);a.push(g);break;case "xor":f=a.pop();g=a.pop();L(g)&&L(f)?a.push(g!=f):a.push(g^f);break;default:m("Unknown operator "+g)}return a.stack}};return b}(),Ca=function(){function b(a){this.lexer=a;this.operators=[];this.prev=this.token=null}b.prototype={nextToken:function(){this.prev=this.token;this.token=this.lexer.getToken()},accept:function(a){return this.token.type==a?(this.nextToken(),!0):!1},expect:function(a){if(this.accept(a))return!0;
-m("Unexpected symbol: found "+this.token.type+" expected "+a+".")},parse:function(){this.nextToken();this.expect(A.LBRACE);this.parseBlock();this.expect(A.RBRACE);return this.operators},parseBlock:function(){for(;;)if(this.accept(A.NUMBER))this.operators.push(this.prev.value);else if(this.accept(A.OPERATOR))this.operators.push(this.prev.value);else if(this.accept(A.LBRACE))this.parseCondition();else break},parseCondition:function(){var a=this.operators.length;this.operators.push(null,null);this.parseBlock();
-this.expect(A.RBRACE);if(this.accept(A.IF))this.operators[a]=this.operators.length,this.operators[a+1]="jz";else if(this.accept(A.LBRACE)){var c=this.operators.length;this.operators.push(null,null);var b=this.operators.length;this.parseBlock();this.expect(A.RBRACE);this.expect(A.IFELSE);this.operators[c]=this.operators.length;this.operators[c+1]="j";this.operators[a]=b;this.operators[a+1]="jz"}else m("PS Function: error parsing conditional.")}};return b}(),A={LBRACE:0,RBRACE:1,NUMBER:2,OPERATOR:3,
-IF:4,IFELSE:5},Q=function(){function b(a,b){this.type=a;this.value=b}var a={};b.getOperator=function(c){var e=a[c];return e?e:a[c]=new b(A.OPERATOR,c)};b.LBRACE=new b(A.LBRACE,"{");b.RBRACE=new b(A.RBRACE,"}");b.IF=new b(A.IF,"IF");b.IFELSE=new b(A.IFELSE,"IFELSE");return b}(),Ba=function(){function b(a){this.stream=a;this.nextChar()}b.prototype={nextChar:function(){return this.currentChar=this.stream.getByte()},getToken:function(){for(var a=!1,c=this.currentChar;;){if(0>c)return EOF;if(a){if(10===
-c||13===c)a=!1}else if(37==c)a=!0;else if(!Lexer.isSpace(c))break;c=this.nextChar()}switch(c|0){case 48:case 49:case 50:case 51:case 52:case 53:case 54:case 55:case 56:case 57:case 43:case 45:case 46:return new Q(A.NUMBER,this.getNumber());case 123:return this.nextChar(),Q.LBRACE;case 125:return this.nextChar(),Q.RBRACE}for(a=String.fromCharCode(c);0<=(c=this.nextChar())&&(65<=c&&90>=c||97<=c&&122>=c);)a+=String.fromCharCode(c);switch(a.toLowerCase()){case "if":return Q.IF;case "ifelse":return Q.IFELSE;
-default:return Q.getOperator(a)}},getNumber:function(){for(var a=this.currentChar,c=String.fromCharCode(a);0<=(a=this.nextChar());)if(48<=a&&57>=a||45===a||46===a)c+=String.fromCharCode(a);else break;a=parseFloat(c);isNaN(a)&&m("Invalid floating point number: "+a);return a}};return b}(),H=function(){function b(a,b,d){var g=s.getAxialAlignedBoundingBox(b,d);b=g[0];d=g[1];var f=g[2],g=g[3];if(b===f||d===g)return[1,0,0,1,a[0],a[1]];f=(a[2]-a[0])/(f-b);g=(a[3]-a[1])/(g-d);return[f,0,0,g,a[0]-b*f,a[1]-
-d*g]}function a(a){if(a.data)this.data=a.data;else{var b=a.dict;a=this.data={};a.subtype=b.get("Subtype").name;var d=b.get("Rect");a.rect=s.normalizeRect(d);a.annotationFlags=b.get("F");d=b.get("C");B(d)&&3===d.length?a.color=d:a.color=[0,0,0];b.has("BS")?(d=b.get("BS"),a.borderWidth=d.has("W")?d.get("W"):1):(d=b.get("Border")||[0,0,1],a.borderWidth=d[2]||0);var g;d=b.get("AP");O(d)?(d=d.get("N"),O(d)?(b=b.get("AS"))&&d.has(b.name)&&(g=d.get(b.name)):g=d):g=void 0;this.appearance=g;a.hasAppearance=
-!!this.appearance}}a.prototype={getData:function(){return this.data},hasHtml:function(){return!1},getHtmlElement:function(a){throw new sa("getHtmlElement() should be implemented in subclass");},getEmptyContainer:function(a,b){U&&m("getEmptyContainer() should be called from main thread");b=b||this.data.rect;var d=document.createElement(a);d.style.width=Math.ceil(b[2]-b[0])+"px";d.style.height=Math.ceil(b[3]-b[1])+"px";return d},isViewable:function(){var a=this.data;return!(!a||a.annotationFlags&&a.annotationFlags&
-34||!a.rect)},loadResources:function(a){var b=new x;this.appearance.dict.getAsync("Resources").then(function(d){d?(new ObjectLoader(d.map,a,d.xref)).load().then(function(){b.resolve(d)}):b.resolve()}.bind(this));return b},getOperatorList:function(a){var e=new x;if(!this.appearance)return e.resolve(new OperatorList),e;var d=this.data,g=this.appearance.dict,f=this.loadResources("ExtGState ColorSpace Pattern Shading XObject Font".split(" ")),k=g.get("BBox")||[0,0,1,1],h=g.get("Matrix")||[1,0,0,1,0,0],
-l=b(d.rect,k,h);f.then(function(b){var f=new OperatorList;f.addOp("beginAnnotation",[d.rect,l,h]);a.getOperatorList(this.appearance,b,f);f.addOp("endAnnotation",[]);e.resolve(f)}.bind(this));return e}};a.getConstructor=function(c,b){if(c){if("Link"===c)return Ga;if("Text"===c)return Ha;if("Widget"===c){if(b)return"Tx"===b?Ia:aa}else return a}};a.fromData=function(c){var b=a.getConstructor(c.subtype,c.fieldType);if(b)return new b({data:c})};a.fromRef=function(c,b){var d=c.fetchIfRef(b);if(O(d)){var g=
-d.get("Subtype");if(g=M(g)?g.name:""){var f=s.getInheritableProperty(d,"FT"),f=M(f)?f.name:"";if(f=a.getConstructor(g,f)){d=new f({dict:d,ref:b});if(d.isViewable())return d;K("unimplemented annotation type: "+g)}}}};a.appendToOperatorList=function(a,b,d,g){var f=new x;d=[];for(var k=0,h=a.length;k<h;++k)d.push(a[k].getOperatorList(g));x.all(d).then(function(a){b.addOp("beginAnnotations",[]);for(var c=0,d=a.length;c<d;++c)b.addOpList(a[c]);b.addOp("endAnnotations",[]);f.resolve()},function(a){f.reject(a)});
-return f};return a}();PDFJS.Annotation=H;var aa=function(){function b(a){H.call(this,a);if(!a.data){var b=a.dict,d=this.data;d.fieldValue=T(s.getInheritableProperty(b,"V")||"");d.alternativeText=T(b.get("TU")||"");d.defaultAppearance=s.getInheritableProperty(b,"DA")||"";var g=s.getInheritableProperty(b,"FT");d.fieldType=M(g)?g.name:"";d.fieldFlags=s.getInheritableProperty(b,"Ff")||0;this.fieldResources=s.getInheritableProperty(b,"DR")||new Dict;var g=[],f=b;for(a=a.ref;f;){var b=f.get("Parent"),k=
-f.getRaw("Parent");if(f=f.get("T"))g.unshift(T(f));else{var f=b.get("Kids"),h,l;h=0;for(l=f.length;h<l;h++){var n=f[h];if(n.num==a.num&&n.gen==a.gen)break}g.unshift("`"+h)}f=b;a=k}d.fullName=g.join(".")}}var a=H.prototype;s.inherit(b,H,{isViewable:function(){return"Sig"===this.data.fieldType?(K("unimplemented annotation type: Widget signature"),!1):a.isViewable.call(this)}});return b}(),Ia=function(){function b(a){aa.call(this,a);a.data||(this.data.textAlignment=s.getInheritableProperty(a.dict,"Q"))}
-s.inherit(b,aa,{hasHtml:function(){return!this.data.hasAppearance&&!!this.data.fieldValue},getHtmlElement:function(a){U&&m("getHtmlElement() shall be called from main thread");var c=this.data,b=this.getEmptyContainer("div");b.style.display="table";var d=document.createElement("div");d.textContent=c.fieldValue;d.style.textAlign=["left","center","right"][c.textAlignment];d.style.verticalAlign="middle";d.style.display="table-cell";a=c.fontRefName?a.getData(c.fontRefName):null;var g=d.style;g.fontSize=
-c.fontSize+"px";g.direction=0>c.fontDirection?"rtl":"ltr";a&&(g.fontWeight=a.black?a.bold?"bolder":"bold":a.bold?"bold":"normal",g.fontStyle=a.italic?"italic":"normal",c=a.loadedName,g.fontFamily=(c?'"'+c+'", ':"")+(a.fallbackName||"Helvetica, sans-serif"));b.appendChild(d);return b},getOperatorList:function(a){if(this.appearance)return H.prototype.getOperatorList.call(this,a);var c=new x,b=new OperatorList,d=this.data,g=d.defaultAppearance;if(!g)return c.resolve(b),c;for(var f=Stream,k=g.length,
-h=new Uint8Array(k),l=0;l<k;++l)h[l]=g.charCodeAt(l)&255;g=new f(h);a.getOperatorList(g,this.fieldResources,b);a=b.fnArray;g=b.argsArray;d.rgb=[0,0,0];for(f=0;0>f;++f)k=a[f],h=g[f],"setFont"===k?(d.fontRefName=h[0],k=h[1],0>k?(d.fontDirection=-1,d.fontSize=-k):(d.fontDirection=1,d.fontSize=k)):"setFillRGBColor"===k?d.rgb=h:"setFillGray"===k&&(k=255*h[0],d.rgb=[k,k,k]);c.resolve(b);return c}});return b}(),Ha=function(){function b(a){H.call(this,a);if(!a.data){a=a.dict;var c=this.data,b=a.get("Contents"),
-d=a.get("T");c.content=T(b||"");c.title=T(d||"");c.name=a.has("Name")?a.get("Name").name:"Note"}}s.inherit(b,H,{getOperatorList:function(a){a=new x;a.resolve(new OperatorList);return a},hasHtml:function(){return!0},getHtmlElement:function(a){U&&m("getHtmlElement() shall be called from main thread");var c=this.data,b=c.rect;10>b[3]-b[1]&&(b[3]=b[1]+10);10>b[2]-b[0]&&(b[2]=b[0]+(b[3]-b[1]));var d=this.getEmptyContainer("section",b);d.className="annotText";a=document.createElement("img");a.style.height=
-d.style.height;var g=c.name;a.src=PDFJS.imageResourcesPath+"annotation-"+g.toLowerCase()+".svg";a.alt="[{{type}} Annotation]";a.dataset.l10nId="text_annotation_type";a.dataset.l10nArgs=JSON.stringify({type:g});var f=document.createElement("div");f.setAttribute("hidden",!0);var g=document.createElement("h1"),k=document.createElement("p");f.style.left=Math.floor(b[2]-b[0])+"px";f.style.top="0px";g.textContent=c.title;if(c.content||c.title){for(var b=document.createElement("span"),c=c.content.split(/(?:\r\n?|\n)/),
-h=0,l=c.length;h<l;++h)b.appendChild(document.createTextNode(c[h])),h<l-1&&b.appendChild(document.createElement("br"));k.appendChild(b);b=function(){d.style.zIndex+=1;f.removeAttribute("hidden")};c=function(a){if(a.toElement||a.relatedTarget)d.style.zIndex-=1,f.setAttribute("hidden",!0)};f.addEventListener("mouseover",b,!1);f.addEventListener("mouseout",c,!1);a.addEventListener("mouseover",b,!1);a.addEventListener("mouseout",c,!1)}else f.setAttribute("hidden",!0);f.appendChild(g);f.appendChild(k);
-d.appendChild(a);d.appendChild(f);return d}});return b}(),Ga=function(){function b(a){H.call(this,a);if(!a.data){var b=a.dict;a=this.data;var e=b.get("A");if(e)if(b=e.get("S").name,"URI"===b){var d=e.get("URI");Y(d,!1)||(d="");a.url=d}else"GoTo"===b?a.dest=e.get("D"):"GoToR"===b?(b=e.get("F"),O(b)&&(d=b.get("F")||""),Y(d,!1)||(d=""),a.url=d,a.dest=e.get("D")):"Named"===b?a.action=e.get("N").name:K("unrecognized link type: "+b);else b.has("Dest")&&(d=b.get("Dest"),a.dest=M(d)?d.name:d)}}s.inherit(b,
-H,{hasOperatorList:function(){return!1},hasHtml:function(){return!0},getHtmlElement:function(a){a=this.data.rect;var b=document.createElement("a"),e=this.data.borderWidth;b.style.borderWidth=e+"px";for(var d=this.data.color,g=[],f=0;3>f;++f)g[f]=Math.round(255*d[f]);b.style.borderColor=s.makeCssRgb(g);b.style.borderStyle="solid";d=a[3]-a[1]-2*e;b.style.width=a[2]-a[0]-2*e+"px";b.style.height=d+"px";b.href=this.data.url||"";return b}});return b}();PDFJS.maxImageSize=void 0===PDFJS.maxImageSize?-1:
-PDFJS.maxImageSize;PDFJS.disableFontFace=void 0===PDFJS.disableFontFace?!1:PDFJS.disableFontFace;PDFJS.getDocument=function(b,a,c,e){var d,g;"string"===typeof b?b={url:b}:"object"==typeof b&&null!==b&&void 0!==b&&"byteLength"in b?b={data:b}:"object"!==typeof b&&m("Invalid parameter in getDocument, need either Uint8Array, string or a parameter object");b.url||b.data||m("Invalid parameter array, need either .data or .url");var f={};for(d in b)f[d]="url"===d&&"undefined"!==typeof window?oa(window.location.href,
-b[d]):b[d];b=new PDFJS.Promise;d=new PDFJS.Promise;g=new Ja(b,d,a,e);b.then(function(){g.passwordCallback=c;g.fetchDocument(f)});return d};var Ka=function(){function b(a,b){this.pdfInfo=a;this.transport=b}b.prototype={get numPages(){return this.pdfInfo.numPages},get fingerprint(){return this.pdfInfo.fingerprint},get embeddedFontsUsed(){return this.transport.embeddedFontsUsed},getPage:function(a){return this.transport.getPage(a)},getDestinations:function(){return this.transport.getDestinations()},
-getJavaScript:function(){var a=new PDFJS.Promise;a.resolve(this.pdfInfo.javaScript);return a},getOutline:function(){var a=new PDFJS.Promise;a.resolve(this.pdfInfo.outline);return a},getMetadata:function(){var a=new PDFJS.Promise,b=this.pdfInfo.metadata;a.resolve({info:this.pdfInfo.info,metadata:b?new PDFJS.Metadata(b):null});return a},isEncrypted:function(){var a=new PDFJS.Promise;a.resolve(this.pdfInfo.encrypted);return a},getData:function(){var a=new PDFJS.Promise;this.transport.getData(a);return a},
-dataLoaded:function(){return this.transport.dataLoaded()},destroy:function(){this.transport.destroy()}};return b}(),Na=function(){function b(a,b){this.pageInfo=a;this.transport=b;this.stats=new ta;this.stats.enabled=!!v.PDFJS.enableStats;this.commonObjs=b.commonObjs;this.objs=new la;this.pendingDestroy=this.cleanupAfterRender=this.receivingOperatorList=!1;this.renderTasks=[]}b.prototype={get pageNumber(){return this.pageInfo.pageIndex+1},get rotate(){return this.pageInfo.rotate},get ref(){return this.pageInfo.ref},
-get view(){return this.pageInfo.view},getViewport:function(a,b){2>arguments.length&&(b=this.rotate);return new PDFJS.PageViewport(this.view,a,b,0,0)},getAnnotations:function(){if(this.annotationsPromise)return this.annotationsPromise;var a=new PDFJS.Promise;this.annotationsPromise=a;this.transport.getAnnotations(this.pageInfo.pageIndex);return a},render:function(a){function b(a){var c=f.renderTasks.indexOf(d);0<=c&&f.renderTasks.splice(c,1);f.cleanupAfterRender&&(f.pendingDestroy=!0);f._tryDestroy();
-a?g.reject(a):g.resolve();e.timeEnd("Rendering");e.timeEnd("Overall")}var e=this.stats;e.time("Overall");this.pendingDestroy=!1;this.displayReadyPromise||(this.receivingOperatorList=!0,this.displayReadyPromise=new x,this.operatorList={fnArray:[],argsArray:[],lastChunk:!1},this.stats.time("Page Request"),this.transport.messageHandler.send("RenderPageRequest",{pageIndex:this.pageNumber-1}));var d=new La(b,a,this.objs,this.commonObjs,this.operatorList,this.pageNumber);this.renderTasks.push(d);var g=
-new Ma(d),f=this;this.displayReadyPromise.then(function(a){f.pendingDestroy?b():(e.time("Rendering"),d.initalizeGraphics(a),d.operatorListChanged())},function(a){b(a)});return g},getTextContent:function(){var a=new PDFJS.Promise;this.transport.messageHandler.send("GetTextContent",{pageIndex:this.pageNumber-1},function(b){a.resolve(b)});return a},getOperationList:function(){var a=new PDFJS.Promise;a.resolve({dependencyFontsID:null,operatorList:null});return a},destroy:function(){this.pendingDestroy=
-!0;this._tryDestroy()},_tryDestroy:function(){this.pendingDestroy&&0===this.renderTasks.length&&!this.receivingOperatorList&&(delete this.operatorList,delete this.displayReadyPromise,this.objs.clear(),this.pendingDestroy=!1)},_startRenderPage:function(a){this.displayReadyPromise.resolve(a)},_renderPageChunk:function(a){s.concatenateToArray(this.operatorList.fnArray,a.fnArray);s.concatenateToArray(this.operatorList.argsArray,a.argsArray);this.operatorList.lastChunk=a.lastChunk;for(var b=0;b<this.renderTasks.length;b++)this.renderTasks[b].operatorListChanged();
-a.lastChunk&&(this.receivingOperatorList=!1,this._tryDestroy())}};return b}(),Ja=function(){function b(a,b,e,d){this.pdfDataRangeTransport=e;this.workerReadyPromise=b;this.progressCallback=d;this.commonObjs=new la;this.pageCache=[];this.pagePromises=[];this.embeddedFontsUsed=!1;this.passwordCallback=null;if(!v.PDFJS.disableWorker&&"undefined"!==typeof Worker){b=PDFJS.workerSrc;"undefined"===typeof b&&m("No PDFJS.workerSrc specified");try{var g=new Worker(b),f=new Z("main",g);this.messageHandler=f;
-f.on("test",function(b){b?(this.worker=g,this.setupMessageHandler(f)):(v.PDFJS.disableWorker=!0,this.setupFakeWorker());a.resolve()}.bind(this));var k=new Uint8Array(1);f.send("test",k);return}catch(h){S("The worker has been disabled.")}}v.PDFJS.disableWorker=!0;this.loadFakeWorkerFiles().then(function(){this.setupFakeWorker();a.resolve()}.bind(this))}b.prototype={destroy:function(){this.pageCache=[];this.pagePromises=[];var a=this;this.messageHandler.send("Terminate",null,function(){a.worker&&a.worker.terminate()})},
-loadFakeWorkerFiles:function(){PDFJS.fakeWorkerFilesLoadedPromise||(PDFJS.fakeWorkerFilesLoadedPromise=new x,s.loadScript(PDFJS.workerSrc,function(){PDFJS.fakeWorkerFilesLoadedPromise.resolve()}));return PDFJS.fakeWorkerFilesLoadedPromise},setupFakeWorker:function(){F("Setting up fake worker.");var a={postMessage:function(b){a.onmessage({data:b})},terminate:function(){}},b=new Z("main",a);this.setupMessageHandler(b);PDFJS.WorkerMessageHandler.setup(b)},setupMessageHandler:function(a){function b(c){a.send("UpdatePassword",
-c)}this.messageHandler=a;var e=this.pdfDataRangeTransport;e&&(e.addRangeListener(function(b,c){a.send("OnDataRange",{begin:b,chunk:c})}),e.addProgressListener(function(b){a.send("OnDataProgress",{loaded:b})}),a.on("RequestDataRange",function(a){e.requestDataRange(a.begin,a.end)},this));a.on("GetDoc",function(a){this.pdfDocument=a=new Ka(a.pdfInfo,this);this.workerReadyPromise.resolve(a)},this);a.on("NeedPassword",function(a){if(this.passwordCallback)return this.passwordCallback(b,ga.NEED_PASSWORD);
-this.workerReadyPromise.reject(a.exception.message,a.exception)},this);a.on("IncorrectPassword",function(a){if(this.passwordCallback)return this.passwordCallback(b,ga.INCORRECT_PASSWORD);this.workerReadyPromise.reject(a.exception.message,a.exception)},this);a.on("InvalidPDF",function(a){this.workerReadyPromise.reject(a.exception.name,a.exception)},this);a.on("MissingPDF",function(a){this.workerReadyPromise.reject(a.exception.message,a.exception)},this);a.on("UnknownError",function(a){this.workerReadyPromise.reject(a.exception.message,
-a.exception)},this);a.on("GetPage",function(a){a=a.pageInfo;var b=new Na(a,this);this.pageCache[a.pageIndex]=b;this.pagePromises[a.pageIndex].resolve(b)},this);a.on("GetAnnotations",function(a){this.pageCache[a.pageIndex].annotationsPromise.resolve(a.annotations)},this);a.on("StartRenderPage",function(a){var b=this.pageCache[a.pageIndex];b.stats.timeEnd("Page Request");b._startRenderPage(a.transparency)},this);a.on("RenderPageChunk",function(a){this.pageCache[a.pageIndex]._renderPageChunk(a.operatorList)},
-this);a.on("commonobj",function(a){var b=a[0],c=a[1];if(!this.commonObjs.hasData(b))switch(c){case "Font":a=a[2];var k;if("error"in a){var h=a.error;F("Error during font loading: "+h);this.commonObjs.resolve(b,h);break}else k=new Oa(a);R.bind([k],function(a){this.commonObjs.resolve(b,k)}.bind(this));break;case "FontPath":this.commonObjs.resolve(b,a[2]);break;default:h("Got unknown common object type "+c)}},this);a.on("obj",function(a){var b=a[0],c=a[2],k=this.pageCache[a[1]];if(!k.objs.hasData(b))switch(c){case "JpegStream":a=
-a[3];qa(b,a,k.objs);break;case "Image":a=a[3];k.objs.resolve(b,a);"data"in a&&8E6<a.data.length&&(k.cleanupAfterRender=!0);break;default:m("Got unknown object type "+c)}},this);a.on("DocProgress",function(a){this.progressCallback&&this.progressCallback({loaded:a.loaded,total:a.total})},this);a.on("DocError",function(a){this.workerReadyPromise.reject(a)},this);a.on("PageError",function(a){var b=this.pageCache[a.pageNum-1];b.displayReadyPromise?b.displayReadyPromise.reject(a.error):m(a.error)},this);
-a.on("JpegDecode",function(a,b){var c=a[0],k=a[1];3!=k&&1!=k&&m("Only 3 component or 1 component can be returned");var h=new Image;h.onload=function(){var a=h.width,c=h.height,f=a*c,d=4*f,f=new Uint8Array(f*k),e=ea(a,c).getContext("2d");e.drawImage(h,0,0);e=e.getImageData(0,0,a,c).data;if(3==k)for(var r=0,m=0;r<d;r+=4,m+=3)f[m]=e[r],f[m+1]=e[r+1],f[m+2]=e[r+2];else if(1==k)for(m=r=0;r<d;r+=4,m++)f[m]=e[r];b.resolve({data:f,width:a,height:c})}.bind(this);c="data:image/jpeg;base64,"+window.btoa(c);
-h.src=c})},fetchDocument:function(a){a.disableAutoFetch=PDFJS.disableAutoFetch;a.chunkedViewerLoading=!!this.pdfDataRangeTransport;this.messageHandler.send("GetDocRequest",{source:a,disableRange:PDFJS.disableRange,maxImageSize:PDFJS.maxImageSize,disableFontFace:PDFJS.disableFontFace})},getData:function(a){this.messageHandler.send("GetData",null,function(b){a.resolve(b)})},dataLoaded:function(){var a=new PDFJS.Promise;this.messageHandler.send("DataLoaded",null,function(b){a.resolve(b)});return a},
-getPage:function(a,b){var e=a-1;if(e in this.pagePromises)return this.pagePromises[e];b=new PDFJS.Promise("Page "+a);this.pagePromises[e]=b;this.messageHandler.send("GetPageRequest",{pageIndex:e});return b},getAnnotations:function(a){this.messageHandler.send("GetAnnotationsRequest",{pageIndex:a})},getDestinations:function(){var a=new PDFJS.Promise;this.messageHandler.send("GetDestinations",null,function(b){a.resolve(b)});return a}};return b}(),la=function(){function b(){this.objs={}}b.prototype={ensureObj:function(a){if(this.objs[a])return this.objs[a];
-var b={promise:new x(a),data:null,resolved:!1};return this.objs[a]=b},get:function(a,b){if(b)return this.ensureObj(a).promise.then(b),null;var e=this.objs[a];e&&e.resolved||m("Requesting object that isn't resolved yet "+a);return e.data},resolve:function(a,b){var e=this.ensureObj(a);e.resolved=!0;e.data=b;e.promise.resolve(b)},isResolved:function(a){var b=this.objs;return b[a]?b[a].resolved:!1},hasData:function(a){return this.isResolved(a)},getData:function(a){var b=this.objs;return b[a]&&b[a].resolved?
-b[a].data:null},clear:function(){this.objs={}}};return b}(),Ma=function(){function b(a){this.internalRenderTask=a;x.call(this)}b.prototype=Object.create(x.prototype);b.prototype.cancel=function(){this.internalRenderTask.cancel()};return b}(),La=function(){function b(a,b,e,d,g,f){this.callback=a;this.params=b;this.objs=e;this.commonObjs=d;this.operatorListIdx=null;this.operatorList=g;this.pageNumber=f;this.running=!1;this.graphicsReadyCallback=null;this.cancelled=this.graphicsReady=!1}b.prototype=
-{initalizeGraphics:function(a){if(!this.cancelled){PDFJS.pdfBug&&"StepperManager"in v&&v.StepperManager.enabled&&(this.stepper=v.StepperManager.create(this.pageNumber-1),this.stepper.init(this.operatorList),this.stepper.nextBreakPoint=this.stepper.getNextBreakPoint());var b=this.params;this.gfx=new ka(b.canvasContext,this.commonObjs,this.objs,b.textLayer,b.imageLayer);this.gfx.beginDrawing(b.viewport,a);this.operatorListIdx=0;this.graphicsReady=!0;this.graphicsReadyCallback&&this.graphicsReadyCallback()}},
-cancel:function(){this.running=!1;this.cancelled=!0;this.callback("cancelled")},operatorListChanged:function(){this.graphicsReady?(this.stepper&&this.stepper.updateOperatorList(this.operatorList),this.running||this._continue()):this.graphicsReadyCallback||(this.graphicsReadyCallback=this._continue.bind(this))},_continue:function(){this.running=!0;this.cancelled||(this.params.continueCallback?this.params.continueCallback(this._next.bind(this)):this._next())},_next:function(){this.cancelled||(this.operatorListIdx=
-this.gfx.executeOperatorList(this.operatorList,this.operatorListIdx,this._continue.bind(this),this.stepper),this.operatorListIdx===this.operatorList.fnArray.length&&(this.running=!1,this.operatorList.lastChunk&&(this.gfx.endDrawing(),this.callback())))}};return b}();PDFJS.Metadata=function(){function b(a){return a.replace(/>\\376\\377([^<]+)/g,function(a,b){for(var c=b.replace(/\\([0-3])([0-7])([0-7])/g,function(a,b,c,f){return String.fromCharCode(64*b+8*c+1*f)}),f="",k=0;k<c.length;k+=2)var h=256*
-c.charCodeAt(k)+c.charCodeAt(k+1),f=f+("&#x"+(65536+h).toString(16).substring(1)+";");return">"+f})}function a(a){"string"===typeof a?(a=b(a),a=(new DOMParser).parseFromString(a,"application/xml")):a instanceof Document||m("Metadata: Invalid metadata object");this.metaDocument=a;this.metadata={};this.parse()}a.prototype={parse:function(){var a=this.metaDocument.documentElement;if("rdf:rdf"!==a.nodeName.toLowerCase())for(a=a.firstChild;a&&"rdf:rdf"!==a.nodeName.toLowerCase();)a=a.nextSibling;var b=
-a?a.nodeName.toLowerCase():null;if(a&&"rdf:rdf"===b&&a.hasChildNodes()){var a=a.childNodes,d,g,f,k,h,l;f=0;for(h=a.length;f<h;f++)if(b=a[f],"rdf:description"===b.nodeName.toLowerCase())for(k=0,l=b.childNodes.length;k<l;k++)"#text"!==b.childNodes[k].nodeName.toLowerCase()&&(d=b.childNodes[k],g=d.nodeName.toLowerCase(),this.metadata[g]=d.textContent.trim())}},get:function(a){return this.metadata[a]||null},has:function(a){return"undefined"!==typeof this.metadata[a]}};return a}();var G=function(){var b=
-{};return{getCanvas:function(a,c,e,d){a in b?(a=b[a],a.canvas.width=c,a.canvas.height=e,a.context.setTransform(1,0,0,1,0,0)):(c=ea(c,e),e=c.getContext("2d"),d&&fa(e),b[a]=a={canvas:c,context:e});return a},clear:function(){b={}}}}(),ma=function(){function b(a){this.alphaIsShape=!1;this.fontSize=0;this.fontSizeScale=1;this.textMatrix=ha;this.fontMatrix=$;this.wordSpacing=this.charSpacing=this.lineY=this.lineX=this.y=this.x=this.leading=0;this.textHScale=1;this.textRenderingMode=V;this.textRise=0;this.fillColorSpace=
-p.singletons.gray;this.fillColorSpaceObj=null;this.strokeColorSpace=p.singletons.gray;this.strokeColorObj=this.fillColorObj=this.strokeColorSpaceObj=null;this.strokeColor=this.fillColor="#000000";this.lineWidth=this.strokeAlpha=this.fillAlpha=1;this.paintFormXObjectDepth=0;this.old=a}b.prototype={clone:function(){return Object.create(this)},setCurrentPoint:function(a,b){this.x=a;this.y=b}};return b}(),ka=function(){function b(a,b,c,d,e){this.ctx=a;this.current=new ma;this.stateStack=[];this.pendingClip=
-null;this.pendingEOFill=!1;this.xobjs=this.res=null;this.commonObjs=b;this.objs=c;this.textLayer=d;this.imageLayer=e;this.groupStack=[];this.baseTransform=this.processingType3=null;this.baseTransformStack=[];this.groupLevel=0;a&&fa(a)}function a(a,b){if("undefined"!==typeof ImageData&&b instanceof ImageData)a.putImageData(b,0,0);else{var c=a.createImageData(b.width,b.height),d=b.data,e=c.data;if("set"in e)e.set(d);else for(var g=0,y=e.length;g<y;g++)e[g]=d[g];a.putImageData(c,0,0)}}var c=["butt",
-"round","square"],e=["miter","round","bevel"],d={},g={};b.prototype={slowCommands:{stroke:!0,closeStroke:!0,fill:!0,eoFill:!0,fillStroke:!0,eoFillStroke:!0,closeFillStroke:!0,closeEOFillStroke:!0,showText:!0,showSpacedText:!0,setStrokeColorSpace:!0,setFillColorSpace:!0,setStrokeColor:!0,setStrokeColorN:!0,setFillColor:!0,setFillColorN:!0,setStrokeGray:!0,setFillGray:!0,setStrokeRGBColor:!0,setFillRGBColor:!0,setStrokeCMYKColor:!0,setFillCMYKColor:!0,paintJpegXObject:!0,paintImageXObject:!0,paintInlineImageXObject:!0,
-paintInlineImageXObjectGroup:!0,paintImageMaskXObject:!0,paintImageMaskXObjectGroup:!0,shadingFill:!0},beginDrawing:function(a,b){var c=this.ctx.canvas.width,d=this.ctx.canvas.height;b?this.ctx.clearRect(0,0,c,d):(this.ctx.mozOpaque=!0,this.ctx.save(),this.ctx.fillStyle="rgb(255, 255, 255)",this.ctx.fillRect(0,0,c,d),this.ctx.restore());c=a.transform;this.baseTransform=c.slice();this.ctx.save();this.ctx.transform.apply(this.ctx,c);this.textLayer&&this.textLayer.beginLayout();this.imageLayer&&this.imageLayer.beginLayout()},
-executeOperatorList:function(a,b,c,d){var e=a.argsArray;a=a.fnArray;b=b||0;var g=e.length;if(g==b)return b;for(var y=Date.now()+15,q=this.commonObjs,r=this.objs,m,u=this.slowCommands;;){if(d&&b===d.nextBreakPoint)return d.breakIt(b,c),b;m=a[b];if("dependency"!==m)this[m].apply(this,e[b]);else for(var s=e[b],p=0,E=s.length;p<E;p++){var z=s[p],v="g_"==z.substring(0,2);if(!v&&!r.isResolved(z))return r.get(z,c),b;if(v&&!q.isResolved(z))return q.get(z,c),b}b++;if(b==g)return b;if(c&&u[m]&&Date.now()>y)return setTimeout(c,
-0),b}},endDrawing:function(){this.ctx.restore();G.clear();this.textLayer&&this.textLayer.endLayout();this.imageLayer&&this.imageLayer.endLayout()},setLineWidth:function(a){this.current.lineWidth=a;this.ctx.lineWidth=a},setLineCap:function(a){this.ctx.lineCap=c[a]},setLineJoin:function(a){this.ctx.lineJoin=e[a]},setMiterLimit:function(a){this.ctx.miterLimit=a},setDash:function(a,b){var c=this.ctx;"setLineDash"in c?(c.setLineDash(a),c.lineDashOffset=b):(c.mozDash=a,c.mozDashOffset=b)},setRenderingIntent:function(a){},
-setFlatness:function(a){},setGState:function(a){for(var b=0,c=a.length;b<c;b++){var d=a[b],e=d[1];switch(d[0]){case "LW":this.setLineWidth(e);break;case "LC":this.setLineCap(e);break;case "LJ":this.setLineJoin(e);break;case "ML":this.setMiterLimit(e);break;case "D":this.setDash(e[0],e[1]);break;case "RI":this.setRenderingIntent(e);break;case "FL":this.setFlatness(e);break;case "Font":this.setFont(e[0],e[1]);break;case "CA":this.current.strokeAlpha=d[1];break;case "ca":this.current.fillAlpha=d[1];
-this.ctx.globalAlpha=d[1];break;case "BM":e&&e.name&&"Normal"!==e.name?(d=e.name.replace(/([A-Z])/g,function(a){return"-"+a.toLowerCase()}).substring(1),this.ctx.globalCompositeOperation=d,this.ctx.globalCompositeOperation!==d&&F('globalCompositeOperation "'+d+'" is not supported')):this.ctx.globalCompositeOperation="source-over"}}},save:function(){this.ctx.save();var a=this.current;this.stateStack.push(a);this.current=a.clone()},restore:function(){var a=this.stateStack.pop();a&&(this.current=a,this.ctx.restore())},
-transform:function(a,b,c,d,e,g){this.ctx.transform(a,b,c,d,e,g)},moveTo:function(a,b){this.ctx.moveTo(a,b);this.current.setCurrentPoint(a,b)},lineTo:function(a,b){this.ctx.lineTo(a,b);this.current.setCurrentPoint(a,b)},curveTo:function(a,b,c,d,e,g){this.ctx.bezierCurveTo(a,b,c,d,e,g);this.current.setCurrentPoint(e,g)},curveTo2:function(a,b,c,d){var e=this.current;this.ctx.bezierCurveTo(e.x,e.y,a,b,c,d);e.setCurrentPoint(c,d)},curveTo3:function(a,b,c,d){this.curveTo(a,b,c,d,c,d);this.current.setCurrentPoint(c,
-d)},closePath:function(){this.ctx.closePath()},rectangle:function(a,b,c,d){this.ctx.rect(a,b,c,d)},stroke:function(a){a="undefined"!==typeof a?a:!0;var b=this.ctx,c=this.current.strokeColor;0===this.current.lineWidth&&(b.lineWidth=this.getSinglePixelWidth());b.globalAlpha=this.current.strokeAlpha;c&&c.hasOwnProperty("type")&&"Pattern"===c.type?(b.save(),b.strokeStyle=c.getPattern(b,this),b.stroke(),b.restore()):b.stroke();a&&this.consumePath();b.globalAlpha=this.current.fillAlpha},closeStroke:function(){this.closePath();
-this.stroke()},fill:function(a){a="undefined"!==typeof a?a:!0;var b=this.ctx,c=this.current.fillColor,d=!1;c&&c.hasOwnProperty("type")&&"Pattern"===c.type&&(b.save(),b.fillStyle=c.getPattern(b,this),d=!0);if(this.pendingEOFill){if("mozFillRule"in this.ctx)this.ctx.mozFillRule="evenodd",this.ctx.fill(),this.ctx.mozFillRule="nonzero";else try{this.ctx.fill("evenodd")}catch(e){this.ctx.fill()}this.pendingEOFill=!1}else this.ctx.fill();d&&b.restore();a&&this.consumePath()},eoFill:function(){this.pendingEOFill=
-!0;this.fill()},fillStroke:function(){this.fill(!1);this.stroke(!1);this.consumePath()},eoFillStroke:function(){this.pendingEOFill=!0;this.fillStroke()},closeFillStroke:function(){this.closePath();this.fillStroke()},closeEOFillStroke:function(){this.pendingEOFill=!0;this.closePath();this.fillStroke()},endPath:function(){this.consumePath()},clip:function(){this.pendingClip=d},eoClip:function(){this.pendingClip=g},beginText:function(){this.current.textMatrix=ha;this.current.x=this.current.lineX=0;this.current.y=
-this.current.lineY=0},endText:function(){if("pendingTextPaths"in this){var a=this.pendingTextPaths,b=this.ctx;b.save();b.beginPath();for(var c=0;c<a.length;c++){var d=a[c];b.setTransform.apply(b,d.transform);b.translate(d.x,d.y);d.addToPath(b,d.fontSize)}b.restore();b.clip();b.beginPath();delete this.pendingTextPaths}else this.ctx.beginPath()},setCharSpacing:function(a){this.current.charSpacing=a},setWordSpacing:function(a){this.current.wordSpacing=a},setHScale:function(a){this.current.textHScale=
-a/100},setLeading:function(a){this.current.leading=-a},setFont:function(a,b){var c=this.commonObjs.get(a),d=this.current;c||m("Can't find font for "+a);d.fontMatrix=c.fontMatrix?c.fontMatrix:$;0!==d.fontMatrix[0]&&0!==d.fontMatrix[3]||F("Invalid font matrix for font "+a);0>b?(b=-b,d.fontDirection=-1):d.fontDirection=1;this.current.font=c;this.current.fontSize=b;if(!c.coded){var d=c.black?c.bold?"bolder":"bold":c.bold?"bold":"normal",e=c.italic?"italic":"normal",c='"'+(c.loadedName||"sans-serif")+
-'", '+c.fallbackName,g=16<=b?b:16;this.current.fontSizeScale=16!=g?1:b/16;this.ctx.font=e+" "+d+" "+g+"px "+c}},setTextRenderingMode:function(a){this.current.textRenderingMode=a},setTextRise:function(a){this.current.textRise=a},moveText:function(a,b){this.current.x=this.current.lineX+=a;this.current.y=this.current.lineY+=b},setLeadingMoveText:function(a,b){this.setLeading(-b);this.moveText(a,b)},setTextMatrix:function(a,b,c,d,e,g){this.current.textMatrix=[a,b,c,d,e,g];this.current.x=this.current.lineX=
-0;this.current.y=this.current.lineY=0},nextLine:function(){this.moveText(0,this.current.leading)},applyTextTransforms:function(){var a=this.ctx,b=this.current;a.transform.apply(a,b.textMatrix);a.translate(b.x,b.y+b.textRise);0<b.fontDirection?a.scale(b.textHScale,-1):a.scale(-b.textHScale,1)},createTextGeometry:function(){var a={},b=this.current.font,c=this.ctx.mozCurrentTransform,d=c[0],e=c[1],g=c[2],m=c[3],q=c[4],c=c[5],r=0<=d?Math.sqrt(d*d+e*e):-Math.sqrt(d*d+e*e),g=0<=m?Math.sqrt(g*g+m*m):-Math.sqrt(g*
-g+m*m),d=Math.atan2(e,d);a.x=q;a.y=c;a.hScale=r;a.vScale=g;a.angle=d;a.spaceWidth=b.spaceWidth;a.fontName=b.loadedName;a.fontFamily=b.fallbackName;a.fontSize=this.current.fontSize;return a},paintChar:function(a,b,c){var d=this.ctx,e=this.current,g=e.font,m=e.fontSize/e.fontSizeScale,q=e.textRenderingMode,e=q&3,q=!!(q&4),r;if(g.disableFontFace||q)r=g.getPathGenerator(this.commonObjs,a);g.disableFontFace?(d.save(),d.translate(b,c),d.beginPath(),r(d,m),e!==V&&2!==e||d.fill(),1!==e&&2!==e||d.stroke(),
-d.restore()):(e!==V&&2!==e||d.fillText(a,b,c),1!==e&&2!==e||d.strokeText(a,b,c));q&&(this.pendingTextPaths||(this.pendingTextPaths=[])).push({transform:d.mozCurrentTransform,x:b,y:c,fontSize:m,addToPath:r})},showText:function(a,b){var c=this.ctx,d=this.current,e=d.font,g=d.fontSize,m=d.fontSizeScale,q=d.charSpacing,r=d.wordSpacing,p=d.textHScale*d.fontDirection,u=d.fontMatrix||$,w=a.length,v,E=this.textLayer&&!b?!0:!1,z=0,A=e.vertical,F=e.defaultVMetrics;if(e.coded){c.save();c.transform.apply(c,d.textMatrix);
-c.translate(d.x,d.y);c.scale(p,1);E&&(this.save(),c.scale(1,-1),v=this.createTextGeometry(),this.restore());for(var I=0;I<w;++I){var C=a[I];if(null===C)this.ctx.translate(r,0),d.x+=r*p;else{this.processingType3=C;this.save();c.scale(g,g);c.transform.apply(c,u);this.executeOperatorList(C.operatorList);this.restore();var x=(s.applyTransform([C.width,0],u)[0]*g+q)*d.fontDirection;c.translate(x,0);d.x+=x*p;z+=x}}c.restore();this.processingType3=null}else{c.save();this.applyTextTransforms();var I=d.lineWidth,
-u=d.textMatrix[0],B=d.textMatrix[1],u=Math.sqrt(u*u+B*B),I=0===u||0===I?this.getSinglePixelWidth():I/u;E&&(v=this.createTextGeometry());1!=m&&(c.scale(m,m),I/=m);c.lineWidth=I;for(I=u=0;I<w;++I)if(C=a[I],null===C)u+=d.fontDirection*r;else{var B=!1,H=C.fontChar,D=C.vmetric||F;if(A)var L=C.vmetric?D[1]:0.5*C.width,L=-L*g*d.fontMatrix[0],M=D[2]*g*d.fontMatrix[0];var x=D?-D[0]:C.width,D=x*g*d.fontMatrix[0]+q*d.fontDirection,G=C.accent,J,K;C.disabled||(A?(C=L/m,J=(u+M)/m):(C=u/m,J=0),e.remeasure&&0<x&&
-(B=1E3*c.measureText(H).width/d.fontSize*d.fontSizeScale,x/=B,B=!0,c.save(),c.scale(x,1),C/=x,G&&(K/=x)),this.paintChar(H,C,J),G&&(K=C+G.offset.x/m,H=J-G.offset.y/m,this.paintChar(G.fontChar,K,H)));u+=D;z+=D;B&&c.restore()}A?d.y-=u*p:d.x+=u*p;c.restore()}E&&(v.canvasWidth=z,A&&(v.angle+=Math.PI/2),this.textLayer.appendText(v));return z},showSpacedText:function(a){var b=this.ctx,c=this.current,d=c.fontSize,e=0.0010*c.textHScale*c.fontDirection,g=a.length,m,q=0,r=this.textLayer?!0:!1,s=c.font.vertical,
-u=0;r&&(b.save(),this.applyTextTransforms(),m=this.createTextGeometry(),b.restore());for(b=0;b<g;++b){var p=a[b];"number"==typeof p?(p=-p*d*e,s?c.y+=p:c.x+=p,r&&(u+=p)):(p=this.showText(p,!0),r&&(q+=u+p,u=0))}r&&(m.canvasWidth=q,s&&(m.angle+=Math.PI/2),this.textLayer.appendText(m))},nextLineShowText:function(a){this.nextLine();this.showText(a)},nextLineSetSpacingShowText:function(a,b,c){this.setWordSpacing(a);this.setCharSpacing(b);this.nextLineShowText(c)},setCharWidth:function(a,b){},setCharWidthAndBounds:function(a,
-b,c,d,e,g){this.rectangle(c,d,e-c,g-d);this.clip();this.endPath()},setStrokeColorSpace:function(a){this.current.strokeColorSpace=p.fromIR(a)},setFillColorSpace:function(a){this.current.fillColorSpace=p.fromIR(a)},setStrokeColor:function(){var a=this.current.strokeColorSpace.getRgb(arguments,0),a=s.makeCssRgb(a);this.ctx.strokeStyle=a;this.current.strokeColor=a},getColorN_Pattern:function(a,b){if("TilingPattern"==a[0]){var c=a[1],d=b.base,e;d&&(e=d.getRgb(c,0));c=new Aa(a,e,this.ctx,this.objs,this.commonObjs,
-this.baseTransform)}else"RadialAxial"==a[0]||"Dummy"==a[0]?c=ja.shadingFromIR(a):m("Unkown IR type "+a[0]);return c},setStrokeColorN:function(){var a=this.current.strokeColorSpace;"Pattern"==a.name?this.current.strokeColor=this.getColorN_Pattern(arguments,a):this.setStrokeColor.apply(this,arguments)},setFillColor:function(){var a=this.current.fillColorSpace.getRgb(arguments,0),a=s.makeCssRgb(a);this.ctx.fillStyle=a;this.current.fillColor=a},setFillColorN:function(){var a=this.current.fillColorSpace;
-"Pattern"==a.name?this.current.fillColor=this.getColorN_Pattern(arguments,a):this.setFillColor.apply(this,arguments)},setStrokeGray:function(a){this.current.strokeColorSpace=p.singletons.gray;var b=this.current.strokeColorSpace.getRgb(arguments,0),b=s.makeCssRgb(b);this.ctx.strokeStyle=b;this.current.strokeColor=b},setFillGray:function(a){this.current.fillColorSpace=p.singletons.gray;var b=this.current.fillColorSpace.getRgb(arguments,0),b=s.makeCssRgb(b);this.ctx.fillStyle=b;this.current.fillColor=
-b},setStrokeRGBColor:function(a,b,c){this.current.strokeColorSpace=p.singletons.rgb;var d=this.current.strokeColorSpace.getRgb(arguments,0),d=s.makeCssRgb(d);this.ctx.strokeStyle=d;this.current.strokeColor=d},setFillRGBColor:function(a,b,c){this.current.fillColorSpace=p.singletons.rgb;var d=this.current.fillColorSpace.getRgb(arguments,0),d=s.makeCssRgb(d);this.ctx.fillStyle=d;this.current.fillColor=d},setStrokeCMYKColor:function(a,b,c,d){this.current.strokeColorSpace=p.singletons.cmyk;var e=s.makeCssCmyk(arguments);
-this.ctx.strokeStyle=e;this.current.strokeColor=e},setFillCMYKColor:function(a,b,c,d){this.current.fillColorSpace=p.singletons.cmyk;var e=s.makeCssCmyk(arguments);this.ctx.fillStyle=e;this.current.fillColor=e},shadingFill:function(a){var b=this.ctx;this.save();a=ja.shadingFromIR(a);b.fillStyle=a.getPattern(b,this);var c=b.mozCurrentTransformInverse;if(c){var b=b.canvas,d=b.width,e=b.height,b=s.applyTransform([0,0],c);a=s.applyTransform([0,e],c);var g=s.applyTransform([d,0],c),m=s.applyTransform([d,
-e],c),c=Math.min(b[0],a[0],g[0],m[0]),d=Math.min(b[1],a[1],g[1],m[1]),e=Math.max(b[0],a[0],g[0],m[0]),b=Math.max(b[1],a[1],g[1],m[1]);this.ctx.fillRect(c,d,e-c,b-d)}else this.ctx.fillRect(-1E10,-1E10,2E10,2E10);this.restore()},beginInlineImage:function(){m("Should not call beginInlineImage")},beginImageData:function(){m("Should not call beginImageData")},paintFormXObjectBegin:function(a,b){this.save();this.current.paintFormXObjectDepth++;this.baseTransformStack.push(this.baseTransform);a&&B(a)&&6==
-a.length&&this.transform.apply(this,a);this.baseTransform=this.ctx.mozCurrentTransform;b&&B(b)&&4==b.length&&(this.rectangle(b[0],b[1],b[2]-b[0],b[3]-b[1]),this.clip(),this.endPath())},paintFormXObjectEnd:function(){var a=this.current.paintFormXObjectDepth;do this.restore();while(this.current.paintFormXObjectDepth>=a);this.baseTransform=this.baseTransformStack.pop()},beginGroup:function(a){this.save();var b=this.ctx;a.isolated||S("TODO: Support non-isolated groups.");a.knockout&&K("Support knockout groups.");
-var c=b.mozCurrentTransform;a.matrix&&b.transform.apply(b,a.matrix);a.bbox||m("Bounding box is required.");var d=s.getAxialAlignedBoundingBox(a.bbox,b.mozCurrentTransform);a=Math.max(Math.ceil(d[2]-d[0]),1);var e=Math.max(Math.ceil(d[3]-d[1]),1);a=G.getCanvas("groupAt"+this.groupLevel,a,e,!0).context;e=d[0];d=d[1];a.translate(-e,-d);a.transform.apply(a,c);b.setTransform(1,0,0,1,0,0);b.translate(e,d);c="strokeStyle fillStyle fillRule globalAlpha lineWidth lineCap lineJoin miterLimit globalCompositeOperation font".split(" ");
-d=0;for(e=c.length;d<e;d++){var g=c[d];g in b&&(a[g]=b[g])}"setLineDash"in b?(a.setLineDash(b.getLineDash()),a.lineDashOffset=b.lineDashOffset):"mozDash"in b&&(a.mozDash=b.mozDash,a.mozDashOffset=b.mozDashOffset);this.ctx=a;this.setGState([["SMask","None"],["BM","Normal"],["ca",1],["CA",1]]);this.groupStack.push(b);this.groupLevel++},endGroup:function(a){this.groupLevel--;a=this.ctx;this.ctx=this.groupStack.pop();"imageSmoothingEnabled"in this.ctx?this.ctx.imageSmoothingEnabled=!1:this.ctx.mozImageSmoothingEnabled=
-!1;this.ctx.drawImage(a.canvas,0,0);this.restore()},beginAnnotations:function(){this.save();this.current=new ma},endAnnotations:function(){this.restore()},beginAnnotation:function(a,b,c){this.save();a&&B(a)&&4==a.length&&(this.rectangle(a[0],a[1],a[2]-a[0],a[3]-a[1]),this.clip(),this.endPath());this.transform.apply(this,b);this.transform.apply(this,c)},endAnnotation:function(){this.restore()},paintJpegXObject:function(a,b,c){var d=this.objs.get(a);d||m("Dependent image isn't ready yet");this.save();
-var e=this.ctx;e.scale(1/b,-1/c);e.drawImage(d,0,0,d.width,d.height,0,-c,b,c);this.imageLayer&&(d=e.mozCurrentTransformInverse,e=this.getCanvasPosition(0,0),this.imageLayer.appendImage({objId:a,left:e[0],top:e[1],width:b/d[0],height:c/d[3]}));this.restore()},paintImageMaskXObject:function(b){var c=this.ctx,d=b.width,e=b.height,g=this.processingType3;!g||"compiled"in g||(g.compiled=1E3>=d&&1E3>=e?ra({data:b.data,width:d,height:e}):null);g&&g.compiled?g.compiled(c):(c=G.getCanvas("maskCanvas",d,e),
-g=c.context,g.save(),a(g,b),g.globalCompositeOperation="source-in",b=this.current.fillColor,g.fillStyle=b&&b.hasOwnProperty("type")&&"Pattern"===b.type?b.getPattern(g,this):b,g.fillRect(0,0,d,e),g.restore(),this.paintInlineImageXObject(c.canvas))},paintImageMaskXObjectGroup:function(b){for(var c=this.ctx,d=0,e=b.length;d<e;d++){var g=b[d],m=g.width,p=g.height,q=G.getCanvas("maskCanvas",m,p),r=q.context;r.save();a(r,g);r.globalCompositeOperation="source-in";var s=this.current.fillColor;r.fillStyle=
-s&&s.hasOwnProperty("type")&&"Pattern"===s.type?s.getPattern(r,this):s;r.fillRect(0,0,m,p);r.restore();c.save();c.transform.apply(c,g.transform);c.scale(1,-1);c.drawImage(q.canvas,0,0,m,p,0,-1,1,1);c.restore()}},paintImageXObject:function(a){(a=this.objs.get(a))||m("Dependent image isn't ready yet");this.paintInlineImageXObject(a)},paintInlineImageXObject:function(b){var c=b.width,d=b.height,e=this.ctx;this.save();e.scale(1/c,-1/d);var g=e.mozCurrentTransformInverse,m=g[0],p=g[1],m=Math.max(Math.sqrt(m*
-m+p*p),1),p=g[2],q=g[3],p=Math.max(Math.sqrt(p*p+q*q),1);if(b instanceof HTMLElement)q=b;else{var r=G.getCanvas("inlineImage",c,d),s=r.context;a(s,b);q=r.canvas}for(var u=c,w=d,v="prescale1";2<m&&1<u||2<p&&1<w;){var x=u,z=w;2<m&&1<u&&(x=Math.ceil(u/2),m/=u/x);2<p&&1<w&&(z=Math.ceil(w/2),p/=w/z);r=G.getCanvas(v,x,z);s=r.context;s.clearRect(0,0,x,z);s.drawImage(q,0,0,u,w,0,0,x,z);q=r.canvas;u=x;w=z;v="prescale1"===v?"prescale2":"prescale1"}e.drawImage(q,0,0,u,w,0,-d,c,d);this.imageLayer&&(e=this.getCanvasPosition(0,
--d),this.imageLayer.appendImage({imgData:b,left:e[0],top:e[1],width:c/g[0],height:d/g[3]}));this.restore()},paintInlineImageXObjectGroup:function(b,c){var d=this.ctx,e=b.width,g=b.height,m=G.getCanvas("inlineImage",e,g);a(m.context,b);for(var p=0,q=c.length;p<q;p++){var r=c[p];d.save();d.transform.apply(d,r.transform);d.scale(1,-1);d.drawImage(m.canvas,r.x,r.y,r.w,r.h,0,-1,1,1);this.imageLayer&&(r=this.getCanvasPosition(r.x,r.y),this.imageLayer.appendImage({imgData:b,left:r[0],top:r[1],width:e,height:g}));
-d.restore()}},markPoint:function(a){},markPointProps:function(a,b){},beginMarkedContent:function(a){},beginMarkedContentProps:function(a,b){},endMarkedContent:function(){},beginCompat:function(){},endCompat:function(){},consumePath:function(){if(this.pendingClip){if(this.pendingClip==g)if("mozFillRule"in this.ctx)this.ctx.mozFillRule="evenodd",this.ctx.clip(),this.ctx.mozFillRule="nonzero";else try{this.ctx.clip("evenodd")}catch(a){this.ctx.clip()}else this.ctx.clip();this.pendingClip=null}this.ctx.beginPath()},
-getSinglePixelWidth:function(a){a=this.ctx.mozCurrentTransformInverse;return Math.sqrt(Math.max(a[0]*a[0]+a[1]*a[1],a[2]*a[2]+a[3]*a[3]))},getCanvasPosition:function(a,b){var c=this.ctx.mozCurrentTransform;return[c[0]*a+c[2]*b+c[4],c[1]*a+c[3]*b+c[5]]}};return b}();PDFJS.disableFontFace=!1;var R={insertRule:function(b){var a=document.getElementById("PDFJS_FONT_STYLE_TAG");a||(a=document.createElement("style"),a.id="PDFJS_FONT_STYLE_TAG",document.documentElement.getElementsByTagName("head")[0].appendChild(a));
-a=a.sheet;a.insertRule(b,a.cssRules.length)},get loadTestFont(){return W(this,"loadTestFont",atob("T1RUTwALAIAAAwAwQ0ZGIDHtZg4AAAOYAAAAgUZGVE1lkzZwAAAEHAAAABxHREVGABQAFQAABDgAAAAeT1MvMlYNYwkAAAEgAAAAYGNtYXABDQLUAAACNAAAAUJoZWFk/xVFDQAAALwAAAA2aGhlYQdkA+oAAAD0AAAAJGhtdHgD6AAAAAAEWAAAAAZtYXhwAAJQAAAAARgAAAAGbmFtZVjmdH4AAAGAAAAAsXBvc3T/hgAzAAADeAAAACAAAQAAAAEAALZRFsRfDzz1AAsD6AAAAADOBOTLAAAAAM4KHDwAAAAAA+gDIQAAAAgAAgAAAAAAAAABAAADIQAAAFoD6AAAAAAD6AABAAAAAAAAAAAAAAAAAAAAAQAAUAAAAgAAAAQD6AH0AAUAAAKKArwAAACMAooCvAAAAeAAMQECAAACAAYJAAAAAAAAAAAAAQAAAAAAAAAAAAAAAFBmRWQAwAAuAC4DIP84AFoDIQAAAAAAAQAAAAAAAAAAACAAIAABAAAADgCuAAEAAAAAAAAAAQAAAAEAAAAAAAEAAQAAAAEAAAAAAAIAAQAAAAEAAAAAAAMAAQAAAAEAAAAAAAQAAQAAAAEAAAAAAAUAAQAAAAEAAAAAAAYAAQAAAAMAAQQJAAAAAgABAAMAAQQJAAEAAgABAAMAAQQJAAIAAgABAAMAAQQJAAMAAgABAAMAAQQJAAQAAgABAAMAAQQJAAUAAgABAAMAAQQJAAYAAgABWABYAAAAAAAAAwAAAAMAAAAcAAEAAAAAADwAAwABAAAAHAAEACAAAAAEAAQAAQAAAC7//wAAAC7////TAAEAAAAAAAABBgAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAD/gwAyAAAAAQAAAAAAAAAAAAAAAAAAAAABAAQEAAEBAQJYAAEBASH4DwD4GwHEAvgcA/gXBIwMAYuL+nz5tQXkD5j3CBLnEQACAQEBIVhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYAAABAQAADwACAQEEE/t3Dov6fAH6fAT+fPp8+nwHDosMCvm1Cvm1DAz6fBQAAAAAAAABAAAAAMmJbzEAAAAAzgTjFQAAAADOBOQpAAEAAAAAAAAADAAUAAQAAAABAAAAAgABAAAAAAAAAAAD6AAAAAAAAA=="))},
-loadTestFontId:0,loadingContext:{requests:[],nextRequestId:0},isSyncFontLoadingSupported:function(){if(U)return!1;var b=/Mozilla\/5.0.*?rv:(\d+).*? Gecko/.exec(window.navigator.userAgent);return b&&14<=b[1]?!0:!1}(),bind:function(b,a){U&&m("bind() shall be called from main thread");for(var c=[],e=[],d=0,g=b.length;d<g;d++){var f=b[d];if(!f.attached&&!1!==f.loading){f.attached=!0;var k=f.bindDOM();k&&(c.push(k),e.push(f))}}d=R.queueLoadingCallback(a);0<c.length&&!this.isSyncFontLoadingSupported?R.prepareFontLoadEvent(c,
-e,d):d.complete()},queueLoadingCallback:function(b){var a=R.loadingContext,c={id:"pdfjs-font-loading-"+a.nextRequestId++,complete:function(){c.end&&m("completeRequest() cannot be called twice");for(c.end=Date.now();0<a.requests.length&&a.requests[0].end;){var b=a.requests.shift();setTimeout(b.callback,0)}},callback:b,started:Date.now()};a.requests.push(c);return c},prepareFontLoadEvent:function(b,a,c){function e(a,b){return a.charCodeAt(b)<<24|a.charCodeAt(b+1)<<16|a.charCodeAt(b+2)<<8|a.charCodeAt(b+
-3)&255}function d(a,b,c,d){a=m.substr(0,b);b=m.substr(b+c);return a+d+b}function g(a,b){l++;30<l?(F("Load test font never loaded."),b()):(h.font="30px "+a,h.fillText(".",0,20),0<h.getImageData(0,0,1,1).data[3]?b():setTimeout(g.bind(null,a,b)))}var f,k;b=document.createElement("canvas");b.width=1;b.height=1;var h=b.getContext("2d"),l=0;b="lt"+Date.now()+this.loadTestFontId++;var m=this.loadTestFont,m=d(m,976,b.length,b),p=e(m,16);f=0;for(k=b.length-3;f<k;f+=4)p=p-1482184792+e(b,f)|0;f<b.length&&(p=
-p-1482184792+e(b+"XXX",f)|0);m=d(m,16,4,String.fromCharCode(p>>24&255)+String.fromCharCode(p>>16&255)+String.fromCharCode(p>>8&255)+String.fromCharCode(p&255));f="url(data:font/opentype;base64,"+btoa(m)+");";R.insertRule('@font-face { font-family:"'+b+'";src:'+f+"}");p=[];f=0;for(k=a.length;f<k;f++)p.push(a[f].loadedName);p.push(b);var s=document.createElement("div");s.setAttribute("style","visibility: hidden;width: 10px; height: 10px;position: absolute; top: 0px; left: 0px;");f=0;for(k=p.length;f<
-k;++f)a=document.createElement("span"),a.textContent="Hi",a.style.fontFamily=p[f],s.appendChild(a);document.body.appendChild(s);g(b,function(){document.body.removeChild(s);c.complete()})}},Oa=function(){function b(a,b,e){this.compiledGlyphs={};if(1===arguments.length){var d=arguments[0],g;for(g in d)this[g]=d[g]}}b.prototype={bindDOM:function(){if(!this.data)return null;if(PDFJS.disableFontFace)return this.disableFontFace=!0,null;for(var a=this.data,b="",e=a.length,d=0;d<e;++d)b+=String.fromCharCode(a[d]);
-a=this.loadedName;b="url(data:"+this.mimetype+";base64,"+window.btoa(b)+");";a='@font-face { font-family:"'+a+'";src:'+b+"}";R.insertRule(a);PDFJS.pdfBug&&"FontInspector"in v&&v.FontInspector.enabled&&v.FontInspector.fontAdded(this,b);return a},getPathGenerator:function(a,b){if(!(b in this.compiledGlyphs)){var e=a.get(this.loadedName+"_path_"+b);this.compiledGlyphs[b]=new Function("c","size",e)}return this.compiledGlyphs[b]}};return b}()}).call("undefined"===typeof window?this:window);
-PDFJS.workerSrc||"undefined"===typeof document||(PDFJS.workerSrc=function(){var D=(document.body||document.getElementsByTagName("head")[0]).lastChild.src;return D&&D.replace(/\.js$/i,".worker.js")}());
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/* Copyright 2012 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Initializing PDFJS global object (if still undefined)
+if (typeof PDFJS === 'undefined') {
+  (typeof window !== 'undefined' ? window : this).PDFJS = {};
+}
+
+PDFJS.version = '0.8.894';
+PDFJS.build = 'ac91047';
+
+(function pdfjsWrapper() {
+  // Use strict in our context only - users might not want it
+  'use strict';
+
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/* Copyright 2012 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/* globals Cmd, ColorSpace, Dict, MozBlobBuilder, Name, PDFJS, Ref, URL,
+           Promise */
+
+'use strict';
+
+var globalScope = (typeof window === 'undefined') ? this : window;
+
+var isWorker = (typeof window == 'undefined');
+
+var FONT_IDENTITY_MATRIX = [0.001, 0, 0, 0.001, 0, 0];
+
+var TextRenderingMode = {
+  FILL: 0,
+  STROKE: 1,
+  FILL_STROKE: 2,
+  INVISIBLE: 3,
+  FILL_ADD_TO_PATH: 4,
+  STROKE_ADD_TO_PATH: 5,
+  FILL_STROKE_ADD_TO_PATH: 6,
+  ADD_TO_PATH: 7,
+  FILL_STROKE_MASK: 3,
+  ADD_TO_PATH_FLAG: 4
+};
+
+// The global PDFJS object exposes the API
+// In production, it will be declared outside a global wrapper
+// In development, it will be declared here
+if (!globalScope.PDFJS) {
+  globalScope.PDFJS = {};
+}
+
+globalScope.PDFJS.pdfBug = false;
+
+PDFJS.VERBOSITY_LEVELS = {
+  errors: 0,
+  warnings: 1,
+  infos: 5
+};
+
+// All the possible operations for an operator list.
+var OPS = PDFJS.OPS = {
+  // Intentionally start from 1 so it is easy to spot bad operators that will be
+  // 0's.
+  dependency: 1,
+  setLineWidth: 2,
+  setLineCap: 3,
+  setLineJoin: 4,
+  setMiterLimit: 5,
+  setDash: 6,
+  setRenderingIntent: 7,
+  setFlatness: 8,
+  setGState: 9,
+  save: 10,
+  restore: 11,
+  transform: 12,
+  moveTo: 13,
+  lineTo: 14,
+  curveTo: 15,
+  curveTo2: 16,
+  curveTo3: 17,
+  closePath: 18,
+  rectangle: 19,
+  stroke: 20,
+  closeStroke: 21,
+  fill: 22,
+  eoFill: 23,
+  fillStroke: 24,
+  eoFillStroke: 25,
+  closeFillStroke: 26,
+  closeEOFillStroke: 27,
+  endPath: 28,
+  clip: 29,
+  eoClip: 30,
+  beginText: 31,
+  endText: 32,
+  setCharSpacing: 33,
+  setWordSpacing: 34,
+  setHScale: 35,
+  setLeading: 36,
+  setFont: 37,
+  setTextRenderingMode: 38,
+  setTextRise: 39,
+  moveText: 40,
+  setLeadingMoveText: 41,
+  setTextMatrix: 42,
+  nextLine: 43,
+  showText: 44,
+  showSpacedText: 45,
+  nextLineShowText: 46,
+  nextLineSetSpacingShowText: 47,
+  setCharWidth: 48,
+  setCharWidthAndBounds: 49,
+  setStrokeColorSpace: 50,
+  setFillColorSpace: 51,
+  setStrokeColor: 52,
+  setStrokeColorN: 53,
+  setFillColor: 54,
+  setFillColorN: 55,
+  setStrokeGray: 56,
+  setFillGray: 57,
+  setStrokeRGBColor: 58,
+  setFillRGBColor: 59,
+  setStrokeCMYKColor: 60,
+  setFillCMYKColor: 61,
+  shadingFill: 62,
+  beginInlineImage: 63,
+  beginImageData: 64,
+  endInlineImage: 65,
+  paintXObject: 66,
+  markPoint: 67,
+  markPointProps: 68,
+  beginMarkedContent: 69,
+  beginMarkedContentProps: 70,
+  endMarkedContent: 71,
+  beginCompat: 72,
+  endCompat: 73,
+  paintFormXObjectBegin: 74,
+  paintFormXObjectEnd: 75,
+  beginGroup: 76,
+  endGroup: 77,
+  beginAnnotations: 78,
+  endAnnotations: 79,
+  beginAnnotation: 80,
+  endAnnotation: 81,
+  paintJpegXObject: 82,
+  paintImageMaskXObject: 83,
+  paintImageMaskXObjectGroup: 84,
+  paintImageXObject: 85,
+  paintInlineImageXObject: 86,
+  paintInlineImageXObjectGroup: 87
+};
+
+// A notice for devs. These are good for things that are helpful to devs, such
+// as warning that Workers were disabled, which is important to devs but not
+// end users.
+function info(msg) {
+  if (PDFJS.verbosity >= PDFJS.VERBOSITY_LEVELS.infos) {
+    console.log('Info: ' + msg);
+  }
+}
+
+// Non-fatal warnings.
+function warn(msg) {
+  if (PDFJS.verbosity >= PDFJS.VERBOSITY_LEVELS.warnings) {
+    console.log('Warning: ' + msg);
+  }
+}
+
+// Fatal errors that should trigger the fallback UI and halt execution by
+// throwing an exception.
+function error(msg) {
+  // If multiple arguments were passed, pass them all to the log function.
+  if (arguments.length > 1) {
+    var logArguments = ['Error:'];
+    logArguments.push.apply(logArguments, arguments);
+    console.log.apply(console, logArguments);
+    // Join the arguments into a single string for the lines below.
+    msg = [].join.call(arguments, ' ');
+  } else {
+    console.log('Error: ' + msg);
+  }
+  console.log(backtrace());
+  UnsupportedManager.notify(UNSUPPORTED_FEATURES.unknown);
+  throw new Error(msg);
+}
+
+function backtrace() {
+  try {
+    throw new Error();
+  } catch (e) {
+    return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
+  }
+}
+
+function assert(cond, msg) {
+  if (!cond)
+    error(msg);
+}
+
+var UNSUPPORTED_FEATURES = PDFJS.UNSUPPORTED_FEATURES = {
+  unknown: 'unknown',
+  forms: 'forms',
+  javaScript: 'javaScript',
+  smask: 'smask',
+  shadingPattern: 'shadingPattern',
+  font: 'font'
+};
+
+var UnsupportedManager = PDFJS.UnsupportedManager =
+  (function UnsupportedManagerClosure() {
+  var listeners = [];
+  return {
+    listen: function (cb) {
+      listeners.push(cb);
+    },
+    notify: function (featureId) {
+      warn('Unsupported feature "' + featureId + '"');
+      for (var i = 0, ii = listeners.length; i < ii; i++) {
+        listeners[i](featureId);
+      }
+    }
+  };
+})();
+
+// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
+// absolute URL, it will be returned as is.
+function combineUrl(baseUrl, url) {
+  if (!url)
+    return baseUrl;
+  if (url.indexOf(':') >= 0)
+    return url;
+  if (url.charAt(0) == '/') {
+    // absolute path
+    var i = baseUrl.indexOf('://');
+    i = baseUrl.indexOf('/', i + 3);
+    return baseUrl.substring(0, i) + url;
+  } else {
+    // relative path
+    var pathLength = baseUrl.length, i;
+    i = baseUrl.lastIndexOf('#');
+    pathLength = i >= 0 ? i : pathLength;
+    i = baseUrl.lastIndexOf('?', pathLength);
+    pathLength = i >= 0 ? i : pathLength;
+    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
+    return baseUrl.substring(0, prefixLength + 1) + url;
+  }
+}
+
+// Validates if URL is safe and allowed, e.g. to avoid XSS.
+function isValidUrl(url, allowRelative) {
+  if (!url) {
+    return false;
+  }
+  var colon = url.indexOf(':');
+  if (colon < 0) {
+    return allowRelative;
+  }
+  var protocol = url.substr(0, colon);
+  switch (protocol) {
+    case 'http':
+    case 'https':
+    case 'ftp':
+    case 'mailto':
+      return true;
+    default:
+      return false;
+  }
+}
+PDFJS.isValidUrl = isValidUrl;
+
+// In a well-formed PDF, |cond| holds.  If it doesn't, subsequent
+// behavior is undefined.
+function assertWellFormed(cond, msg) {
+  if (!cond)
+    error(msg);
+}
+
+function shadow(obj, prop, value) {
+  Object.defineProperty(obj, prop, { value: value,
+                                     enumerable: true,
+                                     configurable: true,
+                                     writable: false });
+  return value;
+}
+
+var PasswordResponses = PDFJS.PasswordResponses = {
+  NEED_PASSWORD: 1,
+  INCORRECT_PASSWORD: 2
+};
+
+var PasswordException = (function PasswordExceptionClosure() {
+  function PasswordException(msg, code) {
+    this.name = 'PasswordException';
+    this.message = msg;
+    this.code = code;
+  }
+
+  PasswordException.prototype = new Error();
+  PasswordException.constructor = PasswordException;
+
+  return PasswordException;
+})();
+
+var UnknownErrorException = (function UnknownErrorExceptionClosure() {
+  function UnknownErrorException(msg, details) {
+    this.name = 'UnknownErrorException';
+    this.message = msg;
+    this.details = details;
+  }
+
+  UnknownErrorException.prototype = new Error();
+  UnknownErrorException.constructor = UnknownErrorException;
+
+  return UnknownErrorException;
+})();
+
+var InvalidPDFException = (function InvalidPDFExceptionClosure() {
+  function InvalidPDFException(msg) {
+    this.name = 'InvalidPDFException';
+    this.message = msg;
+  }
+
+  InvalidPDFException.prototype = new Error();
+  InvalidPDFException.constructor = InvalidPDFException;
+
+  return InvalidPDFException;
+})();
+
+var MissingPDFException = (function MissingPDFExceptionClosure() {
+  function MissingPDFException(msg) {
+    this.name = 'MissingPDFException';
+    this.message = msg;
+  }
+
+  MissingPDFException.prototype = new Error();
+  MissingPDFException.constructor = MissingPDFException;
+
+  return MissingPDFException;
+})();
+
+var NotImplementedException = (function NotImplementedExceptionClosure() {
+  function NotImplementedException(msg) {
+    this.message = msg;
+  }
+
+  NotImplementedException.prototype = new Error();
+  NotImplementedException.prototype.name = 'NotImplementedException';
+  NotImplementedException.constructor = NotImplementedException;
+
+  return NotImplementedException;
+})();
+
+var MissingDataException = (function MissingDataExceptionClosure() {
+  function MissingDataException(begin, end) {
+    this.begin = begin;
+    this.end = end;
+    this.message = 'Missing data [' + begin + ', ' + end + ')';
+  }
+
+  MissingDataException.prototype = new Error();
+  MissingDataException.prototype.name = 'MissingDataException';
+  MissingDataException.constructor = MissingDataException;
+
+  return MissingDataException;
+})();
+
+var XRefParseException = (function XRefParseExceptionClosure() {
+  function XRefParseException(msg) {
+    this.message = msg;
+  }
+
+  XRefParseException.prototype = new Error();
+  XRefParseException.prototype.name = 'XRefParseException';
+  XRefParseException.constructor = XRefParseException;
+
+  return XRefParseException;
+})();
+
+
+function bytesToString(bytes) {
+  var str = '';
+  var length = bytes.length;
+  for (var n = 0; n < length; ++n)
+    str += String.fromCharCode(bytes[n]);
+  return str;
+}
+
+function stringToBytes(str) {
+  var length = str.length;
+  var bytes = new Uint8Array(length);
+  for (var n = 0; n < length; ++n)
+    bytes[n] = str.charCodeAt(n) & 0xFF;
+  return bytes;
+}
+
+var IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
+
+var Util = PDFJS.Util = (function UtilClosure() {
+  function Util() {}
+
+  Util.makeCssRgb = function Util_makeCssRgb(rgb) {
+    return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+  };
+
+  Util.makeCssCmyk = function Util_makeCssCmyk(cmyk) {
+    var rgb = ColorSpace.singletons.cmyk.getRgb(cmyk, 0);
+    return Util.makeCssRgb(rgb);
+  };
+
+  // Concatenates two transformation matrices together and returns the result.
+  Util.transform = function Util_transform(m1, m2) {
+    return [
+      m1[0] * m2[0] + m1[2] * m2[1],
+      m1[1] * m2[0] + m1[3] * m2[1],
+      m1[0] * m2[2] + m1[2] * m2[3],
+      m1[1] * m2[2] + m1[3] * m2[3],
+      m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+      m1[1] * m2[4] + m1[3] * m2[5] + m1[5]
+    ];
+  };
+
+  // For 2d affine transforms
+  Util.applyTransform = function Util_applyTransform(p, m) {
+    var xt = p[0] * m[0] + p[1] * m[2] + m[4];
+    var yt = p[0] * m[1] + p[1] * m[3] + m[5];
+    return [xt, yt];
+  };
+
+  Util.applyInverseTransform = function Util_applyInverseTransform(p, m) {
+    var d = m[0] * m[3] - m[1] * m[2];
+    var xt = (p[0] * m[3] - p[1] * m[2] + m[2] * m[5] - m[4] * m[3]) / d;
+    var yt = (-p[0] * m[1] + p[1] * m[0] + m[4] * m[1] - m[5] * m[0]) / d;
+    return [xt, yt];
+  };
+
+  // Applies the transform to the rectangle and finds the minimum axially
+  // aligned bounding box.
+  Util.getAxialAlignedBoundingBox =
+    function Util_getAxialAlignedBoundingBox(r, m) {
+
+    var p1 = Util.applyTransform(r, m);
+    var p2 = Util.applyTransform(r.slice(2, 4), m);
+    var p3 = Util.applyTransform([r[0], r[3]], m);
+    var p4 = Util.applyTransform([r[2], r[1]], m);
+    return [
+      Math.min(p1[0], p2[0], p3[0], p4[0]),
+      Math.min(p1[1], p2[1], p3[1], p4[1]),
+      Math.max(p1[0], p2[0], p3[0], p4[0]),
+      Math.max(p1[1], p2[1], p3[1], p4[1])
+    ];
+  };
+
+  Util.inverseTransform = function Util_inverseTransform(m) {
+    var d = m[0] * m[3] - m[1] * m[2];
+    return [m[3] / d, -m[1] / d, -m[2] / d, m[0] / d,
+      (m[2] * m[5] - m[4] * m[3]) / d, (m[4] * m[1] - m[5] * m[0]) / d];
+  };
+
+  // Apply a generic 3d matrix M on a 3-vector v:
+  //   | a b c |   | X |
+  //   | d e f | x | Y |
+  //   | g h i |   | Z |
+  // M is assumed to be serialized as [a,b,c,d,e,f,g,h,i],
+  // with v as [X,Y,Z]
+  Util.apply3dTransform = function Util_apply3dTransform(m, v) {
+    return [
+      m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+      m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+      m[6] * v[0] + m[7] * v[1] + m[8] * v[2]
+    ];
+  };
+
+  // This calculation uses Singular Value Decomposition.
+  // The SVD can be represented with formula A = USV. We are interested in the
+  // matrix S here because it represents the scale values.
+  Util.singularValueDecompose2dScale =
+    function Util_singularValueDecompose2dScale(m) {
+
+    var transpose = [m[0], m[2], m[1], m[3]];
+
+    // Multiply matrix m with its transpose.
+    var a = m[0] * transpose[0] + m[1] * transpose[2];
+    var b = m[0] * transpose[1] + m[1] * transpose[3];
+    var c = m[2] * transpose[0] + m[3] * transpose[2];
+    var d = m[2] * transpose[1] + m[3] * transpose[3];
+
+    // Solve the second degree polynomial to get roots.
+    var first = (a + d) / 2;
+    var second = Math.sqrt((a + d) * (a + d) - 4 * (a * d - c * b)) / 2;
+    var sx = first + second || 1;
+    var sy = first - second || 1;
+
+    // Scale values are the square roots of the eigenvalues.
+    return [Math.sqrt(sx), Math.sqrt(sy)];
+  };
+
+  // Normalize rectangle rect=[x1, y1, x2, y2] so that (x1,y1) < (x2,y2)
+  // For coordinate systems whose origin lies in the bottom-left, this
+  // means normalization to (BL,TR) ordering. For systems with origin in the
+  // top-left, this means (TL,BR) ordering.
+  Util.normalizeRect = function Util_normalizeRect(rect) {
+    var r = rect.slice(0); // clone rect
+    if (rect[0] > rect[2]) {
+      r[0] = rect[2];
+      r[2] = rect[0];
+    }
+    if (rect[1] > rect[3]) {
+      r[1] = rect[3];
+      r[3] = rect[1];
+    }
+    return r;
+  };
+
+  // Returns a rectangle [x1, y1, x2, y2] corresponding to the
+  // intersection of rect1 and rect2. If no intersection, returns 'false'
+  // The rectangle coordinates of rect1, rect2 should be [x1, y1, x2, y2]
+  Util.intersect = function Util_intersect(rect1, rect2) {
+    function compare(a, b) {
+      return a - b;
+    }
+
+    // Order points along the axes
+    var orderedX = [rect1[0], rect1[2], rect2[0], rect2[2]].sort(compare),
+        orderedY = [rect1[1], rect1[3], rect2[1], rect2[3]].sort(compare),
+        result = [];
+
+    rect1 = Util.normalizeRect(rect1);
+    rect2 = Util.normalizeRect(rect2);
+
+    // X: first and second points belong to different rectangles?
+    if ((orderedX[0] === rect1[0] && orderedX[1] === rect2[0]) ||
+        (orderedX[0] === rect2[0] && orderedX[1] === rect1[0])) {
+      // Intersection must be between second and third points
+      result[0] = orderedX[1];
+      result[2] = orderedX[2];
+    } else {
+      return false;
+    }
+
+    // Y: first and second points belong to different rectangles?
+    if ((orderedY[0] === rect1[1] && orderedY[1] === rect2[1]) ||
+        (orderedY[0] === rect2[1] && orderedY[1] === rect1[1])) {
+      // Intersection must be between second and third points
+      result[1] = orderedY[1];
+      result[3] = orderedY[2];
+    } else {
+      return false;
+    }
+
+    return result;
+  };
+
+  Util.sign = function Util_sign(num) {
+    return num < 0 ? -1 : 1;
+  };
+
+  // TODO(mack): Rename appendToArray
+  Util.concatenateToArray = function concatenateToArray(arr1, arr2) {
+    Array.prototype.push.apply(arr1, arr2);
+  };
+
+  Util.prependToArray = function concatenateToArray(arr1, arr2) {
+    Array.prototype.unshift.apply(arr1, arr2);
+  };
+
+  Util.extendObj = function extendObj(obj1, obj2) {
+    for (var key in obj2) {
+      obj1[key] = obj2[key];
+    }
+  };
+
+  Util.getInheritableProperty = function Util_getInheritableProperty(dict,
+                                                                     name) {
+    while (dict && !dict.has(name)) {
+      dict = dict.get('Parent');
+    }
+    if (!dict) {
+      return null;
+    }
+    return dict.get(name);
+  };
+
+  Util.inherit = function Util_inherit(sub, base, prototype) {
+    sub.prototype = Object.create(base.prototype);
+    sub.prototype.constructor = sub;
+    for (var prop in prototype) {
+      sub.prototype[prop] = prototype[prop];
+    }
+  };
+
+  Util.loadScript = function Util_loadScript(src, callback) {
+    var script = document.createElement('script');
+    var loaded = false;
+    script.setAttribute('src', src);
+    if (callback) {
+      script.onload = function() {
+        if (!loaded) {
+          callback();
+        }
+        loaded = true;
+      };
+    }
+    document.getElementsByTagName('head')[0].appendChild(script);
+  };
+
+  return Util;
+})();
+
+var PageViewport = PDFJS.PageViewport = (function PageViewportClosure() {
+  function PageViewport(viewBox, scale, rotation, offsetX, offsetY, dontFlip) {
+    this.viewBox = viewBox;
+    this.scale = scale;
+    this.rotation = rotation;
+    this.offsetX = offsetX;
+    this.offsetY = offsetY;
+
+    // creating transform to convert pdf coordinate system to the normal
+    // canvas like coordinates taking in account scale and rotation
+    var centerX = (viewBox[2] + viewBox[0]) / 2;
+    var centerY = (viewBox[3] + viewBox[1]) / 2;
+    var rotateA, rotateB, rotateC, rotateD;
+    rotation = rotation % 360;
+    rotation = rotation < 0 ? rotation + 360 : rotation;
+    switch (rotation) {
+      case 180:
+        rotateA = -1; rotateB = 0; rotateC = 0; rotateD = 1;
+        break;
+      case 90:
+        rotateA = 0; rotateB = 1; rotateC = 1; rotateD = 0;
+        break;
+      case 270:
+        rotateA = 0; rotateB = -1; rotateC = -1; rotateD = 0;
+        break;
+      //case 0:
+      default:
+        rotateA = 1; rotateB = 0; rotateC = 0; rotateD = -1;
+        break;
+    }
+
+    if (dontFlip) {
+      rotateC = -rotateC; rotateD = -rotateD;
+    }
+
+    var offsetCanvasX, offsetCanvasY;
+    var width, height;
+    if (rotateA === 0) {
+      offsetCanvasX = Math.abs(centerY - viewBox[1]) * scale + offsetX;
+      offsetCanvasY = Math.abs(centerX - viewBox[0]) * scale + offsetY;
+      width = Math.abs(viewBox[3] - viewBox[1]) * scale;
+      height = Math.abs(viewBox[2] - viewBox[0]) * scale;
+    } else {
+      offsetCanvasX = Math.abs(centerX - viewBox[0]) * scale + offsetX;
+      offsetCanvasY = Math.abs(centerY - viewBox[1]) * scale + offsetY;
+      width = Math.abs(viewBox[2] - viewBox[0]) * scale;
+      height = Math.abs(viewBox[3] - viewBox[1]) * scale;
+    }
+    // creating transform for the following operations:
+    // translate(-centerX, -centerY), rotate and flip vertically,
+    // scale, and translate(offsetCanvasX, offsetCanvasY)
+    this.transform = [
+      rotateA * scale,
+      rotateB * scale,
+      rotateC * scale,
+      rotateD * scale,
+      offsetCanvasX - rotateA * scale * centerX - rotateC * scale * centerY,
+      offsetCanvasY - rotateB * scale * centerX - rotateD * scale * centerY
+    ];
+
+    this.width = width;
+    this.height = height;
+    this.fontScale = scale;
+  }
+  PageViewport.prototype = {
+    clone: function PageViewPort_clone(args) {
+      args = args || {};
+      var scale = 'scale' in args ? args.scale : this.scale;
+      var rotation = 'rotation' in args ? args.rotation : this.rotation;
+      return new PageViewport(this.viewBox.slice(), scale, rotation,
+                              this.offsetX, this.offsetY, args.dontFlip);
+    },
+    convertToViewportPoint: function PageViewport_convertToViewportPoint(x, y) {
+      return Util.applyTransform([x, y], this.transform);
+    },
+    convertToViewportRectangle:
+      function PageViewport_convertToViewportRectangle(rect) {
+      var tl = Util.applyTransform([rect[0], rect[1]], this.transform);
+      var br = Util.applyTransform([rect[2], rect[3]], this.transform);
+      return [tl[0], tl[1], br[0], br[1]];
+    },
+    convertToPdfPoint: function PageViewport_convertToPdfPoint(x, y) {
+      return Util.applyInverseTransform([x, y], this.transform);
+    }
+  };
+  return PageViewport;
+})();
+
+var PDFStringTranslateTable = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0x2D8, 0x2C7, 0x2C6, 0x2D9, 0x2DD, 0x2DB, 0x2DA, 0x2DC, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x2022, 0x2020, 0x2021, 0x2026, 0x2014,
+  0x2013, 0x192, 0x2044, 0x2039, 0x203A, 0x2212, 0x2030, 0x201E, 0x201C,
+  0x201D, 0x2018, 0x2019, 0x201A, 0x2122, 0xFB01, 0xFB02, 0x141, 0x152, 0x160,
+  0x178, 0x17D, 0x131, 0x142, 0x153, 0x161, 0x17E, 0, 0x20AC
+];
+
+function stringToPDFString(str) {
+  var i, n = str.length, str2 = '';
+  if (str[0] === '\xFE' && str[1] === '\xFF') {
+    // UTF16BE BOM
+    for (i = 2; i < n; i += 2)
+      str2 += String.fromCharCode(
+        (str.charCodeAt(i) << 8) | str.charCodeAt(i + 1));
+  } else {
+    for (i = 0; i < n; ++i) {
+      var code = PDFStringTranslateTable[str.charCodeAt(i)];
+      str2 += code ? String.fromCharCode(code) : str.charAt(i);
+    }
+  }
+  return str2;
+}
+
+function stringToUTF8String(str) {
+  return decodeURIComponent(escape(str));
+}
+
+function isEmptyObj(obj) {
+  for (var key in obj) {
+    return false;
+  }
+  return true;
+}
+
+function isBool(v) {
+  return typeof v == 'boolean';
+}
+
+function isInt(v) {
+  return typeof v == 'number' && ((v | 0) == v);
+}
+
+function isNum(v) {
+  return typeof v == 'number';
+}
+
+function isString(v) {
+  return typeof v == 'string';
+}
+
+function isNull(v) {
+  return v === null;
+}
+
+function isName(v) {
+  return v instanceof Name;
+}
+
+function isCmd(v, cmd) {
+  return v instanceof Cmd && (!cmd || v.cmd == cmd);
+}
+
+function isDict(v, type) {
+  if (!(v instanceof Dict)) {
+    return false;
+  }
+  if (!type) {
+    return true;
+  }
+  var dictType = v.get('Type');
+  return isName(dictType) && dictType.name == type;
+}
+
+function isArray(v) {
+  return v instanceof Array;
+}
+
+function isStream(v) {
+  return typeof v == 'object' && v !== null && v !== undefined &&
+         ('getBytes' in v);
+}
+
+function isArrayBuffer(v) {
+  return typeof v == 'object' && v !== null && v !== undefined &&
+         ('byteLength' in v);
+}
+
+function isRef(v) {
+  return v instanceof Ref;
+}
+
+function isPDFFunction(v) {
+  var fnDict;
+  if (typeof v != 'object')
+    return false;
+  else if (isDict(v))
+    fnDict = v;
+  else if (isStream(v))
+    fnDict = v.dict;
+  else
+    return false;
+  return fnDict.has('FunctionType');
+}
+
+/**
+ * Legacy support for PDFJS Promise implementation.
+ * TODO remove eventually
+ */
+var LegacyPromise = PDFJS.LegacyPromise = (function LegacyPromiseClosure() {
+  return function LegacyPromise() {
+    var resolve, reject;
+    var promise = new Promise(function (resolve_, reject_) {
+      resolve = resolve_;
+      reject = reject_;
+    });
+    promise.resolve = resolve;
+    promise.reject = reject;
+    return promise;
+  };
+})();
+
+/**
+ * Polyfill for Promises:
+ * The following promise implementation tries to generally implment the
+ * Promise/A+ spec. Some notable differences from other promise libaries are:
+ * - There currently isn't a seperate deferred and promise object.
+ * - Unhandled rejections eventually show an error if they aren't handled.
+ *
+ * Based off of the work in:
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=810490
+ */
+(function PromiseClosure() {
+  if (globalScope.Promise) {
+    // Promises existing in the DOM/Worker, checking presence of all/resolve
+    if (typeof globalScope.Promise.all !== 'function') {
+      globalScope.Promise.all = function (iterable) {
+        var count = 0, results = [], resolve, reject;
+        var promise = new globalScope.Promise(function (resolve_, reject_) {
+          resolve = resolve_;
+          reject = reject_;
+        });
+        iterable.forEach(function (p, i) {
+          count++;
+          p.then(function (result) {
+            results[i] = result;
+            count--;
+            if (count === 0) {
+              resolve(results);
+            }
+          }, reject);
+        });
+        if (count === 0) {
+          resolve(results);
+        }
+        return promise;
+      };
+    }
+    if (typeof globalScope.Promise.resolve !== 'function') {
+      globalScope.Promise.resolve = function (x) {
+        return new globalScope.Promise(function (resolve) { resolve(x); });
+      };
+    }
+    return;
+  }
+  var STATUS_PENDING = 0;
+  var STATUS_RESOLVED = 1;
+  var STATUS_REJECTED = 2;
+
+  // In an attempt to avoid silent exceptions, unhandled rejections are
+  // tracked and if they aren't handled in a certain amount of time an
+  // error is logged.
+  var REJECTION_TIMEOUT = 500;
+
+  var HandlerManager = {
+    handlers: [],
+    running: false,
+    unhandledRejections: [],
+    pendingRejectionCheck: false,
+
+    scheduleHandlers: function scheduleHandlers(promise) {
+      if (promise._status == STATUS_PENDING) {
+        return;
+      }
+
+      this.handlers = this.handlers.concat(promise._handlers);
+      promise._handlers = [];
+
+      if (this.running) {
+        return;
+      }
+      this.running = true;
+
+      setTimeout(this.runHandlers.bind(this), 0);
+    },
+
+    runHandlers: function runHandlers() {
+      var RUN_TIMEOUT = 1; // ms
+      var timeoutAt = Date.now() + RUN_TIMEOUT;
+      while (this.handlers.length > 0) {
+        var handler = this.handlers.shift();
+
+        var nextStatus = handler.thisPromise._status;
+        var nextValue = handler.thisPromise._value;
+
+        try {
+          if (nextStatus === STATUS_RESOLVED) {
+            if (typeof(handler.onResolve) == 'function') {
+              nextValue = handler.onResolve(nextValue);
+            }
+          } else if (typeof(handler.onReject) === 'function') {
+              nextValue = handler.onReject(nextValue);
+              nextStatus = STATUS_RESOLVED;
+
+              if (handler.thisPromise._unhandledRejection) {
+                this.removeUnhandeledRejection(handler.thisPromise);
+              }
+          }
+        } catch (ex) {
+          nextStatus = STATUS_REJECTED;
+          nextValue = ex;
+        }
+
+        handler.nextPromise._updateStatus(nextStatus, nextValue);
+        if (Date.now() >= timeoutAt) {
+          break;
+        }
+      }
+
+      if (this.handlers.length > 0) {
+        setTimeout(this.runHandlers.bind(this), 0);
+        return;
+      }
+
+      this.running = false;
+    },
+
+    addUnhandledRejection: function addUnhandledRejection(promise) {
+      this.unhandledRejections.push({
+        promise: promise,
+        time: Date.now()
+      });
+      this.scheduleRejectionCheck();
+    },
+
+    removeUnhandeledRejection: function removeUnhandeledRejection(promise) {
+      promise._unhandledRejection = false;
+      for (var i = 0; i < this.unhandledRejections.length; i++) {
+        if (this.unhandledRejections[i].promise === promise) {
+          this.unhandledRejections.splice(i);
+          i--;
+        }
+      }
+    },
+
+    scheduleRejectionCheck: function scheduleRejectionCheck() {
+      if (this.pendingRejectionCheck) {
+        return;
+      }
+      this.pendingRejectionCheck = true;
+      setTimeout(function rejectionCheck() {
+        this.pendingRejectionCheck = false;
+        var now = Date.now();
+        for (var i = 0; i < this.unhandledRejections.length; i++) {
+          if (now - this.unhandledRejections[i].time > REJECTION_TIMEOUT) {
+            var unhandled = this.unhandledRejections[i].promise._value;
+            var msg = 'Unhandled rejection: ' + unhandled;
+            if (unhandled.stack) {
+              msg += '\n' + unhandled.stack;
+            }
+            warn(msg);
+            this.unhandledRejections.splice(i);
+            i--;
+          }
+        }
+        if (this.unhandledRejections.length) {
+          this.scheduleRejectionCheck();
+        }
+      }.bind(this), REJECTION_TIMEOUT);
+    }
+  };
+
+  function Promise(resolver) {
+    this._status = STATUS_PENDING;
+    this._handlers = [];
+    resolver.call(this, this._resolve.bind(this), this._reject.bind(this));
+  }
+  /**
+   * Builds a promise that is resolved when all the passed in promises are
+   * resolved.
+   * @param {array} array of data and/or promises to wait for.
+   * @return {Promise} New dependant promise.
+   */
+  Promise.all = function Promise_all(promises) {
+    var resolveAll, rejectAll;
+    var deferred = new Promise(function (resolve, reject) {
+      resolveAll = resolve;
+      rejectAll = reject;
+    });
+    var unresolved = promises.length;
+    var results = [];
+    if (unresolved === 0) {
+      resolveAll(results);
+      return deferred;
+    }
+    function reject(reason) {
+      if (deferred._status === STATUS_REJECTED) {
+        return;
+      }
+      results = [];
+      rejectAll(reason);
+    }
+    for (var i = 0, ii = promises.length; i < ii; ++i) {
+      var promise = promises[i];
+      var resolve = (function(i) {
+        return function(value) {
+          if (deferred._status === STATUS_REJECTED) {
+            return;
+          }
+          results[i] = value;
+          unresolved--;
+          if (unresolved === 0)
+            resolveAll(results);
+        };
+      })(i);
+      if (Promise.isPromise(promise)) {
+        promise.then(resolve, reject);
+      } else {
+        resolve(promise);
+      }
+    }
+    return deferred;
+  };
+
+  /**
+   * Checks if the value is likely a promise (has a 'then' function).
+   * @return {boolean} true if x is thenable
+   */
+  Promise.isPromise = function Promise_isPromise(value) {
+    return value && typeof value.then === 'function';
+  };
+  /**
+   * Creates resolved promise
+   * @param x resolve value
+   * @returns {Promise}
+   */
+  Promise.resolve = function Promise_resolve(x) {
+    return new Promise(function (resolve) { resolve(x); });
+  };
+
+  Promise.prototype = {
+    _status: null,
+    _value: null,
+    _handlers: null,
+    _unhandledRejection: null,
+
+    _updateStatus: function Promise__updateStatus(status, value) {
+      if (this._status === STATUS_RESOLVED ||
+          this._status === STATUS_REJECTED) {
+        return;
+      }
+
+      if (status == STATUS_RESOLVED &&
+          Promise.isPromise(value)) {
+        value.then(this._updateStatus.bind(this, STATUS_RESOLVED),
+                   this._updateStatus.bind(this, STATUS_REJECTED));
+        return;
+      }
+
+      this._status = status;
+      this._value = value;
+
+      if (status === STATUS_REJECTED && this._handlers.length === 0) {
+        this._unhandledRejection = true;
+        HandlerManager.addUnhandledRejection(this);
+      }
+
+      HandlerManager.scheduleHandlers(this);
+    },
+
+    _resolve: function Promise_resolve(value) {
+      this._updateStatus(STATUS_RESOLVED, value);
+    },
+
+    _reject: function Promise_reject(reason) {
+      this._updateStatus(STATUS_REJECTED, reason);
+    },
+
+    then: function Promise_then(onResolve, onReject) {
+      var nextPromise = new Promise(function (resolve, reject) {
+        this.resolve = reject;
+        this.reject = reject;
+      });
+      this._handlers.push({
+        thisPromise: this,
+        onResolve: onResolve,
+        onReject: onReject,
+        nextPromise: nextPromise
+      });
+      HandlerManager.scheduleHandlers(this);
+      return nextPromise;
+    }
+  };
+
+  globalScope.Promise = Promise;
+})();
+
+var StatTimer = (function StatTimerClosure() {
+  function rpad(str, pad, length) {
+    while (str.length < length)
+      str += pad;
+    return str;
+  }
+  function StatTimer() {
+    this.started = {};
+    this.times = [];
+    this.enabled = true;
+  }
+  StatTimer.prototype = {
+    time: function StatTimer_time(name) {
+      if (!this.enabled)
+        return;
+      if (name in this.started)
+        warn('Timer is already running for ' + name);
+      this.started[name] = Date.now();
+    },
+    timeEnd: function StatTimer_timeEnd(name) {
+      if (!this.enabled)
+        return;
+      if (!(name in this.started))
+        warn('Timer has not been started for ' + name);
+      this.times.push({
+        'name': name,
+        'start': this.started[name],
+        'end': Date.now()
+      });
+      // Remove timer from started so it can be called again.
+      delete this.started[name];
+    },
+    toString: function StatTimer_toString() {
+      var times = this.times;
+      var out = '';
+      // Find the longest name for padding purposes.
+      var longest = 0;
+      for (var i = 0, ii = times.length; i < ii; ++i) {
+        var name = times[i]['name'];
+        if (name.length > longest)
+          longest = name.length;
+      }
+      for (var i = 0, ii = times.length; i < ii; ++i) {
+        var span = times[i];
+        var duration = span.end - span.start;
+        out += rpad(span['name'], ' ', longest) + ' ' + duration + 'ms\n';
+      }
+      return out;
+    }
+  };
+  return StatTimer;
+})();
+
+PDFJS.createBlob = function createBlob(data, contentType) {
+  if (typeof Blob !== 'undefined')
+    return new Blob([data], { type: contentType });
+  // Blob builder is deprecated in FF14 and removed in FF18.
+  var bb = new MozBlobBuilder();
+  bb.append(data);
+  return bb.getBlob(contentType);
+};
+
+PDFJS.createObjectURL = (function createObjectURLClosure() {
+  // Blob/createObjectURL is not available, falling back to data schema.
+  var digits =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+  return function createObjectURL(data, contentType) {
+    if (!PDFJS.disableCreateObjectURL &&
+        typeof URL !== 'undefined' && URL.createObjectURL) {
+      var blob = PDFJS.createBlob(data, contentType);
+      return URL.createObjectURL(blob);
+    }
+
+    var buffer = 'data:' + contentType + ';base64,';
+    for (var i = 0, ii = data.length; i < ii; i += 3) {
+      var b1 = data[i] & 0xFF;
+      var b2 = data[i + 1] & 0xFF;
+      var b3 = data[i + 2] & 0xFF;
+      var d1 = b1 >> 2, d2 = ((b1 & 3) << 4) | (b2 >> 4);
+      var d3 = i + 1 < ii ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
+      var d4 = i + 2 < ii ? (b3 & 0x3F) : 64;
+      buffer += digits[d1] + digits[d2] + digits[d3] + digits[d4];
+    }
+    return buffer;
+  };
+})();
+
+function MessageHandler(name, comObj) {
+  this.name = name;
+  this.comObj = comObj;
+  this.callbackIndex = 1;
+  this.postMessageTransfers = true;
+  var callbacks = this.callbacks = {};
+  var ah = this.actionHandler = {};
+
+  ah['console_log'] = [function ahConsoleLog(data) {
+    console.log.apply(console, data);
+  }];
+  ah['console_error'] = [function ahConsoleError(data) {
+    console.error.apply(console, data);
+  }];
+  ah['_unsupported_feature'] = [function ah_unsupportedFeature(data) {
+    UnsupportedManager.notify(data);
+  }];
+
+  comObj.onmessage = function messageHandlerComObjOnMessage(event) {
+    var data = event.data;
+    if (data.isReply) {
+      var callbackId = data.callbackId;
+      if (data.callbackId in callbacks) {
+        var callback = callbacks[callbackId];
+        delete callbacks[callbackId];
+        callback(data.data);
+      } else {
+        error('Cannot resolve callback ' + callbackId);
+      }
+    } else if (data.action in ah) {
+      var action = ah[data.action];
+      if (data.callbackId) {
+        var deferred = {};
+        var promise = new Promise(function (resolve, reject) {
+          deferred.resolve = resolve;
+          deferred.reject = reject;
+        });
+        deferred.promise = promise;
+        promise.then(function(resolvedData) {
+          comObj.postMessage({
+            isReply: true,
+            callbackId: data.callbackId,
+            data: resolvedData
+          });
+        });
+        action[0].call(action[1], data.data, deferred);
+      } else {
+        action[0].call(action[1], data.data);
+      }
+    } else {
+      error('Unkown action from worker: ' + data.action);
+    }
+  };
+}
+
+MessageHandler.prototype = {
+  on: function messageHandlerOn(actionName, handler, scope) {
+    var ah = this.actionHandler;
+    if (ah[actionName]) {
+      error('There is already an actionName called "' + actionName + '"');
+    }
+    ah[actionName] = [handler, scope];
+  },
+  /**
+   * Sends a message to the comObj to invoke the action with the supplied data.
+   * @param {String} actionName Action to call.
+   * @param {JSON} data JSON data to send.
+   * @param {function} [callback] Optional callback that will handle a reply.
+   * @param {Array} [transfers] Optional list of transfers/ArrayBuffers
+   */
+  send: function messageHandlerSend(actionName, data, callback, transfers) {
+    var message = {
+      action: actionName,
+      data: data
+    };
+    if (callback) {
+      var callbackId = this.callbackIndex++;
+      this.callbacks[callbackId] = callback;
+      message.callbackId = callbackId;
+    }
+    if (transfers && this.postMessageTransfers) {
+      this.comObj.postMessage(message, transfers);
+    } else {
+      this.comObj.postMessage(message);
+    }
+  }
+};
+
+function loadJpegStream(id, imageUrl, objs) {
+  var img = new Image();
+  img.onload = (function loadJpegStream_onloadClosure() {
+    objs.resolve(id, img);
+  });
+  img.src = imageUrl;
+}
+
+
+var ColorSpace = (function ColorSpaceClosure() {
+  // Constructor should define this.numComps, this.defaultColor, this.name
+  function ColorSpace() {
+    error('should not call ColorSpace constructor');
+  }
+
+  ColorSpace.prototype = {
+    /**
+     * Converts the color value to the RGB color. The color components are
+     * located in the src array starting from the srcOffset. Returns the array
+     * of the rgb components, each value ranging from [0,255].
+     */
+    getRgb: function ColorSpace_getRgb(src, srcOffset) {
+      error('Should not call ColorSpace.getRgb');
+    },
+    /**
+     * Converts the color value to the RGB color, similar to the getRgb method.
+     * The result placed into the dest array starting from the destOffset.
+     */
+    getRgbItem: function ColorSpace_getRgb(src, srcOffset, dest, destOffset) {
+      error('Should not call ColorSpace.getRgbItem');
+    },
+    /**
+     * Converts the specified number of the color values to the RGB colors.
+     * The colors are located in the src array starting from the srcOffset.
+     * The result is placed into the dest array starting from the destOffset.
+     * The src array items shall be in [0,2^bits) range, the dest array items
+     * will be in [0,255] range.
+     */
+    getRgbBuffer: function ColorSpace_getRgbBuffer(src, srcOffset, count,
+                                                   dest, destOffset, bits) {
+      error('Should not call ColorSpace.getRgbBuffer');
+    },
+    /**
+     * Determines amount of the bytes is required to store the reslut of the
+     * conversion that done by the getRgbBuffer method.
+     */
+    getOutputLength: function ColorSpace_getOutputLength(inputLength) {
+      error('Should not call ColorSpace.getOutputLength');
+    },
+    /**
+     * Returns true if source data will be equal the result/output data.
+     */
+    isPassthrough: function ColorSpace_isPassthrough(bits) {
+      return false;
+    },
+    /**
+     * Creates the output buffer and converts the specified number of the color
+     * values to the RGB colors, similar to the getRgbBuffer.
+     */
+    createRgbBuffer: function ColorSpace_createRgbBuffer(src, srcOffset,
+                                                         count, bits) {
+      if (this.isPassthrough(bits)) {
+        return src.subarray(srcOffset);
+      }
+      var dest = new Uint8Array(count * 3);
+      var numComponentColors = 1 << bits;
+      // Optimization: create a color map when there is just one component and
+      // we are converting more colors than the size of the color map. We
+      // don't build the map if the colorspace is gray or rgb since those
+      // methods are faster than building a map. This mainly offers big speed
+      // ups for indexed and alternate colorspaces.
+      if (this.numComps === 1 && count > numComponentColors &&
+          this.name !== 'DeviceGray' && this.name !== 'DeviceRGB') {
+        // TODO it may be worth while to cache the color map. While running
+        // testing I never hit a cache so I will leave that out for now (perhaps
+        // we are reparsing colorspaces too much?).
+        var allColors = bits <= 8 ? new Uint8Array(numComponentColors) :
+                                    new Uint16Array(numComponentColors);
+        for (var i = 0; i < numComponentColors; i++) {
+          allColors[i] = i;
+        }
+        var colorMap = new Uint8Array(numComponentColors * 3);
+        this.getRgbBuffer(allColors, 0, numComponentColors, colorMap, 0, bits);
+
+        var destOffset = 0;
+        for (var i = 0; i < count; ++i) {
+          var key = src[srcOffset++] * 3;
+          dest[destOffset++] = colorMap[key];
+          dest[destOffset++] = colorMap[key + 1];
+          dest[destOffset++] = colorMap[key + 2];
+        }
+        return dest;
+      }
+      this.getRgbBuffer(src, srcOffset, count, dest, 0, bits);
+      return dest;
+    },
+    /**
+     * True if the colorspace has components in the default range of [0, 1].
+     * This should be true for all colorspaces except for lab color spaces
+     * which are [0,100], [-128, 127], [-128, 127].
+     */
+    usesZeroToOneRange: true
+  };
+
+  ColorSpace.parse = function ColorSpace_parse(cs, xref, res) {
+    var IR = ColorSpace.parseToIR(cs, xref, res);
+    if (IR instanceof AlternateCS)
+      return IR;
+
+    return ColorSpace.fromIR(IR);
+  };
+
+  ColorSpace.fromIR = function ColorSpace_fromIR(IR) {
+    var name = isArray(IR) ? IR[0] : IR;
+
+    switch (name) {
+      case 'DeviceGrayCS':
+        return this.singletons.gray;
+      case 'DeviceRgbCS':
+        return this.singletons.rgb;
+      case 'DeviceCmykCS':
+        return this.singletons.cmyk;
+      case 'CalGrayCS':
+        var whitePoint = IR[1].WhitePoint;
+        var blackPoint = IR[1].BlackPoint;
+        var gamma = IR[1].Gamma;
+        return new CalGrayCS(whitePoint, blackPoint, gamma);
+      case 'PatternCS':
+        var basePatternCS = IR[1];
+        if (basePatternCS)
+          basePatternCS = ColorSpace.fromIR(basePatternCS);
+        return new PatternCS(basePatternCS);
+      case 'IndexedCS':
+        var baseIndexedCS = IR[1];
+        var hiVal = IR[2];
+        var lookup = IR[3];
+        return new IndexedCS(ColorSpace.fromIR(baseIndexedCS), hiVal, lookup);
+      case 'AlternateCS':
+        var numComps = IR[1];
+        var alt = IR[2];
+        var tintFnIR = IR[3];
+
+        return new AlternateCS(numComps, ColorSpace.fromIR(alt),
+                                PDFFunction.fromIR(tintFnIR));
+      case 'LabCS':
+        var whitePoint = IR[1].WhitePoint;
+        var blackPoint = IR[1].BlackPoint;
+        var range = IR[1].Range;
+        return new LabCS(whitePoint, blackPoint, range);
+      default:
+        error('Unkown name ' + name);
+    }
+    return null;
+  };
+
+  ColorSpace.parseToIR = function ColorSpace_parseToIR(cs, xref, res) {
+    if (isName(cs)) {
+      var colorSpaces = res.get('ColorSpace');
+      if (isDict(colorSpaces)) {
+        var refcs = colorSpaces.get(cs.name);
+        if (refcs)
+          cs = refcs;
+      }
+    }
+
+    cs = xref.fetchIfRef(cs);
+    var mode;
+
+    if (isName(cs)) {
+      mode = cs.name;
+      this.mode = mode;
+
+      switch (mode) {
+        case 'DeviceGray':
+        case 'G':
+          return 'DeviceGrayCS';
+        case 'DeviceRGB':
+        case 'RGB':
+          return 'DeviceRgbCS';
+        case 'DeviceCMYK':
+        case 'CMYK':
+          return 'DeviceCmykCS';
+        case 'Pattern':
+          return ['PatternCS', null];
+        default:
+          error('unrecognized colorspace ' + mode);
+      }
+    } else if (isArray(cs)) {
+      mode = cs[0].name;
+      this.mode = mode;
+
+      switch (mode) {
+        case 'DeviceGray':
+        case 'G':
+          return 'DeviceGrayCS';
+        case 'DeviceRGB':
+        case 'RGB':
+          return 'DeviceRgbCS';
+        case 'DeviceCMYK':
+        case 'CMYK':
+          return 'DeviceCmykCS';
+        case 'CalGray':
+          var params = cs[1].getAll();
+          return ['CalGrayCS', params];
+        case 'CalRGB':
+          return 'DeviceRgbCS';
+        case 'ICCBased':
+          var stream = xref.fetchIfRef(cs[1]);
+          var dict = stream.dict;
+          var numComps = dict.get('N');
+          if (numComps == 1)
+            return 'DeviceGrayCS';
+          if (numComps == 3)
+            return 'DeviceRgbCS';
+          if (numComps == 4)
+            return 'DeviceCmykCS';
+          break;
+        case 'Pattern':
+          var basePatternCS = cs[1];
+          if (basePatternCS)
+            basePatternCS = ColorSpace.parseToIR(basePatternCS, xref, res);
+          return ['PatternCS', basePatternCS];
+        case 'Indexed':
+        case 'I':
+          var baseIndexedCS = ColorSpace.parseToIR(cs[1], xref, res);
+          var hiVal = cs[2] + 1;
+          var lookup = xref.fetchIfRef(cs[3]);
+          if (isStream(lookup)) {
+            lookup = lookup.getBytes();
+          }
+          return ['IndexedCS', baseIndexedCS, hiVal, lookup];
+        case 'Separation':
+        case 'DeviceN':
+          var name = cs[1];
+          var numComps = 1;
+          if (isName(name))
+            numComps = 1;
+          else if (isArray(name))
+            numComps = name.length;
+          var alt = ColorSpace.parseToIR(cs[2], xref, res);
+          var tintFnIR = PDFFunction.getIR(xref, xref.fetchIfRef(cs[3]));
+          return ['AlternateCS', numComps, alt, tintFnIR];
+        case 'Lab':
+          var params = cs[1].getAll();
+          return ['LabCS', params];
+        default:
+          error('unimplemented color space object "' + mode + '"');
+      }
+    } else {
+      error('unrecognized color space object: "' + cs + '"');
+    }
+    return null;
+  };
+  /**
+   * Checks if a decode map matches the default decode map for a color space.
+   * This handles the general decode maps where there are two values per
+   * component. e.g. [0, 1, 0, 1, 0, 1] for a RGB color.
+   * This does not handle Lab, Indexed, or Pattern decode maps since they are
+   * slightly different.
+   * @param {Array} decode Decode map (usually from an image).
+   * @param {Number} n Number of components the color space has.
+   */
+  ColorSpace.isDefaultDecode = function ColorSpace_isDefaultDecode(decode, n) {
+    if (!decode)
+      return true;
+
+    if (n * 2 !== decode.length) {
+      warn('The decode map is not the correct length');
+      return true;
+    }
+    for (var i = 0, ii = decode.length; i < ii; i += 2) {
+      if (decode[i] !== 0 || decode[i + 1] != 1)
+        return false;
+    }
+    return true;
+  };
+
+  ColorSpace.singletons = {
+    get gray() {
+      return shadow(this, 'gray', new DeviceGrayCS());
+    },
+    get rgb() {
+      return shadow(this, 'rgb', new DeviceRgbCS());
+    },
+    get cmyk() {
+      return shadow(this, 'cmyk', new DeviceCmykCS());
+    }
+  };
+
+  return ColorSpace;
+})();
+
+/**
+ * Alternate color space handles both Separation and DeviceN color spaces.  A
+ * Separation color space is actually just a DeviceN with one color component.
+ * Both color spaces use a tinting function to convert colors to a base color
+ * space.
+ */
+var AlternateCS = (function AlternateCSClosure() {
+  function AlternateCS(numComps, base, tintFn) {
+    this.name = 'Alternate';
+    this.numComps = numComps;
+    this.defaultColor = new Float32Array(numComps);
+    for (var i = 0; i < numComps; ++i) {
+      this.defaultColor[i] = 1;
+    }
+    this.base = base;
+    this.tintFn = tintFn;
+  }
+
+  AlternateCS.prototype = {
+    getRgb: function AlternateCS_getRgb(src, srcOffset) {
+      var rgb = new Uint8Array(3);
+      this.getRgbItem(src, srcOffset, rgb, 0);
+      return rgb;
+    },
+    getRgbItem: function AlternateCS_getRgbItem(src, srcOffset,
+                                                dest, destOffset) {
+      var baseNumComps = this.base.numComps;
+      var input = 'subarray' in src ?
+        src.subarray(srcOffset, srcOffset + this.numComps) :
+        Array.prototype.slice.call(src, srcOffset, srcOffset + this.numComps);
+      var tinted = this.tintFn(input);
+      this.base.getRgbItem(tinted, 0, dest, destOffset);
+    },
+    getRgbBuffer: function AlternateCS_getRgbBuffer(src, srcOffset, count,
+                                                    dest, destOffset, bits) {
+      var tintFn = this.tintFn;
+      var base = this.base;
+      var scale = 1 / ((1 << bits) - 1);
+      var baseNumComps = base.numComps;
+      var usesZeroToOneRange = base.usesZeroToOneRange;
+      var isPassthrough = base.isPassthrough(8) || !usesZeroToOneRange;
+      var pos = isPassthrough ? destOffset : 0;
+      var baseBuf = isPassthrough ? dest : new Uint8Array(baseNumComps * count);
+      var numComps = this.numComps;
+
+      var scaled = new Float32Array(numComps);
+      for (var i = 0; i < count; i++) {
+        for (var j = 0; j < numComps; j++) {
+          scaled[j] = src[srcOffset++] * scale;
+        }
+        var tinted = tintFn(scaled);
+        if (usesZeroToOneRange) {
+          for (var j = 0; j < baseNumComps; j++) {
+            baseBuf[pos++] = tinted[j] * 255;
+          }
+        } else {
+          base.getRgbItem(tinted, 0, baseBuf, pos);
+          pos += baseNumComps;
+        }
+      }
+      if (!isPassthrough) {
+        base.getRgbBuffer(baseBuf, 0, count, dest, destOffset, 8);
+      }
+    },
+    getOutputLength: function AlternateCS_getOutputLength(inputLength) {
+      return this.base.getOutputLength(inputLength *
+                                       this.base.numComps / this.numComps);
+    },
+    isPassthrough: ColorSpace.prototype.isPassthrough,
+    createRgbBuffer: ColorSpace.prototype.createRgbBuffer,
+    isDefaultDecode: function AlternateCS_isDefaultDecode(decodeMap) {
+      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
+    },
+    usesZeroToOneRange: true
+  };
+
+  return AlternateCS;
+})();
+
+var PatternCS = (function PatternCSClosure() {
+  function PatternCS(baseCS) {
+    this.name = 'Pattern';
+    this.base = baseCS;
+  }
+  PatternCS.prototype = {};
+
+  return PatternCS;
+})();
+
+var IndexedCS = (function IndexedCSClosure() {
+  function IndexedCS(base, highVal, lookup) {
+    this.name = 'Indexed';
+    this.numComps = 1;
+    this.defaultColor = new Uint8Array([0]);
+    this.base = base;
+    this.highVal = highVal;
+
+    var baseNumComps = base.numComps;
+    var length = baseNumComps * highVal;
+    var lookupArray;
+
+    if (isStream(lookup)) {
+      lookupArray = new Uint8Array(length);
+      var bytes = lookup.getBytes(length);
+      lookupArray.set(bytes);
+    } else if (isString(lookup)) {
+      lookupArray = new Uint8Array(length);
+      for (var i = 0; i < length; ++i)
+        lookupArray[i] = lookup.charCodeAt(i);
+    } else if (lookup instanceof Uint8Array || lookup instanceof Array) {
+      lookupArray = lookup;
+    } else {
+      error('Unrecognized lookup table: ' + lookup);
+    }
+    this.lookup = lookupArray;
+  }
+
+  IndexedCS.prototype = {
+    getRgb: function IndexedCS_getRgb(src, srcOffset) {
+      var numComps = this.base.numComps;
+      var start = src[srcOffset] * numComps;
+      return this.base.getRgb(this.lookup, start);
+    },
+    getRgbItem: function IndexedCS_getRgbItem(src, srcOffset,
+                                              dest, destOffset) {
+      var numComps = this.base.numComps;
+      var start = src[srcOffset] * numComps;
+      this.base.getRgbItem(this.lookup, start, dest, destOffset);
+    },
+    getRgbBuffer: function IndexedCS_getRgbBuffer(src, srcOffset, count,
+                                                  dest, destOffset) {
+      var base = this.base;
+      var numComps = base.numComps;
+      var outputDelta = base.getOutputLength(numComps);
+      var lookup = this.lookup;
+
+      for (var i = 0; i < count; ++i) {
+        var lookupPos = src[srcOffset++] * numComps;
+        base.getRgbBuffer(lookup, lookupPos, 1, dest, destOffset, 8);
+        destOffset += outputDelta;
+      }
+    },
+    getOutputLength: function IndexedCS_getOutputLength(inputLength) {
+      return this.base.getOutputLength(inputLength * this.base.numComps);
+    },
+    isPassthrough: ColorSpace.prototype.isPassthrough,
+    createRgbBuffer: ColorSpace.prototype.createRgbBuffer,
+    isDefaultDecode: function IndexedCS_isDefaultDecode(decodeMap) {
+      // indexed color maps shouldn't be changed
+      return true;
+    },
+    usesZeroToOneRange: true
+  };
+  return IndexedCS;
+})();
+
+var DeviceGrayCS = (function DeviceGrayCSClosure() {
+  function DeviceGrayCS() {
+    this.name = 'DeviceGray';
+    this.numComps = 1;
+    this.defaultColor = new Float32Array([0]);
+  }
+
+  DeviceGrayCS.prototype = {
+    getRgb: function DeviceGrayCS_getRgb(src, srcOffset) {
+      var rgb = new Uint8Array(3);
+      this.getRgbItem(src, srcOffset, rgb, 0);
+      return rgb;
+    },
+    getRgbItem: function DeviceGrayCS_getRgbItem(src, srcOffset,
+                                                 dest, destOffset) {
+      var c = (src[srcOffset] * 255) | 0;
+      c = c < 0 ? 0 : c > 255 ? 255 : c;
+      dest[destOffset] = dest[destOffset + 1] = dest[destOffset + 2] = c;
+    },
+    getRgbBuffer: function DeviceGrayCS_getRgbBuffer(src, srcOffset, count,
+                                                     dest, destOffset, bits) {
+      var scale = 255 / ((1 << bits) - 1);
+      var j = srcOffset, q = destOffset;
+      for (var i = 0; i < count; ++i) {
+        var c = (scale * src[j++]) | 0;
+        dest[q++] = c;
+        dest[q++] = c;
+        dest[q++] = c;
+      }
+    },
+    getOutputLength: function DeviceGrayCS_getOutputLength(inputLength) {
+      return inputLength * 3;
+    },
+    isPassthrough: ColorSpace.prototype.isPassthrough,
+    createRgbBuffer: ColorSpace.prototype.createRgbBuffer,
+    isDefaultDecode: function DeviceGrayCS_isDefaultDecode(decodeMap) {
+      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
+    },
+    usesZeroToOneRange: true
+  };
+  return DeviceGrayCS;
+})();
+
+var DeviceRgbCS = (function DeviceRgbCSClosure() {
+  function DeviceRgbCS() {
+    this.name = 'DeviceRGB';
+    this.numComps = 3;
+    this.defaultColor = new Float32Array([0, 0, 0]);
+  }
+  DeviceRgbCS.prototype = {
+    getRgb: function DeviceRgbCS_getRgb(src, srcOffset) {
+      var rgb = new Uint8Array(3);
+      this.getRgbItem(src, srcOffset, rgb, 0);
+      return rgb;
+    },
+    getRgbItem: function DeviceRgbCS_getRgbItem(src, srcOffset,
+                                                dest, destOffset) {
+      var r = (src[srcOffset] * 255) | 0;
+      var g = (src[srcOffset + 1] * 255) | 0;
+      var b = (src[srcOffset + 2] * 255) | 0;
+      dest[destOffset] = r < 0 ? 0 : r > 255 ? 255 : r;
+      dest[destOffset + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+      dest[destOffset + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    },
+    getRgbBuffer: function DeviceRgbCS_getRgbBuffer(src, srcOffset, count,
+                                                    dest, destOffset, bits) {
+      var length = count * 3;
+      if (bits == 8) {
+        dest.set(src.subarray(srcOffset, srcOffset + length), destOffset);
+        return;
+      }
+      var scale = 255 / ((1 << bits) - 1);
+      var j = srcOffset, q = destOffset;
+      for (var i = 0; i < length; ++i) {
+        dest[q++] = (scale * src[j++]) | 0;
+      }
+    },
+    getOutputLength: function DeviceRgbCS_getOutputLength(inputLength) {
+      return inputLength;
+    },
+    isPassthrough: function DeviceRgbCS_isPassthrough(bits) {
+      return bits == 8;
+    },
+    createRgbBuffer: ColorSpace.prototype.createRgbBuffer,
+    isDefaultDecode: function DeviceRgbCS_isDefaultDecode(decodeMap) {
+      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
+    },
+    usesZeroToOneRange: true
+  };
+  return DeviceRgbCS;
+})();
+
+var DeviceCmykCS = (function DeviceCmykCSClosure() {
+  // The coefficients below was found using numerical analysis: the method of
+  // steepest descent for the sum((f_i - color_value_i)^2) for r/g/b colors,
+  // where color_value is the tabular value from the table of sampled RGB colors
+  // from CMYK US Web Coated (SWOP) colorspace, and f_i is the corresponding
+  // CMYK color conversion using the estimation below:
+  //   f(A, B,.. N) = Acc+Bcm+Ccy+Dck+c+Fmm+Gmy+Hmk+Im+Jyy+Kyk+Ly+Mkk+Nk+255
+  function convertToRgb(src, srcOffset, srcScale, dest, destOffset) {
+    var c = src[srcOffset + 0] * srcScale;
+    var m = src[srcOffset + 1] * srcScale;
+    var y = src[srcOffset + 2] * srcScale;
+    var k = src[srcOffset + 3] * srcScale;
+
+    var r =
+      c * (-4.387332384609988 * c + 54.48615194189176 * m +
+           18.82290502165302 * y + 212.25662451639585 * k +
+           -285.2331026137004) +
+      m * (1.7149763477362134 * m - 5.6096736904047315 * y +
+           -17.873870861415444 * k - 5.497006427196366) +
+      y * (-2.5217340131683033 * y - 21.248923337353073 * k +
+           17.5119270841813) +
+      k * (-21.86122147463605 * k - 189.48180835922747) + 255;
+    var g =
+      c * (8.841041422036149 * c + 60.118027045597366 * m +
+           6.871425592049007 * y + 31.159100130055922 * k +
+           -79.2970844816548) +
+      m * (-15.310361306967817 * m + 17.575251261109482 * y +
+           131.35250912493976 * k - 190.9453302588951) +
+      y * (4.444339102852739 * y + 9.8632861493405 * k - 24.86741582555878) +
+      k * (-20.737325471181034 * k - 187.80453709719578) + 255;
+    var b =
+      c * (0.8842522430003296 * c + 8.078677503112928 * m +
+           30.89978309703729 * y - 0.23883238689178934 * k +
+           -14.183576799673286) +
+      m * (10.49593273432072 * m + 63.02378494754052 * y +
+           50.606957656360734 * k - 112.23884253719248) +
+      y * (0.03296041114873217 * y + 115.60384449646641 * k +
+           -193.58209356861505) +
+      k * (-22.33816807309886 * k - 180.12613974708367) + 255;
+
+    dest[destOffset] = r > 255 ? 255 : r < 0 ? 0 : r;
+    dest[destOffset + 1] = g > 255 ? 255 : g < 0 ? 0 : g;
+    dest[destOffset + 2] = b > 255 ? 255 : b < 0 ? 0 : b;
+  }
+
+  function DeviceCmykCS() {
+    this.name = 'DeviceCMYK';
+    this.numComps = 4;
+    this.defaultColor = new Float32Array([0, 0, 0, 1]);
+  }
+  DeviceCmykCS.prototype = {
+    getRgb: function DeviceCmykCS_getRgb(src, srcOffset) {
+      var rgb = new Uint8Array(3);
+      convertToRgb(src, srcOffset, 1, rgb, 0);
+      return rgb;
+    },
+    getRgbItem: function DeviceCmykCS_getRgbItem(src, srcOffset,
+                                                 dest, destOffset) {
+      convertToRgb(src, srcOffset, 1, dest, destOffset);
+    },
+    getRgbBuffer: function DeviceCmykCS_getRgbBuffer(src, srcOffset, count,
+                                                     dest, destOffset, bits) {
+      var scale = 1 / ((1 << bits) - 1);
+      for (var i = 0; i < count; i++) {
+        convertToRgb(src, srcOffset, scale, dest, destOffset);
+        srcOffset += 4;
+        destOffset += 3;
+      }
+    },
+    getOutputLength: function DeviceCmykCS_getOutputLength(inputLength) {
+      return (inputLength >> 2) * 3;
+    },
+    isPassthrough: ColorSpace.prototype.isPassthrough,
+    createRgbBuffer: ColorSpace.prototype.createRgbBuffer,
+    isDefaultDecode: function DeviceCmykCS_isDefaultDecode(decodeMap) {
+      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
+    },
+    usesZeroToOneRange: true
+  };
+
+  return DeviceCmykCS;
+})();
+
+//
+// CalGrayCS: Based on "PDF Reference, Sixth Ed", p.245
+//
+var CalGrayCS = (function CalGrayCSClosure() {
+  function CalGrayCS(whitePoint, blackPoint, gamma) {
+    this.name = 'CalGray';
+    this.numComps = 1;
+    this.defaultColor = new Float32Array([0]);
+
+    if (!whitePoint) {
+      error('WhitePoint missing - required for color space CalGray');
+    }
+    blackPoint = blackPoint || [0, 0, 0];
+    gamma = gamma || 1;
+
+    // Translate arguments to spec variables.
+    this.XW = whitePoint[0];
+    this.YW = whitePoint[1];
+    this.ZW = whitePoint[2];
+
+    this.XB = blackPoint[0];
+    this.YB = blackPoint[1];
+    this.ZB = blackPoint[2];
+
+    this.G = gamma;
+
+    // Validate variables as per spec.
+    if (this.XW < 0 || this.ZW < 0 || this.YW !== 1) {
+      error('Invalid WhitePoint components for ' + this.name +
+            ', no fallback available');
+    }
+
+    if (this.XB < 0 || this.YB < 0 || this.ZB < 0) {
+      info('Invalid BlackPoint for ' + this.name + ', falling back to default');
+      this.XB = this.YB = this.ZB = 0;
+    }
+
+    if (this.XB !== 0 || this.YB !== 0 || this.ZB !== 0) {
+      warn(this.name + ', BlackPoint: XB: ' + this.XB + ', YB: ' + this.YB +
+           ', ZB: ' + this.ZB + ', only default values are supported.');
+    }
+
+    if (this.G < 1) {
+      info('Invalid Gamma: ' + this.G + ' for ' + this.name +
+           ', falling back to default');
+      this.G = 1;
+    }
+  }
+
+  function convertToRgb(cs, src, srcOffset, dest, destOffset, scale) {
+    // A represents a gray component of a calibrated gray space.
+    // A <---> AG in the spec
+    var A = src[srcOffset] * scale;
+    var AG = Math.pow(A, cs.G);
+
+    // Computes intermediate variables M, L, N as per spec.
+    // Except if other than default BlackPoint values are used.
+    var M = cs.XW * AG;
+    var L = cs.YW * AG;
+    var N = cs.ZW * AG;
+
+    // Decode XYZ, as per spec.
+    var X = M;
+    var Y = L;
+    var Z = N;
+
+    // http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html, Ch 4.
+    // This yields values in range [0, 100].
+    var Lstar = Math.max(116 * Math.pow(Y, 1 / 3) - 16, 0);
+
+    // Convert values to rgb range [0, 255].
+    dest[destOffset] = Lstar * 255 / 100;
+    dest[destOffset + 1] = Lstar * 255 / 100;
+    dest[destOffset + 2] = Lstar * 255 / 100;
+  }
+
+  CalGrayCS.prototype = {
+    getRgb: function CalGrayCS_getRgb(src, srcOffset) {
+      var rgb = new Uint8Array(3);
+      this.getRgbItem(src, srcOffset, rgb, 0);
+      return rgb;
+    },
+    getRgbItem: function CalGrayCS_getRgbItem(src, srcOffset,
+                                              dest, destOffset) {
+      convertToRgb(this, src, srcOffset, dest, destOffset, 1);
+    },
+    getRgbBuffer: function CalGrayCS_getRgbBuffer(src, srcOffset, count,
+                                                  dest, destOffset, bits) {
+      var scale = 1 / ((1 << bits) - 1);
+
+      for (var i = 0; i < count; ++i) {
+        convertToRgb(this, src, srcOffset, dest, destOffset, scale);
+        srcOffset += 1;
+        destOffset += 3;
+      }
+    },
+    getOutputLength: function CalGrayCS_getOutputLength(inputLength) {
+      return inputLength * 3;
+    },
+    isPassthrough: ColorSpace.prototype.isPassthrough,
+    createRgbBuffer: ColorSpace.prototype.createRgbBuffer,
+    isDefaultDecode: function CalGrayCS_isDefaultDecode(decodeMap) {
+      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
+    },
+    usesZeroToOneRange: true
+  };
+  return CalGrayCS;
+})();
+
+//
+// LabCS: Based on "PDF Reference, Sixth Ed", p.250
+//
+var LabCS = (function LabCSClosure() {
+  function LabCS(whitePoint, blackPoint, range) {
+    this.name = 'Lab';
+    this.numComps = 3;
+    this.defaultColor = new Float32Array([0, 0, 0]);
+
+    if (!whitePoint)
+      error('WhitePoint missing - required for color space Lab');
+    blackPoint = blackPoint || [0, 0, 0];
+    range = range || [-100, 100, -100, 100];
+
+    // Translate args to spec variables
+    this.XW = whitePoint[0];
+    this.YW = whitePoint[1];
+    this.ZW = whitePoint[2];
+    this.amin = range[0];
+    this.amax = range[1];
+    this.bmin = range[2];
+    this.bmax = range[3];
+
+    // These are here just for completeness - the spec doesn't offer any
+    // formulas that use BlackPoint in Lab
+    this.XB = blackPoint[0];
+    this.YB = blackPoint[1];
+    this.ZB = blackPoint[2];
+
+    // Validate vars as per spec
+    if (this.XW < 0 || this.ZW < 0 || this.YW !== 1)
+      error('Invalid WhitePoint components, no fallback available');
+
+    if (this.XB < 0 || this.YB < 0 || this.ZB < 0) {
+      info('Invalid BlackPoint, falling back to default');
+      this.XB = this.YB = this.ZB = 0;
+    }
+
+    if (this.amin > this.amax || this.bmin > this.bmax) {
+      info('Invalid Range, falling back to defaults');
+      this.amin = -100;
+      this.amax = 100;
+      this.bmin = -100;
+      this.bmax = 100;
+    }
+  }
+
+  // Function g(x) from spec
+  function fn_g(x) {
+    if (x >= 6 / 29)
+      return x * x * x;
+    else
+      return (108 / 841) * (x - 4 / 29);
+  }
+
+  function decode(value, high1, low2, high2) {
+    return low2 + (value) * (high2 - low2) / (high1);
+  }
+
+  // If decoding is needed maxVal should be 2^bits per component - 1.
+  function convertToRgb(cs, src, srcOffset, maxVal, dest, destOffset) {
+    // XXX: Lab input is in the range of [0, 100], [amin, amax], [bmin, bmax]
+    // not the usual [0, 1]. If a command like setFillColor is used the src
+    // values will already be within the correct range. However, if we are
+    // converting an image we have to map the values to the correct range given
+    // above.
+    // Ls,as,bs <---> L*,a*,b* in the spec
+    var Ls = src[srcOffset];
+    var as = src[srcOffset + 1];
+    var bs = src[srcOffset + 2];
+    if (maxVal !== false) {
+      Ls = decode(Ls, maxVal, 0, 100);
+      as = decode(as, maxVal, cs.amin, cs.amax);
+      bs = decode(bs, maxVal, cs.bmin, cs.bmax);
+    }
+
+    // Adjust limits of 'as' and 'bs'
+    as = as > cs.amax ? cs.amax : as < cs.amin ? cs.amin : as;
+    bs = bs > cs.bmax ? cs.bmax : bs < cs.bmin ? cs.bmin : bs;
+
+    // Computes intermediate variables X,Y,Z as per spec
+    var M = (Ls + 16) / 116;
+    var L = M + (as / 500);
+    var N = M - (bs / 200);
+
+    var X = cs.XW * fn_g(L);
+    var Y = cs.YW * fn_g(M);
+    var Z = cs.ZW * fn_g(N);
+
+    var r, g, b;
+    // Using different conversions for D50 and D65 white points,
+    // per http://www.color.org/srgb.pdf
+    if (cs.ZW < 1) {
+      // Assuming D50 (X=0.9642, Y=1.00, Z=0.8249)
+      r = X * 3.1339 + Y * -1.6170 + Z * -0.4906;
+      g = X * -0.9785 + Y * 1.9160 + Z * 0.0333;
+      b = X * 0.0720 + Y * -0.2290 + Z * 1.4057;
+    } else {
+      // Assuming D65 (X=0.9505, Y=1.00, Z=1.0888)
+      r = X * 3.2406 + Y * -1.5372 + Z * -0.4986;
+      g = X * -0.9689 + Y * 1.8758 + Z * 0.0415;
+      b = X * 0.0557 + Y * -0.2040 + Z * 1.0570;
+    }
+    // clamp color values to [0,1] range then convert to [0,255] range.
+    dest[destOffset] = Math.sqrt(r < 0 ? 0 : r > 1 ? 1 : r) * 255;
+    dest[destOffset + 1] = Math.sqrt(g < 0 ? 0 : g > 1 ? 1 : g) * 255;
+    dest[destOffset + 2] = Math.sqrt(b < 0 ? 0 : b > 1 ? 1 : b) * 255;
+  }
+
+  LabCS.prototype = {
+    getRgb: function LabCS_getRgb(src, srcOffset) {
+      var rgb = new Uint8Array(3);
+      convertToRgb(this, src, srcOffset, false, rgb, 0);
+      return rgb;
+    },
+    getRgbItem: function LabCS_getRgbItem(src, srcOffset, dest, destOffset) {
+      convertToRgb(this, src, srcOffset, false, dest, destOffset);
+    },
+    getRgbBuffer: function LabCS_getRgbBuffer(src, srcOffset, count,
+                                              dest, destOffset, bits) {
+      var maxVal = (1 << bits) - 1;
+      for (var i = 0; i < count; i++) {
+        convertToRgb(this, src, srcOffset, maxVal, dest, destOffset);
+        srcOffset += 3;
+        destOffset += 3;
+      }
+    },
+    getOutputLength: function LabCS_getOutputLength(inputLength) {
+      return inputLength;
+    },
+    isPassthrough: ColorSpace.prototype.isPassthrough,
+    isDefaultDecode: function LabCS_isDefaultDecode(decodeMap) {
+      // XXX: Decoding is handled with the lab conversion because of the strange
+      // ranges that are used.
+      return true;
+    },
+    usesZeroToOneRange: false
+  };
+  return LabCS;
+})();
+
+
+
+var PatternType = {
+  AXIAL: 2,
+  RADIAL: 3
+};
+
+var Pattern = (function PatternClosure() {
+  // Constructor should define this.getPattern
+  function Pattern() {
+    error('should not call Pattern constructor');
+  }
+
+  Pattern.prototype = {
+    // Input: current Canvas context
+    // Output: the appropriate fillStyle or strokeStyle
+    getPattern: function Pattern_getPattern(ctx) {
+      error('Should not call Pattern.getStyle: ' + ctx);
+    }
+  };
+
+  Pattern.shadingFromIR = function Pattern_shadingFromIR(raw) {
+    return Shadings[raw[0]].fromIR(raw);
+  };
+
+  Pattern.parseShading = function Pattern_parseShading(shading, matrix, xref,
+                                                       res) {
+
+    var dict = isStream(shading) ? shading.dict : shading;
+    var type = dict.get('ShadingType');
+
+    switch (type) {
+      case PatternType.AXIAL:
+      case PatternType.RADIAL:
+        // Both radial and axial shadings are handled by RadialAxial shading.
+        return new Shadings.RadialAxial(dict, matrix, xref, res);
+      default:
+        UnsupportedManager.notify(UNSUPPORTED_FEATURES.shadingPattern);
+        return new Shadings.Dummy();
+    }
+  };
+  return Pattern;
+})();
+
+var Shadings = {};
+
+// A small number to offset the first/last color stops so we can insert ones to
+// support extend.  Number.MIN_VALUE appears to be too small and breaks the
+// extend. 1e-7 works in FF but chrome seems to use an even smaller sized number
+// internally so we have to go bigger.
+Shadings.SMALL_NUMBER = 1e-2;
+
+// Radial and axial shading have very similar implementations
+// If needed, the implementations can be broken into two classes
+Shadings.RadialAxial = (function RadialAxialClosure() {
+  function RadialAxial(dict, matrix, xref, res, ctx) {
+    this.matrix = matrix;
+    this.coordsArr = dict.get('Coords');
+    this.shadingType = dict.get('ShadingType');
+    this.type = 'Pattern';
+    this.ctx = ctx;
+    var cs = dict.get('ColorSpace', 'CS');
+    cs = ColorSpace.parse(cs, xref, res);
+    this.cs = cs;
+
+    var t0 = 0.0, t1 = 1.0;
+    if (dict.has('Domain')) {
+      var domainArr = dict.get('Domain');
+      t0 = domainArr[0];
+      t1 = domainArr[1];
+    }
+
+    var extendStart = false, extendEnd = false;
+    if (dict.has('Extend')) {
+      var extendArr = dict.get('Extend');
+      extendStart = extendArr[0];
+      extendEnd = extendArr[1];
+    }
+
+    if (this.shadingType === PatternType.RADIAL &&
+       (!extendStart || !extendEnd)) {
+      // Radial gradient only currently works if either circle is fully within
+      // the other circle.
+      var x1 = this.coordsArr[0];
+      var y1 = this.coordsArr[1];
+      var r1 = this.coordsArr[2];
+      var x2 = this.coordsArr[3];
+      var y2 = this.coordsArr[4];
+      var r2 = this.coordsArr[5];
+      var distance = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+      if (r1 <= r2 + distance &&
+          r2 <= r1 + distance) {
+        warn('Unsupported radial gradient.');
+      }
+    }
+
+    this.extendStart = extendStart;
+    this.extendEnd = extendEnd;
+
+    var fnObj = dict.get('Function');
+    var fn;
+    if (isArray(fnObj)) {
+      var fnArray = [];
+      for (var j = 0, jj = fnObj.length; j < jj; j++) {
+        var obj = xref.fetchIfRef(fnObj[j]);
+        if (!isPDFFunction(obj)) {
+          error('Invalid function');
+        }
+        fnArray.push(PDFFunction.parse(xref, obj));
+      }
+      fn = function radialAxialColorFunction(arg) {
+        var out = [];
+        for (var i = 0, ii = fnArray.length; i < ii; i++) {
+          out.push(fnArray[i](arg)[0]);
+        }
+        return out;
+      };
+    } else {
+      if (!isPDFFunction(fnObj)) {
+        error('Invalid function');
+      }
+      fn = PDFFunction.parse(xref, fnObj);
+    }
+
+    // 10 samples seems good enough for now, but probably won't work
+    // if there are sharp color changes. Ideally, we would implement
+    // the spec faithfully and add lossless optimizations.
+    var diff = t1 - t0;
+    var step = diff / 10;
+
+    var colorStops = this.colorStops = [];
+
+    // Protect against bad domains so we don't end up in an infinte loop below.
+    if (t0 >= t1 || step <= 0) {
+      // Acrobat doesn't seem to handle these cases so we'll ignore for
+      // now.
+      info('Bad shading domain.');
+      return;
+    }
+
+    for (var i = t0; i <= t1; i += step) {
+      var rgbColor = cs.getRgb(fn([i]), 0);
+      var cssColor = Util.makeCssRgb(rgbColor);
+      colorStops.push([(i - t0) / diff, cssColor]);
+    }
+
+    var background = 'transparent';
+    if (dict.has('Background')) {
+      var rgbColor = cs.getRgb(dict.get('Background'), 0);
+      background = Util.makeCssRgb(rgbColor);
+    }
+
+    if (!extendStart) {
+      // Insert a color stop at the front and offset the first real color stop
+      // so it doesn't conflict with the one we insert.
+      colorStops.unshift([0, background]);
+      colorStops[1][0] += Shadings.SMALL_NUMBER;
+    }
+    if (!extendEnd) {
+      // Same idea as above in extendStart but for the end.
+      colorStops[colorStops.length - 1][0] -= Shadings.SMALL_NUMBER;
+      colorStops.push([1, background]);
+    }
+
+    this.colorStops = colorStops;
+  }
+
+  RadialAxial.fromIR = function RadialAxial_fromIR(raw) {
+    var type = raw[1];
+    var colorStops = raw[2];
+    var p0 = raw[3];
+    var p1 = raw[4];
+    var r0 = raw[5];
+    var r1 = raw[6];
+    return {
+      type: 'Pattern',
+      getPattern: function RadialAxial_getPattern(ctx) {
+        var grad;
+        if (type == PatternType.AXIAL)
+          grad = ctx.createLinearGradient(p0[0], p0[1], p1[0], p1[1]);
+        else if (type == PatternType.RADIAL)
+          grad = ctx.createRadialGradient(p0[0], p0[1], r0, p1[0], p1[1], r1);
+
+        for (var i = 0, ii = colorStops.length; i < ii; ++i) {
+          var c = colorStops[i];
+          grad.addColorStop(c[0], c[1]);
+        }
+        return grad;
+      }
+    };
+  };
+
+  RadialAxial.prototype = {
+    getIR: function RadialAxial_getIR() {
+      var coordsArr = this.coordsArr;
+      var type = this.shadingType;
+      if (type == PatternType.AXIAL) {
+        var p0 = [coordsArr[0], coordsArr[1]];
+        var p1 = [coordsArr[2], coordsArr[3]];
+        var r0 = null;
+        var r1 = null;
+      } else if (type == PatternType.RADIAL) {
+        var p0 = [coordsArr[0], coordsArr[1]];
+        var p1 = [coordsArr[3], coordsArr[4]];
+        var r0 = coordsArr[2];
+        var r1 = coordsArr[5];
+      } else {
+        error('getPattern type unknown: ' + type);
+      }
+
+      var matrix = this.matrix;
+      if (matrix) {
+        p0 = Util.applyTransform(p0, matrix);
+        p1 = Util.applyTransform(p1, matrix);
+      }
+
+      return ['RadialAxial', type, this.colorStops, p0, p1, r0, r1];
+    }
+  };
+
+  return RadialAxial;
+})();
+
+Shadings.Dummy = (function DummyClosure() {
+  function Dummy() {
+    this.type = 'Pattern';
+  }
+
+  Dummy.fromIR = function Dummy_fromIR() {
+    return {
+      type: 'Pattern',
+      getPattern: function Dummy_fromIR_getPattern() {
+        return 'hotpink';
+      }
+    };
+  };
+
+  Dummy.prototype = {
+    getIR: function Dummy_getIR() {
+      return ['Dummy'];
+    }
+  };
+  return Dummy;
+})();
+
+var TilingPattern = (function TilingPatternClosure() {
+  var PaintType = {
+    COLORED: 1,
+    UNCOLORED: 2
+  };
+
+  var MAX_PATTERN_SIZE = 3000; // 10in @ 300dpi shall be enough
+
+  function TilingPattern(IR, color, ctx, objs, commonObjs, baseTransform) {
+    this.name = IR[1][0].name;
+    this.operatorList = IR[2];
+    this.matrix = IR[3] || [1, 0, 0, 1, 0, 0];
+    this.bbox = IR[4];
+    this.xstep = IR[5];
+    this.ystep = IR[6];
+    this.paintType = IR[7];
+    this.tilingType = IR[8];
+    this.color = color;
+    this.objs = objs;
+    this.commonObjs = commonObjs;
+    this.baseTransform = baseTransform;
+    this.type = 'Pattern';
+    this.ctx = ctx;
+  }
+
+  TilingPattern.getIR = function TilingPattern_getIR(operatorList, dict, args) {
+    var matrix = dict.get('Matrix');
+    var bbox = dict.get('BBox');
+    var xstep = dict.get('XStep');
+    var ystep = dict.get('YStep');
+    var paintType = dict.get('PaintType');
+    var tilingType = dict.get('TilingType');
+
+    return [
+      'TilingPattern', args, operatorList, matrix, bbox, xstep, ystep,
+      paintType, tilingType
+    ];
+  };
+
+  TilingPattern.prototype = {
+    createPatternCanvas: function TilinPattern_createPatternCanvas(owner) {
+      var operatorList = this.operatorList;
+      var bbox = this.bbox;
+      var xstep = this.xstep;
+      var ystep = this.ystep;
+      var paintType = this.paintType;
+      var tilingType = this.tilingType;
+      var color = this.color;
+      var objs = this.objs;
+      var commonObjs = this.commonObjs;
+      var ctx = this.ctx;
+
+      info('TilingType: ' + tilingType);
+
+      var x0 = bbox[0], y0 = bbox[1], x1 = bbox[2], y1 = bbox[3];
+
+      var topLeft = [x0, y0];
+      // we want the canvas to be as large as the step size
+      var botRight = [x0 + xstep, y0 + ystep];
+
+      var width = botRight[0] - topLeft[0];
+      var height = botRight[1] - topLeft[1];
+
+      // Obtain scale from matrix and current transformation matrix.
+      var matrixScale = Util.singularValueDecompose2dScale(this.matrix);
+      var curMatrixScale = Util.singularValueDecompose2dScale(
+                             this.baseTransform);
+      var combinedScale = [matrixScale[0] * curMatrixScale[0],
+                           matrixScale[1] * curMatrixScale[1]];
+
+      // MAX_PATTERN_SIZE is used to avoid OOM situation.
+      // Use width and height values that are as close as possible to the end
+      // result when the pattern is used. Too low value makes the pattern look
+      // blurry. Too large value makes it look too crispy.
+      width = Math.min(Math.ceil(Math.abs(width * combinedScale[0])),
+                       MAX_PATTERN_SIZE);
+
+      height = Math.min(Math.ceil(Math.abs(height * combinedScale[1])),
+                        MAX_PATTERN_SIZE);
+
+      var tmpCanvas = CachedCanvases.getCanvas('pattern', width, height, true);
+      var tmpCtx = tmpCanvas.context;
+      var graphics = new CanvasGraphics(tmpCtx, commonObjs, objs);
+      graphics.groupLevel = owner.groupLevel;
+
+      this.setFillAndStrokeStyleToContext(tmpCtx, paintType, color);
+
+      this.setScale(width, height, xstep, ystep);
+      this.transformToScale(graphics);
+
+      // transform coordinates to pattern space
+      var tmpTranslate = [1, 0, 0, 1, -topLeft[0], -topLeft[1]];
+      graphics.transform.apply(graphics, tmpTranslate);
+
+      this.clipBbox(graphics, bbox, x0, y0, x1, y1);
+
+      graphics.executeOperatorList(operatorList);
+      return tmpCanvas.canvas;
+    },
+
+    setScale: function TilingPattern_setScale(width, height, xstep, ystep) {
+      this.scale = [width / xstep, height / ystep];
+    },
+
+    transformToScale: function TilingPattern_transformToScale(graphics) {
+      var scale = this.scale;
+      var tmpScale = [scale[0], 0, 0, scale[1], 0, 0];
+      graphics.transform.apply(graphics, tmpScale);
+    },
+
+    scaleToContext: function TilingPattern_scaleToContext() {
+      var scale = this.scale;
+      this.ctx.scale(1 / scale[0], 1 / scale[1]);
+    },
+
+    clipBbox: function clipBbox(graphics, bbox, x0, y0, x1, y1) {
+      if (bbox && isArray(bbox) && 4 == bbox.length) {
+        var bboxWidth = x1 - x0;
+        var bboxHeight = y1 - y0;
+        graphics.rectangle(x0, y0, bboxWidth, bboxHeight);
+        graphics.clip();
+        graphics.endPath();
+      }
+    },
+
+    setFillAndStrokeStyleToContext:
+      function setFillAndStrokeStyleToContext(context, paintType, color) {
+      switch (paintType) {
+        case PaintType.COLORED:
+          var ctx = this.ctx;
+          context.fillStyle = ctx.fillStyle;
+          context.strokeStyle = ctx.strokeStyle;
+          break;
+        case PaintType.UNCOLORED:
+          var rgbColor = ColorSpace.singletons.rgb.getRgb(color, 0);
+          var cssColor = Util.makeCssRgb(rgbColor);
+          context.fillStyle = cssColor;
+          context.strokeStyle = cssColor;
+          break;
+        default:
+          error('Unsupported paint type: ' + paintType);
+      }
+    },
+
+    getPattern: function TilingPattern_getPattern(ctx, owner) {
+      var temporaryPatternCanvas = this.createPatternCanvas(owner);
+
+      var ctx = this.ctx;
+      ctx.setTransform.apply(ctx, this.baseTransform);
+      ctx.transform.apply(ctx, this.matrix);
+      this.scaleToContext();
+
+      return ctx.createPattern(temporaryPatternCanvas, 'repeat');
+    }
+  };
+
+  return TilingPattern;
+})();
+
+
+
+var PDFFunction = (function PDFFunctionClosure() {
+  var CONSTRUCT_SAMPLED = 0;
+  var CONSTRUCT_INTERPOLATED = 2;
+  var CONSTRUCT_STICHED = 3;
+  var CONSTRUCT_POSTSCRIPT = 4;
+
+  return {
+    getSampleArray: function PDFFunction_getSampleArray(size, outputSize, bps,
+                                                       str) {
+      var length = 1;
+      for (var i = 0, ii = size.length; i < ii; i++)
+        length *= size[i];
+      length *= outputSize;
+
+      var array = [];
+      var codeSize = 0;
+      var codeBuf = 0;
+      // 32 is a valid bps so shifting won't work
+      var sampleMul = 1.0 / (Math.pow(2.0, bps) - 1);
+
+      var strBytes = str.getBytes((length * bps + 7) / 8);
+      var strIdx = 0;
+      for (var i = 0; i < length; i++) {
+        while (codeSize < bps) {
+          codeBuf <<= 8;
+          codeBuf |= strBytes[strIdx++];
+          codeSize += 8;
+        }
+        codeSize -= bps;
+        array.push((codeBuf >> codeSize) * sampleMul);
+        codeBuf &= (1 << codeSize) - 1;
+      }
+      return array;
+    },
+
+    getIR: function PDFFunction_getIR(xref, fn) {
+      var dict = fn.dict;
+      if (!dict)
+        dict = fn;
+
+      var types = [this.constructSampled,
+                   null,
+                   this.constructInterpolated,
+                   this.constructStiched,
+                   this.constructPostScript];
+
+      var typeNum = dict.get('FunctionType');
+      var typeFn = types[typeNum];
+      if (!typeFn)
+        error('Unknown type of function');
+
+      return typeFn.call(this, fn, dict, xref);
+    },
+
+    fromIR: function PDFFunction_fromIR(IR) {
+      var type = IR[0];
+      switch (type) {
+        case CONSTRUCT_SAMPLED:
+          return this.constructSampledFromIR(IR);
+        case CONSTRUCT_INTERPOLATED:
+          return this.constructInterpolatedFromIR(IR);
+        case CONSTRUCT_STICHED:
+          return this.constructStichedFromIR(IR);
+        //case CONSTRUCT_POSTSCRIPT:
+        default:
+          return this.constructPostScriptFromIR(IR);
+      }
+    },
+
+    parse: function PDFFunction_parse(xref, fn) {
+      var IR = this.getIR(xref, fn);
+      return this.fromIR(IR);
+    },
+
+    constructSampled: function PDFFunction_constructSampled(str, dict) {
+      function toMultiArray(arr) {
+        var inputLength = arr.length;
+        var outputLength = arr.length / 2;
+        var out = [];
+        var index = 0;
+        for (var i = 0; i < inputLength; i += 2) {
+          out[index] = [arr[i], arr[i + 1]];
+          ++index;
+        }
+        return out;
+      }
+      var domain = dict.get('Domain');
+      var range = dict.get('Range');
+
+      if (!domain || !range)
+        error('No domain or range');
+
+      var inputSize = domain.length / 2;
+      var outputSize = range.length / 2;
+
+      domain = toMultiArray(domain);
+      range = toMultiArray(range);
+
+      var size = dict.get('Size');
+      var bps = dict.get('BitsPerSample');
+      var order = dict.get('Order') || 1;
+      if (order !== 1) {
+        // No description how cubic spline interpolation works in PDF32000:2008
+        // As in poppler, ignoring order, linear interpolation may work as good
+        info('No support for cubic spline interpolation: ' + order);
+      }
+
+      var encode = dict.get('Encode');
+      if (!encode) {
+        encode = [];
+        for (var i = 0; i < inputSize; ++i) {
+          encode.push(0);
+          encode.push(size[i] - 1);
+        }
+      }
+      encode = toMultiArray(encode);
+
+      var decode = dict.get('Decode');
+      if (!decode)
+        decode = range;
+      else
+        decode = toMultiArray(decode);
+
+      var samples = this.getSampleArray(size, outputSize, bps, str);
+
+      return [
+        CONSTRUCT_SAMPLED, inputSize, domain, encode, decode, samples, size,
+        outputSize, Math.pow(2, bps) - 1, range
+      ];
+    },
+
+    constructSampledFromIR: function PDFFunction_constructSampledFromIR(IR) {
+      // See chapter 3, page 109 of the PDF reference
+      function interpolate(x, xmin, xmax, ymin, ymax) {
+        return ymin + ((x - xmin) * ((ymax - ymin) / (xmax - xmin)));
+      }
+
+      return function constructSampledFromIRResult(args) {
+        // See chapter 3, page 110 of the PDF reference.
+        var m = IR[1];
+        var domain = IR[2];
+        var encode = IR[3];
+        var decode = IR[4];
+        var samples = IR[5];
+        var size = IR[6];
+        var n = IR[7];
+        var mask = IR[8];
+        var range = IR[9];
+
+        if (m != args.length)
+          error('Incorrect number of arguments: ' + m + ' != ' +
+                args.length);
+
+        var x = args;
+
+        // Building the cube vertices: its part and sample index
+        // http://rjwagner49.com/Mathematics/Interpolation.pdf
+        var cubeVertices = 1 << m;
+        var cubeN = new Float64Array(cubeVertices);
+        var cubeVertex = new Uint32Array(cubeVertices);
+        for (var j = 0; j < cubeVertices; j++)
+          cubeN[j] = 1;
+
+        var k = n, pos = 1;
+        // Map x_i to y_j for 0 <= i < m using the sampled function.
+        for (var i = 0; i < m; ++i) {
+          // x_i' = min(max(x_i, Domain_2i), Domain_2i+1)
+          var domain_2i = domain[i][0];
+          var domain_2i_1 = domain[i][1];
+          var xi = Math.min(Math.max(x[i], domain_2i), domain_2i_1);
+
+          // e_i = Interpolate(x_i', Domain_2i, Domain_2i+1,
+          //                   Encode_2i, Encode_2i+1)
+          var e = interpolate(xi, domain_2i, domain_2i_1,
+                              encode[i][0], encode[i][1]);
+
+          // e_i' = min(max(e_i, 0), Size_i - 1)
+          var size_i = size[i];
+          e = Math.min(Math.max(e, 0), size_i - 1);
+
+          // Adjusting the cube: N and vertex sample index
+          var e0 = e < size_i - 1 ? Math.floor(e) : e - 1; // e1 = e0 + 1;
+          var n0 = e0 + 1 - e; // (e1 - e) / (e1 - e0);
+          var n1 = e - e0; // (e - e0) / (e1 - e0);
+          var offset0 = e0 * k;
+          var offset1 = offset0 + k; // e1 * k
+          for (var j = 0; j < cubeVertices; j++) {
+            if (j & pos) {
+              cubeN[j] *= n1;
+              cubeVertex[j] += offset1;
+            } else {
+              cubeN[j] *= n0;
+              cubeVertex[j] += offset0;
+            }
+          }
+
+          k *= size_i;
+          pos <<= 1;
+        }
+
+        var y = new Float64Array(n);
+        for (var j = 0; j < n; ++j) {
+          // Sum all cube vertices' samples portions
+          var rj = 0;
+          for (var i = 0; i < cubeVertices; i++)
+            rj += samples[cubeVertex[i] + j] * cubeN[i];
+
+          // r_j' = Interpolate(r_j, 0, 2^BitsPerSample - 1,
+          //                    Decode_2j, Decode_2j+1)
+          rj = interpolate(rj, 0, 1, decode[j][0], decode[j][1]);
+
+          // y_j = min(max(r_j, range_2j), range_2j+1)
+          y[j] = Math.min(Math.max(rj, range[j][0]), range[j][1]);
+        }
+
+        return y;
+      };
+    },
+
+    constructInterpolated: function PDFFunction_constructInterpolated(str,
+                                                                      dict) {
+      var c0 = dict.get('C0') || [0];
+      var c1 = dict.get('C1') || [1];
+      var n = dict.get('N');
+
+      if (!isArray(c0) || !isArray(c1))
+        error('Illegal dictionary for interpolated function');
+
+      var length = c0.length;
+      var diff = [];
+      for (var i = 0; i < length; ++i)
+        diff.push(c1[i] - c0[i]);
+
+      return [CONSTRUCT_INTERPOLATED, c0, diff, n];
+    },
+
+    constructInterpolatedFromIR:
+      function PDFFunction_constructInterpolatedFromIR(IR) {
+      var c0 = IR[1];
+      var diff = IR[2];
+      var n = IR[3];
+
+      var length = diff.length;
+
+      return function constructInterpolatedFromIRResult(args) {
+        var x = n == 1 ? args[0] : Math.pow(args[0], n);
+
+        var out = [];
+        for (var j = 0; j < length; ++j)
+          out.push(c0[j] + (x * diff[j]));
+
+        return out;
+
+      };
+    },
+
+    constructStiched: function PDFFunction_constructStiched(fn, dict, xref) {
+      var domain = dict.get('Domain');
+
+      if (!domain)
+        error('No domain');
+
+      var inputSize = domain.length / 2;
+      if (inputSize != 1)
+        error('Bad domain for stiched function');
+
+      var fnRefs = dict.get('Functions');
+      var fns = [];
+      for (var i = 0, ii = fnRefs.length; i < ii; ++i)
+        fns.push(PDFFunction.getIR(xref, xref.fetchIfRef(fnRefs[i])));
+
+      var bounds = dict.get('Bounds');
+      var encode = dict.get('Encode');
+
+      return [CONSTRUCT_STICHED, domain, bounds, encode, fns];
+    },
+
+    constructStichedFromIR: function PDFFunction_constructStichedFromIR(IR) {
+      var domain = IR[1];
+      var bounds = IR[2];
+      var encode = IR[3];
+      var fnsIR = IR[4];
+      var fns = [];
+
+      for (var i = 0, ii = fnsIR.length; i < ii; i++) {
+        fns.push(PDFFunction.fromIR(fnsIR[i]));
+      }
+
+      return function constructStichedFromIRResult(args) {
+        var clip = function constructStichedFromIRClip(v, min, max) {
+          if (v > max)
+            v = max;
+          else if (v < min)
+            v = min;
+          return v;
+        };
+
+        // clip to domain
+        var v = clip(args[0], domain[0], domain[1]);
+        // calulate which bound the value is in
+        for (var i = 0, ii = bounds.length; i < ii; ++i) {
+          if (v < bounds[i])
+            break;
+        }
+
+        // encode value into domain of function
+        var dmin = domain[0];
+        if (i > 0)
+          dmin = bounds[i - 1];
+        var dmax = domain[1];
+        if (i < bounds.length)
+          dmax = bounds[i];
+
+        var rmin = encode[2 * i];
+        var rmax = encode[2 * i + 1];
+
+        var v2 = rmin + (v - dmin) * (rmax - rmin) / (dmax - dmin);
+
+        // call the appropropriate function
+        return fns[i]([v2]);
+      };
+    },
+
+    constructPostScript: function PDFFunction_constructPostScript(fn, dict,
+                                                                  xref) {
+      var domain = dict.get('Domain');
+      var range = dict.get('Range');
+
+      if (!domain)
+        error('No domain.');
+
+      if (!range)
+        error('No range.');
+
+      var lexer = new PostScriptLexer(fn);
+      var parser = new PostScriptParser(lexer);
+      var code = parser.parse();
+
+      return [CONSTRUCT_POSTSCRIPT, domain, range, code];
+    },
+
+    constructPostScriptFromIR: function PDFFunction_constructPostScriptFromIR(
+                                          IR) {
+      var domain = IR[1];
+      var range = IR[2];
+      var code = IR[3];
+      var numOutputs = range.length / 2;
+      var evaluator = new PostScriptEvaluator(code);
+      // Cache the values for a big speed up, the cache size is limited though
+      // since the number of possible values can be huge from a PS function.
+      var cache = new FunctionCache();
+      return function constructPostScriptFromIRResult(args) {
+        var initialStack = [];
+        for (var i = 0, ii = (domain.length / 2); i < ii; ++i) {
+          initialStack.push(args[i]);
+        }
+
+        var key = initialStack.join('_');
+        if (cache.has(key))
+          return cache.get(key);
+
+        var stack = evaluator.execute(initialStack);
+        var transformed = [];
+        for (i = numOutputs - 1; i >= 0; --i) {
+          var out = stack.pop();
+          var rangeIndex = 2 * i;
+          if (out < range[rangeIndex])
+            out = range[rangeIndex];
+          else if (out > range[rangeIndex + 1])
+            out = range[rangeIndex + 1];
+          transformed[i] = out;
+        }
+        cache.set(key, transformed);
+        return transformed;
+      };
+    }
+  };
+})();
+
+var FunctionCache = (function FunctionCacheClosure() {
+  // Of 10 PDF's with type4 functions the maxium number of distinct values seen
+  // was 256. This still may need some tweaking in the future though.
+  var MAX_CACHE_SIZE = 1024;
+  function FunctionCache() {
+    this.cache = {};
+    this.total = 0;
+  }
+  FunctionCache.prototype = {
+    has: function FunctionCache_has(key) {
+      return key in this.cache;
+    },
+    get: function FunctionCache_get(key) {
+      return this.cache[key];
+    },
+    set: function FunctionCache_set(key, value) {
+      if (this.total < MAX_CACHE_SIZE) {
+        this.cache[key] = value;
+        this.total++;
+      }
+    }
+  };
+  return FunctionCache;
+})();
+
+var PostScriptStack = (function PostScriptStackClosure() {
+  var MAX_STACK_SIZE = 100;
+  function PostScriptStack(initialStack) {
+    this.stack = initialStack || [];
+  }
+
+  PostScriptStack.prototype = {
+    push: function PostScriptStack_push(value) {
+      if (this.stack.length >= MAX_STACK_SIZE)
+        error('PostScript function stack overflow.');
+      this.stack.push(value);
+    },
+    pop: function PostScriptStack_pop() {
+      if (this.stack.length <= 0)
+        error('PostScript function stack underflow.');
+      return this.stack.pop();
+    },
+    copy: function PostScriptStack_copy(n) {
+      if (this.stack.length + n >= MAX_STACK_SIZE)
+        error('PostScript function stack overflow.');
+      var stack = this.stack;
+      for (var i = stack.length - n, j = n - 1; j >= 0; j--, i++)
+        stack.push(stack[i]);
+    },
+    index: function PostScriptStack_index(n) {
+      this.push(this.stack[this.stack.length - n - 1]);
+    },
+    // rotate the last n stack elements p times
+    roll: function PostScriptStack_roll(n, p) {
+      var stack = this.stack;
+      var l = stack.length - n;
+      var r = stack.length - 1, c = l + (p - Math.floor(p / n) * n), i, j, t;
+      for (i = l, j = r; i < j; i++, j--) {
+        t = stack[i]; stack[i] = stack[j]; stack[j] = t;
+      }
+      for (i = l, j = c - 1; i < j; i++, j--) {
+        t = stack[i]; stack[i] = stack[j]; stack[j] = t;
+      }
+      for (i = c, j = r; i < j; i++, j--) {
+        t = stack[i]; stack[i] = stack[j]; stack[j] = t;
+      }
+    }
+  };
+  return PostScriptStack;
+})();
+var PostScriptEvaluator = (function PostScriptEvaluatorClosure() {
+  function PostScriptEvaluator(operators, operands) {
+    this.operators = operators;
+    this.operands = operands;
+  }
+  PostScriptEvaluator.prototype = {
+    execute: function PostScriptEvaluator_execute(initialStack) {
+      var stack = new PostScriptStack(initialStack);
+      var counter = 0;
+      var operators = this.operators;
+      var length = operators.length;
+      var operator, a, b;
+      while (counter < length) {
+        operator = operators[counter++];
+        if (typeof operator == 'number') {
+          // Operator is really an operand and should be pushed to the stack.
+          stack.push(operator);
+          continue;
+        }
+        switch (operator) {
+          // non standard ps operators
+          case 'jz': // jump if false
+            b = stack.pop();
+            a = stack.pop();
+            if (!a)
+              counter = b;
+            break;
+          case 'j': // jump
+            a = stack.pop();
+            counter = a;
+            break;
+
+          // all ps operators in alphabetical order (excluding if/ifelse)
+          case 'abs':
+            a = stack.pop();
+            stack.push(Math.abs(a));
+            break;
+          case 'add':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a + b);
+            break;
+          case 'and':
+            b = stack.pop();
+            a = stack.pop();
+            if (isBool(a) && isBool(b))
+              stack.push(a && b);
+            else
+              stack.push(a & b);
+            break;
+          case 'atan':
+            a = stack.pop();
+            stack.push(Math.atan(a));
+            break;
+          case 'bitshift':
+            b = stack.pop();
+            a = stack.pop();
+            if (a > 0)
+              stack.push(a << b);
+            else
+              stack.push(a >> b);
+            break;
+          case 'ceiling':
+            a = stack.pop();
+            stack.push(Math.ceil(a));
+            break;
+          case 'copy':
+            a = stack.pop();
+            stack.copy(a);
+            break;
+          case 'cos':
+            a = stack.pop();
+            stack.push(Math.cos(a));
+            break;
+          case 'cvi':
+            a = stack.pop() | 0;
+            stack.push(a);
+            break;
+          case 'cvr':
+            // noop
+            break;
+          case 'div':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a / b);
+            break;
+          case 'dup':
+            stack.copy(1);
+            break;
+          case 'eq':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a == b);
+            break;
+          case 'exch':
+            stack.roll(2, 1);
+            break;
+          case 'exp':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(Math.pow(a, b));
+            break;
+          case 'false':
+            stack.push(false);
+            break;
+          case 'floor':
+            a = stack.pop();
+            stack.push(Math.floor(a));
+            break;
+          case 'ge':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >= b);
+            break;
+          case 'gt':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a > b);
+            break;
+          case 'idiv':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a / b) | 0);
+            break;
+          case 'index':
+            a = stack.pop();
+            stack.index(a);
+            break;
+          case 'le':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a <= b);
+            break;
+          case 'ln':
+            a = stack.pop();
+            stack.push(Math.log(a));
+            break;
+          case 'log':
+            a = stack.pop();
+            stack.push(Math.log(a) / Math.LN10);
+            break;
+          case 'lt':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a < b);
+            break;
+          case 'mod':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a % b);
+            break;
+          case 'mul':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a * b);
+            break;
+          case 'ne':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a != b);
+            break;
+          case 'neg':
+            a = stack.pop();
+            stack.push(-b);
+            break;
+          case 'not':
+            a = stack.pop();
+            if (isBool(a) && isBool(b))
+              stack.push(a && b);
+            else
+              stack.push(a & b);
+            break;
+          case 'or':
+            b = stack.pop();
+            a = stack.pop();
+            if (isBool(a) && isBool(b))
+              stack.push(a || b);
+            else
+              stack.push(a | b);
+            break;
+          case 'pop':
+            stack.pop();
+            break;
+          case 'roll':
+            b = stack.pop();
+            a = stack.pop();
+            stack.roll(a, b);
+            break;
+          case 'round':
+            a = stack.pop();
+            stack.push(Math.round(a));
+            break;
+          case 'sin':
+            a = stack.pop();
+            stack.push(Math.sin(a));
+            break;
+          case 'sqrt':
+            a = stack.pop();
+            stack.push(Math.sqrt(a));
+            break;
+          case 'sub':
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
+            break;
+          case 'true':
+            stack.push(true);
+            break;
+          case 'truncate':
+            a = stack.pop();
+            a = a < 0 ? Math.ceil(a) : Math.floor(a);
+            stack.push(a);
+            break;
+          case 'xor':
+            b = stack.pop();
+            a = stack.pop();
+            if (isBool(a) && isBool(b))
+              stack.push(a != b);
+            else
+              stack.push(a ^ b);
+            break;
+          default:
+            error('Unknown operator ' + operator);
+            break;
+        }
+      }
+      return stack.stack;
+    }
+  };
+  return PostScriptEvaluator;
+})();
+
+var PostScriptParser = (function PostScriptParserClosure() {
+  function PostScriptParser(lexer) {
+    this.lexer = lexer;
+    this.operators = [];
+    this.token = null;
+    this.prev = null;
+  }
+  PostScriptParser.prototype = {
+    nextToken: function PostScriptParser_nextToken() {
+      this.prev = this.token;
+      this.token = this.lexer.getToken();
+    },
+    accept: function PostScriptParser_accept(type) {
+      if (this.token.type == type) {
+        this.nextToken();
+        return true;
+      }
+      return false;
+    },
+    expect: function PostScriptParser_expect(type) {
+      if (this.accept(type))
+        return true;
+      error('Unexpected symbol: found ' + this.token.type + ' expected ' +
+            type + '.');
+    },
+    parse: function PostScriptParser_parse() {
+      this.nextToken();
+      this.expect(PostScriptTokenTypes.LBRACE);
+      this.parseBlock();
+      this.expect(PostScriptTokenTypes.RBRACE);
+      return this.operators;
+    },
+    parseBlock: function PostScriptParser_parseBlock() {
+      while (true) {
+        if (this.accept(PostScriptTokenTypes.NUMBER)) {
+          this.operators.push(this.prev.value);
+        } else if (this.accept(PostScriptTokenTypes.OPERATOR)) {
+          this.operators.push(this.prev.value);
+        } else if (this.accept(PostScriptTokenTypes.LBRACE)) {
+          this.parseCondition();
+        } else {
+          return;
+        }
+      }
+    },
+    parseCondition: function PostScriptParser_parseCondition() {
+      // Add two place holders that will be updated later
+      var conditionLocation = this.operators.length;
+      this.operators.push(null, null);
+
+      this.parseBlock();
+      this.expect(PostScriptTokenTypes.RBRACE);
+      if (this.accept(PostScriptTokenTypes.IF)) {
+        // The true block is right after the 'if' so it just falls through on
+        // true else it jumps and skips the true block.
+        this.operators[conditionLocation] = this.operators.length;
+        this.operators[conditionLocation + 1] = 'jz';
+      } else if (this.accept(PostScriptTokenTypes.LBRACE)) {
+        var jumpLocation = this.operators.length;
+        this.operators.push(null, null);
+        var endOfTrue = this.operators.length;
+        this.parseBlock();
+        this.expect(PostScriptTokenTypes.RBRACE);
+        this.expect(PostScriptTokenTypes.IFELSE);
+        // The jump is added at the end of the true block to skip the false
+        // block.
+        this.operators[jumpLocation] = this.operators.length;
+        this.operators[jumpLocation + 1] = 'j';
+
+        this.operators[conditionLocation] = endOfTrue;
+        this.operators[conditionLocation + 1] = 'jz';
+      } else {
+        error('PS Function: error parsing conditional.');
+      }
+    }
+  };
+  return PostScriptParser;
+})();
+
+var PostScriptTokenTypes = {
+  LBRACE: 0,
+  RBRACE: 1,
+  NUMBER: 2,
+  OPERATOR: 3,
+  IF: 4,
+  IFELSE: 5
+};
+
+var PostScriptToken = (function PostScriptTokenClosure() {
+  function PostScriptToken(type, value) {
+    this.type = type;
+    this.value = value;
+  }
+
+  var opCache = {};
+
+  PostScriptToken.getOperator = function PostScriptToken_getOperator(op) {
+    var opValue = opCache[op];
+    if (opValue)
+      return opValue;
+
+    return opCache[op] = new PostScriptToken(PostScriptTokenTypes.OPERATOR, op);
+  };
+
+  PostScriptToken.LBRACE = new PostScriptToken(PostScriptTokenTypes.LBRACE,
+                                                '{');
+  PostScriptToken.RBRACE = new PostScriptToken(PostScriptTokenTypes.RBRACE,
+                                                '}');
+  PostScriptToken.IF = new PostScriptToken(PostScriptTokenTypes.IF, 'IF');
+  PostScriptToken.IFELSE = new PostScriptToken(PostScriptTokenTypes.IFELSE,
+                                                'IFELSE');
+  return PostScriptToken;
+})();
+
+var PostScriptLexer = (function PostScriptLexerClosure() {
+  function PostScriptLexer(stream) {
+    this.stream = stream;
+    this.nextChar();
+  }
+  PostScriptLexer.prototype = {
+    nextChar: function PostScriptLexer_nextChar() {
+      return (this.currentChar = this.stream.getByte());
+    },
+    getToken: function PostScriptLexer_getToken() {
+      var s = '';
+      var comment = false;
+      var ch = this.currentChar;
+
+      // skip comments
+      while (true) {
+        if (ch < 0) {
+          return EOF;
+        }
+
+        if (comment) {
+          if (ch === 0x0A || ch === 0x0D) {
+            comment = false;
+          }
+        } else if (ch == 0x25) { // '%'
+          comment = true;
+        } else if (!Lexer.isSpace(ch)) {
+          break;
+        }
+        ch = this.nextChar();
+      }
+      switch (ch | 0) {
+        case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: // '0'-'4'
+        case 0x35: case 0x36: case 0x37: case 0x38: case 0x39: // '5'-'9'
+        case 0x2B: case 0x2D: case 0x2E: // '+', '-', '.'
+          return new PostScriptToken(PostScriptTokenTypes.NUMBER,
+                                      this.getNumber());
+        case 0x7B: // '{'
+          this.nextChar();
+          return PostScriptToken.LBRACE;
+        case 0x7D: // '}'
+          this.nextChar();
+          return PostScriptToken.RBRACE;
+      }
+      // operator
+      var str = String.fromCharCode(ch);
+      while ((ch = this.nextChar()) >= 0 && // and 'A'-'Z', 'a'-'z'
+             ((ch >= 0x41 && ch <= 0x5A) || (ch >= 0x61 && ch <= 0x7A))) {
+        str += String.fromCharCode(ch);
+      }
+      switch (str.toLowerCase()) {
+        case 'if':
+          return PostScriptToken.IF;
+        case 'ifelse':
+          return PostScriptToken.IFELSE;
+        default:
+          return PostScriptToken.getOperator(str);
+      }
+    },
+    getNumber: function PostScriptLexer_getNumber() {
+      var ch = this.currentChar;
+      var str = String.fromCharCode(ch);
+      while ((ch = this.nextChar()) >= 0) {
+        if ((ch >= 0x30 && ch <= 0x39) || // '0'-'9'
+             ch === 0x2D || ch === 0x2E) { // '-', '.'
+          str += String.fromCharCode(ch);
+        } else {
+          break;
+        }
+      }
+      var value = parseFloat(str);
+      if (isNaN(value))
+        error('Invalid floating point number: ' + value);
+      return value;
+    }
+  };
+  return PostScriptLexer;
+})();
+
+
+
+var Annotation = (function AnnotationClosure() {
+  // 12.5.5: Algorithm: Appearance streams
+  function getTransformMatrix(rect, bbox, matrix) {
+    var bounds = Util.getAxialAlignedBoundingBox(bbox, matrix);
+    var minX = bounds[0];
+    var minY = bounds[1];
+    var maxX = bounds[2];
+    var maxY = bounds[3];
+
+    if (minX === maxX || minY === maxY) {
+      // From real-life file, bbox was [0, 0, 0, 0]. In this case,
+      // just apply the transform for rect
+      return [1, 0, 0, 1, rect[0], rect[1]];
+    }
+
+    var xRatio = (rect[2] - rect[0]) / (maxX - minX);
+    var yRatio = (rect[3] - rect[1]) / (maxY - minY);
+    return [
+      xRatio,
+      0,
+      0,
+      yRatio,
+      rect[0] - minX * xRatio,
+      rect[1] - minY * yRatio
+    ];
+  }
+
+  function getDefaultAppearance(dict) {
+    var appearanceState = dict.get('AP');
+    if (!isDict(appearanceState)) {
+      return;
+    }
+
+    var appearance;
+    var appearances = appearanceState.get('N');
+    if (isDict(appearances)) {
+      var as = dict.get('AS');
+      if (as && appearances.has(as.name)) {
+        appearance = appearances.get(as.name);
+      }
+    } else {
+      appearance = appearances;
+    }
+    return appearance;
+  }
+
+  function Annotation(params) {
+    if (params.data) {
+      this.data = params.data;
+      return;
+    }
+
+    var dict = params.dict;
+    var data = this.data = {};
+
+    data.subtype = dict.get('Subtype').name;
+    var rect = dict.get('Rect');
+    data.rect = Util.normalizeRect(rect);
+    data.annotationFlags = dict.get('F');
+
+    var color = dict.get('C');
+    if (isArray(color) && color.length === 3) {
+      // TODO(mack): currently only supporting rgb; need support different
+      // colorspaces
+      data.color = color;
+    } else {
+      data.color = [0, 0, 0];
+    }
+
+    // Some types of annotations have border style dict which has more
+    // info than the border array
+    if (dict.has('BS')) {
+      var borderStyle = dict.get('BS');
+      data.borderWidth = borderStyle.has('W') ? borderStyle.get('W') : 1;
+    } else {
+      var borderArray = dict.get('Border') || [0, 0, 1];
+      data.borderWidth = borderArray[2] || 0;
+
+      // TODO: implement proper support for annotations with line dash patterns.
+      var dashArray = borderArray[3];
+      if (dashArray && isArray(dashArray)) {
+        var dashArrayLength = dashArray.length;
+        if (dashArrayLength > 0) {
+          // According to the PDF specification: the elements in a dashArray
+          // shall be numbers that are nonnegative and not all equal to zero.
+          var isInvalid = false;
+          var numPositive = 0;
+          for (var i = 0; i < dashArrayLength; i++) {
+            if (!(+dashArray[i] >= 0)) {
+              isInvalid = true;
+              break;
+            } else if (dashArray[i] > 0) {
+              numPositive++;
+            }
+          }
+          if (isInvalid || numPositive === 0) {
+            data.borderWidth = 0;
+          }
+        }
+      }
+    }
+
+    this.appearance = getDefaultAppearance(dict);
+    data.hasAppearance = !!this.appearance;
+  }
+
+  Annotation.prototype = {
+
+    getData: function Annotation_getData() {
+      return this.data;
+    },
+
+    hasHtml: function Annotation_hasHtml() {
+      return false;
+    },
+
+    getHtmlElement: function Annotation_getHtmlElement(commonObjs) {
+      throw new NotImplementedException(
+        'getHtmlElement() should be implemented in subclass');
+    },
+
+    // TODO(mack): Remove this, it's not really that helpful.
+    getEmptyContainer: function Annotation_getEmptyContainer(tagName, rect) {
+      assert(!isWorker,
+        'getEmptyContainer() should be called from main thread');
+
+      rect = rect || this.data.rect;
+      var element = document.createElement(tagName);
+      element.style.width = Math.ceil(rect[2] - rect[0]) + 'px';
+      element.style.height = Math.ceil(rect[3] - rect[1]) + 'px';
+      return element;
+    },
+
+    isViewable: function Annotation_isViewable() {
+      var data = this.data;
+      return !!(
+        data &&
+        (!data.annotationFlags ||
+         !(data.annotationFlags & 0x22)) && // Hidden or NoView
+        data.rect                            // rectangle is nessessary
+      );
+    },
+
+    loadResources: function(keys) {
+      var promise = new LegacyPromise();
+      this.appearance.dict.getAsync('Resources').then(function(resources) {
+        if (!resources) {
+          promise.resolve();
+          return;
+        }
+        var objectLoader = new ObjectLoader(resources.map,
+                                            keys,
+                                            resources.xref);
+        objectLoader.load().then(function() {
+          promise.resolve(resources);
+        });
+      }.bind(this));
+
+      return promise;
+    },
+
+    getOperatorList: function Annotation_getToOperatorList(evaluator) {
+
+      var promise = new LegacyPromise();
+
+      if (!this.appearance) {
+        promise.resolve(new OperatorList());
+        return promise;
+      }
+
+      var data = this.data;
+
+      var appearanceDict = this.appearance.dict;
+      var resourcesPromise = this.loadResources([
+        'ExtGState',
+        'ColorSpace',
+        'Pattern',
+        'Shading',
+        'XObject',
+        'Font'
+        // ProcSet
+        // Properties
+      ]);
+      var bbox = appearanceDict.get('BBox') || [0, 0, 1, 1];
+      var matrix = appearanceDict.get('Matrix') || [1, 0, 0, 1, 0 ,0];
+      var transform = getTransformMatrix(data.rect, bbox, matrix);
+
+      var border = data.border;
+
+      resourcesPromise.then(function(resources) {
+        var opList = new OperatorList();
+        opList.addOp(OPS.beginAnnotation, [data.rect, transform, matrix]);
+        evaluator.getOperatorList(this.appearance, resources, opList);
+        opList.addOp(OPS.endAnnotation, []);
+        promise.resolve(opList);
+      }.bind(this));
+
+      return promise;
+    }
+  };
+
+  Annotation.getConstructor =
+      function Annotation_getConstructor(subtype, fieldType) {
+
+    if (!subtype) {
+      return;
+    }
+
+    // TODO(mack): Implement FreeText annotations
+    if (subtype === 'Link') {
+      return LinkAnnotation;
+    } else if (subtype === 'Text') {
+      return TextAnnotation;
+    } else if (subtype === 'Widget') {
+      if (!fieldType) {
+        return;
+      }
+
+      if (fieldType === 'Tx') {
+        return TextWidgetAnnotation;
+      } else {
+        return WidgetAnnotation;
+      }
+    } else {
+      return Annotation;
+    }
+  };
+
+  // TODO(mack): Support loading annotation from data
+  Annotation.fromData = function Annotation_fromData(data) {
+    var subtype = data.subtype;
+    var fieldType = data.fieldType;
+    var Constructor = Annotation.getConstructor(subtype, fieldType);
+    if (Constructor) {
+      return new Constructor({ data: data });
+    }
+  };
+
+  Annotation.fromRef = function Annotation_fromRef(xref, ref) {
+
+    var dict = xref.fetchIfRef(ref);
+    if (!isDict(dict)) {
+      return;
+    }
+
+    var subtype = dict.get('Subtype');
+    subtype = isName(subtype) ? subtype.name : '';
+    if (!subtype) {
+      return;
+    }
+
+    var fieldType = Util.getInheritableProperty(dict, 'FT');
+    fieldType = isName(fieldType) ? fieldType.name : '';
+
+    var Constructor = Annotation.getConstructor(subtype, fieldType);
+    if (!Constructor) {
+      return;
+    }
+
+    var params = {
+      dict: dict,
+      ref: ref,
+    };
+
+    var annotation = new Constructor(params);
+
+    if (annotation.isViewable()) {
+      return annotation;
+    } else {
+      warn('unimplemented annotation type: ' + subtype);
+    }
+  };
+
+  Annotation.appendToOperatorList = function Annotation_appendToOperatorList(
+      annotations, opList, pdfManager, partialEvaluator) {
+
+    function reject(e) {
+      annotationsReadyPromise.reject(e);
+    }
+
+    var annotationsReadyPromise = new LegacyPromise();
+
+    var annotationPromises = [];
+    for (var i = 0, n = annotations.length; i < n; ++i) {
+      annotationPromises.push(annotations[i].getOperatorList(partialEvaluator));
+    }
+    Promise.all(annotationPromises).then(function(datas) {
+      opList.addOp(OPS.beginAnnotations, []);
+      for (var i = 0, n = datas.length; i < n; ++i) {
+        var annotOpList = datas[i];
+        opList.addOpList(annotOpList);
+      }
+      opList.addOp(OPS.endAnnotations, []);
+      annotationsReadyPromise.resolve();
+    }, reject);
+
+    return annotationsReadyPromise;
+  };
+
+  return Annotation;
+})();
+PDFJS.Annotation = Annotation;
+
+
+var WidgetAnnotation = (function WidgetAnnotationClosure() {
+
+  function WidgetAnnotation(params) {
+    Annotation.call(this, params);
+
+    if (params.data) {
+      return;
+    }
+
+    var dict = params.dict;
+    var data = this.data;
+
+    data.fieldValue = stringToPDFString(
+      Util.getInheritableProperty(dict, 'V') || '');
+    data.alternativeText = stringToPDFString(dict.get('TU') || '');
+    data.defaultAppearance = Util.getInheritableProperty(dict, 'DA') || '';
+    var fieldType = Util.getInheritableProperty(dict, 'FT');
+    data.fieldType = isName(fieldType) ? fieldType.name : '';
+    data.fieldFlags = Util.getInheritableProperty(dict, 'Ff') || 0;
+    this.fieldResources = Util.getInheritableProperty(dict, 'DR') || new Dict();
+
+    // Building the full field name by collecting the field and
+    // its ancestors 'T' data and joining them using '.'.
+    var fieldName = [];
+    var namedItem = dict;
+    var ref = params.ref;
+    while (namedItem) {
+      var parent = namedItem.get('Parent');
+      var parentRef = namedItem.getRaw('Parent');
+      var name = namedItem.get('T');
+      if (name) {
+        fieldName.unshift(stringToPDFString(name));
+      } else {
+        // The field name is absent, that means more than one field
+        // with the same name may exist. Replacing the empty name
+        // with the '`' plus index in the parent's 'Kids' array.
+        // This is not in the PDF spec but necessary to id the
+        // the input controls.
+        var kids = parent.get('Kids');
+        var j, jj;
+        for (j = 0, jj = kids.length; j < jj; j++) {
+          var kidRef = kids[j];
+          if (kidRef.num == ref.num && kidRef.gen == ref.gen)
+            break;
+        }
+        fieldName.unshift('`' + j);
+      }
+      namedItem = parent;
+      ref = parentRef;
+    }
+    data.fullName = fieldName.join('.');
+  }
+
+  var parent = Annotation.prototype;
+  Util.inherit(WidgetAnnotation, Annotation, {
+    isViewable: function WidgetAnnotation_isViewable() {
+      if (this.data.fieldType === 'Sig') {
+        warn('unimplemented annotation type: Widget signature');
+        return false;
+      }
+
+      return parent.isViewable.call(this);
+    }
+  });
+
+  return WidgetAnnotation;
+})();
+
+var TextWidgetAnnotation = (function TextWidgetAnnotationClosure() {
+  function TextWidgetAnnotation(params) {
+    WidgetAnnotation.call(this, params);
+
+    if (params.data) {
+      return;
+    }
+
+    this.data.textAlignment = Util.getInheritableProperty(params.dict, 'Q');
+  }
+
+  // TODO(mack): This dupes some of the logic in CanvasGraphics.setFont()
+  function setTextStyles(element, item, fontObj) {
+
+    var style = element.style;
+    style.fontSize = item.fontSize + 'px';
+    style.direction = item.fontDirection < 0 ? 'rtl': 'ltr';
+
+    if (!fontObj) {
+      return;
+    }
+
+    style.fontWeight = fontObj.black ?
+                            (fontObj.bold ? 'bolder' : 'bold') :
+                            (fontObj.bold ? 'bold' : 'normal');
+    style.fontStyle = fontObj.italic ? 'italic' : 'normal';
+
+    var fontName = fontObj.loadedName;
+    var fontFamily = fontName ? '"' + fontName + '", ' : '';
+    // Use a reasonable default font if the font doesn't specify a fallback
+    var fallbackName = fontObj.fallbackName || 'Helvetica, sans-serif';
+    style.fontFamily = fontFamily + fallbackName;
+  }
+
+
+  var parent = WidgetAnnotation.prototype;
+  Util.inherit(TextWidgetAnnotation, WidgetAnnotation, {
+    hasHtml: function TextWidgetAnnotation_hasHtml() {
+      return !this.data.hasAppearance && !!this.data.fieldValue;
+    },
+
+    getHtmlElement: function TextWidgetAnnotation_getHtmlElement(commonObjs) {
+      assert(!isWorker, 'getHtmlElement() shall be called from main thread');
+
+      var item = this.data;
+
+      var element = this.getEmptyContainer('div');
+      element.style.display = 'table';
+
+      var content = document.createElement('div');
+      content.textContent = item.fieldValue;
+      var textAlignment = item.textAlignment;
+      content.style.textAlign = ['left', 'center', 'right'][textAlignment];
+      content.style.verticalAlign = 'middle';
+      content.style.display = 'table-cell';
+
+      var fontObj = item.fontRefName ?
+                    commonObjs.getData(item.fontRefName) : null;
+      var cssRules = setTextStyles(content, item, fontObj);
+
+      element.appendChild(content);
+
+      return element;
+    },
+
+    getOperatorList: function TextWidgetAnnotation_getOperatorList(evaluator) {
+      if (this.appearance) {
+        return Annotation.prototype.getOperatorList.call(this, evaluator);
+      }
+
+      var promise = new LegacyPromise();
+      var opList = new OperatorList();
+      var data = this.data;
+
+      // Even if there is an appearance stream, ignore it. This is the
+      // behaviour used by Adobe Reader.
+
+      var defaultAppearance = data.defaultAppearance;
+      if (!defaultAppearance) {
+        promise.resolve(opList);
+        return promise;
+      }
+
+      // Include any font resources found in the default appearance
+
+      var stream = new Stream(stringToBytes(defaultAppearance));
+      evaluator.getOperatorList(stream, this.fieldResources, opList);
+      var appearanceFnArray = opList.fnArray;
+      var appearanceArgsArray = opList.argsArray;
+      var fnArray = [];
+      var argsArray = [];
+
+      // TODO(mack): Add support for stroke color
+      data.rgb = [0, 0, 0];
+      // TODO THIS DOESN'T MAKE ANY SENSE SINCE THE fnArray IS EMPTY!
+      for (var i = 0, n = fnArray.length; i < n; ++i) {
+        var fnId = appearanceFnArray[i];
+        var args = appearanceArgsArray[i];
+
+        if (fnId === OPS.setFont) {
+          data.fontRefName = args[0];
+          var size = args[1];
+          if (size < 0) {
+            data.fontDirection = -1;
+            data.fontSize = -size;
+          } else {
+            data.fontDirection = 1;
+            data.fontSize = size;
+          }
+        } else if (fnId === OPS.setFillRGBColor) {
+          data.rgb = args;
+        } else if (fnId === OPS.setFillGray) {
+          var rgbValue = args[0] * 255;
+          data.rgb = [rgbValue, rgbValue, rgbValue];
+        }
+      }
+      promise.resolve(opList);
+      return promise;
+    }
+  });
+
+  return TextWidgetAnnotation;
+})();
+
+var TextAnnotation = (function TextAnnotationClosure() {
+  function TextAnnotation(params) {
+    Annotation.call(this, params);
+
+    if (params.data) {
+      return;
+    }
+
+    var dict = params.dict;
+    var data = this.data;
+
+    var content = dict.get('Contents');
+    var title = dict.get('T');
+    data.content = stringToPDFString(content || '');
+    data.title = stringToPDFString(title || '');
+    data.name = !dict.has('Name') ? 'Note' : dict.get('Name').name;
+  }
+
+  var ANNOT_MIN_SIZE = 10;
+
+  Util.inherit(TextAnnotation, Annotation, {
+
+    getOperatorList: function TextAnnotation_getOperatorList(evaluator) {
+      var promise = new LegacyPromise();
+      promise.resolve(new OperatorList());
+      return promise;
+    },
+
+    hasHtml: function TextAnnotation_hasHtml() {
+      return true;
+    },
+
+    getHtmlElement: function TextAnnotation_getHtmlElement(commonObjs) {
+      assert(!isWorker, 'getHtmlElement() shall be called from main thread');
+
+      var item = this.data;
+      var rect = item.rect;
+
+      // sanity check because of OOo-generated PDFs
+      if ((rect[3] - rect[1]) < ANNOT_MIN_SIZE) {
+        rect[3] = rect[1] + ANNOT_MIN_SIZE;
+      }
+      if ((rect[2] - rect[0]) < ANNOT_MIN_SIZE) {
+        rect[2] = rect[0] + (rect[3] - rect[1]); // make it square
+      }
+
+      var container = this.getEmptyContainer('section', rect);
+      container.className = 'annotText';
+
+      var image = document.createElement('img');
+      image.style.height = container.style.height;
+      var iconName = item.name;
+      image.src = PDFJS.imageResourcesPath + 'annotation-' +
+        iconName.toLowerCase() + '.svg';
+      image.alt = '[{{type}} Annotation]';
+      image.dataset.l10nId = 'text_annotation_type';
+      image.dataset.l10nArgs = JSON.stringify({type: iconName});
+      var content = document.createElement('div');
+      content.setAttribute('hidden', true);
+      var title = document.createElement('h1');
+      var text = document.createElement('p');
+      content.style.left = Math.floor(rect[2] - rect[0]) + 'px';
+      content.style.top = '0px';
+      title.textContent = item.title;
+
+      if (!item.content && !item.title) {
+        content.setAttribute('hidden', true);
+      } else {
+        var e = document.createElement('span');
+        var lines = item.content.split(/(?:\r\n?|\n)/);
+        for (var i = 0, ii = lines.length; i < ii; ++i) {
+          var line = lines[i];
+          e.appendChild(document.createTextNode(line));
+          if (i < (ii - 1))
+            e.appendChild(document.createElement('br'));
+        }
+        text.appendChild(e);
+
+        var showAnnotation = function showAnnotation() {
+          container.style.zIndex += 1;
+          content.removeAttribute('hidden');
+        };
+
+        var hideAnnotation = function hideAnnotation(e) {
+          if (e.toElement || e.relatedTarget) { // No context menu is used
+            container.style.zIndex -= 1;
+            content.setAttribute('hidden', true);
+          }
+        };
+
+        content.addEventListener('mouseover', showAnnotation, false);
+        content.addEventListener('mouseout', hideAnnotation, false);
+        image.addEventListener('mouseover', showAnnotation, false);
+        image.addEventListener('mouseout', hideAnnotation, false);
+      }
+
+      content.appendChild(title);
+      content.appendChild(text);
+      container.appendChild(image);
+      container.appendChild(content);
+
+      return container;
+    }
+  });
+
+  return TextAnnotation;
+})();
+
+var LinkAnnotation = (function LinkAnnotationClosure() {
+  function LinkAnnotation(params) {
+    Annotation.call(this, params);
+
+    if (params.data) {
+      return;
+    }
+
+    var dict = params.dict;
+    var data = this.data;
+
+    var action = dict.get('A');
+    if (action) {
+      var linkType = action.get('S').name;
+      if (linkType === 'URI') {
+        var url = addDefaultProtocolToUrl(action.get('URI'));
+        // TODO: pdf spec mentions urls can be relative to a Base
+        // entry in the dictionary.
+        if (!isValidUrl(url, false)) {
+          url = '';
+        }
+        data.url = url;
+      } else if (linkType === 'GoTo') {
+        data.dest = action.get('D');
+      } else if (linkType === 'GoToR') {
+        var urlDict = action.get('F');
+        if (isDict(urlDict)) {
+          // We assume that the 'url' is a Filspec dictionary
+          // and fetch the url without checking any further
+          url = urlDict.get('F') || '';
+        }
+
+        // TODO: pdf reference says that GoToR
+        // can also have 'NewWindow' attribute
+        if (!isValidUrl(url, false)) {
+          url = '';
+        }
+        data.url = url;
+        data.dest = action.get('D');
+      } else if (linkType === 'Named') {
+        data.action = action.get('N').name;
+      } else {
+        warn('unrecognized link type: ' + linkType);
+      }
+    } else if (dict.has('Dest')) {
+      // simple destination link
+      var dest = dict.get('Dest');
+      data.dest = isName(dest) ? dest.name : dest;
+    }
+  }
+
+  // Lets URLs beginning with 'www.' default to using the 'http://' protocol.
+  function addDefaultProtocolToUrl(url) {
+    if (url.indexOf('www.') === 0) {
+      return ('http://' + url);
+    }
+    return url;
+  }
+
+  Util.inherit(LinkAnnotation, Annotation, {
+    hasOperatorList: function LinkAnnotation_hasOperatorList() {
+      return false;
+    },
+
+    hasHtml: function LinkAnnotation_hasHtml() {
+      return true;
+    },
+
+    getHtmlElement: function LinkAnnotation_getHtmlElement(commonObjs) {
+      var rect = this.data.rect;
+      var element = document.createElement('a');
+      var borderWidth = this.data.borderWidth;
+
+      element.style.borderWidth = borderWidth + 'px';
+      var color = this.data.color;
+      var rgb = [];
+      for (var i = 0; i < 3; ++i) {
+        rgb[i] = Math.round(color[i] * 255);
+      }
+      element.style.borderColor = Util.makeCssRgb(rgb);
+      element.style.borderStyle = 'solid';
+
+      var width = rect[2] - rect[0] - 2 * borderWidth;
+      var height = rect[3] - rect[1] - 2 * borderWidth;
+      element.style.width = width + 'px';
+      element.style.height = height + 'px';
+
+      element.href = this.data.url || '';
+      return element;
+    }
+  });
+
+  return LinkAnnotation;
+})();
+
+
+/**
+ * The maximum allowed image size in total pixels e.g. width * height. Images
+ * above this value will not be drawn. Use -1 for no limit.
+ * @var {Number}
+ */
+PDFJS.maxImageSize = PDFJS.maxImageSize === undefined ? -1 : PDFJS.maxImageSize;
+
+/**
+ * By default fonts are converted to OpenType fonts and loaded via font face
+ * rules. If disabled, the font will be rendered using a built in font renderer
+ * that constructs the glyphs with primitive path commands.
+ * @var {Boolean}
+ */
+PDFJS.disableFontFace = PDFJS.disableFontFace === undefined ?
+                        false : PDFJS.disableFontFace;
+
+/**
+ * Path for image resources, mainly for annotation icons. Include trailing
+ * slash.
+ * @var {String}
+ */
+PDFJS.imageResourcesPath = PDFJS.imageResourcesPath === undefined ?
+                           '' : PDFJS.imageResourcesPath;
+
+/**
+ * Disable the web worker and run all code on the main thread. This will happen
+ * automatically if the browser doesn't support workers or sending typed arrays
+ * to workers.
+ * @var {Boolean}
+ */
+PDFJS.disableWorker = PDFJS.disableWorker === undefined ?
+                      false : PDFJS.disableWorker;
+
+/**
+ * Path and filename of the worker file. Required when the worker is enabled in
+ * development mode. If unspecified in the production build, the worker will be
+ * loaded based on the location of the pdf.js file.
+ * @var {String}
+ */
+PDFJS.workerSrc = PDFJS.workerSrc === undefined ? null : PDFJS.workerSrc;
+
+/**
+ * Disable range request loading of PDF files. When enabled and if the server
+ * supports partial content requests then the PDF will be fetched in chunks.
+ * Enabled (false) by default.
+ * @var {Boolean}
+ */
+PDFJS.disableRange = PDFJS.disableRange === undefined ?
+                     false : PDFJS.disableRange;
+
+/**
+ * Disable pre-fetching of PDF file data. When range requests are enabled PDF.js
+ * will automatically keep fetching more data even if it isn't needed to display
+ * the current page. This default behavior can be disabled.
+ * @var {Boolean}
+ */
+PDFJS.disableAutoFetch = PDFJS.disableAutoFetch === undefined ?
+                         false : PDFJS.disableAutoFetch;
+
+/**
+ * Enables special hooks for debugging PDF.js.
+ * @var {Boolean}
+ */
+PDFJS.pdfBug = PDFJS.pdfBug === undefined ? false : PDFJS.pdfBug;
+
+/**
+ * Enables transfer usage in postMessage for ArrayBuffers.
+ * @var {boolean}
+ */
+PDFJS.postMessageTransfers = PDFJS.postMessageTransfers === undefined ?
+                             true : PDFJS.postMessageTransfers;
+
+/**
+ * Disables URL.createObjectURL usage.
+ * @var {boolean}
+ */
+PDFJS.disableCreateObjectURL = PDFJS.disableCreateObjectURL === undefined ?
+                               false : PDFJS.disableCreateObjectURL;
+
+/**
+ * Controls the logging level.
+ * The constants from PDFJS.VERBOSITY_LEVELS should be used:
+ * - errors
+ * - warnings [default]
+ * - infos
+ * @var {Number}
+ */
+PDFJS.verbosity = PDFJS.verbosity === undefined ?
+                  PDFJS.VERBOSITY_LEVELS.warnings : PDFJS.verbosity;
+
+/**
+ * This is the main entry point for loading a PDF and interacting with it.
+ * NOTE: If a URL is used to fetch the PDF data a standard XMLHttpRequest(XHR)
+ * is used, which means it must follow the same origin rules that any XHR does
+ * e.g. No cross domain requests without CORS.
+ *
+ * @param {string|TypedAray|object} source Can be an url to where a PDF is
+ * located, a typed array (Uint8Array) already populated with data or
+ * and parameter object with the following possible fields:
+ *  - url   - The URL of the PDF.
+ *  - data  - A typed array with PDF data.
+ *  - httpHeaders - Basic authentication headers.
+ *  - withCredentials - Indicates whether or not cross-site Access-Control 
+ *                      requests should be made using credentials such as
+ *                      cookies or authorization headers. The default is false.
+ *  - password - For decrypting password-protected PDFs.
+ *  - initialData - A typed array with the first portion or all of the pdf data.
+ *                  Used by the extension since some data is already loaded
+ *                  before the switch to range requests. 
+ *
+ * @param {object} pdfDataRangeTransport is optional. It is used if you want
+ * to manually serve range requests for data in the PDF. See viewer.js for
+ * an example of pdfDataRangeTransport's interface.
+ *
+ * @param {function} passwordCallback is optional. It is used to request a
+ * password if wrong or no password was provided. The callback receives two
+ * parameters: function that needs to be called with new password and reason
+ * (see {PasswordResponses}).
+ *
+ * @return {Promise} A promise that is resolved with {PDFDocumentProxy} object.
+ */
+PDFJS.getDocument = function getDocument(source,
+                                         pdfDataRangeTransport,
+                                         passwordCallback,
+                                         progressCallback) {
+  var workerInitializedPromise, workerReadyPromise, transport;
+
+  if (typeof source === 'string') {
+    source = { url: source };
+  } else if (isArrayBuffer(source)) {
+    source = { data: source };
+  } else if (typeof source !== 'object') {
+    error('Invalid parameter in getDocument, need either Uint8Array, ' +
+          'string or a parameter object');
+  }
+
+  if (!source.url && !source.data)
+    error('Invalid parameter array, need either .data or .url');
+
+  // copy/use all keys as is except 'url' -- full path is required
+  var params = {};
+  for (var key in source) {
+    if (key === 'url' && typeof window !== 'undefined') {
+      params[key] = combineUrl(window.location.href, source[key]);
+      continue;
+    }
+    params[key] = source[key];
+  }
+
+  workerInitializedPromise = new PDFJS.LegacyPromise();
+  workerReadyPromise = new PDFJS.LegacyPromise();
+  transport = new WorkerTransport(workerInitializedPromise,
+      workerReadyPromise, pdfDataRangeTransport, progressCallback);
+  workerInitializedPromise.then(function transportInitialized() {
+    transport.passwordCallback = passwordCallback;
+    transport.fetchDocument(params);
+  });
+  return workerReadyPromise;
+};
+
+/**
+ * Proxy to a PDFDocument in the worker thread. Also, contains commonly used
+ * properties that can be read synchronously.
+ */
+var PDFDocumentProxy = (function PDFDocumentProxyClosure() {
+  function PDFDocumentProxy(pdfInfo, transport) {
+    this.pdfInfo = pdfInfo;
+    this.transport = transport;
+  }
+  PDFDocumentProxy.prototype = {
+    /**
+     * @return {number} Total number of pages the PDF contains.
+     */
+    get numPages() {
+      return this.pdfInfo.numPages;
+    },
+    /**
+     * @return {string} A unique ID to identify a PDF. Not guaranteed to be
+     * unique.
+     */
+    get fingerprint() {
+      return this.pdfInfo.fingerprint;
+    },
+    /**
+     * @return {boolean} true if embedded document fonts are in use. Will be
+     * set during rendering of the pages.
+     */
+    get embeddedFontsUsed() {
+      return this.transport.embeddedFontsUsed;
+    },
+    /**
+     * @param {number} The page number to get. The first page is 1.
+     * @return {Promise} A promise that is resolved with a {PDFPageProxy}
+     * object.
+     */
+    getPage: function PDFDocumentProxy_getPage(number) {
+      return this.transport.getPage(number);
+    },
+    /**
+     * @param {object} Must have 'num' and 'gen' properties.
+     * @return {Promise} A promise that is resolved with the page index that is
+     * associated with the reference.
+     */
+    getPageIndex: function PDFDocumentProxy_getPageIndex(ref) {
+      return this.transport.getPageIndex(ref);
+    },
+    /**
+     * @return {Promise} A promise that is resolved with a lookup table for
+     * mapping named destinations to reference numbers.
+     */
+    getDestinations: function PDFDocumentProxy_getDestinations() {
+      return this.transport.getDestinations();
+    },
+    /**
+     * @return {Promise} A promise that is resolved with an array of all the
+     * JavaScript strings in the name tree.
+     */
+    getJavaScript: function PDFDocumentProxy_getJavaScript() {
+      var promise = new PDFJS.LegacyPromise();
+      var js = this.pdfInfo.javaScript;
+      promise.resolve(js);
+      return promise;
+    },
+    /**
+     * @return {Promise} A promise that is resolved with an {array} that is a
+     * tree outline (if it has one) of the PDF. The tree is in the format of:
+     * [
+     *  {
+     *   title: string,
+     *   bold: boolean,
+     *   italic: boolean,
+     *   color: rgb array,
+     *   dest: dest obj,
+     *   items: array of more items like this
+     *  },
+     *  ...
+     * ].
+     */
+    getOutline: function PDFDocumentProxy_getOutline() {
+      var promise = new PDFJS.LegacyPromise();
+      var outline = this.pdfInfo.outline;
+      promise.resolve(outline);
+      return promise;
+    },
+    /**
+     * @return {Promise} A promise that is resolved with an {object} that has
+     * info and metadata properties.  Info is an {object} filled with anything
+     * available in the information dictionary and similarly metadata is a
+     * {Metadata} object with information from the metadata section of the PDF.
+     */
+    getMetadata: function PDFDocumentProxy_getMetadata() {
+      var promise = new PDFJS.LegacyPromise();
+      var info = this.pdfInfo.info;
+      var metadata = this.pdfInfo.metadata;
+      promise.resolve({
+        info: info,
+        metadata: metadata ? new PDFJS.Metadata(metadata) : null
+      });
+      return promise;
+    },
+    isEncrypted: function PDFDocumentProxy_isEncrypted() {
+      var promise = new PDFJS.LegacyPromise();
+      promise.resolve(this.pdfInfo.encrypted);
+      return promise;
+    },
+    /**
+     * @return {Promise} A promise that is resolved with a TypedArray that has
+     * the raw data from the PDF.
+     */
+    getData: function PDFDocumentProxy_getData() {
+      var promise = new PDFJS.LegacyPromise();
+      this.transport.getData(promise);
+      return promise;
+    },
+    /**
+     * @return {Promise} A promise that is resolved when the document's data
+     * is loaded
+     */
+    dataLoaded: function PDFDocumentProxy_dataLoaded() {
+      return this.transport.dataLoaded();
+    },
+    cleanup: function PDFDocumentProxy_cleanup() {
+      this.transport.startCleanup();
+    },
+    destroy: function PDFDocumentProxy_destroy() {
+      this.transport.destroy();
+    }
+  };
+  return PDFDocumentProxy;
+})();
+
+var PDFPageProxy = (function PDFPageProxyClosure() {
+  function PDFPageProxy(pageInfo, transport) {
+    this.pageInfo = pageInfo;
+    this.transport = transport;
+    this.stats = new StatTimer();
+    this.stats.enabled = !!globalScope.PDFJS.enableStats;
+    this.commonObjs = transport.commonObjs;
+    this.objs = new PDFObjects();
+    this.receivingOperatorList  = false;
+    this.cleanupAfterRender = false;
+    this.pendingDestroy = false;
+    this.renderTasks = [];
+  }
+  PDFPageProxy.prototype = {
+    /**
+     * @return {number} Page number of the page. First page is 1.
+     */
+    get pageNumber() {
+      return this.pageInfo.pageIndex + 1;
+    },
+    /**
+     * @return {number} The number of degrees the page is rotated clockwise.
+     */
+    get rotate() {
+      return this.pageInfo.rotate;
+    },
+    /**
+     * @return {object} The reference that points to this page. It has 'num' and
+     * 'gen' properties.
+     */
+    get ref() {
+      return this.pageInfo.ref;
+    },
+    /**
+     * @return {array} An array of the visible portion of the PDF page in the
+     * user space units - [x1, y1, x2, y2].
+     */
+    get view() {
+      return this.pageInfo.view;
+    },
+    /**
+     * @param {number} scale The desired scale of the viewport.
+     * @param {number} rotate Degrees to rotate the viewport. If omitted this
+     * defaults to the page rotation.
+     * @return {PageViewport} Contains 'width' and 'height' properties along
+     * with transforms required for rendering.
+     */
+    getViewport: function PDFPageProxy_getViewport(scale, rotate) {
+      if (arguments.length < 2)
+        rotate = this.rotate;
+      return new PDFJS.PageViewport(this.view, scale, rotate, 0, 0);
+    },
+    /**
+     * @return {Promise} A promise that is resolved with an {array} of the
+     * annotation objects.
+     */
+    getAnnotations: function PDFPageProxy_getAnnotations() {
+      if (this.annotationsPromise)
+        return this.annotationsPromise;
+
+      var promise = new PDFJS.LegacyPromise();
+      this.annotationsPromise = promise;
+      this.transport.getAnnotations(this.pageInfo.pageIndex);
+      return promise;
+    },
+    /**
+     * Begins the process of rendering a page to the desired context.
+     * @param {object} params A parameter object that supports:
+     * {
+     *   canvasContext(required): A 2D context of a DOM Canvas object.,
+     *   textLayer(optional): An object that has beginLayout, endLayout, and
+     *                        appendText functions.,
+     *   imageLayer(optional): An object that has beginLayout, endLayout and
+     *                         appendImage functions.,
+     *   continueCallback(optional): A function that will be called each time
+     *                               the rendering is paused.  To continue
+     *                               rendering call the function that is the
+     *                               first argument to the callback.
+     * }.
+     * @return {RenderTask} An extended promise that is resolved when the page
+     * finishes rendering (see RenderTask).
+     */
+    render: function PDFPageProxy_render(params) {
+      var stats = this.stats;
+      stats.time('Overall');
+
+      // If there was a pending destroy cancel it so no cleanup happens during
+      // this call to render.
+      this.pendingDestroy = false;
+
+      // If there is no displayReadyPromise yet, then the operatorList was never
+      // requested before. Make the request and create the promise.
+      if (!this.displayReadyPromise) {
+        this.receivingOperatorList = true;
+        this.displayReadyPromise = new LegacyPromise();
+        this.operatorList = {
+          fnArray: [],
+          argsArray: [],
+          lastChunk: false
+        };
+
+        this.stats.time('Page Request');
+        this.transport.messageHandler.send('RenderPageRequest', {
+          pageIndex: this.pageNumber - 1
+        });
+      }
+
+      var internalRenderTask = new InternalRenderTask(complete, params,
+                                       this.objs, this.commonObjs,
+                                       this.operatorList, this.pageNumber);
+      this.renderTasks.push(internalRenderTask);
+      var renderTask = new RenderTask(internalRenderTask);
+
+      var self = this;
+      this.displayReadyPromise.then(
+        function pageDisplayReadyPromise(transparency) {
+          if (self.pendingDestroy) {
+            complete();
+            return;
+          }
+          stats.time('Rendering');
+          internalRenderTask.initalizeGraphics(transparency);
+          internalRenderTask.operatorListChanged();
+        },
+        function pageDisplayReadPromiseError(reason) {
+          complete(reason);
+        }
+      );
+
+      function complete(error) {
+        var i = self.renderTasks.indexOf(internalRenderTask);
+        if (i >= 0) {
+          self.renderTasks.splice(i, 1);
+        }
+
+        if (self.cleanupAfterRender) {
+          self.pendingDestroy = true;
+        }
+        self._tryDestroy();
+
+        if (error) {
+          renderTask.promise.reject(error);
+        } else {
+          renderTask.promise.resolve();
+        }
+        stats.timeEnd('Rendering');
+        stats.timeEnd('Overall');
+      }
+
+      return renderTask;
+    },
+    /**
+     * @return {Promise} That is resolved with the a {string} that is the text
+     * content from the page.
+     */
+    getTextContent: function PDFPageProxy_getTextContent() {
+      var promise = new PDFJS.LegacyPromise();
+      this.transport.messageHandler.send('GetTextContent', {
+          pageIndex: this.pageNumber - 1
+        },
+        function textContentCallback(textContent) {
+          promise.resolve(textContent);
+        }
+      );
+      return promise;
+    },
+    /**
+     * Stub for future feature.
+     */
+    getOperationList: function PDFPageProxy_getOperationList() {
+      var promise = new PDFJS.LegacyPromise();
+      var operationList = { // not implemented
+        dependencyFontsID: null,
+        operatorList: null
+      };
+      promise.resolve(operationList);
+      return promise;
+    },
+    /**
+     * Destroys resources allocated by the page.
+     */
+    destroy: function PDFPageProxy_destroy() {
+      this.pendingDestroy = true;
+      this._tryDestroy();
+    },
+    /**
+     * For internal use only. Attempts to clean up if rendering is in a state
+     * where that's possible.
+     */
+    _tryDestroy: function PDFPageProxy__destroy() {
+      if (!this.pendingDestroy ||
+          this.renderTasks.length !== 0 ||
+          this.receivingOperatorList) {
+        return;
+      }
+
+      delete this.operatorList;
+      delete this.displayReadyPromise;
+      this.objs.clear();
+      this.pendingDestroy = false;
+    },
+    /**
+     * For internal use only.
+     */
+    _startRenderPage: function PDFPageProxy_startRenderPage(transparency) {
+      this.displayReadyPromise.resolve(transparency);
+    },
+    /**
+     * For internal use only.
+     */
+    _renderPageChunk: function PDFPageProxy_renderPageChunk(operatorListChunk) {
+      // Add the new chunk to the current operator list.
+      for (var i = 0, ii = operatorListChunk.length; i < ii; i++) {
+        this.operatorList.fnArray.push(operatorListChunk.fnArray[i]);
+        this.operatorList.argsArray.push(operatorListChunk.argsArray[i]);
+      }
+      this.operatorList.lastChunk = operatorListChunk.lastChunk;
+
+      // Notify all the rendering tasks there are more operators to be consumed.
+      for (var i = 0; i < this.renderTasks.length; i++) {
+        this.renderTasks[i].operatorListChanged();
+      }
+
+      if (operatorListChunk.lastChunk) {
+        this.receivingOperatorList = false;
+        this._tryDestroy();
+      }
+    }
+  };
+  return PDFPageProxy;
+})();
+/**
+ * For internal use only.
+ */
+var WorkerTransport = (function WorkerTransportClosure() {
+  function WorkerTransport(workerInitializedPromise, workerReadyPromise,
+      pdfDataRangeTransport, progressCallback) {
+    this.pdfDataRangeTransport = pdfDataRangeTransport;
+
+    this.workerReadyPromise = workerReadyPromise;
+    this.progressCallback = progressCallback;
+    this.commonObjs = new PDFObjects();
+
+    this.pageCache = [];
+    this.pagePromises = [];
+    this.embeddedFontsUsed = false;
+
+    this.passwordCallback = null;
+
+    // If worker support isn't disabled explicit and the browser has worker
+    // support, create a new web worker and test if it/the browser fullfills
+    // all requirements to run parts of pdf.js in a web worker.
+    // Right now, the requirement is, that an Uint8Array is still an Uint8Array
+    // as it arrives on the worker. Chrome added this with version 15.
+    if (!globalScope.PDFJS.disableWorker && typeof Worker !== 'undefined') {
+      var workerSrc = PDFJS.workerSrc;
+      if (!workerSrc) {
+        error('No PDFJS.workerSrc specified');
+      }
+
+      try {
+        // Some versions of FF can't create a worker on localhost, see:
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=683280
+        var worker = new Worker(workerSrc);
+        var messageHandler = new MessageHandler('main', worker);
+        this.messageHandler = messageHandler;
+
+        messageHandler.on('test', function transportTest(data) {
+          var supportTypedArray = data && data.supportTypedArray;
+          if (supportTypedArray) {
+            this.worker = worker;
+            if (!data.supportTransfers) {
+              PDFJS.postMessageTransfers = false;
+            }
+            this.setupMessageHandler(messageHandler);
+            workerInitializedPromise.resolve();
+          } else {
+            globalScope.PDFJS.disableWorker = true;
+            this.loadFakeWorkerFiles().then(function() {
+              this.setupFakeWorker();
+              workerInitializedPromise.resolve();
+            }.bind(this));
+          }
+        }.bind(this));
+
+        var testObj = new Uint8Array([PDFJS.postMessageTransfers ? 255 : 0]);
+        // Some versions of Opera throw a DATA_CLONE_ERR on serializing the
+        // typed array. Also, checking if we can use transfers.
+        try {
+          messageHandler.send('test', testObj, null, [testObj.buffer]);
+        } catch (ex) {
+          info('Cannot use postMessage transfers');
+          testObj[0] = 0;
+          messageHandler.send('test', testObj);
+        }
+        return;
+      } catch (e) {
+        info('The worker has been disabled.');
+      }
+    }
+    // Either workers are disabled, not supported or have thrown an exception.
+    // Thus, we fallback to a faked worker.
+    globalScope.PDFJS.disableWorker = true;
+    this.loadFakeWorkerFiles().then(function() {
+      this.setupFakeWorker();
+      workerInitializedPromise.resolve();
+    }.bind(this));
+  }
+  WorkerTransport.prototype = {
+    destroy: function WorkerTransport_destroy() {
+      this.pageCache = [];
+      this.pagePromises = [];
+      var self = this;
+      this.messageHandler.send('Terminate', null, function () {
+        if (self.worker) {
+          self.worker.terminate();
+        }
+      });
+    },
+
+    loadFakeWorkerFiles: function WorkerTransport_loadFakeWorkerFiles() {
+      if (!PDFJS.fakeWorkerFilesLoadedPromise) {
+        PDFJS.fakeWorkerFilesLoadedPromise = new LegacyPromise();
+        // In the developer build load worker_loader which in turn loads all the
+        // other files and resolves the promise. In production only the
+        // pdf.worker.js file is needed.
+        Util.loadScript(PDFJS.workerSrc, function() {
+          PDFJS.fakeWorkerFilesLoadedPromise.resolve();
+        });
+      }
+      return PDFJS.fakeWorkerFilesLoadedPromise;
+    },
+
+    setupFakeWorker: function WorkerTransport_setupFakeWorker() {
+      warn('Setting up fake worker.');
+      // If we don't use a worker, just post/sendMessage to the main thread.
+      var fakeWorker = {
+        postMessage: function WorkerTransport_postMessage(obj) {
+          fakeWorker.onmessage({data: obj});
+        },
+        terminate: function WorkerTransport_terminate() {}
+      };
+
+      var messageHandler = new MessageHandler('main', fakeWorker);
+      this.setupMessageHandler(messageHandler);
+
+      // If the main thread is our worker, setup the handling for the messages
+      // the main thread sends to it self.
+      PDFJS.WorkerMessageHandler.setup(messageHandler);
+    },
+
+    setupMessageHandler:
+      function WorkerTransport_setupMessageHandler(messageHandler) {
+      this.messageHandler = messageHandler;
+
+      function updatePassword(password) {
+        messageHandler.send('UpdatePassword', password);
+      }
+
+      var pdfDataRangeTransport = this.pdfDataRangeTransport;
+      if (pdfDataRangeTransport) {
+        pdfDataRangeTransport.addRangeListener(function(begin, chunk) {
+          messageHandler.send('OnDataRange', {
+            begin: begin,
+            chunk: chunk
+          });
+        });
+
+        pdfDataRangeTransport.addProgressListener(function(loaded) {
+          messageHandler.send('OnDataProgress', {
+            loaded: loaded
+          });
+        });
+
+        messageHandler.on('RequestDataRange',
+          function transportDataRange(data) {
+            pdfDataRangeTransport.requestDataRange(data.begin, data.end);
+          }, this);
+      }
+
+      messageHandler.on('GetDoc', function transportDoc(data) {
+        var pdfInfo = data.pdfInfo;
+        var pdfDocument = new PDFDocumentProxy(pdfInfo, this);
+        this.pdfDocument = pdfDocument;
+        this.workerReadyPromise.resolve(pdfDocument);
+      }, this);
+
+      messageHandler.on('NeedPassword', function transportPassword(data) {
+        if (this.passwordCallback) {
+          return this.passwordCallback(updatePassword,
+                                       PasswordResponses.NEED_PASSWORD);
+        }
+        this.workerReadyPromise.reject(data.exception.message, data.exception);
+      }, this);
+
+      messageHandler.on('IncorrectPassword', function transportBadPass(data) {
+        if (this.passwordCallback) {
+          return this.passwordCallback(updatePassword,
+                                       PasswordResponses.INCORRECT_PASSWORD);
+        }
+        this.workerReadyPromise.reject(data.exception.message, data.exception);
+      }, this);
+
+      messageHandler.on('InvalidPDF', function transportInvalidPDF(data) {
+        this.workerReadyPromise.reject(data.exception.name, data.exception);
+      }, this);
+
+      messageHandler.on('MissingPDF', function transportMissingPDF(data) {
+        this.workerReadyPromise.reject(data.exception.message, data.exception);
+      }, this);
+
+      messageHandler.on('UnknownError', function transportUnknownError(data) {
+        this.workerReadyPromise.reject(data.exception.message, data.exception);
+      }, this);
+
+      messageHandler.on('GetPage', function transportPage(data) {
+        var pageInfo = data.pageInfo;
+        var page = new PDFPageProxy(pageInfo, this);
+        this.pageCache[pageInfo.pageIndex] = page;
+        var promise = this.pagePromises[pageInfo.pageIndex];
+        promise.resolve(page);
+      }, this);
+
+      messageHandler.on('GetAnnotations', function transportAnnotations(data) {
+        var annotations = data.annotations;
+        var promise = this.pageCache[data.pageIndex].annotationsPromise;
+        promise.resolve(annotations);
+      }, this);
+
+      messageHandler.on('StartRenderPage', function transportRender(data) {
+        var page = this.pageCache[data.pageIndex];
+
+        page.stats.timeEnd('Page Request');
+        page._startRenderPage(data.transparency);
+      }, this);
+
+      messageHandler.on('RenderPageChunk', function transportRender(data) {
+        var page = this.pageCache[data.pageIndex];
+
+        page._renderPageChunk(data.operatorList);
+      }, this);
+
+      messageHandler.on('commonobj', function transportObj(data) {
+        var id = data[0];
+        var type = data[1];
+        if (this.commonObjs.hasData(id))
+          return;
+
+        switch (type) {
+          case 'Font':
+            var exportedData = data[2];
+
+            var font;
+            if ('error' in exportedData) {
+              var error = exportedData.error;
+              warn('Error during font loading: ' + error);
+              this.commonObjs.resolve(id, error);
+              break;
+            } else {
+              font = new FontFace(exportedData);
+            }
+
+            FontLoader.bind(
+              [font],
+              function fontReady(fontObjs) {
+                this.commonObjs.resolve(id, font);
+              }.bind(this)
+            );
+            break;
+          case 'FontPath':
+            this.commonObjs.resolve(id, data[2]);
+            break;
+          default:
+            error('Got unknown common object type ' + type);
+        }
+      }, this);
+
+      messageHandler.on('obj', function transportObj(data) {
+        var id = data[0];
+        var pageIndex = data[1];
+        var type = data[2];
+        var pageProxy = this.pageCache[pageIndex];
+        if (pageProxy.objs.hasData(id))
+          return;
+
+        switch (type) {
+          case 'JpegStream':
+            var imageData = data[3];
+            loadJpegStream(id, imageData, pageProxy.objs);
+            break;
+          case 'Image':
+            var imageData = data[3];
+            pageProxy.objs.resolve(id, imageData);
+
+            // heuristics that will allow not to store large data
+            var MAX_IMAGE_SIZE_TO_STORE = 8000000;
+            if ('data' in imageData &&
+                imageData.data.length > MAX_IMAGE_SIZE_TO_STORE) {
+              pageProxy.cleanupAfterRender = true;
+            }
+            break;
+          default:
+            error('Got unknown object type ' + type);
+        }
+      }, this);
+
+      messageHandler.on('DocProgress', function transportDocProgress(data) {
+        if (this.progressCallback) {
+          this.progressCallback({
+            loaded: data.loaded,
+            total: data.total
+          });
+        }
+      }, this);
+
+      messageHandler.on('DocError', function transportDocError(data) {
+        this.workerReadyPromise.reject(data);
+      }, this);
+
+      messageHandler.on('PageError', function transportError(data) {
+        var page = this.pageCache[data.pageNum - 1];
+        if (page.displayReadyPromise)
+          page.displayReadyPromise.reject(data.error);
+        else
+          error(data.error);
+      }, this);
+
+      messageHandler.on('JpegDecode', function(data, deferred) {
+        var imageUrl = data[0];
+        var components = data[1];
+        if (components != 3 && components != 1)
+          error('Only 3 component or 1 component can be returned');
+
+        var img = new Image();
+        img.onload = (function messageHandler_onloadClosure() {
+          var width = img.width;
+          var height = img.height;
+          var size = width * height;
+          var rgbaLength = size * 4;
+          var buf = new Uint8Array(size * components);
+          var tmpCanvas = createScratchCanvas(width, height);
+          var tmpCtx = tmpCanvas.getContext('2d');
+          tmpCtx.drawImage(img, 0, 0);
+          var data = tmpCtx.getImageData(0, 0, width, height).data;
+
+          if (components == 3) {
+            for (var i = 0, j = 0; i < rgbaLength; i += 4, j += 3) {
+              buf[j] = data[i];
+              buf[j + 1] = data[i + 1];
+              buf[j + 2] = data[i + 2];
+            }
+          } else if (components == 1) {
+            for (var i = 0, j = 0; i < rgbaLength; i += 4, j++) {
+              buf[j] = data[i];
+            }
+          }
+          deferred.resolve({ data: buf, width: width, height: height});
+        }).bind(this);
+        img.src = imageUrl;
+      });
+    },
+
+    fetchDocument: function WorkerTransport_fetchDocument(source) {
+      source.disableAutoFetch = PDFJS.disableAutoFetch;
+      source.chunkedViewerLoading = !!this.pdfDataRangeTransport;
+      this.messageHandler.send('GetDocRequest', {
+        source: source,
+        disableRange: PDFJS.disableRange,
+        maxImageSize: PDFJS.maxImageSize,
+        disableFontFace: PDFJS.disableFontFace,
+        disableCreateObjectURL: PDFJS.disableCreateObjectURL,
+        verbosity: PDFJS.verbosity
+      });
+    },
+
+    getData: function WorkerTransport_getData(promise) {
+      this.messageHandler.send('GetData', null, function(data) {
+        promise.resolve(data);
+      });
+    },
+
+    dataLoaded: function WorkerTransport_dataLoaded() {
+      var promise = new PDFJS.LegacyPromise();
+      this.messageHandler.send('DataLoaded', null, function(args) {
+        promise.resolve(args);
+      });
+      return promise;
+    },
+
+    getPage: function WorkerTransport_getPage(pageNumber, promise) {
+      var pageIndex = pageNumber - 1;
+      if (pageIndex in this.pagePromises)
+        return this.pagePromises[pageIndex];
+      var promise = new PDFJS.LegacyPromise();
+      this.pagePromises[pageIndex] = promise;
+      this.messageHandler.send('GetPageRequest', { pageIndex: pageIndex });
+      return promise;
+    },
+
+    getPageIndex: function WorkerTransport_getPageIndexByRef(ref) {
+      var promise = new PDFJS.LegacyPromise();
+      this.messageHandler.send('GetPageIndex', { ref: ref },
+        function (pageIndex) {
+          promise.resolve(pageIndex);
+        }
+      );
+      return promise;
+    },
+
+    getAnnotations: function WorkerTransport_getAnnotations(pageIndex) {
+      this.messageHandler.send('GetAnnotationsRequest',
+        { pageIndex: pageIndex });
+    },
+
+    getDestinations: function WorkerTransport_getDestinations() {
+      var promise = new PDFJS.LegacyPromise();
+      this.messageHandler.send('GetDestinations', null,
+        function transportDestinations(destinations) {
+          promise.resolve(destinations);
+        }
+      );
+      return promise;
+    },
+
+    startCleanup: function WorkerTransport_startCleanup() {
+      this.messageHandler.send('Cleanup', null,
+        function endCleanup() {
+          for (var i = 0, ii = this.pageCache.length; i < ii; i++) {
+            var page = this.pageCache[i];
+            if (page) {
+              page.destroy();
+            }
+          }
+          this.commonObjs.clear();
+          FontLoader.clear();
+        }.bind(this)
+      );
+    }
+  };
+  return WorkerTransport;
+
+})();
+
+/**
+ * A PDF document and page is built of many objects. E.g. there are objects
+ * for fonts, images, rendering code and such. These objects might get processed
+ * inside of a worker. The `PDFObjects` implements some basic functions to
+ * manage these objects.
+ */
+var PDFObjects = (function PDFObjectsClosure() {
+  function PDFObjects() {
+    this.objs = {};
+  }
+
+  PDFObjects.prototype = {
+    /**
+     * Internal function.
+     * Ensures there is an object defined for `objId`.
+     */
+    ensureObj: function PDFObjects_ensureObj(objId) {
+      if (this.objs[objId])
+        return this.objs[objId];
+
+      var obj = {
+        promise: new LegacyPromise(),
+        data: null,
+        resolved: false
+      };
+      this.objs[objId] = obj;
+
+      return obj;
+    },
+
+    /**
+     * If called *without* callback, this returns the data of `objId` but the
+     * object needs to be resolved. If it isn't, this function throws.
+     *
+     * If called *with* a callback, the callback is called with the data of the
+     * object once the object is resolved. That means, if you call this
+     * function and the object is already resolved, the callback gets called
+     * right away.
+     */
+    get: function PDFObjects_get(objId, callback) {
+      // If there is a callback, then the get can be async and the object is
+      // not required to be resolved right now
+      if (callback) {
+        this.ensureObj(objId).promise.then(callback);
+        return null;
+      }
+
+      // If there isn't a callback, the user expects to get the resolved data
+      // directly.
+      var obj = this.objs[objId];
+
+      // If there isn't an object yet or the object isn't resolved, then the
+      // data isn't ready yet!
+      if (!obj || !obj.resolved)
+        error('Requesting object that isn\'t resolved yet ' + objId);
+
+      return obj.data;
+    },
+
+    /**
+     * Resolves the object `objId` with optional `data`.
+     */
+    resolve: function PDFObjects_resolve(objId, data) {
+      var obj = this.ensureObj(objId);
+
+      obj.resolved = true;
+      obj.data = data;
+      obj.promise.resolve(data);
+    },
+
+    isResolved: function PDFObjects_isResolved(objId) {
+      var objs = this.objs;
+
+      if (!objs[objId]) {
+        return false;
+      } else {
+        return objs[objId].resolved;
+      }
+    },
+
+    hasData: function PDFObjects_hasData(objId) {
+      return this.isResolved(objId);
+    },
+
+    /**
+     * Returns the data of `objId` if object exists, null otherwise.
+     */
+    getData: function PDFObjects_getData(objId) {
+      var objs = this.objs;
+      if (!objs[objId] || !objs[objId].resolved) {
+        return null;
+      } else {
+        return objs[objId].data;
+      }
+    },
+
+    clear: function PDFObjects_clear() {
+      this.objs = {};
+    }
+  };
+  return PDFObjects;
+})();
+
+var RenderTask = (function RenderTaskClosure() {
+  function RenderTask(internalRenderTask) {
+    this.internalRenderTask = internalRenderTask;
+    this.promise = new PDFJS.LegacyPromise();
+  }
+
+  /**
+   * Cancel the rendering task. If the task is curently rendering it will not be
+   * cancelled until graphics pauses with a timeout. The promise that this
+   * object extends will resolved when cancelled.
+   */
+  RenderTask.prototype.cancel = function RenderTask_cancel() {
+    this.internalRenderTask.cancel();
+  };
+
+  return RenderTask;
+})();
+
+var InternalRenderTask = (function InternalRenderTaskClosure() {
+
+  function InternalRenderTask(callback, params, objs, commonObjs, operatorList,
+                              pageNumber) {
+    this.callback = callback;
+    this.params = params;
+    this.objs = objs;
+    this.commonObjs = commonObjs;
+    this.operatorListIdx = null;
+    this.operatorList = operatorList;
+    this.pageNumber = pageNumber;
+    this.running = false;
+    this.graphicsReadyCallback = null;
+    this.graphicsReady = false;
+    this.cancelled = false;
+  }
+
+  InternalRenderTask.prototype = {
+
+    initalizeGraphics:
+        function InternalRenderTask_initalizeGraphics(transparency) {
+
+      if (this.cancelled) {
+        return;
+      }
+      if (PDFJS.pdfBug && 'StepperManager' in globalScope &&
+          globalScope.StepperManager.enabled) {
+        this.stepper = globalScope.StepperManager.create(this.pageNumber - 1);
+        this.stepper.init(this.operatorList);
+        this.stepper.nextBreakPoint = this.stepper.getNextBreakPoint();
+      }
+
+      var params = this.params;
+      this.gfx = new CanvasGraphics(params.canvasContext, this.commonObjs,
+                                    this.objs, params.textLayer,
+                                    params.imageLayer);
+
+      this.gfx.beginDrawing(params.viewport, transparency);
+      this.operatorListIdx = 0;
+      this.graphicsReady = true;
+      if (this.graphicsReadyCallback) {
+        this.graphicsReadyCallback();
+      }
+    },
+
+    cancel: function InternalRenderTask_cancel() {
+      this.running = false;
+      this.cancelled = true;
+      this.callback('cancelled');
+    },
+
+    operatorListChanged: function InternalRenderTask_operatorListChanged() {
+      if (!this.graphicsReady) {
+        if (!this.graphicsReadyCallback) {
+          this.graphicsReadyCallback = this._continue.bind(this);
+        }
+        return;
+      }
+
+      if (this.stepper) {
+        this.stepper.updateOperatorList(this.operatorList);
+      }
+
+      if (this.running) {
+        return;
+      }
+      this._continue();
+    },
+
+    _continue: function InternalRenderTask__continue() {
+      this.running = true;
+      if (this.cancelled) {
+        return;
+      }
+      if (this.params.continueCallback) {
+        this.params.continueCallback(this._next.bind(this));
+      } else {
+        this._next();
+      }
+    },
+
+    _next: function InternalRenderTask__next() {
+      if (this.cancelled) {
+        return;
+      }
+      this.operatorListIdx = this.gfx.executeOperatorList(this.operatorList,
+                                        this.operatorListIdx,
+                                        this._continue.bind(this),
+                                        this.stepper);
+      if (this.operatorListIdx === this.operatorList.argsArray.length) {
+        this.running = false;
+        if (this.operatorList.lastChunk) {
+          this.gfx.endDrawing();
+          this.callback();
+        }
+      }
+    }
+
+  };
+
+  return InternalRenderTask;
+})();
+
+
+var Metadata = PDFJS.Metadata = (function MetadataClosure() {
+  function fixMetadata(meta) {
+    return meta.replace(/>\\376\\377([^<]+)/g, function(all, codes) {
+      var bytes = codes.replace(/\\([0-3])([0-7])([0-7])/g,
+                                function(code, d1, d2, d3) {
+        return String.fromCharCode(d1 * 64 + d2 * 8 + d3 * 1);
+      });
+      var chars = '';
+      for (var i = 0; i < bytes.length; i += 2) {
+        var code = bytes.charCodeAt(i) * 256 + bytes.charCodeAt(i + 1);
+        chars += code >= 32 && code < 127 && code != 60 && code != 62 &&
+          code != 38 && false ? String.fromCharCode(code) :
+          '&#x' + (0x10000 + code).toString(16).substring(1) + ';';
+      }
+      return '>' + chars;
+    });
+  }
+
+  function Metadata(meta) {
+    if (typeof meta === 'string') {
+      // Ghostscript produces invalid metadata
+      meta = fixMetadata(meta);
+
+      var parser = new DOMParser();
+      meta = parser.parseFromString(meta, 'application/xml');
+    } else if (!(meta instanceof Document)) {
+      error('Metadata: Invalid metadata object');
+    }
+
+    this.metaDocument = meta;
+    this.metadata = {};
+    this.parse();
+  }
+
+  Metadata.prototype = {
+    parse: function Metadata_parse() {
+      var doc = this.metaDocument;
+      var rdf = doc.documentElement;
+
+      if (rdf.nodeName.toLowerCase() !== 'rdf:rdf') { // Wrapped in <xmpmeta>
+        rdf = rdf.firstChild;
+        while (rdf && rdf.nodeName.toLowerCase() !== 'rdf:rdf')
+          rdf = rdf.nextSibling;
+      }
+
+      var nodeName = (rdf) ? rdf.nodeName.toLowerCase() : null;
+      if (!rdf || nodeName !== 'rdf:rdf' || !rdf.hasChildNodes())
+        return;
+
+      var children = rdf.childNodes, desc, entry, name, i, ii, length, iLength;
+
+      for (i = 0, length = children.length; i < length; i++) {
+        desc = children[i];
+        if (desc.nodeName.toLowerCase() !== 'rdf:description')
+          continue;
+
+        for (ii = 0, iLength = desc.childNodes.length; ii < iLength; ii++) {
+          if (desc.childNodes[ii].nodeName.toLowerCase() !== '#text') {
+            entry = desc.childNodes[ii];
+            name = entry.nodeName.toLowerCase();
+            this.metadata[name] = entry.textContent.trim();
+          }
+        }
+      }
+    },
+
+    get: function Metadata_get(name) {
+      return this.metadata[name] || null;
+    },
+
+    has: function Metadata_has(name) {
+      return typeof this.metadata[name] !== 'undefined';
+    }
+  };
+
+  return Metadata;
+})();
+
+
+// <canvas> contexts store most of the state we need natively.
+// However, PDF needs a bit more state, which we store here.
+
+// Minimal font size that would be used during canvas fillText operations.
+var MIN_FONT_SIZE = 16;
+
+var COMPILE_TYPE3_GLYPHS = true;
+
+function createScratchCanvas(width, height) {
+  var canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
+function addContextCurrentTransform(ctx) {
+  // If the context doesn't expose a `mozCurrentTransform`, add a JS based on.
+  if (!ctx.mozCurrentTransform) {
+    // Store the original context
+    ctx._scaleX = ctx._scaleX || 1.0;
+    ctx._scaleY = ctx._scaleY || 1.0;
+    ctx._originalSave = ctx.save;
+    ctx._originalRestore = ctx.restore;
+    ctx._originalRotate = ctx.rotate;
+    ctx._originalScale = ctx.scale;
+    ctx._originalTranslate = ctx.translate;
+    ctx._originalTransform = ctx.transform;
+    ctx._originalSetTransform = ctx.setTransform;
+
+    ctx._transformMatrix = [ctx._scaleX, 0, 0, ctx._scaleY, 0, 0];
+    ctx._transformStack = [];
+
+    Object.defineProperty(ctx, 'mozCurrentTransform', {
+      get: function getCurrentTransform() {
+        return this._transformMatrix;
+      }
+    });
+
+    Object.defineProperty(ctx, 'mozCurrentTransformInverse', {
+      get: function getCurrentTransformInverse() {
+        // Calculation done using WolframAlpha:
+        // http://www.wolframalpha.com/input/?
+        //   i=Inverse+{{a%2C+c%2C+e}%2C+{b%2C+d%2C+f}%2C+{0%2C+0%2C+1}}
+
+        var m = this._transformMatrix;
+        var a = m[0], b = m[1], c = m[2], d = m[3], e = m[4], f = m[5];
+
+        var ad_bc = a * d - b * c;
+        var bc_ad = b * c - a * d;
+
+        return [
+          d / ad_bc,
+          b / bc_ad,
+          c / bc_ad,
+          a / ad_bc,
+          (d * e - c * f) / bc_ad,
+          (b * e - a * f) / ad_bc
+        ];
+      }
+    });
+
+    ctx.save = function ctxSave() {
+      var old = this._transformMatrix;
+      this._transformStack.push(old);
+      this._transformMatrix = old.slice(0, 6);
+
+      this._originalSave();
+    };
+
+    ctx.restore = function ctxRestore() {
+      var prev = this._transformStack.pop();
+      if (prev) {
+        this._transformMatrix = prev;
+        this._originalRestore();
+      }
+    };
+
+    ctx.translate = function ctxTranslate(x, y) {
+      var m = this._transformMatrix;
+      m[4] = m[0] * x + m[2] * y + m[4];
+      m[5] = m[1] * x + m[3] * y + m[5];
+
+      this._originalTranslate(x, y);
+    };
+
+    ctx.scale = function ctxScale(x, y) {
+      var m = this._transformMatrix;
+      m[0] = m[0] * x;
+      m[1] = m[1] * x;
+      m[2] = m[2] * y;
+      m[3] = m[3] * y;
+
+      this._originalScale(x, y);
+    };
+
+    ctx.transform = function ctxTransform(a, b, c, d, e, f) {
+      var m = this._transformMatrix;
+      this._transformMatrix = [
+        m[0] * a + m[2] * b,
+        m[1] * a + m[3] * b,
+        m[0] * c + m[2] * d,
+        m[1] * c + m[3] * d,
+        m[0] * e + m[2] * f + m[4],
+        m[1] * e + m[3] * f + m[5]
+      ];
+
+      ctx._originalTransform(a, b, c, d, e, f);
+    };
+
+    ctx.setTransform = function ctxSetTransform(a, b, c, d, e, f) {
+      this._transformMatrix = [a, b, c, d, e, f];
+
+      ctx._originalSetTransform(a, b, c, d, e, f);
+    };
+
+    ctx.rotate = function ctxRotate(angle) {
+      var cosValue = Math.cos(angle);
+      var sinValue = Math.sin(angle);
+
+      var m = this._transformMatrix;
+      this._transformMatrix = [
+        m[0] * cosValue + m[2] * sinValue,
+        m[1] * cosValue + m[3] * sinValue,
+        m[0] * (-sinValue) + m[2] * cosValue,
+        m[1] * (-sinValue) + m[3] * cosValue,
+        m[4],
+        m[5]
+      ];
+
+      this._originalRotate(angle);
+    };
+  }
+}
+
+var CachedCanvases = (function CachedCanvasesClosure() {
+  var cache = {};
+  return {
+    getCanvas: function CachedCanvases_getCanvas(id, width, height,
+                                                 trackTransform) {
+      var canvasEntry;
+      if (id in cache) {
+        canvasEntry = cache[id];
+        canvasEntry.canvas.width = width;
+        canvasEntry.canvas.height = height;
+        // reset canvas transform for emulated mozCurrentTransform, if needed
+        canvasEntry.context.setTransform(1, 0, 0, 1, 0, 0);
+      } else {
+        var canvas = createScratchCanvas(width, height);
+        var ctx = canvas.getContext('2d');
+        if (trackTransform) {
+          addContextCurrentTransform(ctx);
+        }
+        cache[id] = canvasEntry = {canvas: canvas, context: ctx};
+      }
+      return canvasEntry;
+    },
+    clear: function () {
+      cache = {};
+    }
+  };
+})();
+
+function compileType3Glyph(imgData) {
+  var POINT_TO_PROCESS_LIMIT = 1000;
+
+  var width = imgData.width, height = imgData.height;
+  var i, j, j0, width1 = width + 1;
+  var points = new Uint8Array(width1 * (height + 1));
+  var POINT_TYPES =
+      new Uint8Array([0, 2, 4, 0, 1, 0, 5, 4, 8, 10, 0, 8, 0, 2, 1, 0]);
+
+  // decodes bit-packed mask data
+  var lineSize = (width + 7) & ~7, data0 = imgData.data;
+  var data = new Uint8Array(lineSize * height), pos = 0, ii;
+  for (i = 0, ii = data0.length; i < ii; i++) {
+    var mask = 128, elem = data0[i];
+    while (mask > 0) {
+      data[pos++] = (elem & mask) ? 0 : 255;
+      mask >>= 1;
+    }
+  }
+
+  // finding iteresting points: every point is located between mask pixels,
+  // so there will be points of the (width + 1)x(height + 1) grid. Every point
+  // will have flags assigned based on neighboring mask pixels:
+  //   4 | 8
+  //   --P--
+  //   2 | 1
+  // We are interested only in points with the flags:
+  //   - outside corners: 1, 2, 4, 8;
+  //   - inside corners: 7, 11, 13, 14;
+  //   - and, intersections: 5, 10.
+  var count = 0;
+  pos = 0;
+  if (data[pos] !== 0) {
+    points[0] = 1;
+    ++count;
+  }
+  for (j = 1; j < width; j++) {
+    if (data[pos] !== data[pos + 1]) {
+      points[j] = data[pos] ? 2 : 1;
+      ++count;
+    }
+    pos++;
+  }
+  if (data[pos] !== 0) {
+    points[j] = 2;
+    ++count;
+  }
+  for (i = 1; i < height; i++) {
+    pos = i * lineSize;
+    j0 = i * width1;
+    if (data[pos - lineSize] !== data[pos]) {
+      points[j0] = data[pos] ? 1 : 8;
+      ++count;
+    }
+    // 'sum' is the position of the current pixel configuration in the 'TYPES'
+    // array (in order 8-1-2-4, so we can use '>>2' to shift the column).
+    var sum = (data[pos] ? 4 : 0) + (data[pos - lineSize] ? 8 : 0);
+    for (j = 1; j < width; j++) {
+      sum = (sum >> 2) + (data[pos + 1] ? 4 : 0) +
+            (data[pos - lineSize + 1] ? 8 : 0);
+      if (POINT_TYPES[sum]) {
+        points[j0 + j] = POINT_TYPES[sum];
+        ++count;
+      }
+      pos++;
+    }
+    if (data[pos - lineSize] !== data[pos]) {
+      points[j0 + j] = data[pos] ? 2 : 4;
+      ++count;
+    }
+
+    if (count > POINT_TO_PROCESS_LIMIT) {
+      return null;
+    }
+  }
+
+  pos = lineSize * (height - 1);
+  j0 = i * width1;
+  if (data[pos] !== 0) {
+    points[j0] = 8;
+    ++count;
+  }
+  for (j = 1; j < width; j++) {
+    if (data[pos] !== data[pos + 1]) {
+      points[j0 + j] = data[pos] ? 4 : 8;
+      ++count;
+    }
+    pos++;
+  }
+  if (data[pos] !== 0) {
+    points[j0 + j] = 4;
+    ++count;
+  }
+  if (count > POINT_TO_PROCESS_LIMIT) {
+    return null;
+  }
+
+  // building outlines
+  var steps = new Int32Array([0, width1, -1, 0, -width1, 0, 0, 0, 1]);
+  var outlines = [];
+  for (i = 0; count && i <= height; i++) {
+    var p = i * width1;
+    var end = p + width;
+    while (p < end && !points[p]) {
+      p++;
+    }
+    if (p === end) {
+      continue;
+    }
+    var coords = [p % width1, i];
+
+    var type = points[p], p0 = p, pp;
+    do {
+      var step = steps[type];
+      do { p += step; } while (!points[p]);
+
+      pp = points[p];
+      if (pp !== 5 && pp !== 10) {
+        // set new direction
+        type = pp;
+        // delete mark
+        points[p] = 0;
+      } else { // type is 5 or 10, ie, a crossing
+        // set new direction
+        type = pp & ((0x33 * type) >> 4);
+        // set new type for "future hit"
+        points[p] &= (type >> 2 | type << 2);
+      }
+
+      coords.push(p % width1);
+      coords.push((p / width1) | 0);
+      --count;
+    } while (p0 !== p);
+    outlines.push(coords);
+    --i;
+  }
+
+  var drawOutline = function(c) {
+    c.save();
+    // the path shall be painted in [0..1]x[0..1] space
+    c.scale(1 / width, -1 / height);
+    c.translate(0, -height);
+    c.beginPath();
+    for (var i = 0, ii = outlines.length; i < ii; i++) {
+      var o = outlines[i];
+      c.moveTo(o[0], o[1]);
+      for (var j = 2, jj = o.length; j < jj; j += 2) {
+        c.lineTo(o[j], o[j+1]);
+      }
+    }
+    c.fill();
+    c.beginPath();
+    c.restore();
+  };
+
+  return drawOutline;
+}
+
+var CanvasExtraState = (function CanvasExtraStateClosure() {
+  function CanvasExtraState(old) {
+    // Are soft masks and alpha values shapes or opacities?
+    this.alphaIsShape = false;
+    this.fontSize = 0;
+    this.fontSizeScale = 1;
+    this.textMatrix = IDENTITY_MATRIX;
+    this.fontMatrix = FONT_IDENTITY_MATRIX;
+    this.leading = 0;
+    // Current point (in user coordinates)
+    this.x = 0;
+    this.y = 0;
+    // Start of text line (in text coordinates)
+    this.lineX = 0;
+    this.lineY = 0;
+    // Character and word spacing
+    this.charSpacing = 0;
+    this.wordSpacing = 0;
+    this.textHScale = 1;
+    this.textRenderingMode = TextRenderingMode.FILL;
+    this.textRise = 0;
+    // Color spaces
+    this.fillColorSpace = ColorSpace.singletons.gray;
+    this.fillColorSpaceObj = null;
+    this.strokeColorSpace = ColorSpace.singletons.gray;
+    this.strokeColorSpaceObj = null;
+    this.fillColorObj = null;
+    this.strokeColorObj = null;
+    // Default fore and background colors
+    this.fillColor = '#000000';
+    this.strokeColor = '#000000';
+    // Note: fill alpha applies to all non-stroking operations
+    this.fillAlpha = 1;
+    this.strokeAlpha = 1;
+    this.lineWidth = 1;
+
+    this.old = old;
+  }
+
+  CanvasExtraState.prototype = {
+    clone: function CanvasExtraState_clone() {
+      return Object.create(this);
+    },
+    setCurrentPoint: function CanvasExtraState_setCurrentPoint(x, y) {
+      this.x = x;
+      this.y = y;
+    }
+  };
+  return CanvasExtraState;
+})();
+
+var CanvasGraphics = (function CanvasGraphicsClosure() {
+  // Defines the time the executeOperatorList is going to be executing
+  // before it stops and shedules a continue of execution.
+  var EXECUTION_TIME = 15;
+
+  function CanvasGraphics(canvasCtx, commonObjs, objs, textLayer, imageLayer) {
+    this.ctx = canvasCtx;
+    this.current = new CanvasExtraState();
+    this.stateStack = [];
+    this.pendingClip = null;
+    this.pendingEOFill = false;
+    this.res = null;
+    this.xobjs = null;
+    this.commonObjs = commonObjs;
+    this.objs = objs;
+    this.textLayer = textLayer;
+    this.imageLayer = imageLayer;
+    this.groupStack = [];
+    this.processingType3 = null;
+    // Patterns are painted relative to the initial page/form transform, see pdf
+    // spec 8.7.2 NOTE 1.
+    this.baseTransform = null;
+    this.baseTransformStack = [];
+    this.groupLevel = 0;
+    if (canvasCtx) {
+      addContextCurrentTransform(canvasCtx);
+    }
+  }
+
+  function putBinaryImageData(ctx, imgData) {
+    if (typeof ImageData !== 'undefined' && imgData instanceof ImageData) {
+      ctx.putImageData(imgData, 0, 0);
+      return;
+    }
+
+    // Put the image data to the canvas in chunks, rather than putting the
+    // whole image at once.  This saves JS memory, because the ImageData object
+    // is smaller. It also possibly saves C++ memory within the implementation
+    // of putImageData(). (E.g. in Firefox we make two short-lived copies of
+    // the data passed to putImageData()). |n| shouldn't be too small, however,
+    // because too many putImageData() calls will slow things down.
+
+    var rowsInFullChunks = 16;
+    var fullChunks = (imgData.height / rowsInFullChunks) | 0;
+    var rowsInLastChunk = imgData.height - fullChunks * rowsInFullChunks;
+    var elemsInFullChunks = imgData.width * rowsInFullChunks * 4;
+    var elemsInLastChunk = imgData.width * rowsInLastChunk * 4;
+
+    var chunkImgData = ctx.createImageData(imgData.width, rowsInFullChunks);
+    var srcPos = 0;
+    var src = imgData.data;
+    var dst = chunkImgData.data;
+    var haveSetAndSubarray = 'set' in dst && 'subarray' in src;
+
+    // Do all the full-size chunks.
+    for (var i = 0; i < fullChunks; i++) {
+      if (haveSetAndSubarray) {
+        dst.set(src.subarray(srcPos, srcPos + elemsInFullChunks));
+        srcPos += elemsInFullChunks;
+      } else {
+        for (var j = 0; j < elemsInFullChunks; j++) {
+          chunkImgData.data[j] = imgData.data[srcPos++];
+        }
+      }
+      ctx.putImageData(chunkImgData, 0, i * rowsInFullChunks);
+    }
+
+    // Do the final, partial chunk, if required.
+    if (rowsInLastChunk !== 0) {
+      if (haveSetAndSubarray) {
+        dst.set(src.subarray(srcPos, srcPos + elemsInLastChunk));
+        srcPos += elemsInLastChunk;
+      } else {
+        for (var j = 0; j < elemsInLastChunk; j++) {
+          chunkImgData.data[j] = imgData.data[srcPos++];
+        }
+      }
+      // This (conceptually) puts pixels past the bounds of the canvas.  But
+      // that's ok; any such pixels are ignored.
+      ctx.putImageData(chunkImgData, 0, fullChunks * rowsInFullChunks);
+    }
+  }
+
+  function putBinaryImageMask(ctx, imgData) {
+    var width = imgData.width, height = imgData.height;
+    var tmpImgData = ctx.createImageData(width, height);
+    var data = imgData.data;
+    var tmpImgDataPixels = tmpImgData.data;
+    var dataPos = 0;
+
+    // Expand the mask so it can be used by the canvas.  Any required inversion
+    // has already been handled.
+    var tmpPos = 3; // alpha component offset
+    for (var i = 0; i < height; i++) {
+      var mask = 0;
+      for (var j = 0; j < width; j++) {
+        if (!mask) {
+          var elem = data[dataPos++];
+          mask = 128;
+        }
+        if (!(elem & mask)) {
+          tmpImgDataPixels[tmpPos] = 255;
+        }
+        tmpPos += 4;
+        mask >>= 1;
+      }
+    }
+
+    ctx.putImageData(tmpImgData, 0, 0);
+  }
+
+  function copyCtxState(sourceCtx, destCtx) {
+    var properties = ['strokeStyle', 'fillStyle', 'fillRule', 'globalAlpha',
+                      'lineWidth', 'lineCap', 'lineJoin', 'miterLimit',
+                      'globalCompositeOperation', 'font'];
+    for (var i = 0, ii = properties.length; i < ii; i++) {
+      var property = properties[i];
+      if (property in sourceCtx) {
+        destCtx[property] = sourceCtx[property];
+      }
+    }
+    if ('setLineDash' in sourceCtx) {
+      destCtx.setLineDash(sourceCtx.getLineDash());
+      destCtx.lineDashOffset =  sourceCtx.lineDashOffset;
+    } else if ('mozDash' in sourceCtx) {
+      destCtx.mozDash = sourceCtx.mozDash;
+      destCtx.mozDashOffset = sourceCtx.mozDashOffset;
+    }
+  }
+
+  var LINE_CAP_STYLES = ['butt', 'round', 'square'];
+  var LINE_JOIN_STYLES = ['miter', 'round', 'bevel'];
+  var NORMAL_CLIP = {};
+  var EO_CLIP = {};
+
+  CanvasGraphics.prototype = {
+
+    beginDrawing: function CanvasGraphics_beginDrawing(viewport, transparency) {
+      // For pdfs that use blend modes we have to clear the canvas else certain
+      // blend modes can look wrong since we'd be blending with a white
+      // backdrop. The problem with a transparent backdrop though is we then
+      // don't get sub pixel anti aliasing on text, so we fill with white if
+      // we can.
+      var width = this.ctx.canvas.width;
+      var height = this.ctx.canvas.height;
+      if (transparency) {
+        this.ctx.clearRect(0, 0, width, height);
+      } else {
+        this.ctx.mozOpaque = true;
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgb(255, 255, 255)';
+        this.ctx.fillRect(0, 0, width, height);
+        this.ctx.restore();
+      }
+
+      var transform = viewport.transform;
+      this.baseTransform = transform.slice();
+      this.ctx.save();
+      this.ctx.transform.apply(this.ctx, transform);
+
+      if (this.textLayer) {
+        this.textLayer.beginLayout();
+      }
+      if (this.imageLayer) {
+        this.imageLayer.beginLayout();
+      }
+    },
+
+    executeOperatorList: function CanvasGraphics_executeOperatorList(
+                                    operatorList,
+                                    executionStartIdx, continueCallback,
+                                    stepper) {
+      var argsArray = operatorList.argsArray;
+      var fnArray = operatorList.fnArray;
+      var i = executionStartIdx || 0;
+      var argsArrayLen = argsArray.length;
+
+      // Sometimes the OperatorList to execute is empty.
+      if (argsArrayLen == i) {
+        return i;
+      }
+
+      var executionEndIdx;
+      var endTime = Date.now() + EXECUTION_TIME;
+
+      var commonObjs = this.commonObjs;
+      var objs = this.objs;
+      var fnId;
+      var deferred = Promise.resolve();
+
+      while (true) {
+        if (stepper && i === stepper.nextBreakPoint) {
+          stepper.breakIt(i, continueCallback);
+          return i;
+        }
+
+        fnId = fnArray[i];
+
+        if (fnId !== OPS.dependency) {
+          this[fnId].apply(this, argsArray[i]);
+        } else {
+          var deps = argsArray[i];
+          for (var n = 0, nn = deps.length; n < nn; n++) {
+            var depObjId = deps[n];
+            var common = depObjId.substring(0, 2) == 'g_';
+
+            // If the promise isn't resolved yet, add the continueCallback
+            // to the promise and bail out.
+            if (!common && !objs.isResolved(depObjId)) {
+              objs.get(depObjId, continueCallback);
+              return i;
+            }
+            if (common && !commonObjs.isResolved(depObjId)) {
+              commonObjs.get(depObjId, continueCallback);
+              return i;
+            }
+          }
+        }
+
+        i++;
+
+        // If the entire operatorList was executed, stop as were done.
+        if (i == argsArrayLen) {
+          return i;
+        }
+
+        // If the execution took longer then a certain amount of time, schedule
+        // to continue exeution after a short delay.
+        // However, this is only possible if a 'continueCallback' is passed in.
+        if (continueCallback && Date.now() > endTime) {
+          deferred.then(continueCallback);
+          return i;
+        }
+
+        // If the operatorList isn't executed completely yet OR the execution
+        // time was short enough, do another execution round.
+      }
+    },
+
+    endDrawing: function CanvasGraphics_endDrawing() {
+      this.ctx.restore();
+      CachedCanvases.clear();
+
+      if (this.textLayer) {
+        this.textLayer.endLayout();
+      }
+      if (this.imageLayer) {
+        this.imageLayer.endLayout();
+      }
+    },
+
+    // Graphics state
+    setLineWidth: function CanvasGraphics_setLineWidth(width) {
+      this.current.lineWidth = width;
+      this.ctx.lineWidth = width;
+    },
+    setLineCap: function CanvasGraphics_setLineCap(style) {
+      this.ctx.lineCap = LINE_CAP_STYLES[style];
+    },
+    setLineJoin: function CanvasGraphics_setLineJoin(style) {
+      this.ctx.lineJoin = LINE_JOIN_STYLES[style];
+    },
+    setMiterLimit: function CanvasGraphics_setMiterLimit(limit) {
+      this.ctx.miterLimit = limit;
+    },
+    setDash: function CanvasGraphics_setDash(dashArray, dashPhase) {
+      var ctx = this.ctx;
+      if ('setLineDash' in ctx) {
+        ctx.setLineDash(dashArray);
+        ctx.lineDashOffset = dashPhase;
+      } else {
+        ctx.mozDash = dashArray;
+        ctx.mozDashOffset = dashPhase;
+      }
+    },
+    setRenderingIntent: function CanvasGraphics_setRenderingIntent(intent) {
+      // Maybe if we one day fully support color spaces this will be important
+      // for now we can ignore.
+      // TODO set rendering intent?
+    },
+    setFlatness: function CanvasGraphics_setFlatness(flatness) {
+      // There's no way to control this with canvas, but we can safely ignore.
+      // TODO set flatness?
+    },
+    setGState: function CanvasGraphics_setGState(states) {
+      for (var i = 0, ii = states.length; i < ii; i++) {
+        var state = states[i];
+        var key = state[0];
+        var value = state[1];
+
+        switch (key) {
+          case 'LW':
+            this.setLineWidth(value);
+            break;
+          case 'LC':
+            this.setLineCap(value);
+            break;
+          case 'LJ':
+            this.setLineJoin(value);
+            break;
+          case 'ML':
+            this.setMiterLimit(value);
+            break;
+          case 'D':
+            this.setDash(value[0], value[1]);
+            break;
+          case 'RI':
+            this.setRenderingIntent(value);
+            break;
+          case 'FL':
+            this.setFlatness(value);
+            break;
+          case 'Font':
+            this.setFont(value[0], value[1]);
+            break;
+          case 'CA':
+            this.current.strokeAlpha = state[1];
+            break;
+          case 'ca':
+            this.current.fillAlpha = state[1];
+            this.ctx.globalAlpha = state[1];
+            break;
+          case 'BM':
+            if (value && value.name && (value.name !== 'Normal')) {
+              var mode = value.name.replace(/([A-Z])/g,
+                function(c) {
+                  return '-' + c.toLowerCase();
+                }
+              ).substring(1);
+              this.ctx.globalCompositeOperation = mode;
+              if (this.ctx.globalCompositeOperation !== mode) {
+                warn('globalCompositeOperation "' + mode +
+                     '" is not supported');
+              }
+            } else {
+              this.ctx.globalCompositeOperation = 'source-over';
+            }
+            break;
+        }
+      }
+    },
+    save: function CanvasGraphics_save() {
+      this.ctx.save();
+      var old = this.current;
+      this.stateStack.push(old);
+      this.current = old.clone();
+    },
+    restore: function CanvasGraphics_restore() {
+      var prev = this.stateStack.pop();
+      if (prev) {
+        this.current = prev;
+        this.ctx.restore();
+      }
+    },
+    transform: function CanvasGraphics_transform(a, b, c, d, e, f) {
+      this.ctx.transform(a, b, c, d, e, f);
+    },
+
+    // Path
+    moveTo: function CanvasGraphics_moveTo(x, y) {
+      this.ctx.moveTo(x, y);
+      this.current.setCurrentPoint(x, y);
+    },
+    lineTo: function CanvasGraphics_lineTo(x, y) {
+      this.ctx.lineTo(x, y);
+      this.current.setCurrentPoint(x, y);
+    },
+    curveTo: function CanvasGraphics_curveTo(x1, y1, x2, y2, x3, y3) {
+      this.ctx.bezierCurveTo(x1, y1, x2, y2, x3, y3);
+      this.current.setCurrentPoint(x3, y3);
+    },
+    curveTo2: function CanvasGraphics_curveTo2(x2, y2, x3, y3) {
+      var current = this.current;
+      this.ctx.bezierCurveTo(current.x, current.y, x2, y2, x3, y3);
+      current.setCurrentPoint(x3, y3);
+    },
+    curveTo3: function CanvasGraphics_curveTo3(x1, y1, x3, y3) {
+      this.curveTo(x1, y1, x3, y3, x3, y3);
+      this.current.setCurrentPoint(x3, y3);
+    },
+    closePath: function CanvasGraphics_closePath() {
+      this.ctx.closePath();
+    },
+    rectangle: function CanvasGraphics_rectangle(x, y, width, height) {
+      this.ctx.rect(x, y, width, height);
+    },
+    stroke: function CanvasGraphics_stroke(consumePath) {
+      consumePath = typeof consumePath !== 'undefined' ? consumePath : true;
+      var ctx = this.ctx;
+      var strokeColor = this.current.strokeColor;
+      if (this.current.lineWidth === 0)
+        ctx.lineWidth = this.getSinglePixelWidth();
+      // For stroke we want to temporarily change the global alpha to the
+      // stroking alpha.
+      ctx.globalAlpha = this.current.strokeAlpha;
+      if (strokeColor && strokeColor.hasOwnProperty('type') &&
+          strokeColor.type === 'Pattern') {
+        // for patterns, we transform to pattern space, calculate
+        // the pattern, call stroke, and restore to user space
+        ctx.save();
+        ctx.strokeStyle = strokeColor.getPattern(ctx, this);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        ctx.stroke();
+      }
+      if (consumePath)
+        this.consumePath();
+      // Restore the global alpha to the fill alpha
+      ctx.globalAlpha = this.current.fillAlpha;
+    },
+    closeStroke: function CanvasGraphics_closeStroke() {
+      this.closePath();
+      this.stroke();
+    },
+    fill: function CanvasGraphics_fill(consumePath) {
+      consumePath = typeof consumePath !== 'undefined' ? consumePath : true;
+      var ctx = this.ctx;
+      var fillColor = this.current.fillColor;
+      var needRestore = false;
+
+      if (fillColor && fillColor.hasOwnProperty('type') &&
+          fillColor.type === 'Pattern') {
+        ctx.save();
+        ctx.fillStyle = fillColor.getPattern(ctx, this);
+        needRestore = true;
+      }
+
+      if (this.pendingEOFill) {
+        if ('mozFillRule' in this.ctx) {
+          this.ctx.mozFillRule = 'evenodd';
+          this.ctx.fill();
+          this.ctx.mozFillRule = 'nonzero';
+        } else {
+          try {
+            this.ctx.fill('evenodd');
+          } catch (ex) {
+            // shouldn't really happen, but browsers might think differently
+            this.ctx.fill();
+          }
+        }
+        this.pendingEOFill = false;
+      } else {
+        this.ctx.fill();
+      }
+
+      if (needRestore) {
+        ctx.restore();
+      }
+      if (consumePath) {
+        this.consumePath();
+      }
+    },
+    eoFill: function CanvasGraphics_eoFill() {
+      this.pendingEOFill = true;
+      this.fill();
+    },
+    fillStroke: function CanvasGraphics_fillStroke() {
+      this.fill(false);
+      this.stroke(false);
+
+      this.consumePath();
+    },
+    eoFillStroke: function CanvasGraphics_eoFillStroke() {
+      this.pendingEOFill = true;
+      this.fillStroke();
+    },
+    closeFillStroke: function CanvasGraphics_closeFillStroke() {
+      this.closePath();
+      this.fillStroke();
+    },
+    closeEOFillStroke: function CanvasGraphics_closeEOFillStroke() {
+      this.pendingEOFill = true;
+      this.closePath();
+      this.fillStroke();
+    },
+    endPath: function CanvasGraphics_endPath() {
+      this.consumePath();
+    },
+
+    // Clipping
+    clip: function CanvasGraphics_clip() {
+      this.pendingClip = NORMAL_CLIP;
+    },
+    eoClip: function CanvasGraphics_eoClip() {
+      this.pendingClip = EO_CLIP;
+    },
+
+    // Text
+    beginText: function CanvasGraphics_beginText() {
+      this.current.textMatrix = IDENTITY_MATRIX;
+      this.current.x = this.current.lineX = 0;
+      this.current.y = this.current.lineY = 0;
+    },
+    endText: function CanvasGraphics_endText() {
+      if (!('pendingTextPaths' in this)) {
+        this.ctx.beginPath();
+        return;
+      }
+      var paths = this.pendingTextPaths;
+      var ctx = this.ctx;
+
+      ctx.save();
+      ctx.beginPath();
+      for (var i = 0; i < paths.length; i++) {
+        var path = paths[i];
+        ctx.setTransform.apply(ctx, path.transform);
+        ctx.translate(path.x, path.y);
+        path.addToPath(ctx, path.fontSize);
+      }
+      ctx.restore();
+      ctx.clip();
+      ctx.beginPath();
+      delete this.pendingTextPaths;
+    },
+    setCharSpacing: function CanvasGraphics_setCharSpacing(spacing) {
+      this.current.charSpacing = spacing;
+    },
+    setWordSpacing: function CanvasGraphics_setWordSpacing(spacing) {
+      this.current.wordSpacing = spacing;
+    },
+    setHScale: function CanvasGraphics_setHScale(scale) {
+      this.current.textHScale = scale / 100;
+    },
+    setLeading: function CanvasGraphics_setLeading(leading) {
+      this.current.leading = -leading;
+    },
+    setFont: function CanvasGraphics_setFont(fontRefName, size) {
+      var fontObj = this.commonObjs.get(fontRefName);
+      var current = this.current;
+
+      if (!fontObj)
+        error('Can\'t find font for ' + fontRefName);
+
+      current.fontMatrix = fontObj.fontMatrix ? fontObj.fontMatrix :
+                                                FONT_IDENTITY_MATRIX;
+
+      // A valid matrix needs all main diagonal elements to be non-zero
+      // This also ensures we bypass FF bugzilla bug #719844.
+      if (current.fontMatrix[0] === 0 ||
+          current.fontMatrix[3] === 0) {
+        warn('Invalid font matrix for font ' + fontRefName);
+      }
+
+      // The spec for Tf (setFont) says that 'size' specifies the font 'scale',
+      // and in some docs this can be negative (inverted x-y axes).
+      if (size < 0) {
+        size = -size;
+        current.fontDirection = -1;
+      } else {
+        current.fontDirection = 1;
+      }
+
+      this.current.font = fontObj;
+      this.current.fontSize = size;
+
+      if (fontObj.coded)
+        return; // we don't need ctx.font for Type3 fonts
+
+      var name = fontObj.loadedName || 'sans-serif';
+      var bold = fontObj.black ? (fontObj.bold ? 'bolder' : 'bold') :
+                                 (fontObj.bold ? 'bold' : 'normal');
+
+      var italic = fontObj.italic ? 'italic' : 'normal';
+      var typeface = '"' + name + '", ' + fontObj.fallbackName;
+
+      // Some font backends cannot handle fonts below certain size.
+      // Keeping the font at minimal size and using the fontSizeScale to change
+      // the current transformation matrix before the fillText/strokeText.
+      // See https://bugzilla.mozilla.org/show_bug.cgi?id=726227
+      var browserFontSize = size >= MIN_FONT_SIZE ? size : MIN_FONT_SIZE;
+      this.current.fontSizeScale = browserFontSize != MIN_FONT_SIZE ? 1.0 :
+                                   size / MIN_FONT_SIZE;
+
+      var rule = italic + ' ' + bold + ' ' + browserFontSize + 'px ' + typeface;
+      this.ctx.font = rule;
+    },
+    setTextRenderingMode: function CanvasGraphics_setTextRenderingMode(mode) {
+      this.current.textRenderingMode = mode;
+    },
+    setTextRise: function CanvasGraphics_setTextRise(rise) {
+      this.current.textRise = rise;
+    },
+    moveText: function CanvasGraphics_moveText(x, y) {
+      this.current.x = this.current.lineX += x;
+      this.current.y = this.current.lineY += y;
+    },
+    setLeadingMoveText: function CanvasGraphics_setLeadingMoveText(x, y) {
+      this.setLeading(-y);
+      this.moveText(x, y);
+    },
+    setTextMatrix: function CanvasGraphics_setTextMatrix(a, b, c, d, e, f) {
+      this.current.textMatrix = [a, b, c, d, e, f];
+
+      this.current.x = this.current.lineX = 0;
+      this.current.y = this.current.lineY = 0;
+    },
+    nextLine: function CanvasGraphics_nextLine() {
+      this.moveText(0, this.current.leading);
+    },
+    applyTextTransforms: function CanvasGraphics_applyTextTransforms() {
+      var ctx = this.ctx;
+      var current = this.current;
+      ctx.transform.apply(ctx, current.textMatrix);
+      ctx.translate(current.x, current.y + current.textRise);
+      if (current.fontDirection > 0) {
+        ctx.scale(current.textHScale, -1);
+      } else {
+        ctx.scale(-current.textHScale, 1);
+      }
+    },
+    createTextGeometry: function CanvasGraphics_createTextGeometry() {
+      var geometry = {};
+      var ctx = this.ctx;
+      var font = this.current.font;
+      var ctxMatrix = ctx.mozCurrentTransform;
+      var a = ctxMatrix[0], b = ctxMatrix[1], c = ctxMatrix[2];
+      var d = ctxMatrix[3], e = ctxMatrix[4], f = ctxMatrix[5];
+      var sx = (a >= 0) ?
+          Math.sqrt((a * a) + (b * b)) : -Math.sqrt((a * a) + (b * b));
+      var sy = (d >= 0) ?
+          Math.sqrt((c * c) + (d * d)) : -Math.sqrt((c * c) + (d * d));
+      var angle = Math.atan2(b, a);
+      var x = e;
+      var y = f;
+      geometry.x = x;
+      geometry.y = y;
+      geometry.hScale = sx;
+      geometry.vScale = sy;
+      geometry.angle = angle;
+      geometry.spaceWidth = font.spaceWidth;
+      geometry.fontName = font.loadedName;
+      geometry.fontFamily = font.fallbackName;
+      geometry.fontSize = this.current.fontSize;
+      geometry.ascent = font.ascent;
+      geometry.descent = font.descent;
+      return geometry;
+    },
+
+    paintChar: function (character, x, y) {
+      var ctx = this.ctx;
+      var current = this.current;
+      var font = current.font;
+      var fontSize = current.fontSize / current.fontSizeScale;
+      var textRenderingMode = current.textRenderingMode;
+      var fillStrokeMode = textRenderingMode &
+        TextRenderingMode.FILL_STROKE_MASK;
+      var isAddToPathSet = !!(textRenderingMode &
+        TextRenderingMode.ADD_TO_PATH_FLAG);
+
+      var addToPath;
+      if (font.disableFontFace || isAddToPathSet) {
+        addToPath = font.getPathGenerator(this.commonObjs, character);
+      }
+
+      if (font.disableFontFace) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        addToPath(ctx, fontSize);
+        if (fillStrokeMode === TextRenderingMode.FILL ||
+            fillStrokeMode === TextRenderingMode.FILL_STROKE) {
+          ctx.fill();
+        }
+        if (fillStrokeMode === TextRenderingMode.STROKE ||
+            fillStrokeMode === TextRenderingMode.FILL_STROKE) {
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else {
+        if (fillStrokeMode === TextRenderingMode.FILL ||
+            fillStrokeMode === TextRenderingMode.FILL_STROKE) {
+          ctx.fillText(character, x, y);
+        }
+        if (fillStrokeMode === TextRenderingMode.STROKE ||
+            fillStrokeMode === TextRenderingMode.FILL_STROKE) {
+          ctx.strokeText(character, x, y);
+        }
+      }
+
+      if (isAddToPathSet) {
+        var paths = this.pendingTextPaths || (this.pendingTextPaths = []);
+        paths.push({
+          transform: ctx.mozCurrentTransform,
+          x: x,
+          y: y,
+          fontSize: fontSize,
+          addToPath: addToPath
+        });
+      }
+    },
+
+    get isFontSubpixelAAEnabled() {
+      // Checks if anti-aliasing is enabled when scaled text is painted.
+      // On Windows GDI scaled fonts looks bad.
+      var ctx = document.createElement('canvas').getContext('2d');
+      ctx.scale(1.5, 1);
+      ctx.fillText('I', 0, 10);
+      var data = ctx.getImageData(0, 0, 10, 10).data;
+      var enabled = false;
+      for (var i = 3; i < data.length; i += 4) {
+        if (data[i] > 0 && data[i] < 255) {
+          enabled = true;
+          break;
+        }
+      }
+      return shadow(this, 'isFontSubpixelAAEnabled', enabled);
+    },
+
+    showText: function CanvasGraphics_showText(glyphs, skipTextSelection) {
+      var ctx = this.ctx;
+      var current = this.current;
+      var font = current.font;
+      var fontSize = current.fontSize;
+      var fontSizeScale = current.fontSizeScale;
+      var charSpacing = current.charSpacing;
+      var wordSpacing = current.wordSpacing;
+      var textHScale = current.textHScale * current.fontDirection;
+      var fontMatrix = current.fontMatrix || FONT_IDENTITY_MATRIX;
+      var glyphsLength = glyphs.length;
+      var textLayer = this.textLayer;
+      var geom;
+      var textSelection = textLayer && !skipTextSelection ? true : false;
+      var canvasWidth = 0.0;
+      var vertical = font.vertical;
+      var defaultVMetrics = font.defaultVMetrics;
+
+      // Type3 fonts - each glyph is a "mini-PDF"
+      if (font.coded) {
+        ctx.save();
+        ctx.transform.apply(ctx, current.textMatrix);
+        ctx.translate(current.x, current.y);
+
+        ctx.scale(textHScale, 1);
+
+        if (textSelection) {
+          this.save();
+          ctx.scale(1, -1);
+          geom = this.createTextGeometry();
+          this.restore();
+        }
+        for (var i = 0; i < glyphsLength; ++i) {
+
+          var glyph = glyphs[i];
+          if (glyph === null) {
+            // word break
+            this.ctx.translate(wordSpacing, 0);
+            current.x += wordSpacing * textHScale;
+            continue;
+          }
+
+          this.processingType3 = glyph;
+          this.save();
+          ctx.scale(fontSize, fontSize);
+          ctx.transform.apply(ctx, fontMatrix);
+          this.executeOperatorList(glyph.operatorList);
+          this.restore();
+
+          var transformed = Util.applyTransform([glyph.width, 0], fontMatrix);
+          var width = (transformed[0] * fontSize + charSpacing) *
+                      current.fontDirection;
+
+          ctx.translate(width, 0);
+          current.x += width * textHScale;
+
+          canvasWidth += width;
+        }
+        ctx.restore();
+        this.processingType3 = null;
+      } else {
+        ctx.save();
+        this.applyTextTransforms();
+
+        var lineWidth = current.lineWidth;
+        var a1 = current.textMatrix[0], b1 = current.textMatrix[1];
+        var scale = Math.sqrt(a1 * a1 + b1 * b1);
+        if (scale === 0 || lineWidth === 0)
+          lineWidth = this.getSinglePixelWidth();
+        else
+          lineWidth /= scale;
+
+        if (textSelection)
+          geom = this.createTextGeometry();
+
+        if (fontSizeScale != 1.0) {
+          ctx.scale(fontSizeScale, fontSizeScale);
+          lineWidth /= fontSizeScale;
+        }
+
+        ctx.lineWidth = lineWidth;
+
+        var x = 0;
+        for (var i = 0; i < glyphsLength; ++i) {
+          var glyph = glyphs[i];
+          if (glyph === null) {
+            // word break
+            x += current.fontDirection * wordSpacing;
+            continue;
+          }
+
+          var restoreNeeded = false;
+          var character = glyph.fontChar;
+          var vmetric = glyph.vmetric || defaultVMetrics;
+          if (vertical) {
+            var vx = glyph.vmetric ? vmetric[1] : glyph.width * 0.5;
+            vx = -vx * fontSize * current.fontMatrix[0];
+            var vy = vmetric[2] * fontSize * current.fontMatrix[0];
+          }
+          var width = vmetric ? -vmetric[0] : glyph.width;
+          var charWidth = width * fontSize * current.fontMatrix[0] +
+                          charSpacing * current.fontDirection;
+          var accent = glyph.accent;
+
+          var scaledX, scaledY, scaledAccentX, scaledAccentY;
+          if (!glyph.disabled) {
+            if (vertical) {
+              scaledX = vx / fontSizeScale;
+              scaledY = (x + vy) / fontSizeScale;
+            } else {
+              scaledX = x / fontSizeScale;
+              scaledY = 0;
+            }
+
+            if (font.remeasure && width > 0 && this.isFontSubpixelAAEnabled) {
+              // some standard fonts may not have the exact width, trying to
+              // rescale per character
+              var measuredWidth = ctx.measureText(character).width * 1000 /
+                current.fontSize * current.fontSizeScale;
+              var characterScaleX = width / measuredWidth;
+              restoreNeeded = true;
+              ctx.save();
+              ctx.scale(characterScaleX, 1);
+              scaledX /= characterScaleX;
+              if (accent) {
+                scaledAccentX /= characterScaleX;
+              }
+            }
+
+            this.paintChar(character, scaledX, scaledY);
+            if (accent) {
+              scaledAccentX = scaledX + accent.offset.x / fontSizeScale;
+              scaledAccentY = scaledY - accent.offset.y / fontSizeScale;
+              this.paintChar(accent.fontChar, scaledAccentX, scaledAccentY);
+            }
+          }
+
+          x += charWidth;
+
+          canvasWidth += charWidth;
+
+          if (restoreNeeded) {
+            ctx.restore();
+          }
+        }
+        if (vertical) {
+          current.y -= x * textHScale;
+        } else {
+          current.x += x * textHScale;
+        }
+        ctx.restore();
+      }
+
+      if (textSelection) {
+        geom.canvasWidth = canvasWidth;
+        if (vertical) {
+          var VERTICAL_TEXT_ROTATION = Math.PI / 2;
+          geom.angle += VERTICAL_TEXT_ROTATION;
+        }
+        this.textLayer.appendText(geom);
+      }
+
+      return canvasWidth;
+    },
+    showSpacedText: function CanvasGraphics_showSpacedText(arr) {
+      var ctx = this.ctx;
+      var current = this.current;
+      var font = current.font;
+      var fontSize = current.fontSize;
+      // TJ array's number is independent from fontMatrix
+      var textHScale = current.textHScale * 0.001 * current.fontDirection;
+      var arrLength = arr.length;
+      var textLayer = this.textLayer;
+      var geom;
+      var canvasWidth = 0.0;
+      var textSelection = textLayer ? true : false;
+      var vertical = font.vertical;
+      var spacingAccumulator = 0;
+
+      if (textSelection) {
+        ctx.save();
+        this.applyTextTransforms();
+        geom = this.createTextGeometry();
+        ctx.restore();
+      }
+
+      for (var i = 0; i < arrLength; ++i) {
+        var e = arr[i];
+        if (isNum(e)) {
+          var spacingLength = -e * fontSize * textHScale;
+          if (vertical) {
+            current.y += spacingLength;
+          } else {
+            current.x += spacingLength;
+          }
+
+          if (textSelection)
+            spacingAccumulator += spacingLength;
+        } else {
+          var shownCanvasWidth = this.showText(e, true);
+
+          if (textSelection) {
+            canvasWidth += spacingAccumulator + shownCanvasWidth;
+            spacingAccumulator = 0;
+          }
+        }
+      }
+
+      if (textSelection) {
+        geom.canvasWidth = canvasWidth;
+        if (vertical) {
+          var VERTICAL_TEXT_ROTATION = Math.PI / 2;
+          geom.angle += VERTICAL_TEXT_ROTATION;
+        }
+        this.textLayer.appendText(geom);
+      }
+    },
+    nextLineShowText: function CanvasGraphics_nextLineShowText(text) {
+      this.nextLine();
+      this.showText(text);
+    },
+    nextLineSetSpacingShowText:
+      function CanvasGraphics_nextLineSetSpacingShowText(wordSpacing,
+                                                         charSpacing,
+                                                         text) {
+      this.setWordSpacing(wordSpacing);
+      this.setCharSpacing(charSpacing);
+      this.nextLineShowText(text);
+    },
+
+    // Type3 fonts
+    setCharWidth: function CanvasGraphics_setCharWidth(xWidth, yWidth) {
+      // We can safely ignore this since the width should be the same
+      // as the width in the Widths array.
+    },
+    setCharWidthAndBounds: function CanvasGraphics_setCharWidthAndBounds(xWidth,
+                                                                        yWidth,
+                                                                        llx,
+                                                                        lly,
+                                                                        urx,
+                                                                        ury) {
+      // TODO According to the spec we're also suppose to ignore any operators
+      // that set color or include images while processing this type3 font.
+      this.rectangle(llx, lly, urx - llx, ury - lly);
+      this.clip();
+      this.endPath();
+    },
+
+    // Color
+    setStrokeColorSpace: function CanvasGraphics_setStrokeColorSpace(raw) {
+      this.current.strokeColorSpace = ColorSpace.fromIR(raw);
+    },
+    setFillColorSpace: function CanvasGraphics_setFillColorSpace(raw) {
+      this.current.fillColorSpace = ColorSpace.fromIR(raw);
+    },
+    setStrokeColor: function CanvasGraphics_setStrokeColor(/*...*/) {
+      var cs = this.current.strokeColorSpace;
+      var rgbColor = cs.getRgb(arguments, 0);
+      var color = Util.makeCssRgb(rgbColor);
+      this.ctx.strokeStyle = color;
+      this.current.strokeColor = color;
+    },
+    getColorN_Pattern: function CanvasGraphics_getColorN_Pattern(IR, cs) {
+      if (IR[0] == 'TilingPattern') {
+        var args = IR[1];
+        var base = cs.base;
+        var color;
+        if (base) {
+          var baseComps = base.numComps;
+
+          color = base.getRgb(args, 0);
+        }
+        var pattern = new TilingPattern(IR, color, this.ctx, this.objs,
+                                        this.commonObjs, this.baseTransform);
+      } else if (IR[0] == 'RadialAxial' || IR[0] == 'Dummy') {
+        var pattern = Pattern.shadingFromIR(IR);
+      } else {
+        error('Unkown IR type ' + IR[0]);
+      }
+      return pattern;
+    },
+    setStrokeColorN: function CanvasGraphics_setStrokeColorN(/*...*/) {
+      var cs = this.current.strokeColorSpace;
+
+      if (cs.name == 'Pattern') {
+        this.current.strokeColor = this.getColorN_Pattern(arguments, cs);
+      } else {
+        this.setStrokeColor.apply(this, arguments);
+      }
+    },
+    setFillColor: function CanvasGraphics_setFillColor(/*...*/) {
+      var cs = this.current.fillColorSpace;
+      var rgbColor = cs.getRgb(arguments, 0);
+      var color = Util.makeCssRgb(rgbColor);
+      this.ctx.fillStyle = color;
+      this.current.fillColor = color;
+    },
+    setFillColorN: function CanvasGraphics_setFillColorN(/*...*/) {
+      var cs = this.current.fillColorSpace;
+
+      if (cs.name == 'Pattern') {
+        this.current.fillColor = this.getColorN_Pattern(arguments, cs);
+      } else {
+        this.setFillColor.apply(this, arguments);
+      }
+    },
+    setStrokeGray: function CanvasGraphics_setStrokeGray(gray) {
+      this.current.strokeColorSpace = ColorSpace.singletons.gray;
+
+      var rgbColor = this.current.strokeColorSpace.getRgb(arguments, 0);
+      var color = Util.makeCssRgb(rgbColor);
+      this.ctx.strokeStyle = color;
+      this.current.strokeColor = color;
+    },
+    setFillGray: function CanvasGraphics_setFillGray(gray) {
+      this.current.fillColorSpace = ColorSpace.singletons.gray;
+
+      var rgbColor = this.current.fillColorSpace.getRgb(arguments, 0);
+      var color = Util.makeCssRgb(rgbColor);
+      this.ctx.fillStyle = color;
+      this.current.fillColor = color;
+    },
+    setStrokeRGBColor: function CanvasGraphics_setStrokeRGBColor(r, g, b) {
+      this.current.strokeColorSpace = ColorSpace.singletons.rgb;
+
+      var rgbColor = this.current.strokeColorSpace.getRgb(arguments, 0);
+      var color = Util.makeCssRgb(rgbColor);
+      this.ctx.strokeStyle = color;
+      this.current.strokeColor = color;
+    },
+    setFillRGBColor: function CanvasGraphics_setFillRGBColor(r, g, b) {
+      this.current.fillColorSpace = ColorSpace.singletons.rgb;
+
+      var rgbColor = this.current.fillColorSpace.getRgb(arguments, 0);
+      var color = Util.makeCssRgb(rgbColor);
+      this.ctx.fillStyle = color;
+      this.current.fillColor = color;
+    },
+    setStrokeCMYKColor: function CanvasGraphics_setStrokeCMYKColor(c, m, y, k) {
+      this.current.strokeColorSpace = ColorSpace.singletons.cmyk;
+
+      var color = Util.makeCssCmyk(arguments);
+      this.ctx.strokeStyle = color;
+      this.current.strokeColor = color;
+    },
+    setFillCMYKColor: function CanvasGraphics_setFillCMYKColor(c, m, y, k) {
+      this.current.fillColorSpace = ColorSpace.singletons.cmyk;
+
+      var color = Util.makeCssCmyk(arguments);
+      this.ctx.fillStyle = color;
+      this.current.fillColor = color;
+    },
+
+    shadingFill: function CanvasGraphics_shadingFill(patternIR) {
+      var ctx = this.ctx;
+
+      this.save();
+      var pattern = Pattern.shadingFromIR(patternIR);
+      ctx.fillStyle = pattern.getPattern(ctx, this);
+
+      var inv = ctx.mozCurrentTransformInverse;
+      if (inv) {
+        var canvas = ctx.canvas;
+        var width = canvas.width;
+        var height = canvas.height;
+
+        var bl = Util.applyTransform([0, 0], inv);
+        var br = Util.applyTransform([0, height], inv);
+        var ul = Util.applyTransform([width, 0], inv);
+        var ur = Util.applyTransform([width, height], inv);
+
+        var x0 = Math.min(bl[0], br[0], ul[0], ur[0]);
+        var y0 = Math.min(bl[1], br[1], ul[1], ur[1]);
+        var x1 = Math.max(bl[0], br[0], ul[0], ur[0]);
+        var y1 = Math.max(bl[1], br[1], ul[1], ur[1]);
+
+        this.ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+      } else {
+        // HACK to draw the gradient onto an infinite rectangle.
+        // PDF gradients are drawn across the entire image while
+        // Canvas only allows gradients to be drawn in a rectangle
+        // The following bug should allow us to remove this.
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=664884
+
+        this.ctx.fillRect(-1e10, -1e10, 2e10, 2e10);
+      }
+
+      this.restore();
+    },
+
+    // Images
+    beginInlineImage: function CanvasGraphics_beginInlineImage() {
+      error('Should not call beginInlineImage');
+    },
+    beginImageData: function CanvasGraphics_beginImageData() {
+      error('Should not call beginImageData');
+    },
+
+    paintFormXObjectBegin: function CanvasGraphics_paintFormXObjectBegin(matrix,
+                                                                        bbox) {
+      this.save();
+      this.baseTransformStack.push(this.baseTransform);
+
+      if (matrix && isArray(matrix) && 6 == matrix.length)
+        this.transform.apply(this, matrix);
+
+      this.baseTransform = this.ctx.mozCurrentTransform;
+
+      if (bbox && isArray(bbox) && 4 == bbox.length) {
+        var width = bbox[2] - bbox[0];
+        var height = bbox[3] - bbox[1];
+        this.rectangle(bbox[0], bbox[1], width, height);
+        this.clip();
+        this.endPath();
+      }
+    },
+
+    paintFormXObjectEnd: function CanvasGraphics_paintFormXObjectEnd() {
+      this.restore();
+      this.baseTransform = this.baseTransformStack.pop();
+    },
+
+    beginGroup: function CanvasGraphics_beginGroup(group) {
+      this.save();
+      var currentCtx = this.ctx;
+      // TODO non-isolated groups - according to Rik at adobe non-isolated
+      // group results aren't usually that different and they even have tools
+      // that ignore this setting. Notes from Rik on implmenting:
+      // - When you encounter an transparency group, create a new canvas with
+      // the dimensions of the bbox
+      // - copy the content from the previous canvas to the new canvas
+      // - draw as usual
+      // - remove the backdrop alpha:
+      // alphaNew = 1 - (1 - alpha)/(1 - alphaBackdrop) with 'alpha' the alpha
+      // value of your transparency group and 'alphaBackdrop' the alpha of the
+      // backdrop
+      // - remove background color:
+      // colorNew = color - alphaNew *colorBackdrop /(1 - alphaNew)
+      if (!group.isolated) {
+        info('TODO: Support non-isolated groups.');
+      }
+
+      // TODO knockout - supposedly possible with the clever use of compositing
+      // modes.
+      if (group.knockout) {
+        warn('Knockout groups not supported.');
+      }
+
+      var currentTransform = currentCtx.mozCurrentTransform;
+      if (group.matrix) {
+        currentCtx.transform.apply(currentCtx, group.matrix);
+      }
+      assert(group.bbox, 'Bounding box is required.');
+
+      // Based on the current transform figure out how big the bounding box
+      // will actually be.
+      var bounds = Util.getAxialAlignedBoundingBox(
+                    group.bbox,
+                    currentCtx.mozCurrentTransform);
+      // Clip the bounding box to the current canvas.
+      var canvasBounds = [0,
+                          0,
+                          currentCtx.canvas.width,
+                          currentCtx.canvas.height];
+      bounds = Util.intersect(bounds, canvasBounds) || [0, 0, 0, 0];
+      // Use ceil in case we're between sizes so we don't create canvas that is
+      // too small and make the canvas at least 1x1 pixels.
+      var drawnWidth = Math.max(Math.ceil(bounds[2] - bounds[0]), 1);
+      var drawnHeight = Math.max(Math.ceil(bounds[3] - bounds[1]), 1);
+
+      var scratchCanvas = CachedCanvases.getCanvas(
+        'groupAt' + this.groupLevel, drawnWidth, drawnHeight, true);
+      var groupCtx = scratchCanvas.context;
+      // Since we created a new canvas that is just the size of the bounding box
+      // we have to translate the group ctx.
+      var offsetX = bounds[0];
+      var offsetY = bounds[1];
+      groupCtx.translate(-offsetX, -offsetY);
+      groupCtx.transform.apply(groupCtx, currentTransform);
+
+      // Setup the current ctx so when the group is popped we draw it the right
+      // location.
+      currentCtx.setTransform(1, 0, 0, 1, 0, 0);
+      currentCtx.translate(offsetX, offsetY);
+      // The transparency group inherits all off the current graphics state
+      // except the blend mode, soft mask, and alpha constants.
+      copyCtxState(currentCtx, groupCtx);
+      this.ctx = groupCtx;
+      this.setGState([
+        ['SMask', 'None'],
+        ['BM', 'Normal'],
+        ['ca', 1],
+        ['CA', 1]
+      ]);
+      this.groupStack.push(currentCtx);
+      this.groupLevel++;
+    },
+
+    endGroup: function CanvasGraphics_endGroup(group) {
+      this.groupLevel--;
+      var groupCtx = this.ctx;
+      this.ctx = this.groupStack.pop();
+      // Turn off image smoothing to avoid sub pixel interpolation which can
+      // look kind of blurry for some pdfs.
+      if ('imageSmoothingEnabled' in this.ctx) {
+        this.ctx.imageSmoothingEnabled = false;
+      } else {
+        this.ctx.mozImageSmoothingEnabled = false;
+      }
+      this.ctx.drawImage(groupCtx.canvas, 0, 0);
+      this.restore();
+    },
+
+    beginAnnotations: function CanvasGraphics_beginAnnotations() {
+      this.save();
+      this.current = new CanvasExtraState();
+    },
+
+    endAnnotations: function CanvasGraphics_endAnnotations() {
+      this.restore();
+    },
+
+    beginAnnotation: function CanvasGraphics_beginAnnotation(rect, transform,
+                                                             matrix) {
+      this.save();
+
+      if (rect && isArray(rect) && 4 == rect.length) {
+        var width = rect[2] - rect[0];
+        var height = rect[3] - rect[1];
+        this.rectangle(rect[0], rect[1], width, height);
+        this.clip();
+        this.endPath();
+      }
+
+      this.transform.apply(this, transform);
+      this.transform.apply(this, matrix);
+    },
+
+    endAnnotation: function CanvasGraphics_endAnnotation() {
+      this.restore();
+    },
+
+    paintJpegXObject: function CanvasGraphics_paintJpegXObject(objId, w, h) {
+      var domImage = this.objs.get(objId);
+      if (!domImage) {
+        error('Dependent image isn\'t ready yet');
+      }
+
+      this.save();
+
+      var ctx = this.ctx;
+      // scale the image to the unit square
+      ctx.scale(1 / w, -1 / h);
+
+      ctx.drawImage(domImage, 0, 0, domImage.width, domImage.height,
+                    0, -h, w, h);
+      if (this.imageLayer) {
+        var currentTransform = ctx.mozCurrentTransformInverse;
+        var position = this.getCanvasPosition(0, 0);
+        this.imageLayer.appendImage({
+          objId: objId,
+          left: position[0],
+          top: position[1],
+          width: w / currentTransform[0],
+          height: h / currentTransform[3]
+        });
+      }
+      this.restore();
+    },
+
+    paintImageMaskXObject: function CanvasGraphics_paintImageMaskXObject(img) {
+      var ctx = this.ctx;
+      var width = img.width, height = img.height;
+
+      var glyph = this.processingType3;
+
+      if (COMPILE_TYPE3_GLYPHS && glyph && !('compiled' in glyph)) {
+        var MAX_SIZE_TO_COMPILE = 1000;
+        if (width <= MAX_SIZE_TO_COMPILE && height <= MAX_SIZE_TO_COMPILE) {
+          glyph.compiled =
+            compileType3Glyph({data: img.data, width: width, height: height});
+        } else {
+          glyph.compiled = null;
+        }
+      }
+
+      if (glyph && glyph.compiled) {
+        glyph.compiled(ctx);
+        return;
+      }
+
+      var maskCanvas = CachedCanvases.getCanvas('maskCanvas', width, height);
+      var maskCtx = maskCanvas.context;
+      maskCtx.save();
+
+      putBinaryImageMask(maskCtx, img);
+
+      maskCtx.globalCompositeOperation = 'source-in';
+
+      var fillColor = this.current.fillColor;
+      maskCtx.fillStyle = (fillColor && fillColor.hasOwnProperty('type') &&
+                          fillColor.type === 'Pattern') ?
+                          fillColor.getPattern(maskCtx, this) : fillColor;
+      maskCtx.fillRect(0, 0, width, height);
+
+      maskCtx.restore();
+
+      this.paintInlineImageXObject(maskCanvas.canvas);
+    },
+
+    paintImageMaskXObjectGroup:
+      function CanvasGraphics_paintImageMaskXObjectGroup(images) {
+      var ctx = this.ctx;
+
+      for (var i = 0, ii = images.length; i < ii; i++) {
+        var image = images[i];
+        var width = image.width, height = image.height;
+
+        var maskCanvas = CachedCanvases.getCanvas('maskCanvas', width, height);
+        var maskCtx = maskCanvas.context;
+        maskCtx.save();
+
+        putBinaryImageMask(maskCtx, image);
+
+        maskCtx.globalCompositeOperation = 'source-in';
+
+        var fillColor = this.current.fillColor;
+        maskCtx.fillStyle = (fillColor && fillColor.hasOwnProperty('type') &&
+                            fillColor.type === 'Pattern') ?
+                            fillColor.getPattern(maskCtx, this) : fillColor;
+        maskCtx.fillRect(0, 0, width, height);
+
+        maskCtx.restore();
+
+        ctx.save();
+        ctx.transform.apply(ctx, image.transform);
+        ctx.scale(1, -1);
+        ctx.drawImage(maskCanvas.canvas, 0, 0, width, height,
+                      0, -1, 1, 1);
+        ctx.restore();
+      }
+    },
+
+    paintImageXObject: function CanvasGraphics_paintImageXObject(objId) {
+      var imgData = this.objs.get(objId);
+      if (!imgData)
+        error('Dependent image isn\'t ready yet');
+
+      this.paintInlineImageXObject(imgData);
+    },
+
+    paintInlineImageXObject:
+      function CanvasGraphics_paintInlineImageXObject(imgData) {
+      var width = imgData.width;
+      var height = imgData.height;
+      var ctx = this.ctx;
+
+      this.save();
+      // scale the image to the unit square
+      ctx.scale(1 / width, -1 / height);
+
+      var currentTransform = ctx.mozCurrentTransformInverse;
+      var a = currentTransform[0], b = currentTransform[1];
+      var widthScale = Math.max(Math.sqrt(a * a + b * b), 1);
+      var c = currentTransform[2], d = currentTransform[3];
+      var heightScale = Math.max(Math.sqrt(c * c + d * d), 1);
+
+      var imgToPaint;
+      // instanceof HTMLElement does not work in jsdom node.js module
+      if (imgData instanceof HTMLElement || !imgData.data) {
+        imgToPaint = imgData;
+      } else {
+        var tmpCanvas = CachedCanvases.getCanvas('inlineImage', width, height);
+        var tmpCtx = tmpCanvas.context;
+        putBinaryImageData(tmpCtx, imgData);
+        imgToPaint = tmpCanvas.canvas;
+      }
+
+      var paintWidth = width, paintHeight = height;
+      var tmpCanvasId = 'prescale1';
+      // Vertial or horizontal scaling shall not be more than 2 to not loose the
+      // pixels during drawImage operation, painting on the temporary canvas(es)
+      // that are twice smaller in size
+      while ((widthScale > 2 && paintWidth > 1) ||
+             (heightScale > 2 && paintHeight > 1)) {
+        var newWidth = paintWidth, newHeight = paintHeight;
+        if (widthScale > 2 && paintWidth > 1) {
+          newWidth = Math.ceil(paintWidth / 2);
+          widthScale /= paintWidth / newWidth;
+        }
+        if (heightScale > 2 && paintHeight > 1) {
+          newHeight = Math.ceil(paintHeight / 2);
+          heightScale /= paintHeight / newHeight;
+        }
+        var tmpCanvas = CachedCanvases.getCanvas(tmpCanvasId,
+                                                 newWidth, newHeight);
+        tmpCtx = tmpCanvas.context;
+        tmpCtx.clearRect(0, 0, newWidth, newHeight);
+        tmpCtx.drawImage(imgToPaint, 0, 0, paintWidth, paintHeight,
+                                     0, 0, newWidth, newHeight);
+        imgToPaint = tmpCanvas.canvas;
+        paintWidth = newWidth;
+        paintHeight = newHeight;
+        tmpCanvasId = tmpCanvasId === 'prescale1' ? 'prescale2' : 'prescale1';
+      }
+      ctx.drawImage(imgToPaint, 0, 0, paintWidth, paintHeight,
+                                0, -height, width, height);
+
+      if (this.imageLayer) {
+        var position = this.getCanvasPosition(0, -height);
+        this.imageLayer.appendImage({
+          imgData: imgData,
+          left: position[0],
+          top: position[1],
+          width: width / currentTransform[0],
+          height: height / currentTransform[3]
+        });
+      }
+      this.restore();
+    },
+
+    paintInlineImageXObjectGroup:
+      function CanvasGraphics_paintInlineImageXObjectGroup(imgData, map) {
+      var ctx = this.ctx;
+      var w = imgData.width;
+      var h = imgData.height;
+
+      var tmpCanvas = CachedCanvases.getCanvas('inlineImage', w, h);
+      var tmpCtx = tmpCanvas.context;
+      putBinaryImageData(tmpCtx, imgData);
+
+      for (var i = 0, ii = map.length; i < ii; i++) {
+        var entry = map[i];
+        ctx.save();
+        ctx.transform.apply(ctx, entry.transform);
+        ctx.scale(1, -1);
+        ctx.drawImage(tmpCanvas.canvas, entry.x, entry.y, entry.w, entry.h,
+                      0, -1, 1, 1);
+        if (this.imageLayer) {
+          var position = this.getCanvasPosition(entry.x, entry.y);
+          this.imageLayer.appendImage({
+            imgData: imgData,
+            left: position[0],
+            top: position[1],
+            width: w,
+            height: h
+          });
+        }
+        ctx.restore();
+      }
+    },
+
+    // Marked content
+
+    markPoint: function CanvasGraphics_markPoint(tag) {
+      // TODO Marked content.
+    },
+    markPointProps: function CanvasGraphics_markPointProps(tag, properties) {
+      // TODO Marked content.
+    },
+    beginMarkedContent: function CanvasGraphics_beginMarkedContent(tag) {
+      // TODO Marked content.
+    },
+    beginMarkedContentProps: function CanvasGraphics_beginMarkedContentProps(
+                                        tag, properties) {
+      // TODO Marked content.
+    },
+    endMarkedContent: function CanvasGraphics_endMarkedContent() {
+      // TODO Marked content.
+    },
+
+    // Compatibility
+
+    beginCompat: function CanvasGraphics_beginCompat() {
+      // TODO ignore undefined operators (should we do that anyway?)
+    },
+    endCompat: function CanvasGraphics_endCompat() {
+      // TODO stop ignoring undefined operators
+    },
+
+    // Helper functions
+
+    consumePath: function CanvasGraphics_consumePath() {
+      if (this.pendingClip) {
+        if (this.pendingClip == EO_CLIP) {
+          if ('mozFillRule' in this.ctx) {
+            this.ctx.mozFillRule = 'evenodd';
+            this.ctx.clip();
+            this.ctx.mozFillRule = 'nonzero';
+          } else {
+            try {
+              this.ctx.clip('evenodd');
+            } catch (ex) {
+              // shouldn't really happen, but browsers might think differently
+              this.ctx.clip();
+            }
+          }
+        } else {
+          this.ctx.clip();
+        }
+        this.pendingClip = null;
+      }
+      this.ctx.beginPath();
+    },
+    getSinglePixelWidth: function CanvasGraphics_getSinglePixelWidth(scale) {
+      var inverse = this.ctx.mozCurrentTransformInverse;
+      // max of the current horizontal and vertical scale
+      return Math.sqrt(Math.max(
+        (inverse[0] * inverse[0] + inverse[1] * inverse[1]),
+        (inverse[2] * inverse[2] + inverse[3] * inverse[3])));
+    },
+    getCanvasPosition: function CanvasGraphics_getCanvasPosition(x, y) {
+        var transform = this.ctx.mozCurrentTransform;
+        return [
+          transform[0] * x + transform[2] * y + transform[4],
+          transform[1] * x + transform[3] * y + transform[5]
+        ];
+    }
+  };
+
+  for (var op in OPS) {
+    CanvasGraphics.prototype[OPS[op]] = CanvasGraphics.prototype[op];
+  }
+
+  return CanvasGraphics;
+})();
+
+
+
+PDFJS.disableFontFace = false;
+
+var FontLoader = {
+  insertRule: function fontLoaderInsertRule(rule) {
+    var styleElement = document.getElementById('PDFJS_FONT_STYLE_TAG');
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'PDFJS_FONT_STYLE_TAG';
+        document.documentElement.getElementsByTagName('head')[0].appendChild(
+          styleElement);
+    }
+
+    var styleSheet = styleElement.sheet;
+    styleSheet.insertRule(rule, styleSheet.cssRules.length);
+  },
+  clear: function fontLoaderClear() {
+    var styleElement = document.getElementById('PDFJS_FONT_STYLE_TAG');
+    if (styleElement) {
+      styleElement.parentNode.removeChild(styleElement);
+    }
+  },
+  get loadTestFont() {
+    // This is a CFF font with 1 glyph for '.' that fills its entire width and
+    // height.
+    return shadow(this, 'loadTestFont', atob(
+      'T1RUTwALAIAAAwAwQ0ZGIDHtZg4AAAOYAAAAgUZGVE1lkzZwAAAEHAAAABxHREVGABQAFQ' +
+      'AABDgAAAAeT1MvMlYNYwkAAAEgAAAAYGNtYXABDQLUAAACNAAAAUJoZWFk/xVFDQAAALwA' +
+      'AAA2aGhlYQdkA+oAAAD0AAAAJGhtdHgD6AAAAAAEWAAAAAZtYXhwAAJQAAAAARgAAAAGbm' +
+      'FtZVjmdH4AAAGAAAAAsXBvc3T/hgAzAAADeAAAACAAAQAAAAEAALZRFsRfDzz1AAsD6AAA' +
+      'AADOBOTLAAAAAM4KHDwAAAAAA+gDIQAAAAgAAgAAAAAAAAABAAADIQAAAFoD6AAAAAAD6A' +
+      'ABAAAAAAAAAAAAAAAAAAAAAQAAUAAAAgAAAAQD6AH0AAUAAAKKArwAAACMAooCvAAAAeAA' +
+      'MQECAAACAAYJAAAAAAAAAAAAAQAAAAAAAAAAAAAAAFBmRWQAwAAuAC4DIP84AFoDIQAAAA' +
+      'AAAQAAAAAAAAAAACAAIAABAAAADgCuAAEAAAAAAAAAAQAAAAEAAAAAAAEAAQAAAAEAAAAA' +
+      'AAIAAQAAAAEAAAAAAAMAAQAAAAEAAAAAAAQAAQAAAAEAAAAAAAUAAQAAAAEAAAAAAAYAAQ' +
+      'AAAAMAAQQJAAAAAgABAAMAAQQJAAEAAgABAAMAAQQJAAIAAgABAAMAAQQJAAMAAgABAAMA' +
+      'AQQJAAQAAgABAAMAAQQJAAUAAgABAAMAAQQJAAYAAgABWABYAAAAAAAAAwAAAAMAAAAcAA' +
+      'EAAAAAADwAAwABAAAAHAAEACAAAAAEAAQAAQAAAC7//wAAAC7////TAAEAAAAAAAABBgAA' +
+      'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA' +
+      'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+      'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+      'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+      'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAA' +
+      'AAAAD/gwAyAAAAAQAAAAAAAAAAAAAAAAAAAAABAAQEAAEBAQJYAAEBASH4DwD4GwHEAvgc' +
+      'A/gXBIwMAYuL+nz5tQXkD5j3CBLnEQACAQEBIVhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWF' +
+      'hYWFhYWFhYAAABAQAADwACAQEEE/t3Dov6fAH6fAT+fPp8+nwHDosMCvm1Cvm1DAz6fBQA' +
+      'AAAAAAABAAAAAMmJbzEAAAAAzgTjFQAAAADOBOQpAAEAAAAAAAAADAAUAAQAAAABAAAAAg' +
+      'ABAAAAAAAAAAAD6AAAAAAAAA=='
+    ));
+  },
+
+  loadTestFontId: 0,
+
+  loadingContext: {
+    requests: [],
+    nextRequestId: 0
+  },
+
+  isSyncFontLoadingSupported: (function detectSyncFontLoadingSupport() {
+    if (isWorker)
+      return false;
+
+    // User agent string sniffing is bad, but there is no reliable way to tell
+    // if font is fully loaded and ready to be used with canvas.
+    var userAgent = window.navigator.userAgent;
+    var m = /Mozilla\/5.0.*?rv:(\d+).*? Gecko/.exec(userAgent);
+    if (m && m[1] >= 14)
+      return true;
+    // TODO other browsers
+    return false;
+  })(),
+
+  bind: function fontLoaderBind(fonts, callback) {
+    assert(!isWorker, 'bind() shall be called from main thread');
+
+    var rules = [], fontsToLoad = [];
+    for (var i = 0, ii = fonts.length; i < ii; i++) {
+      var font = fonts[i];
+
+      // Add the font to the DOM only once or skip if the font
+      // is already loaded.
+      if (font.attached || font.loading === false) {
+        continue;
+      }
+      font.attached = true;
+
+      var rule = font.bindDOM();
+      if (rule) {
+        rules.push(rule);
+        fontsToLoad.push(font);
+      }
+    }
+
+    var request = FontLoader.queueLoadingCallback(callback);
+    if (rules.length > 0 && !this.isSyncFontLoadingSupported) {
+      FontLoader.prepareFontLoadEvent(rules, fontsToLoad, request);
+    } else {
+      request.complete();
+    }
+  },
+
+  queueLoadingCallback: function FontLoader_queueLoadingCallback(callback) {
+    function LoadLoader_completeRequest() {
+      assert(!request.end, 'completeRequest() cannot be called twice');
+      request.end = Date.now();
+
+      // sending all completed requests in order how they were queued
+      while (context.requests.length > 0 && context.requests[0].end) {
+        var otherRequest = context.requests.shift();
+        setTimeout(otherRequest.callback, 0);
+      }
+    }
+
+    var context = FontLoader.loadingContext;
+    var requestId = 'pdfjs-font-loading-' + (context.nextRequestId++);
+    var request = {
+      id: requestId,
+      complete: LoadLoader_completeRequest,
+      callback: callback,
+      started: Date.now()
+    };
+    context.requests.push(request);
+    return request;
+  },
+
+  prepareFontLoadEvent: function fontLoaderPrepareFontLoadEvent(rules,
+                                                                fonts,
+                                                                request) {
+      /** Hack begin */
+      // There's currently no event when a font has finished downloading so the
+      // following code is a dirty hack to 'guess' when a font is
+      // ready. It's assumed fonts are loaded in order, so add a known test
+      // font after the desired fonts and then test for the loading of that
+      // test font.
+
+      function int32(data, offset) {
+        return (data.charCodeAt(offset) << 24) |
+               (data.charCodeAt(offset + 1) << 16) |
+               (data.charCodeAt(offset + 2) << 8) |
+               (data.charCodeAt(offset + 3) & 0xff);
+      }
+
+      function string32(value) {
+        return String.fromCharCode((value >> 24) & 0xff) +
+               String.fromCharCode((value >> 16) & 0xff) +
+               String.fromCharCode((value >> 8) & 0xff) +
+               String.fromCharCode(value & 0xff);
+      }
+
+      function spliceString(s, offset, remove, insert) {
+        var chunk1 = data.substr(0, offset);
+        var chunk2 = data.substr(offset + remove);
+        return chunk1 + insert + chunk2;
+      }
+
+      var i, ii;
+
+      var canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      var ctx = canvas.getContext('2d');
+
+      var called = 0;
+      function isFontReady(name, callback) {
+        called++;
+        // With setTimeout clamping this gives the font ~100ms to load.
+        if(called > 30) {
+          warn('Load test font never loaded.');
+          callback();
+          return;
+        }
+        ctx.font = '30px ' + name;
+        ctx.fillText('.', 0, 20);
+        var imageData = ctx.getImageData(0, 0, 1, 1);
+        if (imageData.data[3] > 0) {
+          callback();
+          return;
+        }
+        setTimeout(isFontReady.bind(null, name, callback));
+      }
+
+      var loadTestFontId = 'lt' + Date.now() + this.loadTestFontId++;
+      // Chromium seems to cache fonts based on a hash of the actual font data,
+      // so the font must be modified for each load test else it will appear to
+      // be loaded already.
+      // TODO: This could maybe be made faster by avoiding the btoa of the full
+      // font by splitting it in chunks before hand and padding the font id.
+      var data = this.loadTestFont;
+      var COMMENT_OFFSET = 976; // has to be on 4 byte boundary (for checksum)
+      data = spliceString(data, COMMENT_OFFSET, loadTestFontId.length,
+                          loadTestFontId);
+      // CFF checksum is important for IE, adjusting it
+      var CFF_CHECKSUM_OFFSET = 16;
+      var XXXX_VALUE = 0x58585858; // the "comment" filled with 'X'
+      var checksum = int32(data, CFF_CHECKSUM_OFFSET);
+      for (i = 0, ii = loadTestFontId.length - 3; i < ii; i += 4) {
+        checksum = (checksum - XXXX_VALUE + int32(loadTestFontId, i)) | 0;
+      }
+      if (i < loadTestFontId.length) { // align to 4 bytes boundary
+        checksum = (checksum - XXXX_VALUE +
+                    int32(loadTestFontId + 'XXX', i)) | 0;
+      }
+      data = spliceString(data, CFF_CHECKSUM_OFFSET, 4, string32(checksum));
+
+      var url = 'url(data:font/opentype;base64,' + btoa(data) + ');';
+      var rule = '@font-face { font-family:"' + loadTestFontId + '";src:' +
+                 url + '}';
+      FontLoader.insertRule(rule);
+
+      var names = [];
+      for (i = 0, ii = fonts.length; i < ii; i++) {
+        names.push(fonts[i].loadedName);
+      }
+      names.push(loadTestFontId);
+
+      var div = document.createElement('div');
+      div.setAttribute('style',
+                       'visibility: hidden;' +
+                       'width: 10px; height: 10px;' +
+                       'position: absolute; top: 0px; left: 0px;');
+      for (i = 0, ii = names.length; i < ii; ++i) {
+        var span = document.createElement('span');
+        span.textContent = 'Hi';
+        span.style.fontFamily = names[i];
+        div.appendChild(span);
+      }
+      document.body.appendChild(div);
+
+      isFontReady(loadTestFontId, function() {
+        document.body.removeChild(div);
+        request.complete();
+      });
+      /** Hack end */
+  }
+};
+
+var FontFace = (function FontFaceClosure() {
+  function FontFace(name, file, properties) {
+    this.compiledGlyphs = {};
+    if (arguments.length === 1) {
+      // importing translated data
+      var data = arguments[0];
+      for (var i in data) {
+        this[i] = data[i];
+      }
+      return;
+    }
+  }
+  FontFace.prototype = {
+    bindDOM: function FontFace_bindDOM() {
+      if (!this.data)
+        return null;
+
+      if (PDFJS.disableFontFace) {
+        this.disableFontFace = true;
+        return null;
+      }
+
+      var data = bytesToString(this.data);
+      var fontName = this.loadedName;
+
+      // Add the font-face rule to the document
+      var url = ('url(data:' + this.mimetype + ';base64,' +
+                 window.btoa(data) + ');');
+      var rule = '@font-face { font-family:"' + fontName + '";src:' + url + '}';
+
+      FontLoader.insertRule(rule);
+
+      if (PDFJS.pdfBug && 'FontInspector' in globalScope &&
+          globalScope['FontInspector'].enabled)
+        globalScope['FontInspector'].fontAdded(this, url);
+
+      return rule;
+    },
+    getPathGenerator: function (objs, character) {
+      if (!(character in this.compiledGlyphs)) {
+        var js = objs.get(this.loadedName + '_path_' + character);
+        /*jshint -W054 */
+        this.compiledGlyphs[character] = new Function('c', 'size', js);
+      }
+      return this.compiledGlyphs[character];
+    }
+  };
+  return FontFace;
+})();
+
+
+}).call((typeof window === 'undefined') ? this : window);
+
+if (!PDFJS.workerSrc && typeof document !== 'undefined') {
+  // workerSrc is not set -- using last script url to define default location
+  PDFJS.workerSrc = (function () {
+    'use strict';
+    var scriptTagContainer = document.body ||
+                             document.getElementsByTagName('head')[0];
+    var pdfjsSrc = scriptTagContainer.lastChild.src;
+    return pdfjsSrc && pdfjsSrc.replace(/\.js$/i, '.worker.js');
+  })();
+}
+
+
