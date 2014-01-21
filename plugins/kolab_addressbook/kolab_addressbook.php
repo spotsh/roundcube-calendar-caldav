@@ -67,6 +67,7 @@ class kolab_addressbook extends rcube_plugin
 
             // Load UI elements
             if ($this->api->output->type == 'html') {
+                $this->load_config();
                 require_once($this->home . '/lib/kolab_addressbook_ui.php');
                 $this->ui = new kolab_addressbook_ui($this);
             }
