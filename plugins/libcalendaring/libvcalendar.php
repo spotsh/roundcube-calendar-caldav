@@ -852,8 +852,14 @@ class libvcalendar implements Iterator
             $ve->add($cat);
         }
 
-        if (!empty($event['free_busy']))
+        if (!empty($event['free_busy'])) {
             $ve->add('TRANSP', $event['free_busy'] == 'free' ? 'TRANSPARENT' : 'OPAQUE');
+
+            // for Outlook clients we provide the X-MICROSOFT-CDO-BUSYSTATUS property
+            if (stripos($this->agent, 'outlook') !== false) {
+                $ve->add('X-MICROSOFT-CDO-BUSYSTATUS', $event['free_busy'] == 'outofoffice' ? 'OOF' : strtoupper($event['free_busy']));
+            }
+        }
 
         if ($event['priority'])
           $ve->add('PRIORITY', $event['priority']);
