@@ -465,7 +465,7 @@ class libvcalendar implements Iterator
 
             case 'X-MICROSOFT-CDO-BUSYSTATUS':
                 if ($prop->value == 'OOF')
-                    $event['free_busy'] == 'outofoffice';
+                    $event['free_busy'] = 'outofoffice';
                 else if (in_array($prop->value, array('FREE', 'BUSY', 'TENTATIVE')))
                     $event['free_busy'] = strtolower($prop->value);
                 break;
