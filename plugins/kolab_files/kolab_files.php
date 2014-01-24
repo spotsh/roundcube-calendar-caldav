@@ -52,7 +52,8 @@ class kolab_files extends rcube_plugin
         // we use libkolab::http_request() from libkolab with its configuration
         $this->require_plugin('libkolab');
 
-        $this->ui();
+        // Load UI from startup hook
+        $this->add_hook('startup', array($this, 'startup'));
     }
 
     /**
@@ -61,6 +62,11 @@ class kolab_files extends rcube_plugin
     private function engine()
     {
         if ($this->engine === null) {
+            // the files module can be enabled/disabled by the kolab_auth plugin
+            if ($this->rc->config->get('kolab_files_disabled') || !$this->rc->config->get('kolab_files_enabled', true)) {
+                return $this->engine = false;
+            }
+
             $this->load_config();
 
             $url = $this->rc->config->get('kolab_files_url');
@@ -75,6 +81,16 @@ class kolab_files extends rcube_plugin
         }
 
         return $this->engine;
+    }
+
+    /**
+     * Startup hook handler, initializes/enables Files UI
+     */
+    public function startup($args)
+    {
+        // call this from startup to give a chance to set
+        // kolab_files_enabled/disabled in kolab_auth plugin
+        $this->ui();
     }
 
     /**
