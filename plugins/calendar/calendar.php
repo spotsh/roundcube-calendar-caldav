@@ -580,7 +580,7 @@ class calendar extends rcube_plugin
       $field_id = 'rcmfd_alarm';
       $select_type = new html_select(array('name' => '_alarm_type', 'id' => $field_id));
       $select_type->add($this->gettext('none'), '');
-      foreach ($this->get_driver_by_name("kolab")->alarm_types as $type)
+      foreach ($this->get_driver_names()->alarm_types as $type)
         $select_type->add(rcube_label(strtolower("alarm{$type}option"), 'libcalendaring'), $type);
 
       $p['blocks']['view']['options']['alarmtype'] = array(
@@ -631,64 +631,65 @@ class calendar extends rcube_plugin
 
     // category definitions
     // TODO: Currently uses 'kolab' driver: This should be done for each driver, see preferences_save().
-    $driver = $this->get_driver_by_name("kolab");
-    if (!$driver->nocategories && !isset($no_override['calendar_categories'])) {
-        $p['blocks']['categories']['name'] = $this->gettext('categories');
+    foreach ($this->get_drivers() as $driver) {  
+		if (!$driver->nocategories && !isset($no_override['calendar_categories'])) {
+		    $p['blocks']['categories']['name'] = $this->gettext('categories');
 
-        if (!$p['current']) {
-          $p['blocks']['categories']['content'] = true;
-          return $p;
-        }
+		    if (!$p['current']) {
+		      $p['blocks']['categories']['content'] = true;
+		      return $p;
+		    }
 
-        $categories = (array) $driver->list_categories();
-        $categories_list = '';
-        foreach ($categories as $name => $color) {
-          $key = md5($name);
-          $field_class = 'rcmfd_category_' . str_replace(' ', '_', $name);
-          $category_remove = new html_inputfield(array('type' => 'button', 'value' => 'X', 'class' => 'button', 'onclick' => '$(this).parent().remove()', 'title' => $this->gettext('remove_category')));
-          $category_name  = new html_inputfield(array('name' => "_categories[$key]", 'class' => $field_class, 'size' => 30, 'disabled' => $driver->categoriesimmutable));
-          $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => "$field_class colors", 'size' => 6));
-          $hidden = $driver->categoriesimmutable ? html::tag('input', array('type' => 'hidden', 'name' => "_categories[$key]", 'value' => $name)) : '';
-          $categories_list .= html::div(null, $hidden . $category_name->show($name) . '&nbsp;' . $category_color->show($color) . '&nbsp;' . $category_remove->show());
-        }
+		    $categories = (array) $driver->list_categories();
+		    $categories_list = '';
+		    foreach ($categories as $name => $color) {
+		      $key = md5($name);
+		      $field_class = 'rcmfd_category_' . str_replace(' ', '_', $name);
+		      $category_remove = new html_inputfield(array('type' => 'button', 'value' => 'X', 'class' => 'button', 'onclick' => '$(this).parent().remove()', 'title' => $this->gettext('remove_category')));
+		      $category_name  = new html_inputfield(array('name' => "_categories[$key]", 'class' => $field_class, 'size' => 30, 'disabled' => $driver->categoriesimmutable));
+		      $category_color = new html_inputfield(array('name' => "_colors[$key]", 'class' => "$field_class colors", 'size' => 6));
+		      $hidden = $driver->categoriesimmutable ? html::tag('input', array('type' => 'hidden', 'name' => "_categories[$key]", 'value' => $name)) : '';
+		      $categories_list .= html::div(null, $hidden . $category_name->show($name) . '&nbsp;' . $category_color->show($color) . '&nbsp;' . $category_remove->show());
+		    }
 
-        $p['blocks']['categories']['options']['category_' . $name] = array(
-          'content' => html::div(array('id' => 'calendarcategories'), $categories_list),
-        );
+		    $p['blocks']['categories']['options']['category_' . $name] = array(
+		      'content' => html::div(array('id' => 'calendarcategories'), $categories_list),
+		    );
 
-        $field_id = 'rcmfd_new_category';
-        $new_category = new html_inputfield(array('name' => '_new_category', 'id' => $field_id, 'size' => 30));
-        $add_category = new html_inputfield(array('type' => 'button', 'class' => 'button', 'value' => $this->gettext('add_category'),  'onclick' => "rcube_calendar_add_category()"));
-        $p['blocks']['categories']['options']['categories'] = array(
-          'content' => $new_category->show('') . '&nbsp;' . $add_category->show(),
-        );
+		    $field_id = 'rcmfd_new_category';
+		    $new_category = new html_inputfield(array('name' => '_new_category', 'id' => $field_id, 'size' => 30));
+		    $add_category = new html_inputfield(array('type' => 'button', 'class' => 'button', 'value' => $this->gettext('add_category'),  'onclick' => "rcube_calendar_add_category()"));
+		    $p['blocks']['categories']['options']['categories'] = array(
+		      'content' => $new_category->show('') . '&nbsp;' . $add_category->show(),
+		    );
 
-        $this->rc->output->add_script('function rcube_calendar_add_category(){
-          var name = $("#rcmfd_new_category").val();
-          if (name.length) {
-            var input = $("<input>").attr("type", "text").attr("name", "_categories[]").attr("size", 30).val(name);
-            var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).addClass("colors").val("000000");
-            var button = $("<input>").attr("type", "button").attr("value", "X").addClass("button").click(function(){ $(this).parent().remove() });
-            $("<div>").append(input).append("&nbsp;").append(color).append("&nbsp;").append(button).appendTo("#calendarcategories");
-            color.miniColors({ colorValues:(rcmail.env.mscolors || []) });
-            $("#rcmfd_new_category").val("");
-          }
-        }');
+		    $this->rc->output->add_script('function rcube_calendar_add_category(){
+		      var name = $("#rcmfd_new_category").val();
+		      if (name.length) {
+		        var input = $("<input>").attr("type", "text").attr("name", "_categories[]").attr("size", 30).val(name);
+		        var color = $("<input>").attr("type", "text").attr("name", "_colors[]").attr("size", 6).addClass("colors").val("000000");
+		        var button = $("<input>").attr("type", "button").attr("value", "X").addClass("button").click(function(){ $(this).parent().remove() });
+		        $("<div>").append(input).append("&nbsp;").append(color).append("&nbsp;").append(button).appendTo("#calendarcategories");
+		        color.miniColors({ colorValues:(rcmail.env.mscolors || []) });
+		        $("#rcmfd_new_category").val("");
+		      }
+		    }');
 
-        $this->rc->output->add_script('$("#rcmfd_new_category").keypress(function(event){
-          if (event.which == 13) {
-            rcube_calendar_add_category();
-            event.preventDefault();
-          }
-        });
-        ', 'docready');
+		    $this->rc->output->add_script('$("#rcmfd_new_category").keypress(function(event){
+		      if (event.which == 13) {
+		        rcube_calendar_add_category();
+		        event.preventDefault();
+		      }
+		    });
+		    ', 'docready');
 
-        // include color picker
-        $this->include_script('lib/js/jquery.miniColors.min.js');
-        $this->include_stylesheet($this->local_skin_path() . '/jquery.miniColors.css');
-        $this->rc->output->set_env('mscolors', $driver->get_color_values());
-        $this->rc->output->add_script('$("input.colors").miniColors({ colorValues:rcmail.env.mscolors })', 'docready');
-    }
+		    // include color picker
+		    $this->include_script('lib/js/jquery.miniColors.min.js');
+		    $this->include_stylesheet($this->local_skin_path() . '/jquery.miniColors.css');
+		    $this->rc->output->set_env('mscolors', $driver->get_color_values());
+		    $this->rc->output->add_script('$("input.colors").miniColors({ colorValues:rcmail.env.mscolors })', 'docready');
+		}
+	}
 
     return $p;
   }
@@ -725,39 +726,39 @@ class calendar extends rcube_plugin
 
       // categories
       // TODO: Currently uses default driver: This should be done for each driver, see preferences_list().
-      $driver = $this->get_driver_by_name("kolab");
+      foreach($this->get_drivers() as $driver) {
+		  if (!$driver->nocategories) {
+		    $old_categories = $new_categories = array();
+		    foreach ($driver->list_categories() as $name => $color) {
+		      $old_categories[md5($name)] = $name;
+		    }
 
-      if (!$driver->nocategories) {
-        $old_categories = $new_categories = array();
-        foreach ($driver->list_categories() as $name => $color) {
-          $old_categories[md5($name)] = $name;
-        }
+		    $categories = (array) get_input_value('_categories', RCUBE_INPUT_POST);
+		    $colors     = (array) get_input_value('_colors', RCUBE_INPUT_POST);
 
-        $categories = (array) get_input_value('_categories', RCUBE_INPUT_POST);
-        $colors     = (array) get_input_value('_colors', RCUBE_INPUT_POST);
+		    foreach ($categories as $key => $name) {
+		      $color = preg_replace('/^#/', '', strval($colors[$key]));
 
-        foreach ($categories as $key => $name) {
-          $color = preg_replace('/^#/', '', strval($colors[$key]));
+		      // rename categories in existing events -> driver's job
+		      if ($oldname = $old_categories[$key]) {
+		        $driver->replace_category($oldname, $name, $color);
+		        unset($old_categories[$key]);
+		      }
+		      else
+		        $driver->add_category($name, $color);
 
-          // rename categories in existing events -> driver's job
-          if ($oldname = $old_categories[$key]) {
-            $driver->replace_category($oldname, $name, $color);
-            unset($old_categories[$key]);
-          }
-          else
-            $driver->add_category($name, $color);
+		      $new_categories[$name] = $color;
+		    }
 
-          $new_categories[$name] = $color;
-        }
+		    // these old categories have been removed, alter events accordingly -> driver's job
+		    foreach ((array)$old_categories[$key] as $key => $name) {
+		      $driver->remove_category($name);
+		    }
 
-        // these old categories have been removed, alter events accordingly -> driver's job
-        foreach ((array)$old_categories[$key] as $key => $name) {
-          $driver->remove_category($name);
-        }
-
-        $p['prefs']['calendar_categories'] = $new_categories;
-      }
-    }
+		    $p['prefs']['calendar_categories'] = $new_categories;
+		  }
+	}
+}
 
     return $p;
   }
@@ -833,7 +834,7 @@ class calendar extends rcube_plugin
     // This can happen if creating a new event outside the calendar e.g. from an ical file attached to an email.
     // TODO: Fallback to hard-coded kolab driver! Ask for appropriate calendar or use a configured default driver?
     if(!$driver)
-        $driver = $this->get_driver_by_name("kolab");
+        $driver = $this->get_driver_by_name("database");
     
     // don't notify if modifying a recurring instance (really?)
     if ($event['_savemode'] && $event['_savemode'] != 'all' && $event['_notify'])
@@ -1396,7 +1397,7 @@ class calendar extends rcube_plugin
     // check for organizer in attendees list
     $organizer = null;
     foreach ((array)$event['attendees'] as $i => $attendee) {
-      if ($attendee['role'] == 'ORGANIZER') {
+      if (isset($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
         $organizer = $attendee;
         break;
       }
@@ -1480,7 +1481,7 @@ class calendar extends rcube_plugin
    */
   public function generate_randomdata()
   {
-    $driver = $this->get_driver_by_name("kolab");
+    $driver = $this->get_drivers()[0];
     $num   = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
     $cats  = array_keys($driver->list_categories());
     $cals  = $driver->list_calendars(true);

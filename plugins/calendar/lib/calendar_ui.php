@@ -300,9 +300,11 @@ class calendar_ui
     $select = new html_select($attrib);
     $select->add('---', '');
     // TODO: Categories are taken from kolab driver by default. Use categories from all available drivers.
-    foreach (array_keys((array)$this->cal->get_driver_by_name("kolab")->list_categories()) as $cat) {
-      $select->add($cat, $cat);
-    }
+	foreach ($this->cal->get_drivers() as $driver) {
+		foreach (array_keys((array)$driver->list_categories()) as $cat) {
+		  $select->add($cat, $cat);
+		}
+  	}
 
     return $select->show(null);
   }
@@ -360,8 +362,11 @@ class calendar_ui
   function alarm_select($attrib = array())
   {
     // TODO: Don't know what this does but it seems that it is called very early where no GPC information is available.
-    $driver = $this->cal->get_driver_by_name("kolab");
-    return $this->cal->lib->alarm_select($attrib, $driver->alarm_types, $driver->alarm_absolute);
+    foreach ($this->cal->get_drivers() as $driver) {
+       $attrib[] = $this->cal->lib->alarm_select($attrib, $driver->alarm_types, $driver->alarm_absolute);
+	}
+
+	return $attrib;
   }
 
   /**
