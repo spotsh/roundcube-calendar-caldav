@@ -348,10 +348,10 @@ class kolab_format_contact extends kolab_format
         $object['freebusyurl'] = $this->obj->freeBusyUrl();
 
         if ($bday = self::php_datetime($this->obj->bDay()))
-            $object['birthday'] = $bday->format('c');
+            $object['birthday'] = $bday;
 
         if ($anniversary = self::php_datetime($this->obj->anniversary()))
-            $object['anniversary'] = $anniversary->format('c');
+            $object['anniversary'] = $anniversary;
 
         $gendermap = array_flip($this->gendermap);
         if (($g = $this->obj->gender()) && $gendermap[$g])
