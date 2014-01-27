@@ -381,27 +381,11 @@ class tasklist extends rcube_plugin
         }
 
         if (!empty($rec['date'])) {
-            try {
-                $date = new DateTime($rec['date'] . ' ' . $rec['time'], $this->timezone);
-                $rec['date'] = $date->format('Y-m-d');
-                if (!empty($rec['time']))
-                    $rec['time'] = $date->format('H:i');
-            }
-            catch (Exception $e) {
-                $rec['date'] = $rec['time'] = null;
-            }
+            $this->normalize_dates($rec, 'date', 'time');
         }
 
         if (!empty($rec['startdate'])) {
-            try {
-                $date = new DateTime($rec['startdate'] . ' ' . $rec['starttime'], $this->timezone);
-                $rec['startdate'] = $date->format('Y-m-d');
-                if (!empty($rec['starttime']))
-                    $rec['starttime'] = $date->format('H:i');
-            }
-            catch (Exception $e) {
-                $rec['startdate'] = $rec['starttime'] = null;
-            }
+            $this->normalize_dates($rec, 'startdate', 'starttime');
         }
 
         // convert tags to array, filter out empty entries
@@ -434,6 +418,33 @@ class tasklist extends rcube_plugin
         return $rec;
     }
 
+    /**
+     * Utility method to convert a tasks date/time values into a normalized format
+     */
+    private function normalize_dates(&$rec, $date_key, $time_key)
+    {
+        try {
+            // parse date from user format (#2801)
+            $date_format = $this->rc->config->get(empty($rec[$time_key]) ? 'date_format' : 'date_long', 'Y-m-d');
+            $date = DateTime::createFromFormat($date_format, trim($rec[$date_key] . ' ' . $rec[$time_key]), $this->timezone);
+
+            // fall back to default strtotime logic
+            if (empty($date)) {
+                $date = new DateTime($rec[$date_key] . ' ' . $rec[$time_key], $this->timezone);
+            }
+
+            $rec[$date_key] = $date->format('Y-m-d');
+            if (!empty($rec[$time_key]))
+                $rec[$time_key] = $date->format('H:i');
+
+            return true;
+        }
+        catch (Exception $e) {
+            $rec[$date_key] = $rec[$time_key] = null;
+        }
+
+        return false;
+    }
 
     /**
      * Releases some resources after successful save
