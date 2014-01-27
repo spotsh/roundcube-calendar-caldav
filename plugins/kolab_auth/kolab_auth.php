@@ -164,8 +164,9 @@ class kolab_auth extends rcube_plugin
 
         if (!empty($role_settings)) {
             foreach ($role_settings as $role_dn => $settings) {
+                $role_dn = self::parse_ldap_vars($role_dn);
                 if (!empty($role_settings[$role_dn])) {
-                        $role_settings[$role_dn] = array_merge((array)$role_settings[$role_dn], $settings);
+                    $role_settings[$role_dn] = array_merge((array)$role_settings[$role_dn], $settings);
                 } else {
                     $role_settings[$role_dn] = $settings;
                 }
