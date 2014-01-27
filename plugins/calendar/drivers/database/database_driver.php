@@ -254,7 +254,7 @@ class database_driver extends calendar_driver
         strval($event['title']),
         strval($event['description']),
         strval($event['location']),
-        strval($event['categories']),
+        join(',', (array)$event['categories']),
         strval($event['url']),
         intval($event['free_busy']),
         intval($event['priority']),
@@ -463,6 +463,8 @@ class database_driver extends calendar_driver
     foreach ($set_cols as $col) {
       if (is_object($event[$col]) && is_a($event[$col], 'DateTime'))
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]->format(self::DB_DATE_FORMAT));
+      else if (is_array($event[$col]))
+        $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote(join(',', $event[$col]));
       else if (isset($event[$col]))
         $sql_set[] = $this->rc->db->quote_identifier($col) . '=' . $this->rc->db->quote($event[$col]);
     }
