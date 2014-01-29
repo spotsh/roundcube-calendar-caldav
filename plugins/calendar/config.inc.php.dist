@@ -26,8 +26,9 @@
  +-------------------------------------------------------------------------+
 */
 
-// backend type (database, google, kolab)
-$rcmail_config['calendar_driver'] = "database";
+// backend type (database, kolab, caldav, ical)
+$rcmail_config['calendar_driver'] = array("kolab");
+$rcmail_config['calendar_driver_default'] = "kolab";
 
 // default calendar view (agendaDay, agendaWeek, month)
 $rcmail_config['calendar_default_view'] = "agendaWeek";
