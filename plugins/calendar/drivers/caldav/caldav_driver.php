@@ -23,6 +23,7 @@
 
 require_once (dirname(__FILE__).'/../database/database_driver.php');
 require_once(dirname(__FILE__) . '/caldav_sync.php');
+require_once(dirname(__FILE__) . '/../../lib/encryption.php');
 
 /**
  * TODO
@@ -36,9 +37,10 @@ class caldav_driver extends database_driver
     const OBJ_TYPE_VCAL = "vcal";
     const OBJ_TYPE_VEVENT = "vevent";
     const OBJ_TYPE_VTODO = "vtodo";
+    const PWKEY = "%E`c{2;<J2F^4_&._BxfQ<5Pf3qv!m{e";
 
     private $sync_clients = array();
-    
+
     private $db_caldav_props = 'caldav_props';
     private $db_events = 'events';
     private $db_calendars = 'calendars';
@@ -46,7 +48,7 @@ class caldav_driver extends database_driver
 
     private $cal;
     private $rc;
-    
+
     static private $debug = null;
 
     // features this backend supports
@@ -71,7 +73,7 @@ class caldav_driver extends database_driver
         $this->db_attachments = $this->rc->config->get('db_table_attachments', $db->table_name($this->db_attachments));
 
         parent::__construct($cal);
-        
+
         // Set debug state
         if(self::$debug === null)
             self::$debug = $this->rc->config->get('calendar_caldav_debug', False);
@@ -105,15 +107,22 @@ class caldav_driver extends database_driver
     {
         $this->_remove_caldav_props($obj_id, $obj_type);
 
+        $password = isset($props["pass"]) ? $props["pass"] : null;
+        if ($password) {
+            $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
+            $p = $e->encrypt($password, self::PWKEY);
+            $password = base64_encode($p);
+        }
+
         $query = $this->rc->db->query(
             "INSERT INTO ".$this->db_caldav_props." (obj_id, obj_type, url, tag, user, pass) ".
-            "VALUES (?, ?, ?, ?, ?, ?)", 
-            $obj_id, 
-            $obj_type, 
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            $obj_id,
+            $obj_type,
             $props["url"],
-            isset($props["tag"]) ? $props["tag"] : null, 
-            isset($props["user"]) ? $props["user"] : null, 
-            isset($props["pass"]) ? $props["pass"] : null);
+            isset($props["tag"]) ? $props["tag"] : null,
+            isset($props["user"]) ? $props["user"] : null,
+            $password);
 
         return $this->rc->db->affected_rows($query);
     }
@@ -151,8 +160,16 @@ class caldav_driver extends database_driver
             "SELECT * FROM ".$this->db_caldav_props." p ".
             "WHERE p.obj_type = ? AND p.obj_id = ? ", $obj_type, $obj_id);
 
-        if ($result && ($prop = $this->rc->db->fetch_assoc($result)) !== false)
+        if ($result && ($prop = $this->rc->db->fetch_assoc($result)) !== false) {
+            $password = isset($prop["pass"]) ? $prop["pass"] : null;
+            if ($password) {
+                $p = base64_decode($password);
+                $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
+                $prop["pass"] = $e->decrypt("$p", self::PWKEY);
+            }
+
             return $prop;
+        }
 
         return false;
     }
