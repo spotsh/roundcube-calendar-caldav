@@ -37,7 +37,6 @@ class caldav_driver extends database_driver
     const OBJ_TYPE_VCAL = "vcal";
     const OBJ_TYPE_VEVENT = "vevent";
     const OBJ_TYPE_VTODO = "vtodo";
-    const PWKEY = "%E`c{2;<J2F^4_&._BxfQ<5Pf3qv!m{e";
 
     private $sync_clients = array();
 
@@ -48,6 +47,8 @@ class caldav_driver extends database_driver
 
     private $cal;
     private $rc;
+
+    private $crypt_key;
 
     static private $debug = null;
 
@@ -71,6 +72,8 @@ class caldav_driver extends database_driver
         $this->db_events = $this->rc->config->get('db_table_events', $db->table_name($this->db_events));
         $this->db_calendars = $this->rc->config->get('db_table_calendars', $db->table_name($this->db_calendars));
         $this->db_attachments = $this->rc->config->get('db_table_attachments', $db->table_name($this->db_attachments));
+
+        $this->crypt_key = $this->rc->config->get("calendar_crypt_key");
 
         parent::__construct($cal);
 
@@ -110,7 +113,7 @@ class caldav_driver extends database_driver
         $password = isset($props["pass"]) ? $props["pass"] : null;
         if ($password) {
             $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
-            $p = $e->encrypt($password, self::PWKEY);
+            $p = $e->encrypt($password, $this->crypt_key);
             $password = base64_encode($p);
         }
 
@@ -165,7 +168,7 @@ class caldav_driver extends database_driver
             if ($password) {
                 $p = base64_decode($password);
                 $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
-                $prop["pass"] = $e->decrypt("$p", self::PWKEY);
+                $prop["pass"] = $e->decrypt("$p", $this->crypt_key);
             }
 
             return $prop;
