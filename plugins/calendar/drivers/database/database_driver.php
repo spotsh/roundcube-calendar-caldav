@@ -109,7 +109,7 @@ class database_driver extends calendar_driver
   public function list_calendars($active = false, $personal = false)
   {
     // attempt to create a default calendar for this user
-    if (empty($this->calendars)) {
+    if (get_class($this) == "database_driver" && empty($this->calendars)) {
       if ($this->create_calendar(array('name' => 'Default', 'color' => 'cc0000')))
         $this->_read_calendars();
     }
