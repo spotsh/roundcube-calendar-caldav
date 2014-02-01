@@ -91,7 +91,7 @@ class caldav_sync
         if (!$last_sync || (time() - $last_sync) >= $this->sync_period)
         {
             $_SESSION["calendar_caldav_last_sync"][$this->cal_id] = time();
-            $is_synced = $this->ctag == $this->caldav->get_ctag();
+            $is_synced = $this->ctag == $this->caldav->get_ctag() && $this->ctag;
 
             caldav_driver::debug_log("Sync check: Calendar \"$this->cal_id\" ".($is_synced ? "is synced." : "needs update!"));
             return $is_synced;
@@ -129,6 +129,10 @@ class caldav_sync
 
             list($updates, $synced_event_ids) = $this->_get_event_updates($events, $caldav_props, $etags);
             return array($this->_get_event_data($updates), $synced_event_ids);
+        }
+        else
+        {
+            caldav_driver::debug_log("Unkown error while fetching calendar ctag for calendar \"$this->cal_id\"!");
         }
         
         return null;
