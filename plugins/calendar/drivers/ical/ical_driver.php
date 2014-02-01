@@ -165,6 +165,9 @@ class ical_driver extends database_driver
             // iCal calendars are readonly!
             $cal["readonly"] = true;
 
+            // But name should be editable!
+            $cal["editable_name"] = true;
+
             if($this->_get_ical_props($id, self::OBJ_TYPE_ICAL) !== false)
                 $calendars[$id] = $cal;
         }
@@ -410,8 +413,6 @@ class ical_driver extends database_driver
         return parent::load_events($start, $end, $query, $cal_ids, $virtual, $modifiedsince);
     }
 
-
-    // TODO: Mark calendar as readonly!
     public function new_event($event)
     {
         return false;

@@ -1868,7 +1868,7 @@ function rcube_calendar_ui(settings)
           // resize and reposition dialog window
           form = $('#calendarpropform');
           me.dialog_resize('#calendarform', form.height(), form.width());
-          name = $('#calendar-name').prop('disabled', !calendar.editable).val(calendar.editname || calendar.name);
+          name = $('#calendar-name').prop('disabled', !calendar.editable && !calendar.editable_name).val(calendar.editname || calendar.name);
           color = $('#calendar-color').val(calendar.color).miniColors({ value: calendar.color, colorValues:rcmail.env.mscolors });
           alarms = $('#calendar-showalarms').prop('checked', calendar.showalarms).get(0);
           name.select();
