@@ -73,7 +73,7 @@ class caldav_driver extends database_driver
         $this->db_calendars = $this->rc->config->get('db_table_calendars', $db->table_name($this->db_calendars));
         $this->db_attachments = $this->rc->config->get('db_table_attachments', $db->table_name($this->db_attachments));
 
-        $this->crypt_key = $this->rc->config->get("calendar_crypt_key");
+        $this->crypt_key = $this->rc->config->get("calendar_crypt_key", "%E`c{2;<J2F^4_&._BxfQ<5Pf3qv!m{e");
 
         parent::__construct($cal);
 
