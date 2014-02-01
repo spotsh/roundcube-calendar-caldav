@@ -131,22 +131,6 @@ class caldav_driver extends database_driver
     }
 
     /**
-     * Removes caldav properties.
-     *
-     * @param int $obj_id
-     * @param int One of CALDAV_OBJ_TYPE_CAL, CALDAV_OBJ_TYPE_EVENT or CALDAV_OBJ_TYPE_TODO.
-     * @return True on success, false otherwise.
-     */
-    private function _remove_caldav_props($obj_id, $obj_type)
-    {
-        $query = $this->rc->db->query(
-            "DELETE FROM ".$this->db_caldav_props." ".
-            "WHERE obj_type = ? AND obj_id = ? ", $obj_type, $obj_id);
-
-        return $this->rc->db->affected_rows($query);
-    }
-
-    /**
      * Gets caldav properties.
      *
      * @param int $obj_id
@@ -168,13 +152,29 @@ class caldav_driver extends database_driver
             if ($password) {
                 $p = base64_decode($password);
                 $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
-                $prop["pass"] = $e->decrypt("$p", $this->crypt_key);
+                $prop["pass"] = $e->decrypt($p, $this->crypt_key);
             }
 
             return $prop;
         }
 
         return false;
+    }
+
+    /**
+     * Removes caldav properties.
+     *
+     * @param int $obj_id
+     * @param int One of CALDAV_OBJ_TYPE_CAL, CALDAV_OBJ_TYPE_EVENT or CALDAV_OBJ_TYPE_TODO.
+     * @return True on success, false otherwise.
+     */
+    private function _remove_caldav_props($obj_id, $obj_type)
+    {
+        $query = $this->rc->db->query(
+            "DELETE FROM ".$this->db_caldav_props." ".
+            "WHERE obj_type = ? AND obj_id = ? ", $obj_type, $obj_id);
+
+        return $this->rc->db->affected_rows($query);
     }
 
     /**
