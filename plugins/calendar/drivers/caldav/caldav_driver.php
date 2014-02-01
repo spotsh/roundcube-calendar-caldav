@@ -332,9 +332,18 @@ class caldav_driver extends database_driver
      */
     public function remove_calendar($prop)
     {
+        // Fetch caldav properties from related events.
+        $event_props = $this->rc->db->query("SELECT c.obj_id as id FROM ".$this->db_events." e, ".$this->db_caldav_props." c ".
+            "WHERE e.event_id = c.obj_id AND e.calendar_id=?", $prop['id']);
+
         if (parent::remove_calendar($prop))
         {
+            while($event_props && ($arr = $this->rc->db->fetch_assoc($event_props))){
+                $this->_remove_caldav_props($arr["id"], self::OBJ_TYPE_VEVENT);
+            }
+
             $this->_remove_caldav_props($prop["id"], self::OBJ_TYPE_VCAL);
+            self::debug_log("Removed calendar \"".$prop["id"]."\" with ".$event_props->rowCount()." events.");
             return true;
         }
 
