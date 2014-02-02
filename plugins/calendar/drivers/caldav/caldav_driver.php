@@ -234,15 +234,19 @@ class caldav_driver extends database_driver
 
     /**
      * Initializes calendar sync clients.
+     *
+     * @param array $cal_ids Optional list of calendar ids. If empty, caldav_driver::list_calendars()
+     *              will be used to retrieve a list of calendars.
      */
-    private function _init_sync_clients()
+    private function _init_sync_clients($cal_ids = array())
     {
-        foreach($this->list_calendars() as $cal)
+        if(sizeof($cal_ids) == 0) $cal_ids = array_keys($this->list_calendars());
+        foreach($cal_ids as $cal_id)
         {
-            $props = $this->_get_caldav_props($cal["id"], self::OBJ_TYPE_VCAL);
+            $props = $this->_get_caldav_props($cal_id, self::OBJ_TYPE_VCAL);
             if($props !== false) {
-                self::debug_log("Initialize sync client for calendar ".$cal["id"]);
-                $this->sync_clients[$cal["id"]] = new caldav_sync($cal["id"], $props);
+                self::debug_log("Initialize sync client for calendar ".$cal_id);
+                $this->sync_clients[$cal_id] = new caldav_sync($cal_id, $props);
             }
         }
     }
@@ -396,6 +400,7 @@ class caldav_driver extends database_driver
         $props['user'] = $prop["caldav_user"];
         $props['pass'] = $prop["caldav_pass"];
         $calendars = $this->_autodiscover_calendars($props);
+        $cal_ids = array();
 
         if(sizeof($calendars) > 0)
         {
@@ -406,6 +411,7 @@ class caldav_driver extends database_driver
                 $props['name'] = $calendar['name'];
                 if (($obj_id = parent::create_calendar($props)) !== false) {
                     $result = $result && $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
+                    array_push($cal_ids, $obj_id);
                 }
             }
         }
@@ -414,10 +420,20 @@ class caldav_driver extends database_driver
             // Fallback: Assume given URL as resource to a calendar.
             if (($obj_id = parent::create_calendar($props)) !== false) {
                 $result = $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
+                array_push($cal_ids, $obj_id);
             }
         }
 
-        $this->_init_sync_clients();
+        // Initialize sync clients for new calendars. Explicit specify the list of calendars
+        // to avoid _init_sync_clients() to use list_calendars() which returns an cached and
+        // out-dated list of calendars.
+        $this->_init_sync_clients($cal_ids);
+
+        // Initial sync of calendars.
+        foreach($cal_ids as $cal_id){
+            $this->_sync_calendar($cal_id);
+        }
+
         return $result;
     }
 
