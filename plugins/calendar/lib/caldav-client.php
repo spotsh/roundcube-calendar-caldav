@@ -111,7 +111,7 @@ class caldav_client extends Sabre\DAV\Client
 
         try
         {
-            $arr = $this->propReport($this->path, array(self::CLARK_GETETAG), $event_urls);
+            $arr = $this->prop_report($this->path, array(self::CLARK_GETETAG), $event_urls);
             foreach ($arr as $path => $data)
             {
                 // Some caldav server return an empty calendar as event where etag is missing. Skip this!
@@ -152,7 +152,7 @@ class caldav_client extends Sabre\DAV\Client
 
         try
         {
-            $vcals = $this->propReport($this->path, array(
+            $vcals = $this->prop_report($this->path, array(
                 self::CLARK_GETETAG,
                 self::CLARK_CALDATA
             ), $urls);
@@ -190,7 +190,7 @@ class caldav_client extends Sabre\DAV\Client
      *        made to the server to also return all child resources.
      * @return array Hash with ics event path as key and a hash array with properties and appropriate values.
      */
-    public function propReport($url, array $properties, array $event_urls = array(), $depth = 1)
+    public function prop_report($url, array $properties, array $event_urls = array(), $depth = 1)
     {
         $parent_tag = sizeof($event_urls) > 0 ? "c:calendar-multiget" : "c:calendar-query";
 
