@@ -363,16 +363,27 @@ class caldav_driver extends database_driver
         $props['pass'] = $prop["caldav_pass"];
         $calendars = $this->_autodiscover_calendars($props);
 
-        foreach ($calendars as $calendar)
+        if(sizeof($calendars) > 0)
         {
-            $props['url'] = self::_encode_url($calendar['href']);
-            $props['name'] = $calendar['name'];
+            $result = true;
+            foreach ($calendars as $calendar)
+            {
+                $props['url'] = self::_encode_url($calendar['href']);
+                $props['name'] = $calendar['name'];
+                if (($obj_id = parent::create_calendar($props)) !== false) {
+                    $result = $result && $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
+                }
+            }
+        }
+        else
+        {
+            // Fallback: Assume given URL as resource to a calendar.
             if (($obj_id = parent::create_calendar($props)) !== false) {
                 $result = $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
             }
         }
-        $this->_init_sync_clients();
 
+        $this->_init_sync_clients();
         return $result;
     }
 
