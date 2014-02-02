@@ -59,6 +59,9 @@ class caldav_driver extends database_driver
     public $attachments = true;
     public $alarm_types = array('DISPLAY');
 
+    // Min. time period to wait until sync check.
+    private $sync_period = 10; // seconds
+
     /**
      * Default constructor
      */
@@ -140,6 +143,7 @@ class caldav_driver extends database_driver
      *    tag: Calendar ctag or event etag.
      *   user: Authentication user in case of calendar obj.
      *   pass: Authentication password in case of calendar obj.
+     * last_change: Read-only DateTime obj of the last change.
      */
     private function _get_caldav_props($obj_id, $obj_type)
     {
@@ -175,6 +179,36 @@ class caldav_driver extends database_driver
             "WHERE obj_type = ? AND obj_id = ? ", $obj_type, $obj_id);
 
         return $this->rc->db->affected_rows($query);
+    }
+
+    /**
+     * Determines whether the given calendar is in sync regarding
+     * calendar's ctag and the configured sync period.
+     *
+     * @param int Calender id.
+     * @return boolean True if calendar is in sync, true otherwise.
+     */
+    private function _is_synced($cal_id)
+    {
+        // Atomic sql: Check for exceeded sync period and update last_change.
+        $query = $this->rc->db->query(
+            "UPDATE ".$this->db_caldav_props." ".
+            "SET last_change = CURRENT_TIMESTAMP ".
+            "WHERE obj_id = ? AND obj_type = ? ".
+            "AND last_change <= (CURRENT_TIMESTAMP - ?);",
+        $cal_id, self::OBJ_TYPE_VCAL, $this->sync_period);
+
+        if($query->rowCount() > 0)
+        {
+            $is_synced = $this->sync_clients[$cal_id]->is_synced();
+            self::debug_log("Calendar \"$cal_id\" ".($is_synced ? "is in sync" : "needs update").".");
+            return $is_synced;
+        }
+        else
+        {
+            self::debug_log("Sync period active: Assuming calendar \"$cal_id\" to be in sync.");
+            return true;
+        }
     }
 
     /**
@@ -581,7 +615,7 @@ class caldav_driver extends database_driver
     public function load_events($start, $end, $query = null, $cal_ids = null, $virtual = 1, $modifiedsince = null)
     {
         foreach($this->sync_clients as $cal_id => $cal_sync) {
-            if(!$cal_sync->is_synced())
+            if(!$this->_is_synced($cal_id))
                 $this->_sync_calendar($cal_id);
         }
 

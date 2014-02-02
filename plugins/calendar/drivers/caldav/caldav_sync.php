@@ -35,8 +35,6 @@ class caldav_sync
     private $pass = null;
     private $url = null;
 
-    private $sync_period = 10; // seconds
-
     /**
      *  Default constructor for calendar synchronization adapter.
      *
@@ -70,12 +68,8 @@ class caldav_sync
     }
 
     /**
-     * Determines whether current calendar needs to be synced.
-     *
-     * @see ical_sync::$sync_period Which defines amount of time after which the remote calendar ctag
-     *      is going to be re-checked. Within this time range, to remote sync will be triggered.
-     *
-     * @param bool Set true in order to ignore syncing period and force a check of the remote calendar ctag.
+     * Determines whether current calendar needs to be synced
+     * regarding the CalDAV ctag.
      *
      * @return True if the current calendar ctag differs from the CalDAV tag which
      *         indicates that there are changes that must be synched. Returns false
@@ -83,24 +77,10 @@ class caldav_sync
      */
     public function is_synced($force = false)
     {
-        if(!is_array($_SESSION["calendar_caldav_last_sync"]))
-            $_SESSION["calendar_caldav_last_sync"] = array();
+        $is_synced = $this->ctag == $this->caldav->get_ctag() && $this->ctag;
+        caldav_driver::debug_log("Ctag indicates that calendar \"$this->cal_id\" ".($is_synced ? "is synced." : "needs update!"));
 
-        $last_sync = $_SESSION["calendar_caldav_last_sync"][$this->cal_id];
-
-        if (!$last_sync || (time() - $last_sync) >= $this->sync_period)
-        {
-            $_SESSION["calendar_caldav_last_sync"][$this->cal_id] = time();
-            $is_synced = $this->ctag == $this->caldav->get_ctag() && $this->ctag;
-
-            caldav_driver::debug_log("Sync check: Calendar \"$this->cal_id\" ".($is_synced ? "is synced." : "needs update!"));
-            return $is_synced;
-        }
-        else
-        {
-            caldav_driver::debug_log("Next sync check for calendar \"$this->cal_id\" will be in ".($this->sync_period - (time() - $last_sync))."s.");
-            return true;
-        }
+        return $is_synced;
     }
 
     /**
