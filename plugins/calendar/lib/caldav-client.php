@@ -344,5 +344,30 @@ class caldav_client extends Sabre\DAV\Client
         }
         return false;
     }
+
+    /**
+     * Make a propFind query to caldav server
+     * @param string $path absolute or relative URL to Resource
+     * @param array $props list of properties to use for the query. Properties must have clark-notation.
+     * @param int $depth 0 means no recurse while 1 means recurse
+     * @return array
+     */
+    public function prop_find($path, $props, $depth)
+    {
+        try {
+            $response = $this->propFind($path, $props, $depth);
+        }
+        catch(Sabre\DAV\Exception $err)
+        {
+            rcube::raise_error(array(
+                'code' => $err->getHTTPCode(),
+                'type' => 'DAV',
+                'file' => $err->getFile(),
+                'line' => $err->getLine(),
+                'message' => $err->getMessage()
+            ), true, false);
+        }
+        return $response;
+    }
 };
 ?>
