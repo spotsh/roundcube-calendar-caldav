@@ -22,8 +22,8 @@
  */
 
 require_once (dirname(__FILE__).'/../database/database_driver.php');
-require_once(dirname(__FILE__) . '/caldav_sync.php');
-require_once(dirname(__FILE__) . '/../../lib/encryption.php');
+require_once (dirname(__FILE__).'/caldav_sync.php');
+require_once (dirname(__FILE__).'/../../lib/encryption.php');
 
 /**
  * TODO
@@ -214,6 +214,70 @@ class caldav_driver extends database_driver
     }
 
     /**
+     * Auto discover calenders available to the user on the caldav server
+     * @param array $props
+     *    url: Absolute URL to calendar server
+     *    user: Username
+     *    pass: Password
+     * @return array
+     *    name: Calendar display name
+     *    href: Absolute calendar URL
+     */
+    private function _autodiscover_calendars($props)
+    {
+        $calendars = array();
+        $current_user_principal = array('{DAV:}current-user-principal');
+        $calendar_home_set = array('{urn:ietf:params:xml:ns:caldav}calendar-home-set');
+        $cal_attribs = array('{DAV:}resourcetype', '{DAV:}displayname');
+
+        require_once ($this->home.'/lib/caldav-client.php');
+        $caldav = new caldav_client($props["url"], $props["user"], $props["pass"]);
+
+        $tokens = parse_url($props["url"]);
+        $base_uri = $tokens['scheme']."://".$tokens['host'];
+        $caldav_url = $props["url"];
+        $response = $caldav->prop_find($caldav_url, $current_user_principal, 0);
+        if (!$response) {
+            self::debug_log("Resource \"$caldav_url\" has no collections.");
+            return $calendars;
+        }
+        $caldav_url = $base_uri . $response[$current_user_principal[0]];
+        $response = $caldav->prop_find($caldav_url, $calendar_home_set, 0);
+        if (!$response) {
+            self::debug_log("Resource \"$caldav_url\" contains no calendars.");
+            return $calendars;
+        }
+        $caldav_url = $base_uri . $response[$calendar_home_set[0]];
+        $response = $caldav->prop_find($caldav_url, $cal_attribs, 1);
+        foreach($response as $collection => $attribs)
+        {
+            $found = false;
+            $name = '';
+            foreach($attribs as $key => $value)
+            {
+                if ($key == '{DAV:}resourcetype' && is_object($value)) {
+                    if ($value instanceof Sabre\DAV\Property\ResourceType) {
+                        $values = $value->getValue();
+                        if (in_array('{urn:ietf:params:xml:ns:caldav}calendar', $values))
+                            $found = true;
+                    }
+                }
+                else if ($key == '{DAV:}displayname') {
+                    $name = $value;
+                }
+            }
+            if ($found) {
+                array_push($calendars, array(
+                    name => $name,
+                    href => $base_uri.$collection,
+                ));
+            }
+        }
+
+        return $calendars;
+    }
+
+    /**
      * Encodes directory- and filenames using rawurlencode().
      *
      * @see http://stackoverflow.com/questions/7973790/urlencode-only-the-directory-and-file-names-of-a-url
@@ -292,18 +356,24 @@ class caldav_driver extends database_driver
      */
     public function create_calendar($prop)
     {
-        if (($obj_id = parent::create_calendar($prop)) !== false)
+        $result = false;
+        $props = $prop;
+        $props['url'] = self::_encode_url($prop["caldav_url"]);
+        $props['user'] = $prop["caldav_user"];
+        $props['pass'] = $prop["caldav_pass"];
+        $calendars = $this->_autodiscover_calendars($props);
+
+        foreach ($calendars as $calendar)
         {
-            $props = array(
-                "url" => self::_encode_url($prop["caldav_url"]),
-                "user" => $prop["caldav_user"],
-                "pass" => $prop["caldav_pass"]
-            );
-
-            return $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
+            $props['url'] = self::_encode_url($calendar['href']);
+            $props['name'] = $calendar['name'];
+            if (($obj_id = parent::create_calendar($props)) !== false) {
+                $result = $this->_set_caldav_props($obj_id, self::OBJ_TYPE_VCAL, $props);
+            }
         }
+        $this->_init_sync_clients();
 
-        return false;
+        return $result;
     }
 
     /**
