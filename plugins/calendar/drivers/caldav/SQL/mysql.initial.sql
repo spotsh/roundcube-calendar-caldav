@@ -27,10 +27,6 @@ CREATE TABLE IF NOT EXISTS `caldav_props` (
   `tag` varchar(255) DEFAULT NULL,
   `user` varchar(255) DEFAULT NULL,
   `pass` varchar(1024) DEFAULT NULL,
+  `last_change` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `obj_id` (`obj_id`,`obj_type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-/**
- * alter table caldav_props modify pass varchar(1024);
- *
- **/
