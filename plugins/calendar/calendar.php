@@ -123,6 +123,9 @@ class calendar extends rcube_plugin
 
     if ($args['task'] == 'calendar' && $args['action'] != 'save-pref') {
 
+      // Load drivers to register possible hooks.
+      $this->load_drivers();
+
       // register calendar actions
       $this->register_action('index', array($this, 'calendar_view'));
       $this->register_action('event', array($this, 'event_action'));
