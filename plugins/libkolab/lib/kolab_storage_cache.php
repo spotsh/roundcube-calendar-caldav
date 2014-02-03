@@ -29,7 +29,7 @@ class kolab_storage_cache
     protected $folder;
     protected $uid2msg;
     protected $objects;
-    protected $index = array();
+    protected $index = null;
     protected $metadata = array();
     protected $folder_id;
     protected $resource_uri;
@@ -58,8 +58,10 @@ class kolab_storage_cache
             rcube::raise_error(array(
                 'code' => 900,
                 'type' => 'php',
-                'message' => "No kolab_storage_cache class found for folder of type " . $storage_folder->type
+                'message' => "No kolab_storage_cache class found for folder '$storage_folder->name' of type '$storage_folder->type'"
             ), true);
+
+            return new kolab_storage_cache($storage_folder);
         }
     }
 
@@ -104,7 +106,7 @@ class kolab_storage_cache
         $this->resource_uri = $this->folder->get_resource_uri();
         $this->folders_table = $this->db->table_name('kolab_folders');
         $this->cache_table = $this->db->table_name('kolab_cache_' . $this->folder->type);
-        $this->ready = $this->enabled;
+        $this->ready = $this->enabled && !empty($this->folder->type);
         $this->folder_id = null;
     }
 
@@ -419,6 +421,10 @@ class kolab_storage_cache
                 $this->folder_id
             );
 
+            if ($this->db->is_error($sql_result)) {
+                return null;
+            }
+
             while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
                 if ($uids) {
                     $this->uid2msg[$sql_arr['uid']] = $sql_arr['msguid'];
@@ -434,12 +440,12 @@ class kolab_storage_cache
             $filter = $this->_query2assoc($query);
 
             // use 'list' for folder's default objects
-            if ($filter['type'] == $this->type) {
+            if (is_array($this->index) && $filter['type'] == $this->type) {
                 $index = $this->index;
             }
             else {  // search by object type
                 $search = 'UNDELETED HEADER X-Kolab-Type ' . kolab_format::KTYPE_PREFIX . $filter['type'];
-                $index = $this->imap->search_once($this->folder->name, $search)->get();
+                $index  = $this->imap->search_once($this->folder->name, $search)->get();
             }
 
             // fetch all messages in $index from IMAP
@@ -469,8 +475,6 @@ class kolab_storage_cache
      */
     public function count($query = array())
     {
-        $count = 0;
-
         // cache is in sync, we can count records in local DB
         if ($this->synched) {
             $this->_read_folder_data();
@@ -481,14 +485,23 @@ class kolab_storage_cache
                 $this->folder_id
             );
 
+            if ($this->db->is_error($sql_result)) {
+                return null;
+            }
+
             $sql_arr = $this->db->fetch_assoc($sql_result);
-            $count = intval($sql_arr['numrows']);
+            $count   = intval($sql_arr['numrows']);
         }
         else {
             // search IMAP by object type
             $filter = $this->_query2assoc($query);
             $ctype  = kolab_format::KTYPE_PREFIX . $filter['type'];
-            $index = $this->imap->search_once($this->folder->name, 'UNDELETED HEADER X-Kolab-Type ' . $ctype);
+            $index  = $this->imap->search_once($this->folder->name, 'UNDELETED HEADER X-Kolab-Type ' . $ctype);
+
+            if ($index->is_error()) {
+                return null;
+            }
+
             $count = $index->count();
         }
 
@@ -653,7 +666,9 @@ class kolab_storage_cache
             }
         }
 
-        $sql_data['data'] = serialize($data);
+        // use base64 encoding (Bug #1912, #2662)
+        $sql_data['data'] = base64_encode(serialize($data));
+
         return $sql_data;
     }
 
@@ -662,7 +677,22 @@ class kolab_storage_cache
      */
     protected function _unserialize($sql_arr)
     {
+        // check if data is a base64-encoded string, for backward compat.
+        if (strpos(substr($sql_arr['data'], 0, 64), ':') === false) {
+            $sql_arr['data'] = base64_decode($sql_arr['data']);
+        }
+
         $object = unserialize($sql_arr['data']);
+
+        // de-serialization failed
+        if ($object === false) {
+            rcube::raise_error(array(
+                'code' => 900, 'type' => 'php',
+                'message' => "Malformed data for {$this->resource_uri}/{$sql_arr['msguid']} object."
+            ), true);
+
+            return null;
+        }
 
         // decode binary properties
         foreach ($this->binary_items as $key => $regexp) {
@@ -672,10 +702,10 @@ class kolab_storage_cache
         }
 
         // add meta data
-        $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
-        $object['_msguid'] = $sql_arr['msguid'];
-        $object['_mailbox'] = $this->folder->name;
-        $object['_size'] = strlen($sql_arr['xml']);
+        $object['_type']      = $sql_arr['type'] ?: $this->folder->type;
+        $object['_msguid']    = $sql_arr['msguid'];
+        $object['_mailbox']   = $this->folder->name;
+        $object['_size']      = strlen($sql_arr['xml']);
         $object['_formatobj'] = kolab_format::factory($object['_type'], 3.0, $sql_arr['xml']);
 
         return $object;

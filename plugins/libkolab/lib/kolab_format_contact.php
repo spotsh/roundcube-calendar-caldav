@@ -107,8 +107,8 @@ class kolab_format_contact extends kolab_format
 
         if (isset($object['nickname']))
             $this->obj->setNickNames(self::array2vector($object['nickname']));
-        if (isset($object['profession']))
-            $this->obj->setTitles(self::array2vector($object['profession']));
+        if (isset($object['jobtitle']))
+            $this->obj->setTitles(self::array2vector($object['jobtitle']));
 
         // organisation related properties (affiliation)
         $org = new Affiliation;
@@ -117,17 +117,17 @@ class kolab_format_contact extends kolab_format
             $org->setOrganisation($object['organization']);
         if ($object['department'])
             $org->setOrganisationalUnits(self::array2vector($object['department']));
-        if ($object['jobtitle'])
-            $org->setRoles(self::array2vector($object['jobtitle']));
+        if ($object['profession'])
+            $org->setRoles(self::array2vector($object['profession']));
 
         $rels = new vectorrelated;
-        if ($object['manager']) {
-            foreach ((array)$object['manager'] as $manager)
-                $rels->push(new Related(Related::Text, $manager, Related::Manager));
-        }
-        if ($object['assistant']) {
-            foreach ((array)$object['assistant'] as $assistant)
-                $rels->push(new Related(Related::Text, $assistant, Related::Assistant));
+        foreach (array('manager','assistant') as $field) {
+            if (!empty($object[$field])) {
+                $reltype = $this->relatedmap[$field];
+                foreach ((array)$object[$field] as $value) {
+                    $rels->push(new Related(Related::Text, $value, $reltype));
+                }
+            }
         }
         $org->setRelateds($rels);
 
@@ -219,12 +219,13 @@ class kolab_format_contact extends kolab_format
 
         // spouse and children are relateds
         $rels = new vectorrelated;
-        if ($object['spouse']) {
-            $rels->push(new Related(Related::Text, $object['spouse'], Related::Spouse));
-        }
-        if ($object['children']) {
-            foreach ((array)$object['children'] as $child)
-                $rels->push(new Related(Related::Text, $child, Related::Child));
+        foreach (array('spouse','children') as $field) {
+            if (!empty($object[$field])) {
+                $reltype = $this->relatedmap[$field];
+                foreach ((array)$object[$field] as $value) {
+                    $rels->push(new Related(Related::Text, $value, $reltype));
+                }
+            }
         }
         $this->obj->setRelateds($rels);
 
@@ -296,7 +297,7 @@ class kolab_format_contact extends kolab_format
         $object['prefix']     = join(' ', self::vector2array($nc->prefixes()));
         $object['suffix']     = join(' ', self::vector2array($nc->suffixes()));
         $object['nickname']   = join(' ', self::vector2array($this->obj->nickNames()));
-        $object['profession'] = join(' ', self::vector2array($this->obj->titles()));
+        $object['jobtitle']   = join(' ', self::vector2array($this->obj->titles()));
         $object['categories'] = self::vector2array($this->obj->categories());
 
         // organisation related properties (affiliation)
@@ -304,7 +305,7 @@ class kolab_format_contact extends kolab_format
         if ($orgs->size()) {
             $org = $orgs->get(0);
             $object['organization']   = $org->organisation();
-            $object['jobtitle']       = join(' ', self::vector2array($org->roles()));
+            $object['profession']     = join(' ', self::vector2array($org->roles()));
             $object['department']     = join(' ', self::vector2array($org->organisationalUnits()));
             $this->read_relateds($org->relateds(), $object);
         }
@@ -347,10 +348,10 @@ class kolab_format_contact extends kolab_format
         $object['freebusyurl'] = $this->obj->freeBusyUrl();
 
         if ($bday = self::php_datetime($this->obj->bDay()))
-            $object['birthday'] = $bday->format('c');
+            $object['birthday'] = $bday;
 
         if ($anniversary = self::php_datetime($this->obj->anniversary()))
-            $object['anniversary'] = $anniversary->format('c');
+            $object['anniversary'] = $anniversary;
 
         $gendermap = array_flip($this->gendermap);
         if (($g = $this->obj->gender()) && $gendermap[$g])

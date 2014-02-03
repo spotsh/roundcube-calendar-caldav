@@ -31,6 +31,7 @@
 class kolab_auth extends rcube_plugin
 {
     static $ldap;
+    private $username;
     private $data = array();
 
     public function init()
@@ -54,10 +55,13 @@ class kolab_auth extends rcube_plugin
         // Hook to modify some configuration, e.g. ldap
         $this->add_hook('config_get', array($this, 'config_get'));
 
+        // Hook to modify logging directory
         $this->add_hook('write_log', array($this, 'write_log'));
+        $this->username = $_SESSION['username'];
 
-        // TODO: This section does not actually seem to work
-        if ($rcmail->config->get('kolab_auth_auditlog', false)) {
+        // Enable debug logs per-user, this enables logging only after
+        // user has logged in
+        if (!empty($_SESSION['username']) && $rcmail->config->get('kolab_auth_auditlog')) {
             $rcmail->config->set('debug_level', 1);
             $rcmail->config->set('devel_mode', true);
             $rcmail->config->set('smtp_log', true);
@@ -149,24 +153,28 @@ class kolab_auth extends rcube_plugin
 
         if (!empty($role_plugins)) {
             foreach ($role_plugins as $role_dn => $plugins) {
-                $role_plugins[self::parse_ldap_vars($role_dn)] = $plugins;
+                $role_dn = self::parse_ldap_vars($role_dn);
+                if (!empty($role_plugins[$role_dn])) {
+                    $role_plugins[$role_dn] = array_unique(array_merge((array)$role_plugins[$role_dn], $plugins));
+                } else {
+                    $role_plugins[$role_dn] = $plugins;
+                }
             }
         }
 
         if (!empty($role_settings)) {
             foreach ($role_settings as $role_dn => $settings) {
-                $role_settings[self::parse_ldap_vars($role_dn)] = $settings;
+                $role_dn = self::parse_ldap_vars($role_dn);
+                if (!empty($role_settings[$role_dn])) {
+                    $role_settings[$role_dn] = array_merge((array)$role_settings[$role_dn], $settings);
+                } else {
+                    $role_settings[$role_dn] = $settings;
+                }
             }
         }
 
         foreach ($_SESSION['user_roledns'] as $role_dn) {
-            if (isset($role_plugins[$role_dn]) && is_array($role_plugins[$role_dn])) {
-                foreach ($role_plugins[$role_dn] as $plugin) {
-                    $this->require_plugin($plugin);
-                }
-            }
-
-            if (isset($role_settings[$role_dn]) && is_array($role_settings[$role_dn])) {
+            if (!empty($role_settings[$role_dn]) && is_array($role_settings[$role_dn])) {
                 foreach ($role_settings[$role_dn] as $setting_name => $setting) {
                     if (!isset($setting['mode'])) {
                         $setting['mode'] = 'override';
@@ -188,7 +196,7 @@ class kolab_auth extends rcube_plugin
 
                     $dont_override = (array) $rcmail->config->get('dont_override');
 
-                    if (!isset($setting['allow_override']) || !$setting['allow_override']) {
+                    if (empty($setting['allow_override'])) {
                         $rcmail->config->set('dont_override', array_merge($dont_override, array($setting_name)));
                     }
                     else {
@@ -202,6 +210,19 @@ class kolab_auth extends rcube_plugin
                             $rcmail->config->set('dont_override', $_dont_override);
                         }
                     }
+
+                    if ($setting_name == 'skin') {
+                        if ($rcmail->output->type == 'html') {
+                            $rcmail->output->set_skin($setting['value']);
+                            $rcmail->output->set_env('skin', $setting['value']);
+                        }
+                    }
+                }
+            }
+
+            if (!empty($role_plugins[$role_dn])) {
+                foreach ((array)$role_plugins[$role_dn] as $plugin) {
+                    $this->require_plugin($plugin);
                 }
             }
         }
@@ -215,42 +236,26 @@ class kolab_auth extends rcube_plugin
             return $args;
         }
 
-        $args['abort'] = true;
+        // log_driver == 'file' is assumed here
+        $log_dir  = $rcmail->config->get('log_dir', RCUBE_INSTALL_PATH . 'logs');
 
-        if ($rcmail->config->get('log_driver') == 'syslog') {
-            $prio = $args['name'] == 'errors' ? LOG_ERR : LOG_INFO;
-            syslog($prio, $args['line']);
-            return $args;
+        // Append original username + target username for audit-logging
+        if ($rcmail->config->get('kolab_auth_auditlog') && !empty($_SESSION['kolab_auth_admin'])) {
+            $args['dir'] = $log_dir . '/' . strtolower($_SESSION['kolab_auth_admin']) . '/' . strtolower($this->username);
+
+            // Attempt to create the directory
+            if (!is_dir($args['dir'])) {
+                @mkdir($args['dir'], 0750, true);
+            }
         }
-        else {
-            $line = sprintf("[%s]: %s\n", $args['date'], $args['line']);
-
-            // log_driver == 'file' is assumed here
-            $log_dir  = $rcmail->config->get('log_dir', INSTALL_PATH . 'logs');
-            $log_path = $log_dir.'/'.strtolower($_SESSION['kolab_auth_admin']).'/'.strtolower($_SESSION['username']);
-
-            // Append original username + target username
-            if (!is_dir($log_path)) {
-                // Attempt to create the directory
-                if (@mkdir($log_path, 0750, true)) {
-                    $log_dir = $log_path;
-                }
+        // Define the user log directory if a username is provided
+        else if ($rcmail->config->get('per_user_logging') && !empty($this->username)) {
+            $user_log_dir = $log_dir . '/' . strtolower($this->username);
+            if (is_writable($user_log_dir)) {
+                $args['dir'] = $user_log_dir;
             }
-            else {
-                $log_dir = $log_path;
-            }
-
-            // try to open specific log file for writing
-            $logfile = $log_dir.'/'.$args['name'];
-
-            if ($fp = fopen($logfile, 'a')) {
-                fwrite($fp, $line);
-                fflush($fp);
-                fclose($fp);
-                return $args;
-            }
-            else {
-                trigger_error("Error writing to log file $logfile; Please check permissions", E_USER_WARNING);
+            else if ($args['name'] != 'errors') {
+                $args['abort'] = true;  // don't log if unauthenticed
             }
         }
 
@@ -336,9 +341,13 @@ class kolab_auth extends rcube_plugin
             return $args;
         }
 
+        // temporarily set the current username to the one submitted
+        $this->username = $user;
+
         $ldap = self::ldap();
         if (!$ldap || !$ldap->ready) {
             $args['abort'] = true;
+            $args['kolab_ldap_error'] = true;
             $message = sprintf(
                     'Login failure for user %s from %s in session %s (error %s)',
                     $user,
@@ -384,12 +393,12 @@ class kolab_auth extends rcube_plugin
             $_SESSION['user_roledns'] = (array)($record[$role_attr]);
         }
 
-        if (!empty($imap_attr) && !empty($record[$role_attr])) {
+        if (!empty($imap_attr) && !empty($record[$imap_attr])) {
             $default_host = $rcmail->config->get('default_host');
             if (!empty($default_host)) {
                 rcube::write_log("errors", "Both default host and kolab_auth_mailhost set. Incompatible.");
             } else {
-                $args['host'] = "tls://" . $record[$role_attr];
+                $args['host'] = "tls://" . $record[$imap_attr];
             }
         }
 
@@ -465,7 +474,7 @@ class kolab_auth extends rcube_plugin
                 return $args;
             }
 
-            $args['user'] = $loginas;
+            $args['user'] = $this->username = $loginas;
 
             // Mark session to use SASL proxy for IMAP authentication
             $_SESSION['kolab_auth_admin']    = strtolower($origname);
@@ -488,7 +497,7 @@ class kolab_auth extends rcube_plugin
             $this->data['user_login'] = is_array($record[$login_attr]) ? $record[$login_attr][0] : $record[$login_attr];
         }
         if ($this->data['user_login']) {
-            $args['user'] = $this->data['user_login'];
+            $args['user'] = $this->username = $this->data['user_login'];
         }
 
         // User name for identity (first log in)

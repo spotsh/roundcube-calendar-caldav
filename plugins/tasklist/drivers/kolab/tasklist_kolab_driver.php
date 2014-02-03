@@ -174,6 +174,7 @@ class tasklist_kolab_driver extends tasklist_driver
     {
         $prop['type'] = 'task' . ($prop['default'] ? '.default' : '');
         $prop['active'] = true; // activate folder by default
+        $prop['subscribed'] = true;
         $folder = kolab_storage::folder_update($prop);
 
         if ($folder === false) {
