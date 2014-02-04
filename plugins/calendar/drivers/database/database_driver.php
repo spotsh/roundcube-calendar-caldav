@@ -74,7 +74,7 @@ class database_driver extends calendar_driver
   /**
    * Read available calendars for the current user and store them internally
    */
-  private function _read_calendars()
+  protected function _read_calendars()
   {
     $hidden = array_filter(explode(',', $this->rc->config->get('hidden_calendars', '')));
     

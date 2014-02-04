@@ -424,12 +424,11 @@ class caldav_driver extends database_driver
             }
         }
 
-        // Initialize sync clients for new calendars. Explicit specify the list of calendars
-        // to avoid _init_sync_clients() to use list_calendars() which returns an cached and
-        // out-dated list of calendars.
-        $this->_init_sync_clients($cal_ids);
+        // Re-read calendars to internal buffer.
+        $this->_read_calendars();
 
-        // Initial sync of calendars.
+        // Initial sync of newly created calendars.
+        $this->_init_sync_clients($cal_ids);
         foreach($cal_ids as $cal_id){
             $this->_sync_calendar($cal_id);
         }
