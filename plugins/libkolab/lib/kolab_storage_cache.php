@@ -231,14 +231,14 @@ class kolab_storage_cache
                 );
 
                 if ($sql_arr = $this->db->fetch_assoc($sql_result)) {
-                    $this->objects[$msguid] = $this->_unserialize($sql_arr);
+                    $this->objects = array($msguid => $this->_unserialize($sql_arr));  // store only this object in memory (#2827)
                 }
             }
 
             // fetch from IMAP if not present in cache
             if (empty($this->objects[$msguid])) {
                 $result = $this->_fetch(array($msguid), $type, $foldername);
-                $this->objects[$msguid] = $result[0];
+                $this->objects = array($msguid => $result[0]);  // store only this object in memory (#2827)
             }
         }
 
@@ -409,14 +409,16 @@ class kolab_storage_cache
      */
     public function select($query = array(), $uids = false)
     {
-        $result = array();
+        $result = $uids ? array() : new kolab_storage_dataset($this);
 
         // read from local cache DB (assume it to be synchronized)
         if ($this->ready) {
             $this->_read_folder_data();
 
+            // fetch full object data on one query if a small result set is expected
+            $fetchall = !$uids && $this->count($query) < 500;
             $sql_result = $this->db->query(
-                "SELECT " . ($uids ? 'msguid, uid' : '*') . " FROM $this->cache_table ".
+                "SELECT " . (!$fetchall ? 'msguid, msguid AS _msguid, uid' : '*') . " FROM $this->cache_table ".
                 "WHERE folder_id=? " . $this->_sql_where($query),
                 $this->folder_id
             );
@@ -430,8 +432,12 @@ class kolab_storage_cache
                     $this->uid2msg[$sql_arr['uid']] = $sql_arr['msguid'];
                     $result[] = $sql_arr['uid'];
                 }
-                else if ($object = $this->_unserialize($sql_arr)) {
+                else if ($fetchall && ($object = $this->_unserialize($sql_arr))) {
                     $result[] = $object;
+                }
+                else {
+                    // only add msguid to dataset index
+                    $result[] = $sql_arr;
                 }
             }
         }
@@ -459,7 +465,7 @@ class kolab_storage_cache
         if (!$uids && count($result) == 1) {
             if ($msguid = $result[0]['_msguid']) {
                 $this->uid2msg[$result[0]['uid']] = $msguid;
-                $this->objects[$msguid] = $result[0];
+                $this->objects = array($msguid => $result[0]);
             }
         }
 
@@ -578,7 +584,7 @@ class kolab_storage_cache
      */
     protected function _fetch($index, $type = null, $folder = null)
     {
-        $results = array();
+        $results = new kolab_storage_dataset($this);
         foreach ((array)$index as $msguid) {
             if ($object = $this->folder->read_object($msguid, $type, $folder)) {
                 $results[] = $object;
