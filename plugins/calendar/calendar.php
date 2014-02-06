@@ -1496,7 +1496,7 @@ class calendar extends rcube_plugin
 
   /**
    * TEMPORARY: generate random event data for testing
-   * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=randomdata&_num=500
+   * Create events by opening http://<roundcubeurl>/?_task=calendar&_action=randomdata&_num=500&_driver=<driver>
    */
   public function generate_randomdata()
   {
