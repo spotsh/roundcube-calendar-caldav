@@ -233,7 +233,7 @@ class kolab_calendar
     }
 
     $events = array();
-    foreach ((array)$this->storage->select($query) as $record) {
+    foreach ($this->storage->select($query) as $record) {
       $event = $this->_to_rcube_event($record);
       $this->events[$event['id']] = $event;
 

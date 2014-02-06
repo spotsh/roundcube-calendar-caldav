@@ -167,7 +167,7 @@ class kolab_config extends rcube_plugin
             if ($default && !$folder->default)
                 continue;
 
-            foreach ((array)$folder->select($query) as $object) {
+            foreach ($folder->select($query) as $object) {
                 if ($object['type'] == 'dictionary' && ($object['language'] == $lang || $object['language'] == 'XX')) {
                     if (is_array($this->dicts[$lang]))
                         $this->dicts[$lang]['e'] = array_merge((array)$this->dicts[$lang]['e'], $object['e']);
