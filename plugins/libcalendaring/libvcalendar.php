@@ -292,7 +292,7 @@ class libvcalendar implements Iterator
             $this->method = strval($vobject->METHOD);
             $this->agent  = strval($vobject->PRODID);
 
-            foreach ($vobject->getBaseComponents() as $ve) {
+            foreach ($vobject->getBaseComponents() ?: $vobject->getComponents() as $ve) {
                 if ($ve->name == 'VEVENT' || $ve->name == 'VTODO') {
                     // convert to hash array representation
                     $object = $this->_to_array($ve);
@@ -424,7 +424,7 @@ class libvcalendar implements Iterator
                 break;
 
             case 'RECURRENCE-ID':
-                // $event['recurrence_id'] = self::convert_datetime($prop);
+                $event['recurrence_date'] = self::convert_datetime($prop);
                 break;
 
             case 'RELATED-TO':
