@@ -1500,7 +1500,8 @@ class calendar extends rcube_plugin
    */
   public function generate_randomdata()
   {
-    $driver = $this->get_drivers()[0];
+    $driver = $this->get_driver_by_gpc();
+    )
     $num   = $_REQUEST['_num'] ? intval($_REQUEST['_num']) : 100;
     $cats  = array_keys($driver->list_categories());
     $cals  = $driver->list_calendars(true);
