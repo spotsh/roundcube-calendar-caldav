@@ -424,7 +424,7 @@ class kolab_storage_cache
             );
 
             if ($this->db->is_error($sql_result)) {
-                return null;
+                return $result;
             }
 
             while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
