@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class kolab_storage_dataset implements Iterator, ArrayAccess
+class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 {
     private $cache;  // kolab_storage_cache instance to use for fetching data
     private $memlimit = 0;
@@ -47,6 +47,14 @@ class kolab_storage_dataset implements Iterator, ArrayAccess
             $this->memlimit = parse_bytes(ini_get('memory_limit')) / 5;
             $this->buffer = true;
         }
+    }
+
+
+    /*** Implement PHP Countable interface ***/
+
+    public function count()
+    {
+        return count($this->index);
     }
 
 
