@@ -31,7 +31,7 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
     private $buffer = false;
     private $index = array();
     private $data = array();
-    private $iteratorkey = -1;
+    private $iteratorkey = 0;
 
     /**
      * Default constructor
