@@ -424,7 +424,10 @@ class kolab_storage_cache
             );
 
             if ($this->db->is_error($sql_result)) {
-                if (!$uids) $result->set_error(true);
+                if ($uids) {
+                    return null;
+                }
+                $result->set_error(true);
                 return $result;
             }
 
