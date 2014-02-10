@@ -49,6 +49,10 @@ class kolab_storage_cache_contact extends kolab_storage_cache
         if (is_array($sql_data['email'])) {
             $sql_data['email'] = $sql_data['email']['address'];
         }
+        // avoid value being null
+        if (empty($sql_data['email'])) {
+            $sql_data['email'] = '';
+        }
 
         return $sql_data;
     }
