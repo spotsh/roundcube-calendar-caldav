@@ -43,6 +43,8 @@ class kolab_storage_cache
     protected $max_sync_lock_time = 600;
     protected $binary_items = array();
     protected $extra_cols = array();
+    protected $order_by = null;
+    protected $limit = null;
 
 
     /**
@@ -87,6 +89,24 @@ class kolab_storage_cache
             $this->set_folder($storage_folder);
     }
 
+    /**
+     * Direct access to cache by folder_id
+     * (only for internal use)
+     */
+    public function select_by_id($folder_id)
+    {
+        $folders_table = $this->db->table_name('kolab_folders');
+        $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT * FROM $folders_table WHERE folder_id=?", $folder_id));
+        if ($sql_arr) {
+            $this->metadata = $sql_arr;
+            $this->folder_id = $sql_arr['folder_id'];
+            $this->folder = new StdClass;
+            $this->folder->type = $sql_arr['type'];
+            $this->resource_uri = $sql_arr['resource'];
+            $this->cache_table = $this->db->table_name('kolab_cache_' . $sql_arr['type']);
+            $this->ready = true;
+        }
+    }
 
     /**
      * Connect cache with a storage folder
@@ -416,12 +436,15 @@ class kolab_storage_cache
             $this->_read_folder_data();
 
             // fetch full object data on one query if a small result set is expected
-            $fetchall = !$uids && $this->count($query) < 500;
-            $sql_result = $this->db->query(
-                "SELECT " . ($fetchall ? '*' : 'msguid AS _msguid, uid') . " FROM $this->cache_table ".
-                "WHERE folder_id=? " . $this->_sql_where($query),
-                $this->folder_id
-            );
+            $fetchall = !$uids && ($this->limit ? $this->limit[0] : $this->count($query)) < 500;
+            $sql_query = "SELECT " . ($fetchall ? '*' : 'msguid AS _msguid, uid') . " FROM $this->cache_table ".
+                         "WHERE folder_id=? " . $this->_sql_where($query);
+            if (!empty($this->order_by)) {
+                $sql_query .= ' ORDER BY ' . $this->order_by;
+            }
+            $sql_result = $this->limit ?
+                $this->db->limitquery($sql_query, $this->limit[1], $this->limit[0], $this->folder_id) :
+                $this->db->query($sql_query, $this->folder_id);
 
             if ($this->db->is_error($sql_result)) {
                 if ($uids) {
@@ -518,6 +541,26 @@ class kolab_storage_cache
         return $count;
     }
 
+    /**
+     * Define ORDER BY clause for cache queries
+     */
+    public function set_order_by($sortcols)
+    {
+        if (!empty($sortcols)) {
+            $this->order_by = join(', ', (array)$sortcols);
+        }
+        else {
+            $this->order_by = null;
+        }
+    }
+
+    /**
+     * Define LIMIT clause for cache queries
+     */
+    public function set_limit($length, $offset = 0)
+    {
+        $this->limit = array($length, $offset);
+    }
 
     /**
      * Helper method to compose a valid SQL query from pseudo filter triplets

@@ -23,7 +23,7 @@
 
 class kolab_storage_cache_contact extends kolab_storage_cache
 {
-    protected $extra_cols = array('type');
+    protected $extra_cols = array('type','name','firstname','surname','email');
     protected $binary_items = array(
         'photo'          => '|<photo><uri>[^;]+;base64,([^<]+)</uri></photo>|i',
         'pgppublickey'   => '|<key><uri>date:application/pgp-keys;base64,([^<]+)</uri></key>|i',
@@ -39,6 +39,16 @@ class kolab_storage_cache_contact extends kolab_storage_cache
     {
         $sql_data = parent::_serialize($object);
         $sql_data['type'] = $object['_type'];
+
+        // columns for sorting
+        $sql_data['name']      = $object['name'] . $object['prefix'];
+        $sql_data['firstname'] = $object['firstname'] . $object['middlename'] . $object['surname'];
+        $sql_data['surname']   = $object['surname']   . $object['firstname']  . $object['middlename'];
+        $sql_data['email']     = is_array($object['email']) ? $object['email'][0] : $object['email'];
+
+        if (is_array($sql_data['email'])) {
+            $sql_data['email'] = $sql_data['email']['address'];
+        }
 
         return $sql_data;
     }
