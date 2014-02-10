@@ -418,19 +418,19 @@ class kolab_storage_cache
             // fetch full object data on one query if a small result set is expected
             $fetchall = !$uids && $this->count($query) < 500;
             $sql_result = $this->db->query(
-                "SELECT " . (!$fetchall ? 'msguid, msguid AS _msguid, uid' : '*') . " FROM $this->cache_table ".
+                "SELECT " . ($fetchall ? '*' : 'msguid AS _msguid, uid') . " FROM $this->cache_table ".
                 "WHERE folder_id=? " . $this->_sql_where($query),
                 $this->folder_id
             );
 
             if ($this->db->is_error($sql_result)) {
-                $result->set_error(true);
+                if (!$uids) $result->set_error(true);
                 return $result;
             }
 
             while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
                 if ($uids) {
-                    $this->uid2msg[$sql_arr['uid']] = $sql_arr['msguid'];
+                    $this->uid2msg[$sql_arr['uid']] = $sql_arr['_msguid'];
                     $result[] = $sql_arr['uid'];
                 }
                 else if ($fetchall && ($object = $this->_unserialize($sql_arr))) {
