@@ -32,6 +32,7 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
     private $index = array();
     private $data = array();
     private $iteratorkey = 0;
+    private $error = null;
 
     /**
      * Default constructor
@@ -47,6 +48,22 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
             $this->memlimit = parse_bytes(ini_get('memory_limit')) / 5;
             $this->buffer = true;
         }
+    }
+
+    /**
+     * Return error state
+     */
+    public function is_error()
+    {
+        return !empty($this->error);
+    }
+
+    /**
+     * Set error state
+     */
+    public function set_error($err)
+    {
+        $this->error = $err;
     }
 
 
