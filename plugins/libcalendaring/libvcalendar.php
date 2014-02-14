@@ -963,7 +963,7 @@ class libvcalendar implements Iterator
         }
 
         // append recurrence exceptions
-        if ($event['recurrence']['EXCEPTIONS']) {
+        if (isset($event['recurrence']['EXCEPTIONS']) && is_array($event['recurrence']['EXCEPTIONS'])) {
             foreach ($event['recurrence']['EXCEPTIONS'] as $ex) {
                 $exdate = clone $event['start'];
                 $exdate->setDate($ex['start']->format('Y'), $ex['start']->format('n'), $ex['start']->format('j'));
