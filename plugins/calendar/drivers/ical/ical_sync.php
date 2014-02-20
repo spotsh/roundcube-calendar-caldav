@@ -84,7 +84,7 @@ class ical_sync
             foreach ($this->ical->import($vcal) as $remote_event) {
 
                 // Attach remote event to current calendar
-                $remote_events["calendar"] = $this->cal_id;
+                $remote_event["calendar"] = $this->cal_id;
 
                 $local_event = null;
                 if($events_hash[$remote_event['uid']])
