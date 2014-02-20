@@ -659,6 +659,9 @@ class tasklist extends rcube_plugin
         if (in_array($rec['id'], $this->collapsed_tasks))
           $rec['collapsed'] = true;
 
+        if (empty($rec['parent_id']))
+            $rec['parent_id'] = null;
+
         $this->task_titles[$rec['id']] = $rec['title'];
     }
 
