@@ -31,8 +31,6 @@ class ical_sync
     private $url = null;
     private $ical = null;
 
-    private $sync_period = 300; // seconds
-
     /**
      *  Default constructor for calendar synchronization adapter.
      *
@@ -50,29 +48,12 @@ class ical_sync
     /**
      * Determines whether current calendar needs to be synced.
      *
-     * @see ical_sync::$sync_period Which defines amount of time after which the remote calendar ctag
-     *      is going to be re-checked. Within this time range, to remote sync will be triggered.
-     *
      * @return True if the current calendar needs to be synced, false otherwise.
      */
     public function is_synced()
     {
-        if(!is_array($_SESSION["calendar_ical_last_sync"]))
-            $_SESSION["calendar_ical_last_sync"] = array();
-
-        $last_sync = $_SESSION["calendar_ical_last_sync"][$this->cal_id];
-
-        if(!$last_sync || (time() - $last_sync) >= $this->sync_period)
-        {
-            $_SESSION["calendar_ical_last_sync"][$this->cal_id] = time();
-            ical_driver::debug_log("Sync check: Calendar \"$this->cal_id\" needs to be synced!");
-            return false;
-        }
-        else
-        {
-            ical_driver::debug_log("Sync check: Calendar \"$this->cal_id\" is in sync!");
-            return true;
-        }
+        // No change to check that so far.
+        return false;
     }
 
     /**

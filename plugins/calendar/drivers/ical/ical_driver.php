@@ -37,8 +37,6 @@ class ical_driver extends database_driver
     const OBJ_TYPE_VEVENT = "vevent";
     const OBJ_TYPE_VTODO = "vtodo";
 
-    private $sync_clients = array();
-
     private $db_ical_props = 'ical_props';
     private $db_events = 'events';
     private $db_calendars = 'calendars';
@@ -55,6 +53,11 @@ class ical_driver extends database_driver
     public $freebusy = false;
     public $attachments = true;
     public $alarm_types = array('DISPLAY');
+
+    private $sync_clients = array();
+
+    // Min. time period to wait until sync check.
+    private $sync_period = 10; // seconds
 
     /**
      * Default constructor
@@ -149,6 +152,35 @@ class ical_driver extends database_driver
     }
 
     /**
+     * Determines whether the given calendar is in sync regarding the configured sync period.
+     *
+     * @param int Calender id.
+     * @return boolean True if calendar is in sync, true otherwise.
+     */
+    private function _is_synced($cal_id)
+    {
+        // Atomic sql: Check for exceeded sync period and update last_change.
+        $query = $this->rc->db->query(
+            "UPDATE ".$this->db_ical_props." ".
+            "SET last_change = CURRENT_TIMESTAMP ".
+            "WHERE obj_id = ? AND obj_type = ? ".
+            "AND last_change <= (CURRENT_TIMESTAMP - ?);",
+            $cal_id, self::OBJ_TYPE_ICAL, $this->sync_period);
+
+        if($query->rowCount() > 0)
+        {
+            $is_synced = $this->sync_clients[$cal_id]->is_synced();
+            self::debug_log("Calendar \"$cal_id\" ".($is_synced ? "is in sync" : "needs update").".");
+            return $is_synced;
+        }
+        else
+        {
+            self::debug_log("Sync period active: Assuming calendar \"$cal_id\" to be in sync.");
+            return true;
+        }
+    }
+
+    /**
      * Get a list of available calendars from this source
      *
      * @param bool $active Return only active calendars
@@ -177,15 +209,19 @@ class ical_driver extends database_driver
 
     /**
      * Initializes calendar sync clients.
+     *
+     * @param array $cal_ids Optional list of calendar ids. If empty, caldav_driver::list_calendars()
+     *              will be used to retrieve a list of calendars.
      */
-    private function _init_sync_clients()
+    private function _init_sync_clients($cal_ids = array())
     {
-        foreach($this->list_calendars() as $cal)
+        if(sizeof($cal_ids) == 0) $cal_ids = array_keys($this->list_calendars());
+        foreach($cal_ids as $cal_id)
         {
-            $props = $this->_get_ical_props($cal["id"], self::OBJ_TYPE_ICAL);
+            $props = $this->_get_ical_props($cal_id, self::OBJ_TYPE_ICAL);
             if ($props !== false) {
-                self::debug_log("Initialize sync client for calendar " . $cal["id"]);
-                $this->sync_clients[$cal["id"]] = new ical_sync($cal["id"], $props);
+                self::debug_log("Initialize sync client for calendar " . $cal_id);
+                $this->sync_clients[$cal_id] = new ical_sync($cal_id, $props);
             }
         }
     }
@@ -243,15 +279,23 @@ class ical_driver extends database_driver
      */
     public function create_calendar($prop)
     {
+        $result = false;
         if (($obj_id = parent::create_calendar($prop)) !== false) {
             $props = array(
                 "url" => self::_encode_url($prop["ical_url"])
             );
 
-            return $this->_set_ical_props($obj_id, self::OBJ_TYPE_ICAL, $props);
+            $result = $this->_set_ical_props($obj_id, self::OBJ_TYPE_ICAL, $props);
         }
 
-        return false;
+        // Re-read calendars to internal buffer.
+        $this->_read_calendars();
+
+        // Initial sync of newly created calendars.
+        $this->_init_sync_clients(array($obj_id));
+        $this->_sync_calendar($obj_id);
+
+        return $result;
     }
 
     /**
@@ -406,7 +450,7 @@ class ical_driver extends database_driver
     public function load_events($start, $end, $query = null, $cal_ids = null, $virtual = 1, $modifiedsince = null)
     {
         foreach ($this->sync_clients as $cal_id => $cal_sync) {
-            if (!$cal_sync->is_synced())
+            if (!$this->_is_synced($cal_id))
                 $this->_sync_calendar($cal_id);
         }
 
