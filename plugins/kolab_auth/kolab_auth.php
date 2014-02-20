@@ -530,6 +530,9 @@ class kolab_auth extends rcube_plugin
                 $args['user'], $origname, rcube_utils::remote_ip()));
         }
 
+        // load per-user settings/plugins
+        $this->load_user_role_plugins_and_settings();
+
         return $args;
     }
 
