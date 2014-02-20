@@ -196,8 +196,21 @@ class tasklist extends rcube_plugin
         case 'edit':
             $rec = $this->prepare_task($rec);
             if ($success = $this->driver->edit_task($rec)) {
-                $refresh = $this->driver->get_task($rec);
+                $refresh[] = $this->driver->get_task($rec);
                 $this->cleanup_task($rec);
+
+                // move all childs if list assignment was changed
+                if (!empty($rec['_fromlist']) && !empty($rec['list']) && $rec['_fromlist'] != $rec['list']) {
+                    foreach ($this->driver->get_childs(array('id' => $rec['id'], 'list' => $rec['_fromlist']), true) as $cid) {
+                        $child = array('id' => $cid, 'list' => $rec['list'], '_fromlist' => $rec['_fromlist']);
+                        if ($this->driver->move_task($child)) {
+                            $r = $this->driver->get_task($child);
+                            if ((bool)($filter & self::FILTER_MASK_COMPLETE) == ($r['complete'] == 1.0)) {
+                                $refresh[] = $r;
+                            }
+                        }
+                    }
+                }
             }
             break;
 
@@ -210,7 +223,7 @@ class tasklist extends rcube_plugin
                       $success = true;
 
                       // move all childs, too
-                      foreach ($this->driver->get_childs(array('id' => $rec['id'], 'list' => $rec['_fromlist'])) as $cid) {
+                      foreach ($this->driver->get_childs(array('id' => $rec['id'], 'list' => $rec['_fromlist']), true) as $cid) {
                           $child = $rec;
                           $child['id'] = $cid;
                           if ($this->driver->move_task($child)) {
