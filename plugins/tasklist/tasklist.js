@@ -1307,7 +1307,7 @@ function rcube_tasklist_ui(settings)
 
             // task assigned to a new list
             if (me.selected_task.list && listdata[id] && me.selected_task.list != listdata[id].list) {
-                me.selected_task._fromlist = rec.list;
+                me.selected_task._fromlist = list.id;
             }
 
             me.selected_task.complete = complete.val() / 100;
