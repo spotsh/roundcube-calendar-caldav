@@ -172,4 +172,4 @@ CREATE TABLE `kolab_cache_freebusy` (
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
 
-INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013121100');
+INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2014021000');
