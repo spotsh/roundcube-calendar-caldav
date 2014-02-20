@@ -38,8 +38,6 @@ class caldav_driver extends database_driver
     const OBJ_TYPE_VEVENT = "vevent";
     const OBJ_TYPE_VTODO = "vtodo";
 
-    private $sync_clients = array();
-
     private $db_caldav_props = 'caldav_props';
     private $db_events = 'events';
     private $db_calendars = 'calendars';
@@ -58,6 +56,9 @@ class caldav_driver extends database_driver
     public $freebusy = false;
     public $attachments = true;
     public $alarm_types = array('DISPLAY');
+
+
+    private $sync_clients = array();
 
     // Min. time period to wait until sync check.
     private $sync_period = 10; // seconds
