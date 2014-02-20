@@ -57,7 +57,7 @@ class ical_driver extends database_driver
     private $sync_clients = array();
 
     // Min. time period to wait until sync check.
-    private $sync_period = 10; // seconds
+    private $sync_period = 600; // seconds
 
     /**
      * Default constructor
