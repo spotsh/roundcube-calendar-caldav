@@ -52,7 +52,7 @@ class caldav_client extends Sabre\DAV\Client
         $this->libvcal = new libvcalendar();
 
         $tokens = parse_url($uri);
-        $this->base_uri = $tokens['scheme']."://".$tokens['host'];
+        $this->base_uri = $tokens['scheme']."://".$tokens['host'].($tokens['port'] ? ":".$tokens['port'] : nul
         $this->path = $tokens['path'].($tokens['query'] ? "?".$tokens['query'] : null);
 
         $settings = array(

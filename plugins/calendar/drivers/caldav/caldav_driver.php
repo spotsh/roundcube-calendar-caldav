@@ -273,7 +273,7 @@ class caldav_driver extends database_driver
         $caldav = new caldav_client($props["url"], $props["user"], $props["pass"]);
 
         $tokens = parse_url($props["url"]);
-        $base_uri = $tokens['scheme']."://".$tokens['host'];
+        $base_uri = $tokens['scheme']."://".$tokens['host'].($tokens['port'] ? ":".$tokens['port'] : null);
         $caldav_url = $props["url"];
         $response = $caldav->prop_find($caldav_url, $current_user_principal, 0);
         if (!$response) {
