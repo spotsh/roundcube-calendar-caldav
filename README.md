@@ -68,7 +68,8 @@ Troubleshooting
     $config['calendar_ical_debug'] = true;
     ```
 
-* If you find any bugs, please fill an issue in our [bug tracker](https://gitlab.awesome-it.de/kolab/roundcube-plugins/issues).
+
+If you find any bugs, please fill an issue in our [bug tracker](https://gitlab.awesome-it.de/kolab/roundcube-plugins/issues).
 
 License
 =======
