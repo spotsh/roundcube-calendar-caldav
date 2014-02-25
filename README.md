@@ -1,6 +1,6 @@
 CalDAV/iCAL Support for Roundcube Calendar
 ==========================================
-This repository was forked from <a href="http://git.kolab.org/roundcubemail-plugins-kolab/">roundcubemail-plugins-kolab</a> and contains a modified version of the Roundcube calendar plugin that enables client support for CalDAV and iCAL calendar resources. We added a feature branch <a href="https://gitlab.awesome-it.de/kolab/roundcube-plugins/tree/feature_caldav">feature_caldav</a> with the modified calendar plugin and we try to frequently merge the latest release tags from upstream. You can find further information and a short introduction to this plugin on our <a href="http://awesome-it.de/2014/02/22/Kolab-CalDAV-iCAL/">website</a>.
+This repository was forked from [roundcubemail-plugins-kolab](http://git.kolab.org/roundcubemail-plugins-kolab) and contains a modified version of the Roundcube calendar plugin that enables client support for CalDAV and iCAL calendar resources. We added a feature branch [feature_caldav](https://gitlab.awesome-it.de/kolab/roundcube-plugins/tree/feature_caldav) with the modified calendar plugin and we try to frequently merge the latest release tags from upstream. You can find further information and a short introduction to this plugin on our [website](http://awesome-it.de/2014/02/22/Kolab-CalDAV-iCAL/).
 
 Requirements
 ============
@@ -68,7 +68,7 @@ Troubleshooting
     $config['calendar_ical_debug'] = true;
     ```
 
-* If you find any bugs, please fill an issue in our <a href="https://gitlab.awesome-it.de/kolab/roundcube-plugins/issues">bug tracker</a>.
+* If you find any bugs, please fill an issue in our [bug tracker](https://gitlab.awesome-it.de/kolab/roundcube-plugins/issues).
 
 License
 =======
