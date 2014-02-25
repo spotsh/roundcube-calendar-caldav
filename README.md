@@ -61,13 +61,12 @@ Installation
 Troubleshooting
 ===============
 
-* Enabling debug mode in `config.inc.php` will output additional debug information to `/path/to/your/roundcube/logs/console`:
+Enabling debug mode in `config.inc.php` will output additional debug information to `/path/to/your/roundcube/logs/console`:
 
-    ```php
-    $config['calendar_caldav_debug'] = true;
-    $config['calendar_ical_debug'] = true;
-    ```
-
+```php
+$config['calendar_caldav_debug'] = true;
+$config['calendar_ical_debug'] = true;
+```
 
 If you find any bugs, please fill an issue in our [bug tracker](https://gitlab.awesome-it.de/kolab/roundcube-plugins/issues).
 
