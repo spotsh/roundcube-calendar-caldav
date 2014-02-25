@@ -72,6 +72,10 @@ Troubleshooting
 
 License
 =======
+
+Calendar Modificatons
+---------------------
+
 Copyright (C) 2014, Awesome Information Technology GbR <info@awesome-it.de>
  
 This program is free software: you can redistribute it and/or modify
@@ -86,3 +90,7 @@ GNU Affero General Public License for more details.
  
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+Kolab Plugins
+-------------
+See http://git.kolab.org/roundcubemail-plugins-kolab/tree/plugins/calendar/LICENSE.
