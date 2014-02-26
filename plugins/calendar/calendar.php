@@ -2122,7 +2122,12 @@ class calendar extends rcube_plugin
     if ($success) {
       $message = $this->ical->method == 'REPLY' ? 'attendeupdateesuccess' : ($deleted ? 'successremoval' : 'importedsuccessfully');
       $this->rc->output->command('display_message', $this->gettext(array('name' => $message, 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
-      $this->rc->output->command('plugin.fetch_event_rsvp_status', array('uid' => $event['uid'], 'changed' => $event['changed']->format('U'), 'sequence' => intval($event['sequence']), 'fallback' => strtoupper($status)));
+      $this->rc->output->command('plugin.fetch_event_rsvp_status', array(
+          'uid' => $event['uid'],
+          'changed' => is_object($event['changed']) ? $event['changed']->format('U') : 0,
+          'sequence' => intval($event['sequence']),
+          'fallback' => strtoupper($status),
+      ));
       $error_msg = null;
     }
     else if ($error_msg)
