@@ -443,14 +443,8 @@ class libvcalendar implements Iterator
 
             case 'LOCATION':
             case 'DESCRIPTION':
-                if ($this->is_apple()) {
-                    $event[strtolower($prop->name)] = str_replace('\,', ',', $prop->value);
-                    break;
-                }
-                // else: fall through
-
             case 'URL':
-                $event[strtolower($prop->name)] = $prop->value;
+                $event[strtolower($prop->name)] = str_replace('\,', ',', $prop->value);
                 break;
 
             case 'CATEGORY':

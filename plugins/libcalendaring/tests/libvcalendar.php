@@ -183,6 +183,19 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * 
+     */
+    function test_escaped_values()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/escaped.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals("House, Street, Zip Place", $event['location'], "Decode escaped commas in location value");
+        $this->assertEquals("Me, meets Them\nThem, meet Me", $event['description'], "Decode description value");
+    }
+
+    /**
      * @depends test_import
      */
     function test_freebusy()
