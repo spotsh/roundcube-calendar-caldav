@@ -154,6 +154,28 @@ class calendar extends rcube_plugin
           // @TODO: do EXPUNGE on kolab objects?
         }
       }
+
+      // loading preinstalled calendars
+      $preinstalled_calendars = $this->rc->config->get('calendar_preinstalled_calendars', FALSE);
+      if ($preinstalled_calendars && is_array($preinstalled_calendars)) {
+          
+          foreach ($preinstalled_calendars as $index => $cal){
+              $preinstalled_calendars[$index] = str_replace('%u', $this->rc->get_user_name(), $cal); 
+              $preinstalled_calendars[$index] = str_replace('%p', $this->rc->get_user_password(), $preinstalled_calendars[$index]);
+          }
+        
+          foreach ($this->get_drivers() as $driver_name => $driver) {
+              foreach ($preinstalled_calendars as $cal) {
+                  if ($driver_name == $cal['driver']) {    
+                      if (!$driver->insert_default_calendar($cal)) {
+                          $error_msg = 'Unable to add default calendars' . ($driver && $driver->last_error ? ': ' . $driver->last_error :'');
+                          $this->rc->output->show_message($error_msg, 'error');
+                      }
+                  }
+              }
+          }
+      }
+
     }
     else if ($args['task'] == 'settings') {
       // add hooks for Calendar settings

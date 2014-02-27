@@ -128,4 +128,24 @@ $rcmail_config['calendar_itip_smtp_pass'] = '123456';
 // %i - Calendar UUID
 // $rcmail_config['calendar_caldav_url'] = 'http://%h/iRony/calendars/%u/%i';
 
+// Pre-installed calendars, added at first access to calendar section
+// Caldav driver is supported only
+// $rcmail_config['calendar_preinstalled_calendars'] = array(
+//    'Caldav' => array(
+//                    'driver'      => 'caldav',    
+//                    'caldav_user' => '%u',
+//                    'caldav_pass' => '%p',
+//                    'caldav_url'  => 'http://example.caldav.org/%u/calendar/',
+//                    'color'       => 'cccc00',
+//                    'showAlarms'  => 1),
+//    'Other' => array(
+//                    'driver'          => 'other',
+//                    'other_user'      => 'user@example.other.org',
+//                    'other_pass'      => 'password',
+//                    'other_url'       => 'http://example.other.org/user@example.other.org/other',
+//                    'color'           => 'cc0000',
+//                    'other_property1' => 'value1',
+//          		  'other_property2' => 'value2',
+//                    'showAlarms'      => 1));
+
 ?>
