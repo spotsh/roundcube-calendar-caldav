@@ -1427,6 +1427,7 @@ div.calendar-invitebox .rsvp-status.tentative {
 
 .calendaritipattend .centerbox {
 	width: 40em;
+	min-height: 7em;
 	margin: 80px auto 0 auto;
 	padding: 10px 10px 10px 90px;
 	background: url(images/invitation.png) 10px 10px no-repeat #fff;

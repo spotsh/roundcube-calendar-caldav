@@ -1758,6 +1758,8 @@ class calendar extends rcube_plugin
   public function itip_attend_response($p)
   {
     if ($p['action'] == 'attend') {
+      $this->ui->init();
+
       $this->rc->output->set_env('task', 'calendar');  // override some env vars
       $this->rc->output->set_env('refresh_interval', 0);
       $this->rc->output->set_pagetitle($this->gettext('calendar'));
