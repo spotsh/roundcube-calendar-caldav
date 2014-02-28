@@ -1476,8 +1476,10 @@ class calendar extends rcube_plugin
     }
 
     // mapping url => vurl because of the fullcalendar client script
-    $event['url'] = $event['vurl'];
-    unset($event['vurl']);
+    if (array_key_exists('vurl', $event)) {
+      $event['url'] = $event['vurl'];
+      unset($event['vurl']);
+    }
   }
 
   /**
