@@ -47,6 +47,7 @@ class libvcalendar implements Iterator
     private $iteratorkey = 0;
     private $charset;
     private $forward_exceptions;
+    private $vhead;
     private $fp;
 
     public $method;
@@ -100,6 +101,7 @@ class libvcalendar implements Iterator
      */
     public function reset()
     {
+        $this->vhead = '';
         $this->method = '';
         $this->objects = array();
         $this->freebusy = array();
@@ -201,16 +203,7 @@ class libvcalendar implements Iterator
             return false;
         }
 
-        // read vcalendar header (with timezone defintion)
-        $this->vhead = '';
         fseek($this->fp, 0);
-        while (($line = fgets($this->fp, 512)) !== false) {
-            if (preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $line))
-                break;
-            $this->vhead .= $line;
-        }
-        fseek($this->fp, -strlen($line), SEEK_CUR);
-
         return $this->_parse_next();
     }
 
@@ -268,10 +261,31 @@ class libvcalendar implements Iterator
     private function _next_component()
     {
         $buffer = '';
+        $vcalendar_head = false;
         while (($line = fgets($this->fp, 1024)) !== false) {
-            $buffer .= $line;
-            if (preg_match('/END:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
-                break;
+            // ignore END:VCALENDAR lines
+            if (preg_match('/END:VCALENDAR/i', $line)) {
+                continue;
+            }
+            // read vcalendar header (with timezone defintion)
+            if (preg_match('/BEGIN:VCALENDAR/i', $line)) {
+                $this->vhead = '';
+                $vcalendar_head = true;
+            }
+
+            // end of VCALENDAR header part
+            if ($vcalendar_head && preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
+                $vcalendar_head = false;
+            }
+
+            if ($vcalendar_head) {
+                $this->vhead .= $line;
+            }
+            else {
+                $buffer .= $line;
+                if (preg_match('/END:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
+                    break;
+                }
             }
         }
 

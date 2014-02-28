@@ -74,6 +74,23 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEmpty($events);
     }
 
+    /**
+     * Test parsing from files with multiple VCALENDAR blocks (#2884)
+     */
+    function test_import_from_file_multiple()
+    {
+        $ical = new libvcalendar();
+        $ical->fopen(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
+        $events = array();
+        foreach ($ical as $event) {
+            $events[] = $event;
+        }
+
+        $this->assertEquals(2, count($events));
+        $this->assertEquals("AAAA6A8C3CCE4EE2C1257B5C00FFFFFF-Lotus_Notes_Generated", $events[0]['uid']);
+        $this->assertEquals("AAAA1C572093EC3FC125799C004AFFFF-Lotus_Notes_Generated", $events[1]['uid']);
+    }
+
     function test_invalid_dates()
     {
         $ical = new libvcalendar();
