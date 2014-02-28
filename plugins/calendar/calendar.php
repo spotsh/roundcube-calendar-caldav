@@ -1287,6 +1287,23 @@ class calendar extends rcube_plugin
    */
   private function _recurrence_text($rrule)
   {
+    // derive missing FREQ and INTERVAL from RDATE list
+    if (empty($rrule['FREQ']) && !empty($rrule['RDATE'])) {
+      $first = $rrule['RDATE'][0];
+      $second = $rrule['RDATE'][1];
+      if (is_a($first, 'DateTime') && is_a($second, 'DateTime')) {
+        $diff = $first->diff($second);
+        foreach (array('y' => 'YEARLY', 'm' => 'MONTHLY', 'd' => 'DAILY') as $k => $freq) {
+          if ($diff->$k != 0) {
+            $rrule['FREQ'] = $freq;
+            $rrule['INTERVAL'] = $diff->$k;
+            break;
+          }
+        }
+      }
+      $rrule['UNTIL'] = end($rrule['RDATE']);
+    }
+
     // TODO: finish this
     $freq = sprintf('%s %d ', $this->gettext('every'), $rrule['INTERVAL']);
     $details = '';

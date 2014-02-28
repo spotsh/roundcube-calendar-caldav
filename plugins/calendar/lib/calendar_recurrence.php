@@ -60,6 +60,10 @@ class calendar_recurrence
       foreach ($event['recurrence']['EXDATE'] as $exdate)
         $this->engine->addException($exdate->format('Y'), $exdate->format('n'), $exdate->format('j'));
     }
+    if (is_array($event['recurrence']['RDATE'])) {
+      foreach ($event['recurrence']['RDATE'] as $rdate)
+        $this->engine->addRDate($rdate->format('Y'), $rdate->format('n'), $rdate->format('j'));
+    }
   }
 
   /**
