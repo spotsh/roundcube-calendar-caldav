@@ -367,8 +367,8 @@ class libvcalendar implements Iterator
     private function _to_array($ve)
     {
         $event = array(
-            'uid'     => strval($ve->UID),
-            'title'   => strval($ve->SUMMARY),
+            'uid'     => self::convert_string($ve->UID),
+            'title'   => self::convert_string($ve->SUMMARY),
             '_type'   => $ve->name == 'VTODO' ? 'task' : 'event',
             // set defaults
             'priority' => 0,
@@ -434,7 +434,11 @@ class libvcalendar implements Iterator
                 break;
 
             case 'EXDATE':
-                $event['recurrence']['EXDATE'] = array_merge((array)$event['recurrence']['EXDATE'], (array)self::convert_datetime($prop));
+                $event['recurrence']['EXDATE'] = array_merge((array)$event['recurrence']['EXDATE'], self::convert_datetime($prop, true));
+                break;
+
+            case 'RDATE':
+                $event['recurrence']['RDATE'] = array_merge((array)$event['recurrence']['RDATE'], self::convert_datetime($prop, true));
                 break;
 
             case 'RECURRENCE-ID':
@@ -458,7 +462,7 @@ class libvcalendar implements Iterator
             case 'LOCATION':
             case 'DESCRIPTION':
             case 'URL':
-                $event[strtolower($prop->name)] = str_replace('\,', ',', $prop->value);
+                $event[strtolower($prop->name)] = self::convert_string($prop);
                 break;
 
             case 'CATEGORY':
@@ -671,12 +675,20 @@ class libvcalendar implements Iterator
     }
 
     /**
+     *
+     */
+    public static function convert_string($prop)
+    {
+        return str_replace('\,', ',', strval($prop->value));
+    }
+
+    /**
      * Helper method to correctly interpret an all-day date value
      */
-    public static function convert_datetime($prop)
+    public static function convert_datetime($prop, $as_array = false)
     {
         if (empty($prop)) {
-            return null;
+            return $as_array ? array() : null;
         }
         else if ($prop instanceof VObject\Property\MultiDateTime) {
             $dt = array();
@@ -692,8 +704,36 @@ class libvcalendar implements Iterator
                 $dt->_dateonly = true;
             }
         }
+        else if ($prop instanceof VObject\Property && ($prop['VALUE'] == 'DATE' || $prop['VALUE'] == 'DATE-TIME')) {
+            try {
+                list($type, $dt) = VObject\Property\DateTime::parseData($prop->value, $prop);
+                $dt->_dateonly = ($type & VObject\Property\DateTime::DATE);
+            }
+            catch (Exception $e) {
+                // ignore date parse errors
+            }
+        }
+        else if ($prop instanceof VObject\Property && $prop['VALUE'] == 'PERIOD') {
+            $dt = array();
+            foreach(explode(',', $prop->value) as $val) {
+                try {
+                    list($start, $end) = explode('/', $val);
+                    list($type, $item) = VObject\Property\DateTime::parseData($start, $prop);
+                    $item->_dateonly = ($type & VObject\Property\DateTime::DATE);
+                    $dt[] = $item;
+                }
+                catch (Exception $e) {
+                    // ignore single date parse errors
+                }
+            }
+        }
         else if ($prop instanceof DateTime) {
             $dt = $prop;
+        }
+
+        // force return value to array if requested
+        if ($as_array && !is_array($dt)) {
+            $dt = empty($dt) ? array() : array($dt);
         }
 
         return $dt;
@@ -838,8 +878,13 @@ class libvcalendar implements Iterator
             if ($exdates = $event['recurrence']['EXDATE']) {
                 unset($event['recurrence']['EXDATE']);  // don't serialize EXDATEs into RRULE value
             }
+            if ($rdates = $event['recurrence']['RDATE']) {
+                unset($event['recurrence']['RDATE']);  // don't serialize RDATEs into RRULE value
+            }
 
-            $ve->add('RRULE', libcalendaring::to_rrule($event['recurrence']));
+            if ($event['recurrence']['FREQ']) {
+                $ve->add('RRULE', libcalendaring::to_rrule($event['recurrence']));
+            }
 
             // add EXDATEs each one per line (for Thunderbird Lightning)
             if ($exdates) {
@@ -851,6 +896,13 @@ class libvcalendar implements Iterator
                         $ve->add(new VObject\Property('EXDATE', $exd->format('Ymd\\THis\\Z')));
                     }
                 }
+            }
+            // add RDATEs
+            if (!empty($rdates)) {
+                $sample = self::datetime_prop('RDATE', $rdates[0]);
+                $rdprop = new VObject\Property\MultiDateTime('RDATE', null);
+                $rdprop->setDateTimes($rdates, $sample->getDateType());
+                $ve->add($rdprop);
             }
         }
 

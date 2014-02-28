@@ -213,6 +213,19 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Parse RDATE properties (#2885)
+     */
+    function test_rdate()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals(9, count($event['recurrence']['RDATE']));
+        $this->assertInstanceOf('DateTime', $event['recurrence']['RDATE'][0]);
+    }
+
+    /**
      * @depends test_import
      */
     function test_freebusy()
@@ -363,7 +376,19 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertContains('RECURRENCE-ID;VALUE=DATE-TIME:20131113', $ics, "Recurrence-ID (2) being the exception date");
         $this->assertContains('SUMMARY:'.$exception2['title'], $ics, "Exception title");
     }
-    
+
+    /**
+     *
+     */
+    function test_export_rdate()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
+        $ics = $ical->export($events, null, false);
+
+        $this->assertContains('RDATE;VALUE=DATE-TIME:20140520T020000Z', $ics, "VALUE=PERIOD is translated into single DATE-TIME values");
+    }
+
     /**
      * @depends test_export
      */
