@@ -346,7 +346,6 @@ class kolab_calendar
     if (!$old || PEAR::isError($old))
       return false;
 
-    $old['recurrence'] = '';  # clear old field, could have been removed in new, too
     $object = $this->_from_rcube_event($event, $old);
     $saved = $this->storage->save($object, 'event', $event['id']);
 
@@ -647,6 +646,11 @@ class kolab_calendar
       $event['attendees'] = array(array('role' => 'ORGANIZER', 'name' => $identity['name'], 'email' => $identity['email']));
 
     $event['_owner'] = $identity['email'];
+
+    # copy RDATE values as the UI doesn't yet support these
+    if (empty($event['recurrence']['FREQ']) && $old['recurrence']['RDATE'] && empty($old['recurrence']['FREQ'])) {
+      $event['recurrence']['RDATE'] = $old['recurrence']['RDATE'];
+    }
 
     // remove some internal properties which should not be saved
     unset($event['_savemode'], $event['_fromcalendar'], $event['_identity']);
