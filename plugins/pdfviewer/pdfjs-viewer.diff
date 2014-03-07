@@ -1,5 +1,5 @@
---- viewer/viewer.html.orig	2014-01-20 16:22:49.000000000 +0100
-+++ viewer/viewer.html	2014-01-20 16:38:37.000000000 +0100
+--- viewer/viewer.html.orig	2014-03-07 11:40:58.000000000 +0100
++++ viewer/viewer.html	2014-03-07 11:44:02.000000000 +0100
 @@ -31,12 +31,12 @@
  <!-- This snippet is used in production, see Makefile -->
  <link rel="resource" type="application/l10n" href="locale/locale.properties"/>
@@ -61,8 +61,8 @@
                    <span data-l10n-id="bookmark_label">Current View</span>
                  </a>
  
---- viewer/viewer.js.orig	2014-01-20 16:22:49.000000000 +0100
-+++ viewer/viewer.js	2014-01-20 16:32:24.000000000 +0100
+--- viewer/viewer.js.orig	2014-03-07 11:40:40.000000000 +0100
++++ viewer/viewer.js	2014-03-07 11:32:44.000000000 +0100
 @@ -23,7 +23,7 @@
  
  'use strict';
@@ -81,45 +81,3 @@
  
  var mozL10n = document.mozL10n || document.webL10n;
  
-@@ -1581,9 +1581,9 @@
-       // (except for toggleHandTool, hand_tool.js is responsible for it):
-       { element: this.presentationModeButton,
-         handler: this.presentationModeClick },
--      { element: this.openFile, handler: this.openFileClick },
-+      //{ element: this.openFile, handler: this.openFileClick },
-       { element: this.print, handler: this.printClick },
--      { element: this.download, handler: this.downloadClick },
-+      //{ element: this.download, handler: this.downloadClick },
-       { element: this.firstPage, handler: this.firstPageClick },
-       { element: this.lastPage, handler: this.lastPageClick },
-       { element: this.pageRotateCw, handler: this.pageRotateCwClick },
-@@ -4806,8 +4806,8 @@
-   document.body.appendChild(fileInput);
- 
-   if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
--    document.getElementById('openFile').setAttribute('hidden', 'true');
--    document.getElementById('secondaryOpenFile').setAttribute('hidden', 'true');
-+    //document.getElementById('openFile').setAttribute('hidden', 'true');
-+    //document.getElementById('secondaryOpenFile').setAttribute('hidden', 'true');
-   } else {
-     document.getElementById('fileInput').value = null;
-   }
-@@ -4970,14 +4970,14 @@
-   document.getElementById('presentationMode').addEventListener('click',
-     SecondaryToolbar.presentationModeClick.bind(SecondaryToolbar));
- 
--  document.getElementById('openFile').addEventListener('click',
--    SecondaryToolbar.openFileClick.bind(SecondaryToolbar));
-+//  document.getElementById('openFile').addEventListener('click',
-+//    SecondaryToolbar.openFileClick.bind(SecondaryToolbar));
- 
-   document.getElementById('print').addEventListener('click',
-     SecondaryToolbar.printClick.bind(SecondaryToolbar));
- 
--  document.getElementById('download').addEventListener('click',
--    SecondaryToolbar.downloadClick.bind(SecondaryToolbar));
-+//  document.getElementById('download').addEventListener('click',
-+//    SecondaryToolbar.downloadClick.bind(SecondaryToolbar));
- 
- 
-   PDFView.open(file, 0);
