@@ -336,6 +336,33 @@ class caldav_driver extends database_driver
     }
 
     /**
+     * Add default (pre-installation provisioned) calendar. If calendars from 
+     * same url exist, insertion does not take place.  
+     *
+     * @param array $props
+     *    caldav_url: Absolute URL to calendar server collection
+     *    caldav_user: Username
+     *    caldav_pass: Password
+     *    color: Events color
+     *    showAlarms:  
+     * @return bool false on creation error, true otherwise
+     *    
+     */
+    public function insert_default_calendar($props) {
+        $found = FALSE;
+        foreach ($this->list_calendars() as $cal) {
+            $vcal_info = $this->_get_caldav_props($cal['id'], self::OBJ_TYPE_VCAL);
+            if ($vcal_info['url'] == self::_encode_url($props['caldav_url'])) {
+                $found = TRUE;
+            }
+        }
+        if (!$found) {
+            return $this->create_calendar($props);
+        } 
+        return TRUE;
+    }
+
+    /**
      * Callback function to produce driver-specific calendar create/edit form
      *
      * @param string Request action 'form-edit|form-new'
