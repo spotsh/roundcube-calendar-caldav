@@ -122,10 +122,10 @@ class pdfviewer extends rcube_plugin
      */
     private function abs_url($relpath = '')
     {
-        $webroot = '';
+        $webroot = '/';
 
         if (dirname($_SERVER['SCRIPT_NAME']) != '/')
-            $webroot .= dirname($_SERVER['SCRIPT_NAME']) . '/';
+            $webroot = dirname($_SERVER['SCRIPT_NAME']) . '/';
 
         return $webroot . preg_replace('!^\./!', '', $relpath);
     }
