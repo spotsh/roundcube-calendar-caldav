@@ -287,9 +287,10 @@ class calendar extends rcube_plugin
    * Helper method to get the driver by GPC input, e.g. "_driver" or "driver"
    * property specified in POST/GET or COOKIE variables.
    *
+   * @param boolean $quiet = false Indicates where to raise an error if no driver was found in GPC
    * @return mixed Driver object or null if no such driver exists.
    */
-  public function get_driver_by_gpc()
+  public function get_driver_by_gpc($quiet = false)
   {
     $this->load_drivers();
     $driver_name = null;
@@ -315,8 +316,12 @@ class calendar extends rcube_plugin
     }
     else
     {
-      rcube::raise_error("No driver name found in GPC.", true, true);
+      if(!$quiet) {
+        rcube::raise_error("No driver name found in GPC.", true, true);
+      }
     }
+
+    return null;
   }
 
   /**

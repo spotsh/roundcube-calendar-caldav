@@ -361,12 +361,13 @@ class calendar_ui
    */
   function alarm_select($attrib = array())
   {
-    // TODO: Don't know what this does but it seems that it is called very early where no GPC information is available.
-    foreach ($this->cal->get_drivers() as $driver) {
-       $attrib[] = $this->cal->lib->alarm_select($attrib, $driver->alarm_types, $driver->alarm_absolute);
-	}
+    // Try GPC
+    $driver = $this->cal->get_driver_by_gpc(true /* quiet */);
 
-	return $attrib;
+    // We assume that each calendar has equal alarm types, so fallback to default calendar is ok.
+    if(!$driver) $driver = $this->cal->get_default_driver();
+
+    return $this->cal->lib->alarm_select($attrib, $driver->alarm_types, $driver->alarm_absolute);
   }
 
   /**
