@@ -84,7 +84,7 @@ If you find any bugs, please fill an issue in our [bug tracker](https://gitlab.a
 License
 =======
 
-Calendar Modificatons
+CalDAV/iCAL Extension
 ---------------------
 
 Copyright (C) 2014, Awesome Information Technology GbR <info@awesome-it.de>
