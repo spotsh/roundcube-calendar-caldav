@@ -25,8 +25,10 @@ Installation
     $ ln -s plugins-caldav/plugins/calendar plugins/calendar
     ```
 
-    :exclamation: This assumes that your are already using a compatible version of the Kolab Roundcubemail Plugins. E.g. if you checkout `roundcubemail-plugins-kolab-caldav-3.1.11-r1`, `roundcubemail-plugins-kolab-3.1.11` or similar should be installed.
-    If you want to use Roundcubemail without Kolab, you should place all plugins from the `feature_caldav` branch into your plugins folder.
+
+    :exclamation: This assumes that there is already a compatible version of the Kolab Roundcubemail Plugins installed. 
+    E.g. if you checkout `roundcubemail-plugins-kolab-caldav-3.1.11-r1`, `roundcubemail-plugins-kolab-3.1.11` or similar should be installed.
+    If you use Roundcubemail without Kolab, you should put all plugins from the `feature_caldav` branch into your plugins folder.
 
 * Copy `plugins/calendar.orig/config.inc.php` to the new plugin folder and modify accordingly:
 
@@ -35,7 +37,8 @@ Installation
     $ vi plugins/calendar/config.inc.php
     ```
 
-    :exclamation: If you replace existing Kolab Roundcubemail Plugins as described above, make sure to copy the configuration files of those plugins to the new plugin folders as well.
+
+    :exclamation: If you replace existing Kolab Roundcubemail Plugins as described above, make sure to copy the configuration files of those plugins to the new plugin folders!
 
 * The calendar setting `calendar_driver` now accepts an array with calendar drivers you want to enable:
 
