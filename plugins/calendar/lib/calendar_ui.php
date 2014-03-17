@@ -392,6 +392,7 @@ class calendar_ui
         $select->add($this->cal->gettext('weekly'), 'WEEKLY');
         $select->add($this->cal->gettext('monthly'), 'MONTHLY');
         $select->add($this->cal->gettext('yearly'), 'YEARLY');
+        $select->add($this->cal->gettext('rdate'), 'RDATE');
         $html = html::label('edit-frequency', $this->cal->gettext('frequency')) . $select->show('');
         break;
 
@@ -479,6 +480,13 @@ class calendar_ui
         $table->add(null, $radio->show('', array('value' => 'until', 'id' => 'edit-recurrence-repeat-until')) . ' ' .
           $this->cal->gettext('untildate') . ' ' . $input->show(''));
         $html = $table->show();
+        break;
+
+      case 'rdate':
+        $ul = html::tag('ul', array('id' => 'edit-recurrence-rdates'), '');
+        $input = new html_inputfield(array('name' => 'rdate', 'id' => 'edit-recurrence-rdate-input', 'size' => "10"));
+        $button = new html_inputfield(array('type' => 'button', 'class' => 'button add', 'value' => $this->cal->gettext('addrdate')));
+        $html .= html::div($attrib, $ul . html::div('inputform', $input->show() . $button->show()));
         break;
     }
 

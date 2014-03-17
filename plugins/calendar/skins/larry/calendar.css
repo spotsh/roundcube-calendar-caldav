@@ -602,6 +602,31 @@ td.topalign {
 	display: none;
 }
 
+#edit-recurrence-rdates {
+	display: block;
+	list-style: none;
+	margin: 0 0 0.8em 0;
+	padding: 0;
+	max-height: 300px;
+	overflow: auto;
+}
+
+#edit-recurrence-rdates li {
+	display: block;
+	position: relative;
+	width: 12em;
+	padding: 4px 0 4px 0;
+}
+
+#edit-recurrence-rdates li a.delete {
+	position: absolute;
+	top: 2px;
+	right: 0;
+	width: 20px;
+	height: 18px;
+	background-position: -7px -337px;
+}
+
 #eventedit .formtable td {
 	padding: 0.2em 0;
 }

@@ -746,6 +746,7 @@ class libcalendaring extends rcube_plugin
             case 'UNTIL':
                 $val = $val->format('Ymd\THis');
                 break;
+            case 'RDATE':
             case 'EXDATE':
                 foreach ((array)$val as $i => $ex)
                     $val[$i] = $ex->format('Ymd\THis');

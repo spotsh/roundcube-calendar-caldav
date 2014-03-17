@@ -799,6 +799,8 @@ class database_driver extends calendar_driver
           $rr[2] = intval($rr[2]);
         else if ($rr[1] == 'UNTIL')
           $rr[2] = date_create($rr[2]);
+        else if ($rr[1] == 'RDATE')
+          $rr[2] = array_map('date_create', explode(',', $rr[2]));
         else if ($rr[1] == 'EXDATE')
           $rr[2] = array_map('date_create', explode(',', $rr[2]));
         $event['recurrence'][$rr[1]] = $rr[2];

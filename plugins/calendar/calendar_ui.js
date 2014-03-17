@@ -514,11 +514,12 @@ function rcube_calendar_ui(settings)
       var recurrence, interval, rrtimes, rrenddate;
       var load_recurrence_tab = function()
       {
-        recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ : '').change();
+        recurrence = $('#edit-recurrence-frequency').val(event.recurrence ? event.recurrence.FREQ || (event.recurrence.RDATE ? 'RDATE' : '') : '').change();
         interval = $('#eventedit select.edit-recurrence-interval').val(event.recurrence ? event.recurrence.INTERVAL : 1);
         rrtimes = $('#edit-recurrence-repeat-times').val(event.recurrence ? event.recurrence.COUNT : 1);
         rrenddate = $('#edit-recurrence-enddate').val(event.recurrence && event.recurrence.UNTIL ? $.fullCalendar.formatDate(parseISO8601(event.recurrence.UNTIL), settings['date_format']) : '');
         $('#eventedit input.edit-recurrence-until:checked').prop('checked', false);
+        $('#edit-recurrence-rdates').html('');
       
         var weekdays = ['SU','MO','TU','WE','TH','FR','SA'];
         var rrepeat_id = '#edit-recurrence-repeat-forever';
@@ -550,6 +551,11 @@ function rcube_calendar_ui(settings)
         }
         else if (event.start) {
           $('input.edit-recurrence-yearly-bymonth').val([String(event.start.getMonth()+1)]);
+        }
+        if (event.recurrence && event.recurrence.RDATE) {
+          $.each(event.recurrence.RDATE, function(i,rdate){
+            add_rdate(parseISO8601(rdate));
+          });
         }
       };
       
@@ -714,6 +720,16 @@ function rcube_calendar_ui(settings)
               data.recurrence.BYMONTH = bymonth.join(',');
             if ((byday = $('#edit-recurrence-yearly-byday').val()))
               data.recurrence.BYDAY = $('#edit-recurrence-yearly-prefix').val() + byday;
+          }
+          else if (freq == 'RDATE') {
+            data.recurrence = { RDATE:[] };
+            // take selected but not yet added date into account
+            if ($('#edit-recurrence-rdate-input').val() != '') {
+              $('#recurrence-form-rdate input.button.add').click();
+            }
+            $('#edit-recurrence-rdates li').each(function(i, li){
+              data.recurrence.RDATE.push($(li).attr('data-value'));
+            });
           }
         }
 
@@ -1565,6 +1581,34 @@ function rcube_calendar_ui(settings)
         me.saving_lock = rcmail.set_busy(true, 'calendar.savingdata');
         rcmail.http_post('event', { action:'rsvp', e:me.selected_event, status:response });
       }
+    };
+    
+    // add the given date to the RDATE list
+    var add_rdate = function(date)
+    {
+      var li = $('<li>')
+        .attr('data-value', date2servertime(date))
+        .html('<span>' + Q($.fullCalendar.formatDate(date, settings['date_format'])) + '</span>')
+        .appendTo('#edit-recurrence-rdates');
+
+      $('<a>').attr('href', '#del')
+        .addClass('iconbutton delete')
+        .html(rcmail.get_label('delete', 'calendar'))
+        .attr('title', rcmail.get_label('delete', 'calendar'))
+        .appendTo(li);
+    };
+
+    // re-sort the list items by their 'data-value' attribute
+    var sort_rdates = function()
+    {
+      var mylist = $('#edit-recurrence-rdates'),
+        listitems = mylist.children('li').get();
+      listitems.sort(function(a, b) {
+         var compA = $(a).attr('data-value');
+         var compB = $(b).attr('data-value');
+         return (compA < compB) ? -1 : (compA > compB) ? 1 : 0;
+      })
+      $.each(listitems, function(idx, item) { mylist.append(item); });
     }
     
     // post the given event data to server
@@ -2763,13 +2807,31 @@ function rcube_calendar_ui(settings)
       $('#edit-recurrence-frequency').change(function(e){
         var freq = $(this).val().toLowerCase();
         $('.recurrence-form').hide();
-        if (freq)
-          $('#recurrence-form-'+freq+', #recurrence-form-until').show();
+        if (freq) {
+          $('#recurrence-form-'+freq).show();
+          if (freq != 'rdate')
+            $('#recurrence-form-until').show();
+        }
+      });
+      $('#recurrence-form-rdate input.button.add').click(function(e){
+        var dt, dv = $('#edit-recurrence-rdate-input').val();
+        if (dv && (dt = parse_datetime('12:00', dv))) {
+          add_rdate(dt);
+          sort_rdates();
+          $('#edit-recurrence-rdate-input').val('')
+        }
+        else {
+          $('#edit-recurrence-rdate-input').select();
+        }
+      });
+      $('#edit-recurrence-rdates').on('click', 'a.delete', function(e){
+        $(this).closest('li').remove();
+        return false;
       });
       $('#edit-recurrence-enddate').datepicker(datepicker_settings).click(function(){ $("#edit-recurrence-repeat-until").prop('checked', true) });
       $('#edit-recurrence-repeat-times').change(function(e){ $('#edit-recurrence-repeat-count').prop('checked', true); });
 
-      $('#event-export-startdate').datepicker(datepicker_settings);
+      $('#edit-recurrence-rdate-input, #event-export-startdate').datepicker(datepicker_settings);
 
       // init attendees autocompletion
       var ac_props;

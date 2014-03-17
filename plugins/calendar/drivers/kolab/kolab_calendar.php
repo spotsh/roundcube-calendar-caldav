@@ -596,7 +596,7 @@ class kolab_calendar
       unset($record['recurrence']);
 
     // remove internals
-    unset($record['_mailbox'], $record['_msguid'], $record['_formatobj'], $record['_attachments']);
+    unset($record['_mailbox'], $record['_msguid'], $record['_formatobj'], $record['_attachments'], $record['x-custom']);
 
     return $record;
   }
@@ -647,9 +647,9 @@ class kolab_calendar
 
     $event['_owner'] = $identity['email'];
 
-    # copy RDATE values as the UI doesn't yet support these
-    if (empty($event['recurrence']['FREQ']) && $old['recurrence']['RDATE'] && empty($old['recurrence']['FREQ'])) {
-      $event['recurrence']['RDATE'] = $old['recurrence']['RDATE'];
+    # remove EXDATE values if RDATE is given
+    if (!empty($event['recurrence']['RDATE'])) {
+      $event['recurrence']['EXDATE'] = array();
     }
 
     // remove some internal properties which should not be saved

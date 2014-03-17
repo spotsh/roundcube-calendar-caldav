@@ -202,6 +202,7 @@ $labels['daily'] = 'täglich';
 $labels['weekly'] = 'wöchentlich';
 $labels['monthly'] = 'monatlich';
 $labels['yearly'] = 'jährlich';
+$labels['rdate'] = 'per Datum';
 $labels['every'] = 'Alle';
 $labels['days'] = 'Tag(e)';
 $labels['weeks'] = 'Woche(n)';
@@ -221,7 +222,7 @@ $labels['third'] = 'dritter';
 $labels['fourth'] = 'vierter';
 $labels['last'] = 'letzter';
 $labels['dayofmonth'] = 'Tag des Montats';
-
+$labels['addrdate'] = 'Datum hinzufügen';
 $labels['changeeventconfirm'] = 'Termin ändern';
 $labels['removeeventconfirm'] = 'Termin löschen';
 $labels['changerecurringeventwarning'] = 'Dies ist eine Terminreihe. Möchten Sie nur den aktuellen, diesen und alle zukünftigen oder alle Termine bearbeiten oder die Änderungen als neuen Termin speichern?';
