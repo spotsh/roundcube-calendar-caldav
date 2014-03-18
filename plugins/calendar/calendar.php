@@ -1941,6 +1941,9 @@ class calendar extends rcube_plugin
 
       // show a box for every event in the file
       foreach ($events as $idx => $event) {
+        if ($event['_type'] != 'event')  // skip non-event objects (#2928)
+          continue;
+
         // define buttons according to method
         if ($this->ical->method == 'REPLY') {
           $title = $this->gettext('itipreply');
