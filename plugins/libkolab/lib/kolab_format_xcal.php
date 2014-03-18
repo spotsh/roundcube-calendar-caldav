@@ -423,8 +423,19 @@ abstract class kolab_format_xcal extends kolab_format
                 continue;
             $attach = new Attachment;
             $attach->setLabel((string)$attr['name']);
-            $attach->setUri('cid:' . $cid, $attr['mimetype']);
-            $vattach->push($attach);
+            $attach->setUri('cid:' . $cid, $attr['mimetype'] ?: 'application/octet-stream');
+            if ($attach->isValid()) {
+              $vattach->push($attach);
+            }
+            else {
+              rcube::raise_error(array(
+                  'code' => 660,
+                  'type' => 'php',
+                  'file' => __FILE__,
+                  'line' => __LINE__,
+                  'message' => "Invalid attributes for attachment $cid: " . var_export($attr, true),
+              ), true);
+            }
         }
 
         foreach ((array)$object['links'] as $link) {
