@@ -958,7 +958,7 @@ class libvcalendar implements Iterator
             }
             else if (!empty($attendee['email'])) {
                 $attendee['rsvp'] = $attendee['rsvp'] ? 'TRUE' : null;
-                $ve->add('ATTENDEE', 'mailto:' . $attendee['email'], self::map_keys($attendee, $this->attendee_keymap));
+                $ve->add('ATTENDEE', 'mailto:' . $attendee['email'], array_filter(self::map_keys($attendee, $this->attendee_keymap)));
             }
         }
 
@@ -989,7 +989,7 @@ class libvcalendar implements Iterator
                     // embed attachments for iCal
                     $ve->add('ATTACH',
                         base64_encode($data),
-                        array('VALUE' => 'BINARY', 'ENCODING' => 'BASE64', 'FMTTYPE' => $attach['mimetype'], 'X-LABEL' => $attach['name']));
+                        array_filter(array('VALUE' => 'BINARY', 'ENCODING' => 'BASE64', 'FMTTYPE' => $attach['mimetype'], 'X-LABEL' => $attach['name'])));
                     unset($data);  // attempt to free memory
                 }
                 // list attachments as absolute URIs
