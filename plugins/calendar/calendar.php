@@ -1978,7 +1978,7 @@ class calendar extends rcube_plugin
           $status = 'unknown';
           foreach ($event['attendees'] as $attendee) {
             if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
-              $status = strtoupper($attendee['status']);
+              $status = !empty($attendee['status']) ? strtoupper($attendee['status']) : 'NEEDS-ACTION';
               break;
             }
           }
