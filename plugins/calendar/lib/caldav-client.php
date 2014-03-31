@@ -192,7 +192,8 @@ class caldav_client extends Sabre\DAV\Client
      */
     public function prop_report($url, array $properties, array $event_urls = array(), $depth = 1)
     {
-        $parent_tag = sizeof($event_urls) > 0 ? "c:calendar-multiget" : "c:calendar-query";
+        $parent_tag = sizeof($event_urls) > 0 ? "c:calendar-multiget" : "d:propfind";
+        $method = sizeof($event_urls) > 0 ? 'REPORT' : 'PROPFIND';
 
         $body = '<?xml version="1.0"?>'."\n".'<'.$parent_tag.' xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'."\n";
 
@@ -235,7 +236,7 @@ class caldav_client extends Sabre\DAV\Client
 
         $body .= '</'.$parent_tag.'>';
 
-        $response = $this->request('REPORT', $url, $body, array(
+        $response = $this->request($method, $url, $body, array(
             'Depth' => $depth,
             'Content-Type' => 'application/xml'
         ));
