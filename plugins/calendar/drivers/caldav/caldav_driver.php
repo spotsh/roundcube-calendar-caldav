@@ -158,8 +158,7 @@ class caldav_driver extends database_driver
                 $p = base64_decode($password);
                 $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
                 $prop["pass"] = $e->decrypt($p, $this->crypt_key);
-            }
-
+            }            
             return $prop;
         }
 
@@ -211,7 +210,39 @@ class caldav_driver extends database_driver
             return true;
         }
     }
-
+    
+    
+     /**
+     * Expand all "%p" occurrences in 'pass' element of calendar object 
+     * properties array with RC (imap) password. 
+     * Other elements are left untouched.
+     * 
+     * @param array List of caldav properties
+     *    url: Absolute calendar URL or relative event URL.
+     *    tag: Calendar ctag or event etag.
+     *    user: Authentication user in case of calendar obj.
+     *    pass: Authentication password in case of calendar obj.
+     *    last_change: Read-only DateTime obj of the last change.
+     * 
+     * @return array List of caldav properties, with expanded 'pass' element. Original array is modified too.
+     *    url: Absolute calendar URL or relative event URL.
+     *    tag: Calendar ctag or event etag.
+     *    user: Authentication user in case of calendar obj.
+     *    pass: Authentication password in case of calendar obj.
+     *    last_change: Read-only DateTime obj of the last change.
+     *      
+     */
+    private function _expand_pass(& $props)
+    {
+        if ($props !== FALSE) {
+            if (isset($props['pass'])){
+                $props['pass'] = str_replace('%p', $this->rc->get_user_password(), $props['pass']);
+            }
+            return $props; 
+        }    
+        return FALSE;        
+    }
+    
     /**
      * Get a list of available calendars from this source
      *
@@ -246,6 +277,7 @@ class caldav_driver extends database_driver
         {
             $props = $this->_get_caldav_props($cal_id, self::OBJ_TYPE_VCAL);
             if($props !== false) {
+                $this->_expand_pass($props);
                 self::debug_log("Initialize sync client for calendar ".$cal_id);
                 $this->sync_clients[$cal_id] = new caldav_sync($cal_id, $props);
             }
@@ -427,7 +459,9 @@ class caldav_driver extends database_driver
         $props['url'] = self::_encode_url($prop["caldav_url"]);
         $props['user'] = $prop["caldav_user"];
         $props['pass'] = $prop["caldav_pass"];
-        $calendars = $this->_autodiscover_calendars($props);
+        $pwd_expanded_props = $props;
+        $this->_expand_pass($pwd_expanded_props);
+        $calendars = $this->_autodiscover_calendars($pwd_expanded_props);
         $cal_ids = array();
 
         if(sizeof($calendars) > 0)
@@ -639,11 +673,11 @@ class caldav_driver extends database_driver
                     self::debug_log("Remove event \"".$event["id"]."\".");
                 }
             }
-
+           
             // Update calendar ctag ...
             $cal_props = $this->_get_caldav_props($cal_id, self::OBJ_TYPE_VCAL);
             $cal_props["tag"] = $cal_sync->get_ctag();
-            $this->_set_caldav_props($cal_id, self::OBJ_TYPE_VCAL, $cal_props);
+            $this->_set_caldav_props($cal_id, self::OBJ_TYPE_VCAL, $cal_props);            
         }
 
         self::debug_log("Successfully synced calendar id \"$cal_id\".");
