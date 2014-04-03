@@ -759,7 +759,7 @@ class kolab_driver extends calendar_driver
     
     // add new categories to user prefs
     $old_categories = $this->rc->config->get('calendar_categories', $this->default_categories);
-    if ($newcats = array_diff(array_map('strtolower', array_keys($categories)), array_map('strtolower', array_keys($old_categories)))) {
+    if ($newcats = array_udiff(array_keys($categories), array_keys($old_categories), function($a, $b){ return strcasecmp($a, $b); })) {
       foreach ($newcats as $category)
         $old_categories[$category] = '';  // no color set yet
       $this->rc->user->save_prefs(array('calendar_categories' => $old_categories));
