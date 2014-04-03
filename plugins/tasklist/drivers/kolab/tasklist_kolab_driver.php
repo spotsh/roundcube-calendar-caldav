@@ -645,6 +645,12 @@ class tasklist_kolab_driver extends tasklist_driver
             $object[$key] = $val;
         }
 
+        // copy recurrence rules as long as the web client doesn't support it.
+        // that way it doesn't get removed when saving through the web client (#2713)
+        if ($old['recurrence']) {
+            $object['recurrence'] = $old['recurrence'];
+        }
+
         // delete existing attachment(s)
         if (!empty($task['deleted_attachments'])) {
             foreach ($task['deleted_attachments'] as $attachment) {
