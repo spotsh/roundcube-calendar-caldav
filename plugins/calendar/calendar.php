@@ -158,10 +158,11 @@ class calendar extends rcube_plugin
       // loading preinstalled calendars
       $preinstalled_calendars = $this->rc->config->get('calendar_preinstalled_calendars', FALSE);
       if ($preinstalled_calendars && is_array($preinstalled_calendars)) {
-          
+      
+          // expanding both caldav url and user with RC (imap) username
           foreach ($preinstalled_calendars as $index => $cal){
-              $preinstalled_calendars[$index] = str_replace('%u', $this->rc->get_user_name(), $cal); 
-              $preinstalled_calendars[$index] = str_replace('%p', $this->rc->get_user_password(), $preinstalled_calendars[$index]);
+              $preinstalled_calendars[$index]['caldav_url'] = str_replace('%u', $this->rc->get_user_name(), $cal['caldav_url']); 
+              $preinstalled_calendars[$index]['caldav_user'] = str_replace('%u', $this->rc->get_user_name(), $cal['caldav_user']);
           }
         
           foreach ($this->get_drivers() as $driver_name => $driver) {
