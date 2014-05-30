@@ -20,8 +20,8 @@
       <roundcube:object name="plugin.calendar_list" id="calendarslist" />
       </div>
       <div class="boxfooter">
-        <roundcube:button command="calendar-create" type="link" title="calendar.createcalendar" class="buttonPas addgroup" classAct="button addgroup" content=" " />
-        <roundcube:button name="calendaroptionslink" id="calendaroptionslink" type="link" title="moreactions" class="button groupactions" onclick="rcmail_ui.show_popup('calendaroptions');return false" content=" " />
+		<roundcube:button name="calendarcreatelink" id="calendarcreatemenulink" type="link" title="create" class="button addgroup" classAct="button addgroup" onclick="rcmail_ui.show_popup('calendarcreatemenu', undefined, { above:true });return false" content="  " />
+		<roundcube:button name="calendaroptionslink" id="calendaroptionsmenulink" type="link" title="moreactions" class="button groupactions" onclick="rcmail_ui.show_popup('calendaroptionsmenu', undefined, { above:true });return false"content=" " />
       </div>
     </div>
   </div>
@@ -29,6 +29,12 @@
   <div id="calendar">
     <roundcube:object name="plugin.angenda_options" class="boxfooter" id="agendaoptions" />
   </div>
+</div>
+
+<div id="calendarcreatemenu" class="popupmenu">
+	<ul class="toolbarmenu">
+		<roundcube:object name="plugin.calendar_create_menu" />
+	</ul>
 </div>
 
 <div id="calendaroptionsmenu" class="popupmenu">
