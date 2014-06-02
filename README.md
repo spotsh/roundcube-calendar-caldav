@@ -9,13 +9,13 @@ Requirements
 
 Installation
 ============
-* Clone this repo and checkout the appropriate tag from the `feature_caldav` branch:
+* Clone this repo and checkout the appropriate tag from the `feature_caldav` branch or the head of the `feature_caldav` branch for the latest version:
 
     ```bash
     $ cd /path/to/your/roundcube/
     $ git clone https://gitlab.awesome-it.de/kolab/roundcube-plugins.git plugins-caldav
     $ cd plugins-caldav 
-    $ git checkout roundcubemail-plugins-kolab-caldav-3.1.11-r1
+    $ git checkout feature_caldav
     ```
 
 * Replace the origin calendar plugin folder with the modified one:
