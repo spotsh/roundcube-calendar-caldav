@@ -67,6 +67,16 @@ Installation
     $ mysql -h <db-host> -u <db-user> -p <db-name> < /path/to/your/roundcube/plugins-caldav/plugins/calendar/drivers/ical/SQL/mysql.initial.sql
     ```
 
+* Make sure that the calendar plugin is enabled the Roundcube config e.g. `/path/to/your/roundcube/config/config.inc.php`:
+
+    ```php
+    $config['plugins'] = array(
+        // ...
+        'calendar',
+        // ...
+    );
+    ```
+
 * You should now be able to select one of your configured drivers when creating a new calendar.
 
 Troubleshooting
