@@ -29,6 +29,8 @@ class ical_sync
 
     private $cal_id = null;
     private $url = null;
+    private $user = null;
+    private $pass = null;
     private $ical = null;
 
     /**
@@ -42,7 +44,10 @@ class ical_sync
     {
         $this->ical = libcalendaring::get_ical();
         $this->cal_id = $cal_id;
+
         $this->url = $props["url"];
+        $this->user = isset($props["user"]) ? $props["user"] : null;
+        $this->pass = isset($props["pass"]) ? $props["pass"] : null;
     }
 
     /**
@@ -70,7 +75,17 @@ class ical_sync
      */
     public function get_updates($events)
     {
-        $vcal = file_get_contents($this->url);
+        $context = null;
+        if($this->user != null && $this->pass != null)
+        {
+            $context = stream_context_create(array(
+                'http' => array(
+                    'header'  => "Authorization: Basic " . base64_encode("$this->user:$this->pass")
+                )
+            ));
+        }
+
+        $vcal = file_get_contents($this->url, false, $context);
         $updates = array();
         $synced = array();
         if($vcal !== false)

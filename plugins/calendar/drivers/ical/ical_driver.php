@@ -98,6 +98,8 @@ class ical_driver extends database_driver
      * @param int One of OBJ_TYPE_ICAL, OBJ_TYPE_VEVENT or OBJ_TYPE_VTODO.
      * @param array List of ical properties:
      *    url: Absolute URL to iCAL resource.
+     *   user: Optional authentication username.
+     *   pass: Optional authentication password.
      *
      * @return True on success, false otherwise.
      */
@@ -105,14 +107,53 @@ class ical_driver extends database_driver
     {
         $this->_remove_ical_props($obj_id, $obj_type);
 
+        $password = isset($props["pass"]) ? $props["pass"] : null;
+        if ($password) {
+            $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
+            $p = $e->encrypt($password, $this->crypt_key);
+            $password = base64_encode($p);
+        }
+
         $query = $this->rc->db->query(
-            "INSERT INTO " . $this->db_ical_props . " (obj_id, obj_type, url) " .
-            "VALUES (?, ?, ?)",
+            "INSERT INTO " . $this->db_ical_props . " (obj_id, obj_type, url, user, pass) " .
+            "VALUES (?, ?, ?, ?, ?)",
             $obj_id,
             $obj_type,
-            $props["url"]);
+            $props["url"],
+            isset($props["user"]) ? $props["user"] : null,
+            $password);
 
         return $this->rc->db->affected_rows($query);
+    }
+
+    /**
+     * Gets ical properties.
+     *
+     * @param int $obj_id
+     * @param int One of OBJ_TYPE_ICAL, OBJ_TYPE_VEVENT or OBJ_TYPE_VTODO.
+     * @return array List of ical properties or false on error:
+     *    url: Absolute URL to iCAL resource.
+     *   user: Username for authentication if given, otherwise null.
+     *   pass: Password for authentication if given, otherwise null.
+     */
+    private function _get_ical_props($obj_id, $obj_type)
+    {
+        $result = $this->rc->db->query(
+            "SELECT * FROM " . $this->db_ical_props . " p " .
+            "WHERE p.obj_type = ? AND p.obj_id = ? ", $obj_type, $obj_id);
+
+        if ($result && ($prop = $this->rc->db->fetch_assoc($result)) !== false) {
+            $password = isset($prop["pass"]) ? $prop["pass"] : null;
+            if ($password) {
+                $p = base64_decode($password);
+                $e = new Encryption(MCRYPT_BlOWFISH, MCRYPT_MODE_CBC);
+                $prop["pass"] = $e->decrypt($p, $this->crypt_key);
+            }
+
+            return $prop;
+        }
+
+        return false;
     }
 
     /**
@@ -129,26 +170,6 @@ class ical_driver extends database_driver
             "WHERE obj_type = ? AND obj_id = ? ", $obj_type, $obj_id);
 
         return $this->rc->db->affected_rows($query);
-    }
-
-    /**
-     * Gets ical properties.
-     *
-     * @param int $obj_id
-     * @param int One of OBJ_TYPE_ICAL, OBJ_TYPE_VEVENT or OBJ_TYPE_VTODO.
-     * @return array List of ical properties or false on error:
-     *    url: Absolute URL to iCAL resource.
-     */
-    private function _get_ical_props($obj_id, $obj_type)
-    {
-        $result = $this->rc->db->query(
-            "SELECT * FROM " . $this->db_ical_props . " p " .
-            "WHERE p.obj_type = ? AND p.obj_id = ? ", $obj_type, $obj_id);
-
-        if ($result && ($prop = $this->rc->db->fetch_assoc($result)) !== false)
-            return $prop;
-
-        return false;
     }
 
     /**
@@ -269,6 +290,30 @@ class ical_driver extends database_driver
             "id" => "ical_url",
         );
 
+        $input_ical_user = new html_inputfield( array(
+            "name" => "ical_user",
+            "id" => "ical_user",
+            "size" => 20
+        ));
+
+        $formfields["ical_user"] = array(
+            "label" => $this->cal->gettext("username"),
+            "value" => $input_ical_user->show($props["user"]),
+            "id" => "ical_user",
+        );
+
+        $input_ical_pass = new html_passwordfield( array(
+            "name" => "ical_pass",
+            "id" => "ical_pass",
+            "size" => 20
+        ));
+
+        $formfields["ical_pass"] = array(
+            "label" => $this->cal->gettext("password"),
+            "value" => $input_ical_pass->show($props["pass"]),
+            "id" => "ical_pass",
+        );
+
         return parent::calendar_form($action, $calendar, $formfields);
     }
 
@@ -282,7 +327,9 @@ class ical_driver extends database_driver
         $result = false;
         if (($obj_id = parent::create_calendar($prop)) !== false) {
             $props = array(
-                "url" => self::_encode_url($prop["ical_url"])
+                "url" => self::_encode_url($prop["ical_url"]),
+                "user" => $prop["ical_user"],
+                "pass" => $prop["ical_pass"]
             );
 
             $result = $this->_set_ical_props($obj_id, self::OBJ_TYPE_ICAL, $props);
@@ -307,7 +354,9 @@ class ical_driver extends database_driver
     {
         if (parent::edit_calendar($prop) !== false) {
             return $this->_set_ical_props($prop["id"], self::OBJ_TYPE_ICAL, array(
-                "url" => self::_encode_url($prop["ical_url"])
+                "url" => self::_encode_url($prop["ical_url"]),
+                "user" => $prop["ical_user"],
+                "pass" => $prop["ical_pass"]
             ));
         }
 
