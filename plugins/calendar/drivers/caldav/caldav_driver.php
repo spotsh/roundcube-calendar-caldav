@@ -740,7 +740,7 @@ class caldav_driver extends database_driver
      * Update the event entry with the given data and sync with caldav server.
      *
      * @param array Hash array with event properties
-     * @param array Internal use only, filled with non-modigied event if this is second try after a calendar sync was enforced first.
+     * @param array Internal use only, filled with non-modified event if this is second try after a calendar sync was enforced first.
      * @see calendar_driver::edit_event()
      */
     public function edit_event($event, $old_event = null)
