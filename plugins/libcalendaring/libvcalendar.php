@@ -47,6 +47,7 @@ class libvcalendar implements Iterator
     private $iteratorkey = 0;
     private $charset;
     private $forward_exceptions;
+    private $vhead;
     private $fp;
 
     public $method;
@@ -100,6 +101,7 @@ class libvcalendar implements Iterator
      */
     public function reset()
     {
+        $this->vhead = '';
         $this->method = '';
         $this->objects = array();
         $this->freebusy = array();
@@ -201,16 +203,7 @@ class libvcalendar implements Iterator
             return false;
         }
 
-        // read vcalendar header (with timezone defintion)
-        $this->vhead = '';
         fseek($this->fp, 0);
-        while (($line = fgets($this->fp, 512)) !== false) {
-            if (preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $line))
-                break;
-            $this->vhead .= $line;
-        }
-        fseek($this->fp, -strlen($line), SEEK_CUR);
-
         return $this->_parse_next();
     }
 
@@ -268,10 +261,31 @@ class libvcalendar implements Iterator
     private function _next_component()
     {
         $buffer = '';
+        $vcalendar_head = false;
         while (($line = fgets($this->fp, 1024)) !== false) {
-            $buffer .= $line;
-            if (preg_match('/END:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
-                break;
+            // ignore END:VCALENDAR lines
+            if (preg_match('/END:VCALENDAR/i', $line)) {
+                continue;
+            }
+            // read vcalendar header (with timezone defintion)
+            if (preg_match('/BEGIN:VCALENDAR/i', $line)) {
+                $this->vhead = '';
+                $vcalendar_head = true;
+            }
+
+            // end of VCALENDAR header part
+            if ($vcalendar_head && preg_match('/BEGIN:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
+                $vcalendar_head = false;
+            }
+
+            if ($vcalendar_head) {
+                $this->vhead .= $line;
+            }
+            else {
+                $buffer .= $line;
+                if (preg_match('/END:(VEVENT|VTODO|VFREEBUSY)/i', $line)) {
+                    break;
+                }
             }
         }
 
@@ -292,7 +306,7 @@ class libvcalendar implements Iterator
             $this->method = strval($vobject->METHOD);
             $this->agent  = strval($vobject->PRODID);
 
-            foreach ($vobject->getBaseComponents() as $ve) {
+            foreach ($vobject->getBaseComponents() ?: $vobject->getComponents() as $ve) {
                 if ($ve->name == 'VEVENT' || $ve->name == 'VTODO') {
                     // convert to hash array representation
                     $object = $this->_to_array($ve);
@@ -353,8 +367,8 @@ class libvcalendar implements Iterator
     private function _to_array($ve)
     {
         $event = array(
-            'uid'     => strval($ve->UID),
-            'title'   => strval($ve->SUMMARY),
+            'uid'     => self::convert_string($ve->UID),
+            'title'   => self::convert_string($ve->SUMMARY),
             '_type'   => $ve->name == 'VTODO' ? 'task' : 'event',
             // set defaults
             'priority' => 0,
@@ -420,11 +434,15 @@ class libvcalendar implements Iterator
                 break;
 
             case 'EXDATE':
-                $event['recurrence']['EXDATE'] = array_merge((array)$event['recurrence']['EXDATE'], (array)self::convert_datetime($prop));
+                $event['recurrence']['EXDATE'] = array_merge((array)$event['recurrence']['EXDATE'], self::convert_datetime($prop, true));
+                break;
+
+            case 'RDATE':
+                $event['recurrence']['RDATE'] = array_merge((array)$event['recurrence']['RDATE'], self::convert_datetime($prop, true));
                 break;
 
             case 'RECURRENCE-ID':
-                // $event['recurrence_id'] = self::convert_datetime($prop);
+                $event['recurrence_date'] = self::convert_datetime($prop);
                 break;
 
             case 'RELATED-TO':
@@ -443,14 +461,8 @@ class libvcalendar implements Iterator
 
             case 'LOCATION':
             case 'DESCRIPTION':
-                if ($this->is_apple()) {
-                    $event[strtolower($prop->name)] = str_replace('\,', ',', $prop->value);
-                    break;
-                }
-                // else: fall through
-
             case 'URL':
-                $event[strtolower($prop->name)] = $prop->value;
+                $event[strtolower($prop->name)] = self::convert_string($prop);
                 break;
 
             case 'CATEGORY':
@@ -663,12 +675,20 @@ class libvcalendar implements Iterator
     }
 
     /**
+     *
+     */
+    public static function convert_string($prop)
+    {
+        return str_replace('\,', ',', strval($prop->value));
+    }
+
+    /**
      * Helper method to correctly interpret an all-day date value
      */
-    public static function convert_datetime($prop)
+    public static function convert_datetime($prop, $as_array = false)
     {
         if (empty($prop)) {
-            return null;
+            return $as_array ? array() : null;
         }
         else if ($prop instanceof VObject\Property\MultiDateTime) {
             $dt = array();
@@ -684,8 +704,36 @@ class libvcalendar implements Iterator
                 $dt->_dateonly = true;
             }
         }
+        else if ($prop instanceof VObject\Property && ($prop['VALUE'] == 'DATE' || $prop['VALUE'] == 'DATE-TIME')) {
+            try {
+                list($type, $dt) = VObject\Property\DateTime::parseData($prop->value, $prop);
+                $dt->_dateonly = ($type & VObject\Property\DateTime::DATE);
+            }
+            catch (Exception $e) {
+                // ignore date parse errors
+            }
+        }
+        else if ($prop instanceof VObject\Property && $prop['VALUE'] == 'PERIOD') {
+            $dt = array();
+            foreach(explode(',', $prop->value) as $val) {
+                try {
+                    list($start, $end) = explode('/', $val);
+                    list($type, $item) = VObject\Property\DateTime::parseData($start, $prop);
+                    $item->_dateonly = ($type & VObject\Property\DateTime::DATE);
+                    $dt[] = $item;
+                }
+                catch (Exception $e) {
+                    // ignore single date parse errors
+                }
+            }
+        }
         else if ($prop instanceof DateTime) {
             $dt = $prop;
+        }
+
+        // force return value to array if requested
+        if ($as_array && !is_array($dt)) {
+            $dt = empty($dt) ? array() : array($dt);
         }
 
         return $dt;
@@ -830,8 +878,13 @@ class libvcalendar implements Iterator
             if ($exdates = $event['recurrence']['EXDATE']) {
                 unset($event['recurrence']['EXDATE']);  // don't serialize EXDATEs into RRULE value
             }
+            if ($rdates = $event['recurrence']['RDATE']) {
+                unset($event['recurrence']['RDATE']);  // don't serialize RDATEs into RRULE value
+            }
 
-            $ve->add('RRULE', libcalendaring::to_rrule($event['recurrence']));
+            if ($event['recurrence']['FREQ']) {
+                $ve->add('RRULE', libcalendaring::to_rrule($event['recurrence']));
+            }
 
             // add EXDATEs each one per line (for Thunderbird Lightning)
             if ($exdates) {
@@ -843,6 +896,13 @@ class libvcalendar implements Iterator
                         $ve->add(new VObject\Property('EXDATE', $exd->format('Ymd\\THis\\Z')));
                     }
                 }
+            }
+            // add RDATEs
+            if (!empty($rdates)) {
+                $sample = self::datetime_prop('RDATE', $rdates[0]);
+                $rdprop = new VObject\Property\MultiDateTime('RDATE', null);
+                $rdprop->setDateTimes($rdates, $sample->getDateType());
+                $ve->add($rdprop);
             }
         }
 
@@ -898,7 +958,7 @@ class libvcalendar implements Iterator
             }
             else if (!empty($attendee['email'])) {
                 $attendee['rsvp'] = $attendee['rsvp'] ? 'TRUE' : null;
-                $ve->add('ATTENDEE', 'mailto:' . $attendee['email'], self::map_keys($attendee, $this->attendee_keymap));
+                $ve->add('ATTENDEE', 'mailto:' . $attendee['email'], array_filter(self::map_keys($attendee, $this->attendee_keymap)));
             }
         }
 
@@ -929,7 +989,7 @@ class libvcalendar implements Iterator
                     // embed attachments for iCal
                     $ve->add('ATTACH',
                         base64_encode($data),
-                        array('VALUE' => 'BINARY', 'ENCODING' => 'BASE64', 'FMTTYPE' => $attach['mimetype'], 'X-LABEL' => $attach['name']));
+                        array_filter(array('VALUE' => 'BINARY', 'ENCODING' => 'BASE64', 'FMTTYPE' => $attach['mimetype'], 'X-LABEL' => $attach['name'])));
                     unset($data);  // attempt to free memory
                 }
                 // list attachments as absolute URIs

@@ -191,6 +191,13 @@ abstract class kolab_format_xcal extends kolab_format
             }
         }
 
+        if ($rdates = $this->obj->recurrenceDates()) {
+            for ($i=0; $i < $rdates->size(); $i++) {
+                if ($rdate = self::php_datetime($rdates->get($i)))
+                    $object['recurrence']['RDATE'][] = $rdate;
+            }
+        }
+
         // read alarm
         $valarms = $this->obj->alarms();
         $alarm_types = array_flip($this->alarm_type_map);
@@ -311,7 +318,7 @@ abstract class kolab_format_xcal extends kolab_format
         $rr = new RecurrenceRule;
         $rr->setFrequency(RecurrenceRule::FreqNone);
 
-        if ($object['recurrence']) {
+        if ($object['recurrence'] && !empty($object['recurrence']['FREQ'])) {
             $rr->setFrequency($this->rrule_type_map[$object['recurrence']['FREQ']]);
 
             if ($object['recurrence']['INTERVAL'])
@@ -368,6 +375,14 @@ abstract class kolab_format_xcal extends kolab_format
 
         $this->obj->setRecurrenceRule($rr);
 
+        // save recurrence dates (aka RDATE)
+        if (!empty($object['recurrence']['RDATE'])) {
+            $rdates = new vectordatetime;
+            foreach ((array)$object['recurrence']['RDATE'] as $rdate)
+                $rdates->push(self::get_datetime($rdate, null, true));
+            $this->obj->setRecurrenceDates($rdates);
+        }
+
         // save alarm
         $valarms = new vectoralarm;
         if ($object['alarms']) {
@@ -408,8 +423,19 @@ abstract class kolab_format_xcal extends kolab_format
                 continue;
             $attach = new Attachment;
             $attach->setLabel((string)$attr['name']);
-            $attach->setUri('cid:' . $cid, $attr['mimetype']);
-            $vattach->push($attach);
+            $attach->setUri('cid:' . $cid, $attr['mimetype'] ?: 'application/octet-stream');
+            if ($attach->isValid()) {
+              $vattach->push($attach);
+            }
+            else {
+              rcube::raise_error(array(
+                  'code' => 660,
+                  'type' => 'php',
+                  'file' => __FILE__,
+                  'line' => __LINE__,
+                  'message' => "Invalid attributes for attachment $cid: " . var_export($attr, true),
+              ), true);
+            }
         }
 
         foreach ((array)$object['links'] as $link) {

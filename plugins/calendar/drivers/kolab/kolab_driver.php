@@ -466,6 +466,15 @@ class kolab_driver extends calendar_driver
             if ($master['recurrence']['COUNT'])
               $master['recurrence']['COUNT']--;
           }
+          // remove the matching RDATE entry
+          else if ($master['recurrence']['RDATE']) {
+            foreach ($master['recurrence']['RDATE'] as $j => $rdate) {
+              if ($rdate->format('Ymd') == $event['start']->format('Ymd')) {
+                unset($master['recurrence']['RDATE'][$j]);
+                break;
+              }
+            }
+          }
           else {  // add exception to master event
             $master['recurrence']['EXDATE'][] = $event['start'];
           }
@@ -482,8 +491,18 @@ class kolab_driver extends calendar_driver
             unset($master['recurrence']['COUNT']);
 
             // if all future instances are deleted, remove recurrence rule entirely (bug #1677)
-            if ($master['recurrence']['UNTIL']->format('Ymd') == $master['start']->format('Ymd'))
+            if ($master['recurrence']['UNTIL']->format('Ymd') == $master['start']->format('Ymd')) {
               $master['recurrence'] = array();
+            }
+            // remove matching RDATE entries
+            else if ($master['recurrence']['RDATE']) {
+              foreach ($master['recurrence']['RDATE'] as $j => $rdate) {
+                if ($rdate->format('Ymd') == $event['start']->format('Ymd')) {
+                  $master['recurrence']['RDATE'] = array_slice($master['recurrence']['RDATE'], 0, $j);
+                  break;
+                }
+              }
+            }
 
             $success = $storage->update_event($master);
             break;
@@ -640,8 +659,24 @@ class kolab_driver extends calendar_driver
             }
         }
 
+        $add_exception = true;
+
+        // adjust matching RDATE entry if dates changed
+        if ($savemode == 'current' && $master['recurrence']['RDATE'] && ($old_date = $old['start']->format('Ymd')) != $event['start']->format('Ymd')) {
+          foreach ($master['recurrence']['RDATE'] as $j => $rdate) {
+            if ($rdate->format('Ymd') == $old_date) {
+              $master['recurrence']['RDATE'][$j] = $event['start'];
+              sort($master['recurrence']['RDATE']);
+              $add_exception = false;
+              break;
+            }
+          }
+        }
+
         // save as new exception to master event
-        $master['recurrence']['EXCEPTIONS'][] = $event;
+        if ($add_exception) {
+          $master['recurrence']['EXCEPTIONS'][] = $event;
+        }
         $success = $storage->update_event($master);
         break;
 
@@ -724,7 +759,7 @@ class kolab_driver extends calendar_driver
     
     // add new categories to user prefs
     $old_categories = $this->rc->config->get('calendar_categories', $this->default_categories);
-    if ($newcats = array_diff(array_map('strtolower', array_keys($categories)), array_map('strtolower', array_keys($old_categories)))) {
+    if ($newcats = array_udiff(array_keys($categories), array_keys($old_categories), function($a, $b){ return strcasecmp($a, $b); })) {
       foreach ($newcats as $category)
         $old_categories[$category] = '';  // no color set yet
       $this->rc->user->save_prefs(array('calendar_categories' => $old_categories));

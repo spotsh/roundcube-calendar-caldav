@@ -74,6 +74,23 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEmpty($events);
     }
 
+    /**
+     * Test parsing from files with multiple VCALENDAR blocks (#2884)
+     */
+    function test_import_from_file_multiple()
+    {
+        $ical = new libvcalendar();
+        $ical->fopen(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
+        $events = array();
+        foreach ($ical as $event) {
+            $events[] = $event;
+        }
+
+        $this->assertEquals(2, count($events));
+        $this->assertEquals("AAAA6A8C3CCE4EE2C1257B5C00FFFFFF-Lotus_Notes_Generated", $events[0]['uid']);
+        $this->assertEquals("AAAA1C572093EC3FC125799C004AFFFF-Lotus_Notes_Generated", $events[1]['uid']);
+    }
+
     function test_invalid_dates()
     {
         $ical = new libvcalendar();
@@ -180,6 +197,32 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, count($event['attachments']));
         $this->assertEquals('image/png', $event['attachments'][0]['mimetype']);
         $this->assertEquals('500px-Opensource.svg.png', $event['attachments'][0]['name']);
+    }
+
+    /**
+     * 
+     */
+    function test_escaped_values()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/escaped.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals("House, Street, Zip Place", $event['location'], "Decode escaped commas in location value");
+        $this->assertEquals("Me, meets Them\nThem, meet Me", $event['description'], "Decode description value");
+    }
+
+    /**
+     * Parse RDATE properties (#2885)
+     */
+    function test_rdate()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
+        $event = $events[0];
+
+        $this->assertEquals(9, count($event['recurrence']['RDATE']));
+        $this->assertInstanceOf('DateTime', $event['recurrence']['RDATE'][0]);
     }
 
     /**
@@ -333,7 +376,19 @@ class libvcalendar_test extends PHPUnit_Framework_TestCase
         $this->assertContains('RECURRENCE-ID;VALUE=DATE-TIME:20131113', $ics, "Recurrence-ID (2) being the exception date");
         $this->assertContains('SUMMARY:'.$exception2['title'], $ics, "Exception title");
     }
-    
+
+    /**
+     *
+     */
+    function test_export_rdate()
+    {
+        $ical = new libvcalendar();
+        $events = $ical->import_from_file(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
+        $ics = $ical->export($events, null, false);
+
+        $this->assertContains('RDATE;VALUE=DATE-TIME:20140520T020000Z', $ics, "VALUE=PERIOD is translated into single DATE-TIME values");
+    }
+
     /**
      * @depends test_export
      */

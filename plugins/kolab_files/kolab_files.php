@@ -33,7 +33,7 @@ class kolab_files extends rcube_plugin
 
     public function init()
     {
-        $this->rc = rcmail::get_instance();
+        $this->rc = rcube::get_instance();
 
         // Register hooks
         $this->add_hook('refresh', array($this, 'refresh'));

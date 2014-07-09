@@ -293,7 +293,7 @@ class tasklist_kolab_driver extends tasklist_driver
         $counts = array('all' => 0, 'flagged' => 0, 'today' => 0, 'tomorrow' => 0, 'overdue' => 0, 'nodate' => 0);
         foreach ($lists as $list_id) {
             $folder = $this->folders[$list_id];
-            foreach ((array)$folder->select(array(array('tags','!~','x-complete'))) as $record) {
+            foreach ($folder->select(array(array('tags','!~','x-complete'))) as $record) {
                 $rec = $this->_to_rcube_task($record);
 
                 if ($rec['complete'] >= 1.0)  // don't count complete tasks
@@ -357,7 +357,7 @@ class tasklist_kolab_driver extends tasklist_driver
 
         foreach ($lists as $list_id) {
             $folder = $this->folders[$list_id];
-            foreach ((array)$folder->select($query) as $record) {
+            foreach ($folder->select($query) as $record) {
                 $task = $this->_to_rcube_task($record);
                 $task['list'] = $list_id;
 
@@ -420,7 +420,7 @@ class tasklist_kolab_driver extends tasklist_driver
             $query_ids = array();
             foreach ($task_ids as $task_id) {
                 $query = array(array('tags','=','x-parent:' . $task_id));
-                foreach ((array)$folder->select($query) as $record) {
+                foreach ($folder->select($query) as $record) {
                     // don't rely on kolab_storage_folder filtering
                     if ($record['parent_id'] == $task_id) {
                         $childs[] = $record['uid'];
@@ -474,7 +474,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 continue;
 
             $folder = $this->folders[$lid];
-            foreach ((array)$folder->select($query) as $record) {
+            foreach ($folder->select($query) as $record) {
                 if (!$record['alarms'])  // don't trust query :-)
                     continue;
 
@@ -643,6 +643,12 @@ class tasklist_kolab_driver extends tasklist_driver
         foreach ((array)$old as $key => $val) {
           if (!isset($object[$key]) && $key[0] == '_')
             $object[$key] = $val;
+        }
+
+        // copy recurrence rules as long as the web client doesn't support it.
+        // that way it doesn't get removed when saving through the web client (#2713)
+        if ($old['recurrence']) {
+            $object['recurrence'] = $old['recurrence'];
         }
 
         // delete existing attachment(s)

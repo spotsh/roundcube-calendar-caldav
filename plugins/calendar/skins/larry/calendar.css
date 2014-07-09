@@ -276,6 +276,7 @@ pre {
 	top: -6px;
 	left: 0;
 	height: 40px;
+	white-space: nowrap;
 }
 
 #calendartoolbar a.button {
@@ -287,7 +288,15 @@ pre {
 }
 
 #calendartoolbar a.button.export {
+	min-width: 50px;
+	max-width: 55px;
 	background-position: center -40px;
+}
+
+#calendartoolbar a.button.import {
+	min-width: 50px;
+	max-width: 55px;
+	background-position: center -440px;
 }
 
 #calendartoolbar a.button.print {
@@ -377,7 +386,7 @@ a.miniColors-trigger {
 	display: block;
 	color: #333;
 	font-weight: bold;
-	padding: 8px 4px 3px 30px;
+	padding: 4px 4px 3px 30px;
 	text-shadow: 0px 1px 1px #fff;
 	text-decoration: none;
 	white-space: nowrap;
@@ -591,6 +600,31 @@ td.topalign {
 
 #eventedit .recurrence-form {
 	display: none;
+}
+
+#edit-recurrence-rdates {
+	display: block;
+	list-style: none;
+	margin: 0 0 0.8em 0;
+	padding: 0;
+	max-height: 300px;
+	overflow: auto;
+}
+
+#edit-recurrence-rdates li {
+	display: block;
+	position: relative;
+	width: 12em;
+	padding: 4px 0 4px 0;
+}
+
+#edit-recurrence-rdates li a.delete {
+	position: absolute;
+	top: 2px;
+	right: 0;
+	width: 20px;
+	height: 18px;
+	background-position: -7px -337px;
 }
 
 #eventedit .formtable td {
@@ -1427,6 +1461,7 @@ div.calendar-invitebox .rsvp-status.tentative {
 
 .calendaritipattend .centerbox {
 	width: 40em;
+	min-height: 7em;
 	margin: 80px auto 0 auto;
 	padding: 10px 10px 10px 90px;
 	background: url(images/invitation.png) 10px 10px no-repeat #fff;

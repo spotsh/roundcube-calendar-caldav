@@ -253,6 +253,14 @@ pre {
   background-position: -64px -32px;
 }
 
+#calendartoolbar a.import {
+	background-position: -168px 0;
+}
+
+#calendartoolbar a.importSel {
+	background-position: -168px -32px;
+}
+
 #calendartoolbar a.export {
 	background-position: -128px 0;
 }
@@ -527,6 +535,28 @@ td.topalign {
 
 #edit-recurrence-yearly-bymonthblock {
 	margin-left: 7.5em;
+}
+
+#edit-recurrence-rdates {
+	display: block;
+	list-style: none;
+	margin: 0 0 0.8em 0;
+	padding: 0;
+	max-height: 300px;
+	overflow: auto;
+}
+
+#edit-recurrence-rdates li {
+	display: block;
+	position: relative;
+	width: 14em;
+	padding: 1px;
+}
+
+#edit-recurrence-rdates li a.delete {
+	position: absolute;
+	top: 1px;
+	right: 0;
 }
 
 #eventedit .recurrence-form {

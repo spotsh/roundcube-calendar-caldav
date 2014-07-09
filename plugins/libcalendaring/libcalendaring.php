@@ -686,10 +686,10 @@ class libcalendaring extends rcube_plugin
         $url = str_replace('&_preload=1', '', $_SERVER['REQUEST_URI']);
         $message = $this->rc->gettext('loadingdata');
 
-        header('Content-Type: text/html; charset=' . RCMAIL_CHARSET);
+        header('Content-Type: text/html; charset=' . RCUBE_CHARSET);
         print "<html>\n<head>\n"
             . '<meta http-equiv="refresh" content="0; url='.Q($url).'">' . "\n"
-            . '<meta http-equiv="content-type" content="text/html; charset='.RCMAIL_CHARSET.'">' . "\n"
+            . '<meta http-equiv="content-type" content="text/html; charset='.RCUBE_CHARSET.'">' . "\n"
             . "</head>\n<body>\n$message\n</body>\n</html>";
         exit;
     }
@@ -746,6 +746,7 @@ class libcalendaring extends rcube_plugin
             case 'UNTIL':
                 $val = $val->format('Ymd\THis');
                 break;
+            case 'RDATE':
             case 'EXDATE':
                 foreach ((array)$val as $i => $ex)
                     $val[$i] = $ex->format('Ymd\THis');

@@ -1,57 +1,69 @@
---- viewer/viewer.html.orig	2013-10-03 14:06:24.000000000 +0200
-+++ viewer/viewer.html	2013-10-03 13:53:17.000000000 +0200
-@@ -31,7 +31,7 @@
+--- viewer/viewer.html.orig	2014-03-07 11:40:58.000000000 +0100
++++ viewer/viewer.html	2014-03-07 11:44:02.000000000 +0100
+@@ -31,12 +31,12 @@
  <!-- This snippet is used in production, see Makefile -->
  <link rel="resource" type="application/l10n" href="locale/locale.properties"/>
  <script type="text/javascript" src="l10n.js"></script>
 -<script type="text/javascript" src="../build/pdf.js"></script>
-+<script type="text/javascript" src="pdf.js"></script>
++<script type="text/javascript" src="pdf.min.js"></script>
  
  
  
-@@ -88,18 +88,10 @@
+     <script type="text/javascript" src="debugger.js"></script>
+-    <script type="text/javascript" src="viewer.js"></script>
++    <script type="text/javascript" src="viewer.min.js"></script>
+ 
+   </head>
+ 
+@@ -88,7 +88,7 @@
                <span data-l10n-id="presentation_mode_label">Presentation Mode</span>
              </button>
  
 -            <button id="secondaryOpenFile" class="secondaryToolbarButton openFile visibleLargeView" title="Open File" tabindex="19" data-l10n-id="open_file">
--              <span data-l10n-id="open_file_label">Open</span>
--            </button>
--
-             <button id="secondaryPrint" class="secondaryToolbarButton print visibleMediumView" title="Print" tabindex="20" data-l10n-id="print">
++            <button id="secondaryOpenFile" class="secondaryToolbarButton openFile hidden" title="Open File" tabindex="19" data-l10n-id="open_file">
+               <span data-l10n-id="open_file_label">Open</span>
+             </button>
+ 
+@@ -96,11 +96,11 @@
                <span data-l10n-id="print_label">Print</span>
              </button>
  
 -            <button id="secondaryDownload" class="secondaryToolbarButton download visibleMediumView" title="Download" tabindex="21" data-l10n-id="download">
--              <span data-l10n-id="download_label">Download</span>
--            </button>
--
-             <div class="horizontalToolbarSeparator visibleLargeView"></div>
++            <button id="secondaryDownload" class="secondaryToolbarButton download hidden" title="Download" tabindex="21" data-l10n-id="download">
+               <span data-l10n-id="download_label">Download</span>
+             </button>
  
-             <button id="firstPage" class="secondaryToolbarButton firstPage" title="Go to First Page" tabindex="22" data-l10n-id="first_page">
-@@ -150,20 +142,10 @@
+-            <a href="#" id="secondaryViewBookmark" class="secondaryToolbarButton bookmark visibleSmallView" title="Current view (copy or open in new window)" tabindex="22" data-l10n-id="bookmark">
++            <a href="#" id="secondaryViewBookmark" class="secondaryToolbarButton bookmark hidden" title="Current view (copy or open in new window)" tabindex="22" data-l10n-id="bookmark">
+               <span data-l10n-id="bookmark_label">Current View</span>
+             </a>
+ 
+@@ -159,7 +159,7 @@
                    <span data-l10n-id="presentation_mode_label">Presentation Mode</span>
                  </button>
  
 -                <button id="openFile" class="toolbarButton openFile hiddenLargeView" title="Open File" tabindex="13" data-l10n-id="open_file">
--                  <span data-l10n-id="open_file_label">Open</span>
--                </button>
--
-                 <button id="print" class="toolbarButton print hiddenMediumView" title="Print" tabindex="14" data-l10n-id="print">
++                <button id="openFile" class="toolbarButton openFile hidden" title="Open File" tabindex="13" data-l10n-id="open_file">
+                   <span data-l10n-id="open_file_label">Open</span>
+                 </button>
+ 
+@@ -167,11 +167,11 @@
                    <span data-l10n-id="print_label">Print</span>
                  </button>
  
 -                <button id="download" class="toolbarButton download hiddenMediumView" title="Download" tabindex="15" data-l10n-id="download">
--                  <span data-l10n-id="download_label">Download</span>
--                </button>
--                <!-- <div class="toolbarButtonSpacer"></div> -->
--                <a href="#" id="viewBookmark" class="toolbarButton bookmark hiddenSmallView" title="Current view (copy or open in new window)" tabindex="16" data-l10n-id="bookmark"><span data-l10n-id="bookmark_label">Current View</span></a>
--
-                 <div class="verticalToolbarSeparator hiddenSmallView"></div>
-                 
-                 <button id="secondaryToolbarToggle" class="toolbarButton" title="Tools" tabindex="17" data-l10n-id="tools">
---- viewer/viewer.js.orig	2013-10-03 14:06:30.000000000 +0200
-+++ viewer/viewer.js	2013-10-03 14:06:00.000000000 +0200
-@@ -22,7 +22,7 @@
++                <button id="download" class="toolbarButton download hidden" title="Download" tabindex="15" data-l10n-id="download">
+                   <span data-l10n-id="download_label">Download</span>
+                 </button>
+                 <!-- <div class="toolbarButtonSpacer"></div> -->
+-                <a href="#" id="viewBookmark" class="toolbarButton bookmark hiddenSmallView" title="Current view (copy or open in new window)" tabindex="16" data-l10n-id="bookmark">
++                <a href="#" id="viewBookmark" class="toolbarButton bookmark hidden" title="Current view (copy or open in new window)" tabindex="16" data-l10n-id="bookmark">
+                   <span data-l10n-id="bookmark_label">Current View</span>
+                 </a>
+ 
+--- viewer/viewer.js.orig	2014-03-07 11:40:40.000000000 +0100
++++ viewer/viewer.js	2014-03-07 11:32:44.000000000 +0100
+@@ -23,7 +23,7 @@
  
  'use strict';
  
@@ -60,7 +72,7 @@
  var DEFAULT_SCALE = 'auto';
  var DEFAULT_SCALE_DELTA = 1.1;
  var UNKNOWN_SCALE = 0;
-@@ -49,7 +49,7 @@
+@@ -55,7 +55,7 @@
  };
  
  PDFJS.imageResourcesPath = './images/';
@@ -69,69 +81,3 @@
  
  var mozL10n = document.mozL10n || document.webL10n;
  
-@@ -1313,9 +1313,9 @@
- 
-     this.presentationMode.addEventListener('click',
-       this.presentationModeClick.bind(this));
--    this.openFile.addEventListener('click', this.openFileClick.bind(this));
-+    //this.openFile.addEventListener('click', this.openFileClick.bind(this));
-     this.print.addEventListener('click', this.printClick.bind(this));
--    this.download.addEventListener('click', this.downloadClick.bind(this));
-+    //this.download.addEventListener('click', this.downloadClick.bind(this));
- 
-     this.firstPage.addEventListener('click', this.firstPageClick.bind(this));
-     this.lastPage.addEventListener('click', this.lastPageClick.bind(this));
-@@ -3991,8 +3991,8 @@
-   document.body.appendChild(fileInput);
- 
-   if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
--    document.getElementById('openFile').setAttribute('hidden', 'true');
--    document.getElementById('secondaryOpenFile').setAttribute('hidden', 'true');
-+    //document.getElementById('openFile').setAttribute('hidden', 'true');
-+    //document.getElementById('secondaryOpenFile').setAttribute('hidden', 'true');
-   } else {
-     document.getElementById('fileInput').value = null;
-   }
-@@ -4147,14 +4147,14 @@
-   document.getElementById('presentationMode').addEventListener('click',
-     SecondaryToolbar.presentationModeClick.bind(SecondaryToolbar));
- 
--  document.getElementById('openFile').addEventListener('click',
--    SecondaryToolbar.openFileClick.bind(SecondaryToolbar));
-+//  document.getElementById('openFile').addEventListener('click',
-+//    SecondaryToolbar.openFileClick.bind(SecondaryToolbar));
- 
-   document.getElementById('print').addEventListener('click',
-     SecondaryToolbar.printClick.bind(SecondaryToolbar));
- 
--  document.getElementById('download').addEventListener('click',
--    SecondaryToolbar.downloadClick.bind(SecondaryToolbar));
-+//  document.getElementById('download').addEventListener('click',
-+//    SecondaryToolbar.downloadClick.bind(SecondaryToolbar));
- 
-   document.getElementById('contextFirstPage').addEventListener('click',
-     SecondaryToolbar.firstPageClick.bind(SecondaryToolbar));
-@@ -4229,8 +4229,8 @@
-     store.set('scrollLeft', Math.round(topLeft[0]));
-     store.set('scrollTop', Math.round(topLeft[1]));
-   });
--  var href = PDFView.getAnchorUrl(pdfOpenParams);
--  document.getElementById('viewBookmark').href = href;
-+  //var href = PDFView.getAnchorUrl(pdfOpenParams);
-+  //document.getElementById('viewBookmark').href = href;
- 
-   // Update the current bookmark in the browsing history.
-   PDFHistory.updateCurrentBookmark(pdfOpenParams, pageNumber);
-@@ -4273,9 +4273,9 @@
-   PDFView.setTitleUsingUrl(file.name);
- 
-   // URL does not reflect proper document location - hiding some icons.
--  document.getElementById('viewBookmark').setAttribute('hidden', 'true');
--  document.getElementById('download').setAttribute('hidden', 'true');
--  document.getElementById('secondaryDownload').setAttribute('hidden', 'true');
-+  //document.getElementById('viewBookmark').setAttribute('hidden', 'true');
-+  //document.getElementById('download').setAttribute('hidden', 'true');
-+  //document.getElementById('secondaryDownload').setAttribute('hidden', 'true');
- }, true);
- 
- function selectScaleOption(value) {

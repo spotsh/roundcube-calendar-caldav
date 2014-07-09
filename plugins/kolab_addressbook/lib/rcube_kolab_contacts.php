@@ -89,6 +89,8 @@ class rcube_kolab_contacts extends rcube_addressbook
 
     private $gid;
     private $storagefolder;
+    private $dataset;
+    private $sortindex;
     private $contacts;
     private $distlists;
     private $groupmembers;
@@ -266,19 +268,23 @@ class rcube_kolab_contacts extends rcube_addressbook
      *
      * @param array List of cols to show
      * @param  int  Only return this number of records, use negative values for tail
+     * @param  boolean True to skip the count query (select only)
      *
      * @return array  Indexed list of contact records, each a hash array
      */
-    public function list_records($cols = null, $subset = 0)
+    public function list_records($cols = null, $subset = 0, $nocount = false)
     {
         $this->result = new rcube_result_set(0, ($this->list_page-1) * $this->page_size);
+        $fetch_all = false;
 
         // list member of the selected group
         if ($this->gid) {
             $this->_fetch_groups();
 
-            $this->contacts = array();
-            $uids           = array();
+            $this->sortindex = array();
+            $this->contacts  = array();
+            $local_sortindex = array();
+            $uids            = array();
 
             // get members with email specified
             foreach ((array)$this->distlists[$this->gid]['member'] as $member) {
@@ -287,58 +293,55 @@ class rcube_kolab_contacts extends rcube_addressbook
                     continue;
                 }
 
-                if (!empty($member['email'])) {
-                    $this->contacts[$member['ID']] = $member;
-                }
                 if (!empty($member['uid'])) {
                     $uids[] = $member['uid'];
+                }
+                else if (!empty($member['email'])) {
+                    $this->contacts[$member['ID']] = $member;
+                    $local_sortindex[$member['ID']] = $this->_sort_string($member);
+                    $fetch_all = true;
                 }
             }
 
             // get members by UID
             if (!empty($uids)) {
-                foreach ((array)$this->storagefolder->select(array(array('uid', '=', $uids))) as $record) {
-                    $member = $this->_to_rcube_contact($record);
-                    $this->contacts[$member['ID']] = $member;
-                }
+                $this->_fetch_contacts($query = array(array('uid', '=', $uids)), !$fetch_all);
+                $this->sortindex = array_merge($this->sortindex, $local_sortindex);
             }
-
-            $ids = array_keys($this->contacts);
         }
         else if (is_array($this->filter['ids'])) {
             $ids = $this->filter['ids'];
             if (count($ids)) {
                 $uids = array_map(array($this, 'id2uid'), $this->filter['ids']);
-                $this->_fetch_contacts(array(array('uid', '=', $uids)));
-            }
-            else {
-                $this->contacts = array();
+                $this->_fetch_contacts($query = array(array('uid', '=', $uids)), true);
             }
         }
         else {
-            $this->_fetch_contacts();
-            $ids = array_keys($this->contacts);
+            $this->_fetch_contacts($query = array(), true);
         }
 
-        // sort data arrays according to desired list sorting
-        if ($count = count($ids)) {
-            uasort($this->contacts, array($this, '_sort_contacts_comp'));
-            // get sorted IDs
-            if ($count != count($this->contacts))
-                $ids = array_values(array_intersect(array_keys($this->contacts), $ids));
-            else
-                $ids = array_keys($this->contacts);
+        if ($fetch_all) {
+            // sort results (index only)
+            asort($this->sortindex, SORT_LOCALE_STRING);
+            $ids = array_keys($this->sortindex);
 
+            // fill contact data into the current result set
             $this->result->count = count($ids);
+            $start_row = $subset < 0 ? $this->result->first + $this->page_size + $subset : $this->result->first;
+            $last_row = min($subset != 0 ? $start_row + abs($subset) : $this->result->first + $this->page_size, $this->result->count);
+
+            for ($i = $start_row; $i < $last_row; $i++) {
+                if (array_key_exists($i, $ids)) {
+                    $idx = $ids[$i];
+                    $this->result->add($this->contacts[$idx] ?: $this->_to_rcube_contact($this->dataset[$idx]));
+                }
+            }
         }
-
-        // fill contact data into the current result set
-        $start_row = $subset < 0 ? $this->result->first + $this->page_size + $subset : $this->result->first;
-        $last_row = min($subset != 0 ? $start_row + abs($subset) : $this->result->first + $this->page_size, $count);
-
-        for ($i = $start_row; $i < $last_row; $i++) {
-            if ($id = $ids[$i])
-                $this->result->add($this->contacts[$id]);
+        else {
+            $this->result->count = $this->storagefolder->count($query);
+            foreach ($this->dataset as $idx => $record) {
+                $this->result->add($this->_to_rcube_contact($record));
+            }
         }
 
         return $this->result;
@@ -406,8 +409,11 @@ class rcube_kolab_contacts extends rcube_addressbook
         // save searching conditions
         $this->filter = array('fields' => $fields, 'value' => $value, 'mode' => $mode, 'ids' => array());
 
-        // search be iterating over all records in memory
-        foreach ($this->contacts as $id => $contact) {
+        // search by iterating over all records in dataset
+        foreach ($this->dataset as $i => $record) {
+            $contact = $this->_to_rcube_contact($record);
+            $id = $contact['ID'];
+
             // check if current contact has required values, otherwise skip it
             if ($required) {
                 foreach ($required as $f) {
@@ -588,10 +594,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                 true, false);
             }
             else {
-                $contact = $this->_to_rcube_contact($object);
-                $id = $contact['ID'];
-                $this->contacts[$id] = $contact;
-                $insert_id = $id;
+                $insert_id = $this->uid2id($object['uid']);
             }
         }
 
@@ -622,7 +625,6 @@ class rcube_kolab_contacts extends rcube_addressbook
                 true, false);
             }
             else {
-                $this->contacts[$id] = $this->_to_rcube_contact($object);
                 $updated = true;
 
                 // TODO: update data in groups this contact is member of
@@ -669,7 +671,7 @@ class rcube_kolab_contacts extends rcube_addressbook
                     }
 
                     // clear internal cache
-                    unset($this->contacts[$id], $this->groupmembers[$id]);
+                    unset($this->groupmembers[$id]);
                     $count++;
                 }
             }
@@ -718,6 +720,8 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         if ($this->storagefolder->delete_all()) {
             $this->contacts = array();
+            $this->sortindex = array();
+            $this->dataset = null;
             $this->result = null;
         }
     }
@@ -972,59 +976,69 @@ class rcube_kolab_contacts extends rcube_addressbook
     /**
      * Query storage layer and store records in private member var
      */
-    private function _fetch_contacts($query = array())
+    private function _fetch_contacts($query = array(), $limit = false)
     {
-        if (!isset($this->contacts)) {
-            $this->contacts = array();
-            foreach ((array)$this->storagefolder->select($query) as $record) {
+        if (!isset($this->dataset) || !empty($query)) {
+            if ($limit) {
+                $this->storagefolder->set_order_and_limit($this->_sort_columns(), $this->page_size, ($this->list_page-1) * $this->page_size);
+            }
+            $this->sortindex = array();
+            $this->dataset = $this->storagefolder->select($query);
+            foreach ($this->dataset as $idx => $record) {
                 $contact = $this->_to_rcube_contact($record);
-                $id = $contact['ID'];
-                $this->contacts[$id] = $contact;
+                $this->sortindex[$idx] = $this->_sort_string($contact);
             }
         }
     }
 
     /**
-     * Callback function for sorting contacts
+     * Extract a string for sorting from the given contact record
      */
-    private function _sort_contacts_comp($a, $b)
+    private function _sort_string($rec)
     {
-        $a_value = $b_value = '';
+        $str = '';
 
         switch ($this->sort_col) {
         case 'name':
-            $a_value = $a['name'] . $a['prefix'];
-            $b_value = $b['name'] . $b['prefix'];
+            $str = $rec['name'] . $rec['prefix'];
         case 'firstname':
-            $a_value .= $a['firstname'] . $a['middlename'] . $a['surname'];
-            $b_value .= $b['firstname'] . $b['middlename'] . $b['surname'];
+            $str .= $rec['firstname'] . $rec['middlename'] . $rec['surname'];
             break;
 
         case 'surname':
-            $a_value = $a['surname'] . $a['firstname'] . $a['middlename'];
-            $b_value = $b['surname'] . $b['firstname'] . $b['middlename'];
+            $str = $rec['surname'] . $rec['firstname'] . $rec['middlename'];
             break;
 
         default:
-            $a_value = $a[$this->sort_col];
-            $b_value = $b[$this->sort_col];
+            $str = $rec[$this->sort_col];
             break;
         }
 
-        $a_value .= is_array($a['email']) ? $a['email'][0] : $a['email'];
-        $b_value .= is_array($b['email']) ? $b['email'][0] : $b['email'];
+        $str .= is_array($rec['email']) ? $rec['email'][0] : $rec['email'];
+        return mb_strtolower($str);
+    }
 
-        $a_value = mb_strtolower($a_value);
-        $b_value = mb_strtolower($b_value);
+    /**
+     * Return the cache table columns to order by
+     */
+    private function _sort_columns()
+    {
+        $sortcols = array();
 
-        // return strcasecmp($a_value, $b_value);
-        // make sorting unicode-safe and locale-dependent
-        if ($a_value == $b_value)
-            return 0;
+        switch ($this->sort_col) {
+        case 'name':
+            $sortcols[] = 'name';
+        case 'firstname':
+            $sortcols[] = 'firstname';
+            break;
 
-        $arr = array($a_value, $b_value);
-        sort($arr, SORT_LOCALE_STRING);
-        return $a_value == $arr[0] ? -1 : 1;
+        case 'surname':
+            $sortcols[] = 'surname';
+            break;
+        }
+
+        $sortcols[] = 'email';
+        return $sortcols;
     }
 
     /**
@@ -1034,7 +1048,7 @@ class rcube_kolab_contacts extends rcube_addressbook
     {
         if (!isset($this->distlists)) {
             $this->distlists = $this->groupmembers = array();
-            foreach ((array)$this->storagefolder->get_objects('distribution-list') as $record) {
+            foreach ($this->storagefolder->get_objects('distribution-list') as $record) {
                 $record['ID'] = $this->uid2id($record['uid']);
                 foreach ((array)$record['member'] as $i => $member) {
                     $mid = $this->uid2id($member['uid'] ? $member['uid'] : 'mailto:' . $member['email']);

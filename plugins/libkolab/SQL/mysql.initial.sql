@@ -34,6 +34,10 @@ CREATE TABLE `kolab_cache_contact` (
   `tags` VARCHAR(255) NOT NULL,
   `words` TEXT NOT NULL,
   `type` VARCHAR(32) CHARACTER SET ascii NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `firstname` VARCHAR(255) NOT NULL,
+  `surname` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
   CONSTRAINT `fk_kolab_cache_contact_folder` FOREIGN KEY (`folder_id`)
     REFERENCES `kolab_folders`(`folder_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY(`folder_id`,`msguid`),
@@ -172,4 +176,4 @@ CREATE TABLE `kolab_cache_freebusy` (
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
 
-INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2013121100');
+INSERT INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2014021000');

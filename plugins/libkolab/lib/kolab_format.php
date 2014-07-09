@@ -208,7 +208,11 @@ abstract class kolab_format
      */
     public static function mime2object_type($x_kolab_type)
     {
-        return preg_replace('/dictionary.[a-z.]+$/', 'dictionary', substr($x_kolab_type, strlen(self::KTYPE_PREFIX)));
+        return preg_replace(
+            array('/dictionary.[a-z.]+$/', '/contact.distlist$/'),
+            array( 'dictionary',            'distribution-list'),
+            substr($x_kolab_type, strlen(self::KTYPE_PREFIX))
+        );
     }
 
 

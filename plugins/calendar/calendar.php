@@ -1287,8 +1287,16 @@ class calendar extends rcube_plugin
   {
     $start = get_input_value('start', RCUBE_INPUT_GET);
     $end = get_input_value('end', RCUBE_INPUT_GET);
-    if (!$start) $start = mktime(0, 0, 0, 1, date('n'), date('Y')-1);
-    if (!$end) $end = mktime(0, 0, 0, 31, 12, date('Y')+10);
+    if (!isset($start))
+      $start = 'today -1 year';
+    if (!is_numeric($start))
+      $start = strtotime($start . ' 00:00:00');
+    if (!$end)
+      $end = 'today +10 years';
+    if (!is_numeric($end))
+      $end = strtotime($end . ' 23:59:59');
+
+    $attachments = get_input_value('attachments', RCUBE_INPUT_GET);
     $calid = $calname = get_input_value('source', RCUBE_INPUT_GET);
     $driver = $this->get_driver_by_cal($calid);
     $calendars = $driver->list_calendars(true);
@@ -1435,6 +1443,14 @@ class calendar extends rcube_plugin
       if ($event['recurrence']['UNTIL'])
         $event['recurrence']['UNTIL'] = $this->lib->adjust_timezone($event['recurrence']['UNTIL'], $event['allday'])->format('c');
       unset($event['recurrence']['EXCEPTIONS']);
+
+      // format RDATE values
+      if (is_array($event['recurrence']['RDATE'])) {
+        $libcal = $this->lib;
+        $event['recurrence']['RDATE'] = array_map(function($rdate) use ($libcal) {
+          return $libcal->adjust_timezone($rdate, true)->format('c');
+        }, $event['recurrence']['RDATE']);
+      }
     }
 
     foreach ((array)$event['attachments'] as $k => $attachment) {
@@ -1468,6 +1484,7 @@ class calendar extends rcube_plugin
       'end'   => $this->lib->adjust_timezone($event['end'], $event['allday'])->format('c'),
       // 'changed' might be empty for event recurrences (Bug #2185)
       'changed' => $event['changed'] ? $this->lib->adjust_timezone($event['changed'])->format('c') : null,
+      'created' => $event['created'] ? $this->lib->adjust_timezone($event['created'])->format('c') : null,
       'title'       => strval($event['title']),
       'description' => strval($event['description']),
       'location'    => strval($event['location']),
@@ -1482,6 +1499,34 @@ class calendar extends rcube_plugin
    */
   private function _recurrence_text($rrule)
   {
+    // derive missing FREQ and INTERVAL from RDATE list
+    if (empty($rrule['FREQ']) && !empty($rrule['RDATE'])) {
+      $first = $rrule['RDATE'][0];
+      $second = $rrule['RDATE'][1];
+      $third  = $rrule['RDATE'][2];
+      if (is_a($first, 'DateTime') && is_a($second, 'DateTime')) {
+        $diff = $first->diff($second);
+        foreach (array('y' => 'YEARLY', 'm' => 'MONTHLY', 'd' => 'DAILY') as $k => $freq) {
+          if ($diff->$k != 0) {
+            $rrule['FREQ'] = $freq;
+            $rrule['INTERVAL'] = $diff->$k;
+
+            // verify interval with next item
+            if (is_a($third, 'DateTime')) {
+              $diff2 = $second->diff($third);
+              if ($diff2->$k != $diff->$k) {
+                unset($rrule['INTERVAL']);
+              }
+            }
+            break;
+          }
+        }
+      }
+      if (!$rrule['INTERVAL'])
+        $rrule['FREQ'] = 'RDATE';
+      $rrule['UNTIL'] = end($rrule['RDATE']);
+    }
+
     // TODO: finish this
     $freq = sprintf('%s %d ', $this->gettext('every'), $rrule['INTERVAL']);
     $details = '';
@@ -1636,6 +1681,21 @@ class calendar extends rcube_plugin
     if (is_array($event['recurrence']) && !empty($event['recurrence']['UNTIL']))
       $event['recurrence']['UNTIL'] = new DateTime($event['recurrence']['UNTIL'], $this->timezone);
 
+    if (is_array($event['recurrence']) && is_array($event['recurrence']['RDATE'])) {
+      $tz = $this->timezone;
+      $start = $event['start'];
+      $event['recurrence']['RDATE'] = array_map(function($rdate) use ($tz, $start) {
+        try {
+          $dt = new DateTime($rdate, $tz);
+          $dt->setTime($start->format('G'), $start->format('i'));
+          return $dt;
+        }
+        catch (Exception $e) {
+          return null;
+        }
+      }, $event['recurrence']['RDATE']);
+    }
+
     $attachments = array();
     $eventid = 'cal:'.$event['id'];
     if (is_array($_SESSION[self::SESSION_KEY]) && $_SESSION[self::SESSION_KEY]['id'] == $eventid) {
@@ -1683,8 +1743,10 @@ class calendar extends rcube_plugin
     }
 
     // mapping url => vurl because of the fullcalendar client script
-    $event['url'] = $event['vurl'];
-    unset($event['vurl']);
+    if (array_key_exists('vurl', $event)) {
+      $event['url'] = $event['vurl'];
+      unset($event['vurl']);
+    }
   }
 
   /**
@@ -1982,6 +2044,8 @@ class calendar extends rcube_plugin
   public function itip_attend_response($p)
   {
     if ($p['action'] == 'attend') {
+      $this->ui->init();
+
       $this->rc->output->set_env('task', 'calendar');  // override some env vars
       $this->rc->output->set_env('refresh_interval', 0);
       $this->rc->output->set_pagetitle($this->gettext('calendar'));
@@ -2100,6 +2164,9 @@ class calendar extends rcube_plugin
 
       // show a box for every event in the file
       foreach ($events as $idx => $event) {
+        if ($event['_type'] != 'event')  // skip non-event objects (#2928)
+          continue;
+
         // define buttons according to method
         if ($this->ical->method == 'REPLY') {
           $title = $this->gettext('itipreply');
@@ -2134,7 +2201,7 @@ class calendar extends rcube_plugin
           $status = 'unknown';
           foreach ($event['attendees'] as $attendee) {
             if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
-              $status = strtoupper($attendee['status']);
+              $status = !empty($attendee['status']) ? strtoupper($attendee['status']) : 'NEEDS-ACTION';
               break;
             }
           }
@@ -2356,7 +2423,12 @@ class calendar extends rcube_plugin
     if ($success) {
       $message = $this->ical->method == 'REPLY' ? 'attendeupdateesuccess' : ($deleted ? 'successremoval' : 'importedsuccessfully');
       $this->rc->output->command('display_message', $this->gettext(array('name' => $message, 'vars' => array('calendar' => $calendar['name']))), 'confirmation');
-      $this->rc->output->command('plugin.fetch_event_rsvp_status', array('uid' => $event['uid'], 'changed' => $event['changed']->format('U'), 'sequence' => intval($event['sequence']), 'fallback' => strtoupper($status)));
+      $this->rc->output->command('plugin.fetch_event_rsvp_status', array(
+          'uid' => $event['uid'],
+          'changed' => is_object($event['changed']) ? $event['changed']->format('U') : 0,
+          'sequence' => intval($event['sequence']),
+          'fallback' => strtoupper($status),
+      ));
       $error_msg = null;
     }
     else if ($error_msg)
