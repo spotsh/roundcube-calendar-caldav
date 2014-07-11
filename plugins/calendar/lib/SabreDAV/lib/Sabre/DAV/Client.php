@@ -379,8 +379,9 @@ class Client {
         ) = $this->curlRequest($url, $curlSettings);
 
         /*
-        $fd = fopen("/tmp/curl", "w");
+        $fd = fopen("/tmp/curl", "a");
         fwrite($fd,
+        "**************************************************************************************************************\n".
         "URL: ".print_r($url, true)."\n".
         "curlSettings: ".print_r($curlSettings, true)."\n".
         "response: ".print_r($response, true)."\n".
