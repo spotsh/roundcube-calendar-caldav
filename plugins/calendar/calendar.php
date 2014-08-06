@@ -411,24 +411,35 @@ class calendar extends rcube_plugin
   public function get_default_calendar($writeable = false)
   {
     $default_id = $this->rc->config->get('calendar_default_calendar');
-    $first = null;
 
     foreach($this->get_drivers() as $driver){
       $calendars = $driver->list_calendars(false, true);
-      $calendar = $calendars[$default_id] ?: null;
-      if (!$calendar || ($writeable && $calendar['readonly'])) {
-        foreach ($calendars as $cal) {
-          if ($cal['default']) {
-            return $cal;
+      if($default_id) {
+        $calendar = $calendars[$default_id] ?: null;
+
+        if($calendar && (!$writeable || !$calendar["readonly"]))
+        {
+          //rcmail::console("422: get_default_calendar(): " . print_r($calendar, true));
+          return $calendar;
+        }
+      }
+      else
+      {
+        // No default if, so get first calendar of first driver.
+        foreach ($calendars as $calendar) {
+          if ($calendar['default']) {
+              //rcmail::console("431: get_default_calendar(): " . print_r($calendar, true));
+              return $calendar;
           }
-          if (!$first && (!$writeable || !$cal['readonly'])) {
-            $first = $cal;
+          if (!$writeable || !$calendar['readonly']) {
+              //rcmail::console("435: get_default_calendar(): " . print_r($calendar, true));
+              return $calendar;
           }
         }
       }
     }
 
-    return $calendar ?: $first;
+    return null;
   }
 
 
