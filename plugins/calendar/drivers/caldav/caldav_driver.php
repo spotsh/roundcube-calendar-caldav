@@ -339,8 +339,8 @@ class caldav_driver extends database_driver
             }
             if ($found) {
                 array_push($calendars, array(
-                    name => $name,
-                    href => $base_uri.$collection,
+                    'name' => $name,
+                    'href' => $base_uri.$collection,
                 ));
             }
         }
