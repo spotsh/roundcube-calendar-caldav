@@ -324,6 +324,9 @@ class ical_driver extends database_driver
      */
     public function create_calendar($prop)
     {
+        if(!isset($props['color']))
+            $props['color'] = 'cc0000';
+
         $result = false;
         if (($obj_id = parent::create_calendar($prop)) !== false) {
             $props = array(

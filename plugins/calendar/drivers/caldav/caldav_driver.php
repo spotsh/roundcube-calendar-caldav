@@ -459,6 +459,7 @@ class caldav_driver extends database_driver
         $props['url'] = self::_encode_url($prop["caldav_url"]);
         $props['user'] = $prop["caldav_user"];
         $props['pass'] = $prop["caldav_pass"];
+        if(!isset($props['color'])) $props['color'] = 'cc0000';
         $pwd_expanded_props = $props;
         $this->_expand_pass($pwd_expanded_props);
         $calendars = $this->_autodiscover_calendars($pwd_expanded_props);
