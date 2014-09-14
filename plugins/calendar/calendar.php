@@ -1160,9 +1160,9 @@ class calendar extends rcube_plugin
     {
       foreach ($driver->list_calendars(true) as $cal) {
         $events = $driver->load_events(
-          get_input_value('start', RCUBE_INPUT_GET),
-          get_input_value('end', RCUBE_INPUT_GET),
-          get_input_value('q', RCUBE_INPUT_GET),
+          get_input_value('start', RCUBE_INPUT_GPC),
+          get_input_value('end', RCUBE_INPUT_GPC),
+          get_input_value('q', RCUBE_INPUT_GPC),
           $cal['id'],
           1,
           $attr['last']
