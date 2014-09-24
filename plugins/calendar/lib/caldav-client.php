@@ -326,7 +326,8 @@ class caldav_client extends Sabre\DAV\Client
             if ($etag) $headers["If-Match"] = '"'.$etag.'"';
 
             $response = $this->request('DELETE', $path, null, $headers);
-            return $response["statusCode"] == 204;   // 204 (no content, successfully deleted);
+            return $response["statusCode"] == 204 ||    // 204 (no content, successfully deleted)
+                   $response["statusCode"] == 200;      // 200 (OK, successfully deleted)
         }
         catch(Sabre\DAV\Exception\PreconditionFailed $err)
         {
