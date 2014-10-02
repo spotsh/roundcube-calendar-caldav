@@ -440,7 +440,7 @@ class caldav_driver extends database_driver
 
         $formfields["caldav_pass"] = array(
             "label" => $this->cal->gettext("password"),
-            "value" => $input_caldav_pass->show($props["pass"]),
+            "value" => $input_caldav_pass->show(null), // Don't send plain text password to GUI
             "id" => "caldav_pass",
         );
 
@@ -508,6 +508,12 @@ class caldav_driver extends database_driver
     {
         if (parent::edit_calendar($prop) !== false)
         {
+            // Don't change the password if not specified
+            if(!$prop["caldav_pass"]) {
+                $prev_prop = $this->_get_caldav_props($prop["id"], self::OBJ_TYPE_VCAL);
+                if($prev_prop) $prop["caldav_pass"] = $prev_prop["pass"];
+            }
+
             return $this->_set_caldav_props($prop["id"], self::OBJ_TYPE_VCAL, array(
                 "url" => self::_encode_url($prop["caldav_url"]),
                 "user" => $prop["caldav_user"],

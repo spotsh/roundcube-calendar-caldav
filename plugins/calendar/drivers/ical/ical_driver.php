@@ -310,7 +310,7 @@ class ical_driver extends database_driver
 
         $formfields["ical_pass"] = array(
             "label" => $this->cal->gettext("password"),
-            "value" => $input_ical_pass->show($props["pass"]),
+            "value" => $input_ical_pass->show(null), // Don't send plain text password to GUI
             "id" => "ical_pass",
         );
 
@@ -356,6 +356,13 @@ class ical_driver extends database_driver
     public function edit_calendar($prop)
     {
         if (parent::edit_calendar($prop) !== false) {
+
+            // Don't change the password if not specified
+            if(!$prop["ical_pass"]) {
+                $prev_prop = $this->_get_ical_props($prop["id"], self::OBJ_TYPE_ICAL);
+                if($prev_prop) $prop["ical_pass"] = $prev_prop["pass"];
+            }
+
             return $this->_set_ical_props($prop["id"], self::OBJ_TYPE_ICAL, array(
                 "url" => self::_encode_url($prop["ical_url"]),
                 "user" => $prop["ical_user"],
