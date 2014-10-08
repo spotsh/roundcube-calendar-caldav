@@ -152,7 +152,7 @@ class calendar_itip
         if ($attendee['role'] == 'ORGANIZER') {
           $reply_attendees[] = $attendee;
         }
-        else if (strcasecmp($attedee['email'], $from) == 0 || strcasecmp($attendee['email'], $from_utf) == 0) {
+        else if (strcasecmp($attendee['email'], $from) == 0 || strcasecmp($attendee['email'], $from_utf) == 0) {
           $replying_attendee = $attendee;
         }
       }
