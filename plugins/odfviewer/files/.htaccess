@@ -1,5 +1,0 @@
-<IfModule mod_deflate.c>
-SetOutputFilter NONE
-</IfModule>
-
-Options -Indexes
